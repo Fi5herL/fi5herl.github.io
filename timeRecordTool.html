@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>垂直時間軸Pomodoro計時器</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      display: flex;
+      width: 100%;
+      max-width: 1200px;
+      gap: 30px;
+    }
+
+    .left-panel {
+      flex: 1;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      position: fixed; /* 釘選在視窗 */
+      width: 300px; /* 根據需要調整寬度 */
+      height: 80vh; /* 填滿視窗高度 */
+      overflow-y: auto; /* 如果內容超出高度，允許滾動 */
+    }
+
+    .right-panel {
+      flex: 2;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      height: 160vh;
+      overflow-y: auto;
+      position: relative;
+      margin-left: 360px; /* 根據左邊Panel寬度調整 */
+    }
+
+    .clock {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .timeline {
+      position: relative;
+      height: 100%;
+      border-left: 3px solid #ddd;
+      margin-left: 50px; /* 為時間標記留出空間 */
+    }
+
+    .time-point {
+      position: absolute;
+      left: -6px; /* 調整位置以適應更小的點 */
+      width: 10px; /* 更小的點 */
+      height: 10px; /* 更小的點 */
+      border-radius: 50%;
+      background-color: #ff6347;
+      box-shadow: 0 0 0 2px rgba(255, 99, 71, 0.3);
+      z-index: 2;
+    }
+    .time-segment {
+        position: absolute;
+        left: 20px; /* 調整位置，避免與標籤重疊 */
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        border-left: 3px solid #ff6347;
+        min-width: 200px;
+        display: flex; /* 使用 Flexbox */
+        align-items: center; /* 垂直置中 */
+        box-sizing: border-box; /* 包含 padding 和 border */
+    }
+
+    .time-marker {
+      position: absolute;
+      left: -55px; /* 時間標記位置 */
+      font-size: 0.8em;
+      color: #666;
+    }
+
+    .time-tick {
+      position: absolute;
+      left: -15px;
+      width: 10px;
+      height: 1px;
+      background-color: #aaa;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 10px 2px;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .timer-control {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .task-input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .export-btn {
+      background-color: #2196F3;
+    }
+
+    .export-btn:hover {
+      background-color: #0b7dda;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 5px;
+      width: 50%;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: black;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pomodoro 垂直時間軸計時器</h1>
+
+  <div class="container">
+    <div class="left-panel">
+      <div class="clock" id="current-time">00:00:00</div>
+
+      <div class="timer-control">
+        <input type="text" id="task-input" class="task-input" placeholder="輸入任務名稱..."/>
+        <button id="start-btn">開始計時</button>
+        <button id="stop-btn" disabled>停止計時</button>
+        <button id="export-btn" class="export-btn">匯出CSV</button>
+      </div>
+
+      <div id="task-list-container">
+        <h3>今日任務列表</h3>
+        <table id="task-table">
+          <thead>
+            <tr>
+              <th>任務</th>
+              <th>開始時間</th>
+              <th>結束時間</th>
+              <th>持續時間</th>
+            </tr>
+          </thead>
+          <tbody id="task-list">
+            <!-- 任務將在這裡動態添加 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <h3>今日時間軸</h3>
+      <div class="timeline" id="timeline">
+        <!-- 時間點和區段將在這裡動態添加 -->
+      </div>
+    </div>
+  </div>
+
+  <div id="task-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>編輯任務</h3>
+      <input type="text" id="edit-task-input" class="task-input" placeholder="任務名稱..." />
+      <button id="save-task-btn">儲存</button>
+    </div>
+  </div>
+
+  <script>
+    // 全局變數
+    let tasks = [];
+    let currentTask = null;
+    let currentTaskId = 0;
+    let isTimerRunning = false;
+    let editingTaskId = null;
+
+    // DOM元素
+    const currentTimeEl = document.getElementById('current-time');
+    const taskInputEl = document.getElementById('task-input');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const exportBtn = document.getElementById('export-btn');
+    const taskListEl = document.getElementById('task-list');
+    const timelineEl = document.getElementById('timeline');
+    const taskModal = document.getElementById('task-modal');
+    const editTaskInput = document.getElementById('edit-task-input');
+    const saveTaskBtn = document.getElementById('save-task-btn');
+    const closeModalBtn = document.querySelector('.close');
+
+    // 更新當前時間
+    function updateCurrentTime() {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      currentTimeEl.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    // 格式化時間為 HH:MM
+    function formatTime(date) {
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+
+    // 格式化時間為 HH:MM:SS
+    function formatTimeWithSeconds(date) {
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const seconds = date.getSeconds().toString().padStart(2, '0');
+      return `${hours}:${minutes}:${seconds}`;
+    }
+
+    // 計算兩個時間之間的差距（返回分鐘:秒格式）
+    function calculateTimeDiff(startTime, endTime) {
+      const diff = Math.floor((endTime - startTime) / 1000); // 轉為秒
+      const minutes = Math.floor(diff / 60).toString().padStart(2, '0');
+      const seconds = (diff % 60).toString().padStart(2, '0');
+      return `${minutes}:${seconds}`;
+    }
+
+    // 創建15分鐘間隔的時間標記
+    function createTimeMarkers() {
+      // 清除現有的時間標記
+      const existingMarkers = document.querySelectorAll('.time-marker, .time-tick');
+      existingMarkers.forEach(marker => marker.remove());
+
+      // 每小時4個標記（每15分鐘一個）
+      for (let hour = 0; hour < 24; hour++) {
+        for (let quarter = 0; quarter < 4; quarter++) {
+          const minutes = quarter * 15;
+          const timePercentage = (hour * 60 + minutes) / (24 * 60) * 100;
+
+          // 創建時間刻度線
+          const tickEl = document.createElement('div');
+          tickEl.className = 'time-tick';
+          tickEl.style.top = `${timePercentage}%`;
+          timelineEl.appendChild(tickEl);
+
+          // 每小時的第一個刻度（整點）添加時間標籤
+          if (quarter === 0) {
+            const markerEl = document.createElement('div');
+            markerEl.className = 'time-marker';
+            markerEl.style.top = `${timePercentage}%`;
+            markerEl.textContent = `${hour.toString().padStart(2, '0')}:00`;
+            timelineEl.appendChild(markerEl);
+          }
+        }
+      }
+    }
+
+    // 在時間軸上添加時間點
+    function addTimePoint(taskId, time, taskName, isStart) {
+      const hours = time.getHours();
+      const minutes = time.getMinutes();
+      const seconds = time.getSeconds();
+
+      // 計算位置百分比（基於24小時制）
+      const totalMinutes = hours * 60 + minutes + seconds / 60;
+      const dayPercentage = totalMinutes / (24 * 60) * 100;
+
+      // 創建時間點元素
+      const pointEl = document.createElement('div');
+      pointEl.className = 'time-point';
+      pointEl.setAttribute('data-task-id', taskId);
+      pointEl.setAttribute('data-is-start', isStart);
+      pointEl.style.top = `${dayPercentage}%`;
+
+      timelineEl.appendChild(pointEl);
+
+      // 如果這是結束點，添加時間段落元素
+      if (!isStart && currentTask) {
+        const segmentEl = document.createElement('div');
+        segmentEl.className = 'time-segment';
+        segmentEl.setAttribute('data-task-id', taskId);
+
+        // 找到相應的開始點
+        const startPoint = document.querySelector(`.time-point[data-task-id="${taskId}"][data-is-start="true"]`);
+        if (startPoint) {
+          const startPointPercentage = parseFloat(startPoint.style.top);
+
+          // 設置段落位置和高度
+          segmentEl.style.top = `${startPointPercentage}%`;
+          segmentEl.style.height = `${dayPercentage - startPointPercentage}%`;
+
+          // 修改後: 只顯示任務名稱
+          segmentEl.textContent = taskName;
+
+          timelineEl.appendChild(segmentEl);
+        }
+      }
+    }
+
+    // 添加任務到列表
+    function addTaskToList(task) {
+      const row = document.createElement('tr');
+      row.setAttribute('data-task-id', task.id);
+
+      const taskCell = document.createElement('td');
+      taskCell.textContent = task.name;
+      taskCell.style.cursor = 'pointer';
+      taskCell.addEventListener('click', () => editTask(task.id));
+
+      const startTimeCell = document.createElement('td');
+      startTimeCell.textContent = formatTimeWithSeconds(task.startTime);
+
+      const endTimeCell = document.createElement('td');
+      if (task.endTime) {
+        endTimeCell.textContent = formatTimeWithSeconds(task.endTime);
+      } else {
+        endTimeCell.textContent = '進行中...';
+      }
+
+      const durationCell = document.createElement('td');
+      if (task.endTime) {
+        durationCell.textContent = calculateTimeDiff(task.startTime, task.endTime);
+      } else {
+        durationCell.textContent = '計算中...';
+      }
+
+      row.appendChild(taskCell);
+      row.appendChild(startTimeCell);
+      row.appendChild(endTimeCell);
+      row.appendChild(durationCell);
+
+      taskListEl.appendChild(row);
+    }
+
+    // 更新任務列表中的任務
+    function updateTaskInList(task) {
+      const row = document.querySelector(`tr[data-task-id="${task.id}"]`);
+      if (row) {
+        const cells = row.querySelectorAll('td');
+        cells[0].textContent = task.name;
+        cells[1].textContent = formatTimeWithSeconds(task.startTime);
+        if (task.endTime) {
+          cells[2].textContent = formatTimeWithSeconds(task.endTime);
+          cells[3].textContent = calculateTimeDiff(task.startTime, task.endTime);
+        }
+      }
+    }
+
+    // 開始新任務
+    function startNewTask() {
+      const taskName = taskInputEl.value.trim() || `任務 ${currentTaskId + 1}`;
+
+      // 如果有進行中的任務，先停止它
+      if (isTimerRunning) {
+        stopCurrentTask();
+      }
+
+      // 創建新任務
+      currentTaskId++;
+      const startTime = new Date();
+      currentTask = {
+        id: currentTaskId,
+        name: taskName,
+        startTime: startTime,
+        endTime: null
+      };
+
+      tasks.push(currentTask);
+
+      // 添加到時間軸
+      addTimePoint(currentTaskId, startTime, taskName, true);
+
+      // 添加到任務列表
+      addTaskToList(currentTask);
+
+      // 更新UI狀態
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      taskInputEl.value = '';
+      isTimerRunning = true;
+    }
+
+    // 停止當前任務
+    function stopCurrentTask() {
+      if (currentTask && isTimerRunning) {
+        const endTime = new Date();
+        currentTask.endTime = endTime;
+
+        // 更新時間軸
+        addTimePoint(currentTask.id, endTime, currentTask.name, false);
+
+        // 更新任務列表
+        updateTaskInList(currentTask);
+
+        // 更新UI狀態
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        isTimerRunning = false;
+        currentTask = null;
+      }
+    }
+
+    // 編輯任務
+    function editTask(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        editingTaskId = taskId;
+        editTaskInput.value = task.name;
+        taskModal.style.display = 'block';
+      }
+    }
+
+    // 保存編輯後的任務
+    function saveEditedTask() {
+      if (editingTaskId) {
+        const task = tasks.find(t => t.id === editingTaskId);
+        if (task) {
+          task.name = editTaskInput.value.trim() || task.name;
+          updateTaskInList(task);
+
+          // 更新時間軸上的任務名稱（如果有段落元素）
+          const segmentEl = document.querySelector(`.time-segment[data-task-id="${editingTaskId}"]`);
+          if (segmentEl) {
+            segmentEl.textContent = task.name;
+          }
+        }
+
+        taskModal.style.display = 'none';
+        editingTaskId = null;
+      }
+    }
+
+    // 匯出為CSV（解決中文亂碼問題）
+    function exportToCSV() {
+      if (tasks.length === 0) {
+        alert('沒有可匯出的任務');
+        return;
+      }
+
+      // 添加BOM標記，解決中文亂碼
+      const BOM = "\uFEFF";
+
+      // 創建CSV內容
+      let csvContent = [];
+      csvContent.push(["任務名稱", "開始時間", "結束時間", "持續時間"]);
+
+      // 添加每個任務數據
+      tasks.forEach(task => {
+        const startTime = formatTimeWithSeconds(task.startTime);
+        const endTime = task.endTime ? formatTimeWithSeconds(task.endTime) : '進行中';
+        const duration = task.endTime ? calculateTimeDiff(startTime, endTime) : '計算中';
+
+        csvContent.push([
+          `"${task.name.replace(/"/g, '""')}"`, // 處理任務名稱中可能的引號
+          startTime,
+          endTime,
+          duration
+        ]);
+      });
+
+      // 轉換為CSV字符串
+      let csvString = BOM + csvContent.map(row => row.join(',')).join('\n');
+
+      // 創建Blob對象
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8' });
+
+      // 使用URL.createObjectURL創建下載鏈接
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `pomodoro_tasks_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+
+      // 模擬點擊下載
+      link.click();
+
+      // 清理
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // 初始化
+    function init() {
+      // 創建時間標記
+      createTimeMarkers();
+
+      // 更新當前時間並每秒更新一次
+      updateCurrentTime();
+      setInterval(updateCurrentTime, 1000);
+
+      // 添加事件監聽器
+      startBtn.addEventListener('click', startNewTask);
+      stopBtn.addEventListener('click', stopCurrentTask);
+      exportBtn.addEventListener('click', exportToCSV);
+      saveTaskBtn.addEventListener('click', saveEditedTask);
+      closeModalBtn.addEventListener('click', () => taskModal.style.display = 'none');
+
+      // 點擊模態框外部時關閉
+      window.addEventListener('click', (event) => {
+        if (event.target === taskModal) {
+          taskModal.style.display = 'none';
+        }
+      });
+
+      // 按Enter鍵添加任務
+      taskInputEl.addEventListener('keyup', (event) => {
+        if (event.key === 'Enter' && !startBtn.disabled) {
+          startNewTask();
+        }
+      });
+    }
+
+    // 啟動應用
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
