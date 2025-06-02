@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPT Party 開跑啦！🚀</title> <!-- 或者您可以動態從 iframe 獲取標題，但這更複雜 -->
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/616/616656.png" type="image/png">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden; /* 避免 GitHub Pages 頁面本身出現滾動條 */
+            background-color: #f0f0f0; /* iframe 外部的背景顏色，可以和卡片內部不同 */
+            display: flex;
+            justify-content: center;
+            align-items: center; /* 垂直居中 iframe */
+        }
+        iframe {
+            border: none; /* 移除 iframe 的預設邊框 */
+            width: 100%;
+            max-width: 650px; /* iframe 的最大寬度，略大於卡片，給一些邊距 */
+            height: 95vh; /* iframe 的高度，或者您可以根據內容調整 */
+            /* 如果希望 iframe 內容滾動，而不是父頁面滾動: */
+            /* overflow: auto;  <-- 這個通常是 iframe 預設行為 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* 給 iframe 一個陰影，看起來像卡片 */
+            border-radius: 15px; /* 可選：給 iframe 邊框也加圓角 */
+        }
+        /* 響應式調整 */
+        @media (max-width: 700px) {
+            body {
+                align-items: flex-start; /* 在小螢幕上，從頂部開始顯示 */
+                padding-top: 10px; /* 給頂部一些空間 */
+            }
+            iframe {
+                max-width: 98%; /* 在小螢幕上，寬度接近滿版 */
+                height: calc(100vh - 20px); /* 高度也調整 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <iframe id="eventCardFrame" 
+            src="https://script.google.com/macros/s/AKfycbxNFuVfJU5lP0dGBQBUMkPy3MDGfreuVAdiXXoQjD4CLnvwEK55uyBKGiuSm0nDKt9i/exec"
+            title="活動邀請卡">
+        您的瀏覽器不支援 iframe。
+    </iframe>
+
+    <script>
+        // 可選：如果需要根據 iframe 內容動態調整 iframe 高度 (較複雜，通常不必要)
+        /*
+        const iframe = document.getElementById('eventCardFrame');
+        iframe.onload = function() {
+            try {
+                const body = iframe.contentWindow.document.body;
+                const html = iframe.contentWindow.document.documentElement;
+                // const height = Math.max( body.scrollHeight, body.offsetHeight, 
+                //                        html.clientHeight, html.scrollHeight, html.offsetHeight );
+                // iframe.style.height = height + 'px'; // 可能會有同源策略問題
+                console.log("Iframe loaded");
+            } catch (e) {
+                console.error("Cannot access iframe content for height adjustment:", e);
+            }
+        }
+        */
+    </script>
+</body>
+</html>
