@@ -5,9 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPT Party 開跑啦！</title>
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/616/616656.png" type="image/x-icon"> <!-- 確保 favicon 路徑正確 -->
+    <!-- 其他 favicon links -->
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0; /* 可以考慮給 body 一些 padding，例如 padding: 20px 0; */
+            width: 100%;
+            min-height: 100vh; /* 確保 body 至少是視窗高度 */
+            box-sizing: border-box;
+            background-color: #f0f0f0; /* iframe 外部的背景顏色 */
+            display: flex;
+            justify-content: center;
+            align-items: center; /* 垂直和水平居中 iframe */
+        }
+
+        iframe {
+            border: none; /* 移除 iframe 的預設邊框 */
+            display: block; /* 確保 aspect-ratio 和 max-width 正常工作 */
+            
+            /* 寬度設定 */
+            width: 95%; /* 在父容器 (body) 中佔據 95% 的寬度 */
+            max-width: 1920px; /* iframe 的最大物理寬度，比卡片內容 (600px) 稍大 */
+
+            /* 比例設定 (這是關鍵調整) */
+            /* 假設卡片內容的理想比例大約是 寬:高 = 2:3 或 3:4 */
+            /* 例如，如果卡片內容是 600px 寬, 900px 高，比例是 2/3 */
+            /* 如果卡片內容是 600px 寬, 800px 高，比例是 3/4 */
+            aspect-ratio: 2 / 3; /* <<-- 嘗試這個比例，您可以調整為 3/4 或其他 */
+                                 /* 這會讓 iframe 在寬度確定後，高度自動按比例調整 */
+            /* height: auto; /* 由 aspect-ratio 控制，或者可以移除 */
+
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* 給 iframe 一個陰影 */
+            border-radius: 15px; /* iframe 邊框圓角 */
+        }
+
+        /* 針對非常窄的螢幕，可以進一步微調 */
+        @media (max-width: 400px) {
+            body {
+                padding: 10px 0; /* 減少 padding */
+            }
+            iframe {
+                width: 98%; /* 在極窄螢幕上更寬一點 */
+                /* 如果 2/3 在手機上還是太寬，可以考慮 9/16，但內容可能會被壓縮 */
+                /* aspect-ratio: 9 / 16; */
+            }
+        }
+    </style>
 </head>
 <body>
-    <iframe src="https://script.google.com/macros/s/AKfycbxNFuVfJU5lP0dGBQBUMkPy3MDGfreuVAdiXXoQjD4CLnvwEK55uyBKGiuSm0nDKt9i/exec" <!-- 請替換成您的 Apps Script URL -->
+    <iframe id="eventCardFrame" 
+            src="https://script.google.com/macros/s/AKfycbxNFuVfJU5lP0dGBQBUMkPy3MDGfreuVAdiXXoQjD4CLnvwEK55uyBKGiuSm0nDKt9i/exec" <!-- 請替換成您的 Apps Script URL -->
             title="活動邀請卡">
         您的瀏覽器不支援 iframe。
     </iframe>
