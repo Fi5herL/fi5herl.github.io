@@ -12,7 +12,7 @@
             margin: 0;
             padding: 0; /* 可以考慮給 body 一些 padding，例如 padding: 20px 0; */
             width: 100%;
-            min-height: 100vh; /* 確保 body 至少是視窗高度 */
+            height: 100%; /* 確保 body 至少是視窗高度 */
             box-sizing: border-box;
             background-color: #f0f0f0; /* iframe 外部的背景顏色 */
             display: flex;
@@ -26,7 +26,7 @@
             
             /* 寬度設定 */
             width: 95%; /* 在父容器 (body) 中佔據 95% 的寬度 */
-            max-width: 1920px; /* iframe 的最大物理寬度，比卡片內容 (600px) 稍大 */
+            max-width: 1080px; /* iframe 的最大物理寬度，比卡片內容 (600px) 稍大 */
 
             /* 比例設定 (這是關鍵調整) */
             /* 假設卡片內容的理想比例大約是 寬:高 = 2:3 或 3:4 */
