@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Milk Blog</title>
     <style>
+        /* CSS 樣式與之前版本基本一致，這裡省略以節省空間 */
+        /* 但請確保你使用的是我上次提供的包含側邊欄收闔修正的版本 */
         * {
             margin: 0;
             padding: 0;
@@ -34,16 +36,20 @@
             transition: all 0.3s ease;
             position: relative;
             box-shadow: 2px 0 20px rgba(139, 115, 85, 0.1);
+            display: flex; 
+            flex-direction: column; 
         }
 
         .sidebar.collapsed {
             width: 80px;
+            padding-left: 0.5rem; 
+            padding-right: 0.5rem; 
         }
 
         .sidebar-toggle {
             position: absolute;
             top: 1rem;
-            right: -15px;
+            right: -15px; 
             background: #f5f2eb;
             border: 2px solid #e6dcc9;
             border-radius: 50%;
@@ -56,6 +62,7 @@
             font-size: 14px;
             color: #8b7355;
             transition: all 0.3s ease;
+            z-index: 10; 
         }
 
         .sidebar-toggle:hover {
@@ -70,15 +77,21 @@
             margin-bottom: 2rem;
             text-align: center;
             opacity: 1;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease, font-size 0.3s ease; 
+            overflow: hidden; 
+            white-space: nowrap; 
         }
 
         .sidebar.collapsed .logo {
             opacity: 0;
+            height: 0; 
+            margin-bottom: 0; 
+            font-size: 0; 
         }
 
         .nav-menu {
             list-style: none;
+            flex-grow: 1; 
         }
 
         .nav-item {
@@ -94,13 +107,22 @@
             border-radius: 12px;
             transition: all 0.3s ease;
             position: relative;
-            overflow: hidden;
+            overflow: hidden; 
+        }
+
+        .sidebar.collapsed .nav-link {
+            justify-content: center; 
+            padding: 1rem 0.5rem; 
         }
 
         .nav-link:hover {
             background: rgba(222, 216, 202, 0.4);
             transform: translateX(5px);
         }
+        .sidebar.collapsed .nav-link:hover {
+            transform: none; 
+        }
+
 
         .nav-link.active {
             background: linear-gradient(135deg, #e6dcc9, #d4c8b0);
@@ -110,16 +132,24 @@
 
         .nav-icon {
             margin-right: 0.8rem;
-            font-size: 1.1rem;
-            transition: opacity 0.3s ease;
+            font-size: 1.1rem; 
+            transition: opacity 0.3s ease, margin-right 0.3s ease, font-size 0.3s ease;
+            flex-shrink: 0; 
+        }
+
+        .sidebar.collapsed .nav-icon {
+            margin-right: 0; 
         }
 
         .nav-text {
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, width 0.3s ease;
+            white-space: nowrap; 
+            overflow: hidden; 
         }
 
         .sidebar.collapsed .nav-text {
             opacity: 0;
+            width: 0; 
         }
 
         /* 主要內容區 */
@@ -128,6 +158,21 @@
             padding: 2rem;
             transition: all 0.3s ease;
         }
+
+        .page-container { /* 新增：用於包裹每個頁面內容的容器 */
+            background: rgba(255, 253, 249, 0.9);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(139, 115, 85, 0.1);
+            margin-top: 2rem; /* 與 header 間隔 */
+        }
+        #home-page .page-container { /* 首頁的 controls 和 grid 不需要額外的背景包裹 */
+            background: none;
+            padding: 0;
+            box-shadow: none;
+            margin-top: 0;
+        }
+
 
         .header {
             background: rgba(255, 253, 249, 0.8);
@@ -299,170 +344,95 @@
             font-weight: 500;
         }
 
-        /* Markdown 渲染樣式 */
+        /* Markdown 渲染樣式 (與之前版本一致) */
         .markdown-content {
             line-height: 1.8;
             color: #8b7355;
         }
-
         .markdown-content h1, .markdown-content h2, .markdown-content h3, 
         .markdown-content h4, .markdown-content h5, .markdown-content h6 {
-            color: #a0896b;
-            margin: 1.5rem 0 1rem 0;
-            font-weight: bold;
+            color: #a0896b; margin: 1.5rem 0 1rem 0; font-weight: bold;
         }
-
         .markdown-content h1 { font-size: 2rem; border-bottom: 2px solid #e6dcc9; padding-bottom: 0.5rem; }
         .markdown-content h2 { font-size: 1.7rem; }
         .markdown-content h3 { font-size: 1.4rem; }
-        .markdown-content h4 { font-size: 1.2rem; }
-        .markdown-content h5 { font-size: 1.1rem; }
-        .markdown-content h6 { font-size: 1rem; }
+        .markdown-content p { margin: 1rem 0; }
+        .markdown-content ul, .markdown-content ol { margin: 1rem 0; padding-left: 2rem; }
+        .markdown-content li { margin: 0.5rem 0; }
+        .markdown-content a { color: #a0896b; text-decoration: none; border-bottom: 1px dotted #a0896b; transition: all 0.3s ease; }
+        .markdown-content a:hover { color: #8b7355; border-bottom-style: solid; }
+        .markdown-content code { background: rgba(160, 137, 107, 0.1); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.9em; color: #8b7355; }
+        .markdown-content pre { background: #2d3748; border-radius: 8px; padding: 1rem; overflow-x: auto; margin: 1rem 0; box-shadow: 0 4px 15px rgba(139, 115, 85, 0.2); }
+        .markdown-content pre code { background: none; padding: 0; color: #e2e8f0; font-family: 'Courier New', monospace; font-size: 0.9em; }
+        .markdown-content blockquote { border-left: 4px solid #a0896b; padding-left: 1rem; margin: 1rem 0; background: rgba(160, 137, 107, 0.1); border-radius: 0 4px 4px 0; }
+        .markdown-content blockquote p { margin: 0.5rem 0; }
+        .markdown-content hr { border: none; height: 2px; background: linear-gradient(90deg, transparent, #e6dcc9, transparent); margin: 2rem 0; }
+        .markdown-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 1rem 0; box-shadow: 0 4px 15px rgba(139, 115, 85, 0.2); }
+        .markdown-content table { width: 100%; border-collapse: collapse; margin: 1rem 0; background: rgba(255, 253, 249, 0.9); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(139, 115, 85, 0.1); }
+        .markdown-content th, .markdown-content td { padding: 0.8rem; text-align: left; border-bottom: 1px solid #e6dcc9; }
+        .markdown-content tr:last-child td { border-bottom: none; }
+        .markdown-content th { background: rgba(160, 137, 107, 0.2); font-weight: bold; color: #8b7355; }
 
-        .markdown-content p {
-            margin: 1rem 0;
-        }
-
-        .markdown-content ul, .markdown-content ol {
-            margin: 1rem 0;
-            padding-left: 2rem;
-        }
-
-        .markdown-content li {
-            margin: 0.5rem 0;
-        }
-
-        .markdown-content a {
-            color: #a0896b;
-            text-decoration: none;
-            border-bottom: 1px dotted #a0896b;
-            transition: all 0.3s ease;
-        }
-
-        .markdown-content a:hover {
-            color: #8b7355;
-            border-bottom-style: solid;
-        }
-
-        .markdown-content code {
-            background: rgba(160, 137, 107, 0.1);
-            padding: 0.2rem 0.4rem;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            color: #8b7355;
-        }
-
-        .markdown-content pre {
-            background: #2d3748;
-            border-radius: 8px;
-            padding: 1rem;
-            overflow-x: auto;
-            margin: 1rem 0;
-            box-shadow: 0 4px 15px rgba(139, 115, 85, 0.2);
-        }
-
-        .markdown-content pre code {
-            background: none;
-            padding: 0;
-            color: #e2e8f0;
-        }
-
-        .markdown-content blockquote {
-            border-left: 4px solid #a0896b;
-            padding-left: 1rem;
-            margin: 1rem 0;
-            background: rgba(160, 137, 107, 0.1);
-            border-radius: 0 4px 4px 0;
-        }
-
-        .markdown-content hr {
-            border: none;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #e6dcc9, transparent);
-            margin: 2rem 0;
-        }
-
-        .markdown-content img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin: 1rem 0;
-            box-shadow: 0 4px 15px rgba(139, 115, 85, 0.2);
-        }
-
-        .markdown-content table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            background: rgba(255, 253, 249, 0.9);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .markdown-content th, .markdown-content td {
-            padding: 0.8rem;
-            text-align: left;
-            border-bottom: 1px solid #e6dcc9;
-        }
-
-        .markdown-content th {
-            background: rgba(160, 137, 107, 0.2);
-            font-weight: bold;
-            color: #8b7355;
-        }
-
-        /* Mermaid 圖表樣式 */
+        /* Mermaid 圖表樣式 (與之前版本一致) */
         .mermaid {
-            background: rgba(255, 253, 249, 0.9);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 1rem 0;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(139, 115, 85, 0.1);
+            background: rgba(255, 253, 249, 0.9); border-radius: 8px; padding: 1rem; margin: 1rem 0;
+            text-align: center; box-shadow: 0 4px 15px rgba(139, 115, 85, 0.1);
+            display: flex; justify-content: center; align-items: center;
         }
+        .mermaid svg { max-width: 100%; }
 
-        /* 響應式設計 */
+
+        /* 響應式設計 (與之前版本一致) */
         @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                height: auto;
-                padding: 1rem;
-            }
-            
-            .sidebar.collapsed {
-                width: 100%;
-                height: 60px;
-                overflow: hidden;
-            }
-            
-            .articles-grid {
-                grid-template-columns: 1fr;
-            }
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; padding: 1rem; border-right: none; border-bottom: 1px solid rgba(222, 216, 202, 0.3); }
+            .sidebar.collapsed { width: 100%; height: 60px; padding: 0 1rem; overflow: hidden; }
+            .sidebar.collapsed .logo { display: none; }
+            .sidebar.collapsed .nav-menu { display: flex; flex-direction: row; justify-content: space-around; align-items: center; height: 100%; }
+            .sidebar.collapsed .nav-item { margin-bottom: 0; }
+            .sidebar.collapsed .nav-link { padding: 0.5rem; }
+            .sidebar.collapsed .sidebar-toggle { top: 50%; transform: translateY(-50%); right: 10px; }
+            .articles-grid { grid-template-columns: 1fr; }
+            .main-content { padding: 1rem; }
+            .header { padding: 1.5rem; }
+            .header h1 { font-size: 2rem; }
+            .page-container { padding: 1.5rem; margin-top: 1rem;}
         }
 
-        /* 載入動畫 */
-        .loading {
-            text-align: center;
-            padding: 3rem;
-            color: #a0896b;
-            font-size: 1.2rem;
+        /* 載入動畫 (與之前版本一致) */
+        .loading { text-align: center; padding: 3rem; color: #a0896b; font-size: 1.2rem; }
+        .loading::after { content: '...'; animation: dots 1.5s infinite; }
+        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; } }
+
+        /* 分類頁面樣式 */
+        .categories-list { list-style: none; padding: 0; }
+        .categories-list li { margin-bottom: 0.5rem; }
+        .categories-list .category-link {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: rgba(160, 137, 107, 0.1);
+            color: #8b7355;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .categories-list .category-link:hover {
+            background-color: rgba(160, 137, 107, 0.3);
         }
 
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s infinite;
+        /* 文章歸檔頁面樣式 */
+        .archive-list { list-style: none; padding: 0; }
+        .archive-year { font-size: 1.5rem; color: #a0896b; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+        .archive-month { font-size: 1.2rem; color: #8b7355; margin-top: 1rem; margin-bottom: 0.3rem; padding-left: 1rem; }
+        .archive-list li { margin-bottom: 0.5rem; padding-left: 2rem;}
+        .archive-list .archive-link {
+            color: #8b7355;
+            text-decoration: none;
+            transition: color 0.3s ease;
         }
+        .archive-list .archive-link:hover { color: #a0896b; }
+        .archive-list .archive-date { font-size: 0.8em; color: #a0896b; margin-right: 0.5em; }
 
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
-        }
     </style>
 </head>
 <body>
@@ -474,32 +444,27 @@
             <ul class="nav-menu">
                 <li class="nav-item">
                     <a href="#" class="nav-link active" data-page="home">
-                        <span class="nav-icon">🏠</span>
-                        <span class="nav-text">首頁</span>
+                        <span class="nav-icon">🏠</span><span class="nav-text">首頁</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link" data-page="about">
-                        <span class="nav-icon">👤</span>
-                        <span class="nav-text">關於我</span>
+                        <span class="nav-icon">👤</span><span class="nav-text">關於我</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link" data-page="categories">
-                        <span class="nav-icon">📂</span>
-                        <span class="nav-text">分類</span>
+                        <span class="nav-icon">📂</span><span class="nav-text">分類</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link" data-page="archive">
-                        <span class="nav-icon">📚</span>
-                        <span class="nav-text">文章歸檔</span>
+                        <span class="nav-icon">📚</span><span class="nav-text">文章歸檔</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link" data-page="contact">
-                        <span class="nav-icon">📧</span>
-                        <span class="nav-text">聯絡我</span>
+                        <span class="nav-icon">📧</span><span class="nav-text">聯絡我</span>
                     </a>
                 </li>
             </ul>
@@ -507,411 +472,375 @@
 
         <!-- 主要內容 -->
         <main class="main-content">
-            <div id="home-page">
+            <!-- 首頁 -->
+            <div id="home-page" style="display: block;">
                 <header class="header">
                     <h1>歡迎來到我的部落格</h1>
                     <p>分享生活、技術與思考的美好時光</p>
                 </header>
-
-                <!-- 控制面板 -->
-                <div class="controls">
-                    <div class="sort-controls">
-                        <label>排序方式：</label>
-                        <select id="sortSelect">
-                            <option value="newest">最新到最舊</option>
-                            <option value="oldest">最舊到最新</option>
-                        </select>
+                <div class="page-container"> <!-- page-container for controls and grid -->
+                    <div class="controls">
+                        <div class="sort-controls">
+                            <label>排序方式：</label>
+                            <select id="sortSelect">
+                                <option value="newest">最新到最舊</option>
+                                <option value="oldest">最舊到最新</option>
+                            </select>
+                        </div>
+                        <div class="filter-controls">
+                            <label>篩選標籤：</label>
+                            <button onclick="clearFilters()">顯示全部</button>
+                        </div>
+                        <div class="hashtag-filters" id="hashtagFilters"></div>
                     </div>
-                    
-                    <div class="filter-controls">
-                        <label>篩選標籤：</label>
-                        <button onclick="clearFilters()">顯示全部</button>
+                    <div class="articles-grid" id="articlesGrid">
+                        <div class="loading">載入文章中</div>
                     </div>
-                    
-                    <div class="hashtag-filters" id="hashtagFilters">
-                        <!-- 動態生成標籤按鈕 -->
-                    </div>
-                </div>
-
-                <!-- 文章網格 -->
-                <div class="articles-grid" id="articlesGrid">
-                    <div class="loading">載入文章中</div>
                 </div>
             </div>
 
-            <!-- 其他頁面內容 -->
+            <!-- 關於我頁面 -->
             <div id="about-page" style="display: none;">
-                <header class="header">
-                    <h1>關於我</h1>
-                </header>
-                <div style="background: rgba(255, 253, 249, 0.9); padding: 2rem; border-radius: 20px;">
-                    <p>這裡是關於我的介紹...</p>
+                <header class="header"><h1 id="about-title">關於我</h1></header>
+                <div class="page-container">
+                    <div class="markdown-content" id="about-content"><div class="loading">載入內容中...</div></div>
                 </div>
             </div>
+
+            <!-- 分類頁面 -->
+            <div id="categories-page" style="display: none;">
+                <header class="header"><h1 id="categories-title">分類</h1></header>
+                <div class="page-container">
+                    <div id="categories-content"><div class="loading">載入分類中...</div></div>
+                </div>
+            </div>
+
+            <!-- 文章歸檔頁面 -->
+            <div id="archive-page" style="display: none;">
+                <header class="header"><h1 id="archive-title">文章歸檔</h1></header>
+                <div class="page-container">
+                    <div id="archive-content"><div class="loading">載入歸檔中...</div></div>
+                </div>
+            </div>
+
+            <!-- 聯絡我頁面 -->
+            <div id="contact-page" style="display: none;">
+                <header class="header"><h1 id="contact-title">聯絡我</h1></header>
+                <div class="page-container">
+                    <div class="markdown-content" id="contact-content"><div class="loading">載入內容中...</div></div>
+                </div>
+            </div>
+
         </main>
     </div>
 
-    <!-- 引入 Mermaid.js 用於流程圖 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.4.0/mermaid.min.js"></script>
-    <!-- 引入 Prism.js 用於程式碼高亮 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 
     <script>
-        let articles = [];
+        let allData = { articles: [], pages: {} }; // Store all fetched data
+        let articles = [];      // Will point to allData.articles
+        let pagesContent = {};  // Will point to allData.pages
         let filteredArticles = [];
         let currentHashtag = '';
         
-        // 初始化 Mermaid
         mermaid.initialize({ 
-            startOnLoad: true,
+            startOnLoad: false,
             theme: 'neutral',
             themeVariables: {
-                primaryColor: '#f5f2eb',
-                primaryTextColor: '#8b7355',
-                primaryBorderColor: '#e6dcc9',
-                lineColor: '#a0896b'
+                primaryColor: '#f5f2eb', primaryTextColor: '#8b7355',
+                primaryBorderColor: '#e6dcc9', lineColor: '#a0896b'
             }
         });
         
-        // 側邊欄切換
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('collapsed');
-            
             const toggleBtn = document.querySelector('.sidebar-toggle');
             toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '→' : '←';
         }
 
-        // 頁面切換
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
-                
-                // 移除所有活動狀態
                 document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
                 this.classList.add('active');
                 
-                // 隱藏所有頁面
-                document.querySelectorAll('[id$="-page"]').forEach(page => {
+                document.querySelectorAll('.main-content > div[id$="-page"]').forEach(page => {
                     page.style.display = 'none';
                 });
+                const articleDetailPage = document.getElementById('article-detail-page');
+                if (articleDetailPage) articleDetailPage.remove();
                 
-                // 顯示選中的頁面
                 const pageId = this.dataset.page + '-page';
                 const targetPage = document.getElementById(pageId);
                 if (targetPage) {
                     targetPage.style.display = 'block';
+                    window.scrollTo(0, 0); // Scroll to top when changing page
+                    // Specific logic for each page type
+                    if (pageId === 'home-page' && articles.length > 0) {
+                        sortAndDisplayArticles(); 
+                    } else if (pageId === 'about-page') {
+                        renderStaticPage('about');
+                    } else if (pageId === 'categories-page') {
+                        renderCategoriesPage();
+                    } else if (pageId === 'archive-page') {
+                        renderArchivePage();
+                    } else if (pageId === 'contact-page') {
+                        renderStaticPage('contact');
+                    }
+                } else {
+                    const homePage = document.getElementById('home-page');
+                    if (homePage) homePage.style.display = 'block';
                 }
             });
         });
 
-        // Markdown 轉 HTML 函數
         function markdownToHtml(markdown) {
-            if (!markdown) return '';
-            
+            if (typeof markdown !== 'string' || !markdown) return '';
             let html = markdown;
-
-            // 處理程式碼區塊 (```language...```)
-            html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-                const language = lang || 'javascript';
+            // Markdown parsing logic (use the robust version from previous answer)
+            html = html.replace(/```(\w+)?\n([\s\S]*?)```/gs, (match, lang, code) => {
+                const language = lang || 'plaintext';
                 return `<pre><code class="language-${language}">${escapeHtml(code.trim())}</code></pre>`;
             });
-
-            // 處理 Mermaid 圖表
-            html = html.replace(/```mermaid\n([\s\S]*?)```/g, (match, diagram) => {
+            html = html.replace(/^```mermaid\n([\s\S]*?)\n```$/gm, (match, diagram) => {
                 const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
                 return `<div class="mermaid" id="${id}">${diagram.trim()}</div>`;
             });
-
-            // 處理行內程式碼
-            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-            // 處理標題 (# ## ### ...)
+            html = html.replace(/^###### (.*$)/gm, '<h6>$1</h6>');
+            html = html.replace(/^##### (.*$)/gm, '<h5>$1</h5>');
+            html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
             html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
             html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
             html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
-            html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
-            html = html.replace(/^##### (.*$)/gm, '<h5>$1</h5>');
-            html = html.replace(/^###### (.*$)/gm, '<h6>$1</h6>');
+            html = html.replace(/^(\*\*\*|---|\*\s\*\s\*)$/gm, '<hr>');
+            // Basic list handling (for robust lists, use a library)
+            html = html.replace(/^[\s]*([*+-]) +(.+)/gm, (match, bullet, item) => `<li>${item}</li>`);
+            html = html.replace(/^(<li>.+<\/li>\s*)+/gm, (match) => `<ul>${match.replace(/<\/li>\s*<li>/g, '</li><li>')}</ul>`); // Combine li into ul
 
-            // 處理分隔線
-            html = html.replace(/^---$/gm, '<hr>');
-            html = html.replace(/^\*\*\*$/gm, '<hr>');
+            html = html.replace(/^[\s]*(\d+)\. +(.+)/gm, (match, num, item) => `<li>${item}</li>`);
+            // This OL regex needs more work if UL is processed first; order matters.
+            // A simple OL wrapper, but might conflict if items are mixed.
+            // html = html.replace(/^(<li>.+<\/li>\s*)+/gm, (match) => `<ol>${match.replace(/<\/li>\s*<li>/g, '</li><li>')}</ol>`);
 
-            // 處理圖片
+            html = html.replace(/^> +(.*)/gm, (match, content) => `<blockquote><p>${content}</p></blockquote>`);
+            html = html.replace(/<\/blockquote>\s*<blockquote>/g, '');
+            html = html.split(/\n\s*\n/).map(paragraph => {
+                const trimmed = paragraph.trim();
+                if (!trimmed) return '';
+                if (/^<\/?(h[1-6]|ul|ol|li|hr|blockquote|pre|div)/.test(trimmed)) {
+                    return paragraph;
+                }
+                return `<p>${paragraph}</p>`;
+            }).join('\n');
             html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
-
-            // 處理連結
             html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-
-            // 處理粗體和斜體
-            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-            html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-            // 處理無序列表
-            html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-
-            // 處理有序列表
-            html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-            // 將連續的 <li> 包裝在 <ol> 中
-            html = html.replace(/(<li>.*?<\/li>)(?:\s*<li>.*?<\/li>)*/g, (match) => {
-                if (match.includes('<ul>') || match.includes('<ol>')) return match;
-                return `<ol>${match}</ol>`;
-            });
-
-            // 處理引用
-            html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-
-            // 處理段落
-            html = html.replace(/\n\n/g, '</p><p>');
-            html = '<p>' + html + '</p>';
-
-            // 清理多餘的空標籤
-            html = html.replace(/<p><\/p>/g, '');
-            html = html.replace(/<p>(<h[1-6]>)/g, '$1');
-            html = html.replace(/(<\/h[1-6]>)<\/p>/g, '$1');
-            html = html.replace(/<p>(<hr>)<\/p>/g, '$1');
-            html = html.replace(/<p>(<ul>)/g, '$1');
-            html = html.replace(/(<\/ul>)<\/p>/g, '$1');
-            html = html.replace(/<p>(<ol>)/g, '$1');
-            html = html.replace(/(<\/ol>)<\/p>/g, '$1');
-            html = html.replace(/<p>(<blockquote>)/g, '$1');
-            html = html.replace(/(<\/blockquote>)<\/p>/g, '$1');
-            html = html.replace(/<p>(<pre>)/g, '$1');
-            html = html.replace(/(<\/pre>)<\/p>/g, '$1');
-            html = html.replace(/<p>(<div class="mermaid")/g, '$1');
-            html = html.replace(/(<\/div>)<\/p>/g, '$1');
-
+            html = html.replace(/\*\*([^\s*](?:[^*]*[^\s*])?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*([^\s*](?:[^*]*[^\s*])?)\*/g, '<em>$1</em>');
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            html = html.replace(/<p>\s*<\/(ul|ol|li|h[1-6]|hr|blockquote|pre|div)>/g, '</$1>');
+            html = html.replace(/<(ul|ol|li|h[1-6]|hr|blockquote|pre|div)>\s*<\/p>/g, '<$1>');
+            html = html.replace(/<p>\s*(<(?:h[1-6]|hr|ul|ol|blockquote|pre|div class="mermaid"))/g, '$1');
+            html = html.replace(/(<\/(?:h[1-6]|hr|ul|ol|blockquote|pre|div)>)\s*<\/p>/g, '$1');
+            html = html.replace(/<p>\s*<\/p>/g, '');
             return html;
         }
 
-        // HTML 轉義函數
         function escapeHtml(text) {
+            if (typeof text !== 'string') return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // 從 Google Sheets 載入資料
-        async function loadArticles() {
+        async function loadData() { // Renamed from loadArticles to loadData
+            const mainLoadingIndicator = document.querySelector('.main-content .loading') || document.getElementById('articlesGrid').querySelector('.loading');
+            if(mainLoadingIndicator) mainLoadingIndicator.style.display = 'block';
+
             try {
-                // 這裡需要替換為你的 Google Apps Script URL
-                const response = await fetch('https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLh7nLnm7FMOWl_sQQO0zvnCuYBJwG0g6ffOQNMbk78eswQcnIhjPXlIzkDMddqI92vdFSeCdN9LTiz1iugLIbaZl75SN5BrV3Sv78UxR9tdGyu-50NQwmRPub2MnbEm07ezgCgwDMJ3-Crb36mfBq8NpHpiJtFDM7cwT-PUmBCuyI5I-uyw93_xnwy3Fzp0OOzDsCXlgO8PhgORVnOvTFZSHUw1EoEJQ8zLV7UdXqirigkao6ULinwr9qAk4Sf3tI9Jj1suLb8HlkZ2KYAfjF_CJVaVjA&lib=MZmjPs2smMXQNY0XtSpNKCqB_pmy9oCm3');
-                const data = await response.json();
+                const gasUrl = 'YOUR_DEPLOYED_GAS_WEB_APP_URL_HERE'; // ！！！替換成你的 GAS URL！！！
+                if (gasUrl === 'YOUR_DEPLOYED_GAS_WEB_APP_URL_HERE') {
+                    console.warn("提醒：請替換 YOUR_DEPLOYED_GAS_WEB_APP_URL_HERE");
+                    throw new Error("GAS URL not configured.");
+                }
+
+                const response = await fetch(gasUrl);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
-                articles = data.map(row => ({
-                    title: row[0],
-                    content: row[1],
-                    date: new Date(row[2]),
-                    image: row[3],
-                    hashtags: row[4] ? row[4].split(',').map(tag => tag.trim()) : []
-                }));
+                const fetchedData = await response.json();
+                if (fetchedData.error) throw new Error(`GAS Error: ${fetchedData.error} - ${fetchedData.message || ''}`);
                 
+                allData = fetchedData; // Store all data
+                articles = allData.articles.map(row => ({
+                    title: row[0] || "無標題",
+                    content: row[1] || "",
+                    date: row[2] ? new Date(row[2]) : null,
+                    image: row[3] || "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=400&h=200&fit=crop",
+                    hashtags: row[4] && typeof row[4] === 'string' ? row[4].split(',').map(tag => tag.trim()).filter(tag => tag) : []
+                })).filter(article => article.title !== "無標題" && article.date); // Filter out articles without title or date
+
+                pagesContent = allData.pages || {}; // Assign pages data
+
                 filteredArticles = [...articles];
                 generateHashtagFilters();
-                sortAndDisplayArticles();
+                sortAndDisplayArticles(); // Display home page articles
+
+                // Pre-render static pages if their content is available
+                if(pagesContent.about) renderStaticPage('about');
+                if(pagesContent.contact) renderStaticPage('contact');
+                renderCategoriesPage(); // Categories are derived from articles
+                renderArchivePage();    // Archive is derived from articles
+
+                if (articles.length === 0 && !document.getElementById('article-detail-page')) {
+                    document.getElementById('articlesGrid').innerHTML = '<div class="loading">目前沒有文章。</div>';
+                }
+
             } catch (error) {
-                console.error('載入文章失敗:', error);
-                // 使用示例資料
-                loadSampleData();
+                console.error('載入資料失敗:', error);
+                 if(mainLoadingIndicator) mainLoadingIndicator.innerHTML = `<div class="loading">載入資料失敗: ${error.message}<br>請檢查 Google Sheets 設定和 GAS URL。</div>`;
+                // Optionally load sample data here if critical
+                // loadSampleData(); 
+            }
+        }
+        
+        // --- 頁面渲染函數 ---
+        function renderStaticPage(pageName) {
+            const pageData = pagesContent[pageName];
+            const titleElement = document.getElementById(`${pageName}-title`);
+            const contentElement = document.getElementById(`${pageName}-content`);
+
+            if (!contentElement) return;
+
+            if (pageData) {
+                if (titleElement) titleElement.textContent = pageData.title || pageName.charAt(0).toUpperCase() + pageName.slice(1);
+                contentElement.innerHTML = markdownToHtml(pageData.content);
+                // Re-initialize Mermaid/Prism if content was added
+                setTimeout(() => {
+                    if (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {
+                        mermaid.run({ nodes: contentElement.querySelectorAll('.mermaid') });
+                    }
+                    if (typeof Prism !== 'undefined') {
+                        Prism.highlightAllUnder(contentElement);
+                    }
+                }, 100);
+            } else {
+                if (titleElement) titleElement.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+                contentElement.innerHTML = `<p>此頁面內容 (${pageName}) 尚未在 Google Sheets 中設定。</p>`;
             }
         }
 
-        // 示例資料
-        function loadSampleData() {
-            articles = [
-                {
-                    title: "探索咖啡的美好世界",
-                    content: `# 咖啡文化探索
+        function renderCategoriesPage() {
+            const contentElement = document.getElementById('categories-content');
+            if (!contentElement) return;
 
-## 咖啡的起源
-
-咖啡起源於**埃塞俄比亞**，後來傳播到世界各地。從一杯咖啡開始，探索生活中的小確幸。
-
-### 不同種類的咖啡
-
-- **Arabica**: 品質較佳，味道溫和
-- **Robusta**: 咖啡因含量較高，味道較苦
-- **Liberica**: 較為罕見，有獨特香味
-
-### 沖泡步驟
-
-1. 選擇新鮮烘焙的咖啡豆
-2. 研磨至適當粗細度
-3. 控制水溫在90-96°C
-4. 掌握沖泡時間
-
-> 好咖啡需要耐心和技巧的結合
-
-\`\`\`javascript
-// 計算咖啡沖泡比例
-function calculateRatio(coffee, water) {
-    return water / coffee;
-}
-\`\`\`
-
----
-
-[了解更多咖啡知識](https://example.com)`,
-                    date: new Date('2024-12-01'),
-                    image: "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=400&h=200&fit=crop",
-                    hashtags: ["咖啡", "生活", "品味"]
-                },
-                {
-                    title: "前端技術分享：CSS Grid 實戰",
-                    content: `# CSS Grid 完全指南
-
-## 什麼是 CSS Grid？
-
-CSS Grid 是現代網頁佈局的**強大工具**，提供二維佈局系統。
-
-### 基本屬性
-
-- \`display: grid\` - 啟用 Grid 容器
-- \`grid-template-columns\` - 定義列
-- \`grid-template-rows\` - 定義行
-- \`gap\` - 設定間距
-
-### 實戰範例
-
-\`\`\`css
-.container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-\`\`\`
-
-\`\`\`mermaid
-graph TD
-    A[Container] --> B[Item 1]
-    A --> C[Item 2]
-    A --> D[Item 3]
-    B --> E[Grid Area 1]
-    C --> F[Grid Area 2]
-    D --> G[Grid Area 3]
-\`\`\`
-
-![CSS Grid 範例](https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=300&fit=crop)`,
-                    date: new Date('2024-11-28'),
-                    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=200&fit=crop",
-                    hashtags: ["前端", "CSS", "技術"]
-                },
-                {
-                    title: "旅行日記：京都秋日漫步",
-                    content: `# 京都秋日之旅
-
-## 行程規劃
-
-### 第一天：東山區
-
-1. **清水寺** - 賞楓名所
-2. **三年坂二年坂** - 古街漫步
-3. **八坂神社** - 傳統建築
-
-### 第二天：嵐山區
-
-- 竹林小徑
-- 天龍寺庭園
-- 渡月橋夕陽
-
-> 秋天的京都有著獨特的韻味，紅葉滿山，古寺鐘聲，每一處都是詩意的體現。
-
-## 攝影技巧
-
-\`\`\`markdown
-# 拍攝要點
-* 善用自然光線
-* 捕捉瞬間情感
-* 注意構圖平衡
-\`\`\`
-
----
-
-**記住**：旅行不只是到達目的地，更是享受路上的風景。`,
-                    date: new Date('2024-11-25'),
-                    image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=200&fit=crop",
-                    hashtags: ["旅行", "京都", "攝影"]
-                },
-                {
-                    title: "讀書心得：《原子習慣》",
-                    content: `# 《原子習慣》讀書筆記
-
-## 核心概念
-
-### 1% 的改進力量
-
-> 微小的改變，巨大的力量。每天進步1%，一年後你會進步37倍。
-
-### 習慣迴路
-
-\`\`\`mermaid
-graph LR
-    A[提示] --> B[渴望]
-    B --> C[反應]
-    C --> D[獎勵]
-    D --> A
-\`\`\`
-
-## 四大定律
-
-1. **讓提示顯而易見**
-   - 環境設計
-   - 習慣堆疊
-
-2. **讓習慣有吸引力**
-   - 誘惑綑綁
-   - 社群影響
-
-3. **讓行動輕而易舉**
-   - 降低阻力
-   - 兩分鐘法則
-
-4. **讓獎勵令人滿足**
-   - 即時回饋
-   - 習慣追蹤
-
-### 實踐步驟
-
-\`\`\`python
-def build_habit(cue, routine, reward):
-    while not habit_formed:
-        trigger_cue()
-        perform_routine()
-        enjoy_reward()
-        track_progress()
-\`\`\`
-
-![原子習慣概念圖](https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=300&fit=crop)
-
----
-
-**結論**：成功不是靠意志力，而是靠系統化的好習慣。`,
-                    date: new Date('2024-11-20'),
-                    image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=200&fit=crop",
-                    hashtags: ["讀書", "自我成長", "習慣"]
+            const allHashtags = new Set();
+            articles.forEach(article => {
+                if (Array.isArray(article.hashtags)) {
+                    article.hashtags.forEach(tag => allHashtags.add(tag));
                 }
-            ];
-            
-            filteredArticles = [...articles];
-            generateHashtagFilters();
-            sortAndDisplayArticles();
+            });
+
+            if (allHashtags.size === 0) {
+                contentElement.innerHTML = '<p>目前沒有分類標籤。</p>';
+                return;
+            }
+
+            let html = '<ul class="categories-list">';
+            allHashtags.forEach(tag => {
+                // Clicking a category link should filter articles on the home page
+                html += `<li><a href="#" class="category-link" data-hashtag="${escapeHtml(tag)}">#${escapeHtml(tag)}</a></li>`;
+            });
+            html += '</ul>';
+            contentElement.innerHTML = html;
+
+            // Add event listeners for category links
+            contentElement.querySelectorAll('.category-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const hashtag = e.target.dataset.hashtag;
+                    // Switch to home page and apply filter
+                    document.querySelector('.nav-link[data-page="home"]').click(); // Simulate click
+                    // Wait for home page to render then apply filter
+                    setTimeout(() => {
+                         filterByHashtag(hashtag, true); // Pass true to activate the button
+                    }, 100);
+                });
+            });
+        }
+        
+        function renderArchivePage() {
+            const contentElement = document.getElementById('archive-content');
+            if (!contentElement) return;
+
+            if (articles.length === 0) {
+                contentElement.innerHTML = '<p>目前沒有文章可供歸檔。</p>';
+                return;
+            }
+
+            const articlesByYearMonth = {};
+            articles.sort((a, b) => b.date.getTime() - a.date.getTime()) // Sort newest first for archive display
+                   .forEach(article => {
+                const year = article.date.getFullYear();
+                const month = article.date.getMonth(); // 0-11
+                if (!articlesByYearMonth[year]) {
+                    articlesByYearMonth[year] = {};
+                }
+                if (!articlesByYearMonth[year][month]) {
+                    articlesByYearMonth[year][month] = [];
+                }
+                articlesByYearMonth[year][month].push(article);
+            });
+
+            let html = '<ul class="archive-list">';
+            const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+
+            Object.keys(articlesByYearMonth).sort((a, b) => b - a).forEach(year => { // Sort years descending
+                html += `<li class="archive-year">${year}</li>`;
+                Object.keys(articlesByYearMonth[year]).sort((a, b) => b - a).forEach(monthIndex => { // Sort months descending
+                    html += `<li class="archive-month">${monthNames[parseInt(monthIndex)]}</li>`;
+                    articlesByYearMonth[year][monthIndex].forEach(article => {
+                        const articleDateStr = article.date.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' });
+                        // Clicking an archive link should open the article
+                        html += `<li><span class="archive-date">${articleDateStr}</span> <a href="#" class="archive-link" data-article='${escapeHtml(JSON.stringify(article))}'>${escapeHtml(article.title)}</a></li>`;
+                    });
+                });
+            });
+            html += '</ul>';
+            contentElement.innerHTML = html;
+
+            // Add event listeners for archive links
+            contentElement.querySelectorAll('.archive-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    try {
+                        const articleData = JSON.parse(e.target.dataset.article);
+                        // Convert date string back to Date object if necessary
+                        if(articleData.date && typeof articleData.date === 'string') {
+                            articleData.date = new Date(articleData.date);
+                        }
+                        openArticle(articleData);
+                    } catch (err) {
+                        console.error("Error parsing article data from archive link:", err);
+                    }
+                });
+            });
         }
 
-        // 生成標籤過濾器
+
+        // --- 文章列表相關函數 (Home page) ---
         function generateHashtagFilters() {
             const allHashtags = new Set();
             articles.forEach(article => {
-                article.hashtags.forEach(tag => allHashtags.add(tag));
+                if (Array.isArray(article.hashtags)) {
+                    article.hashtags.forEach(tag => allHashtags.add(tag));
+                }
             });
-            
             const filtersContainer = document.getElementById('hashtagFilters');
+            if (!filtersContainer) return;
             filtersContainer.innerHTML = '';
-            
             allHashtags.forEach(tag => {
                 const btn = document.createElement('button');
                 btn.className = 'hashtag-btn';
@@ -921,105 +850,61 @@ def build_habit(cue, routine, reward):
             });
         }
 
-        // 標籤過濾
-        function filterByHashtag(hashtag) {
-            currentHashtag = currentHashtag === hashtag ? '' : hashtag;
+        function filterByHashtag(hashtag, activateButton = false) { // Added activateButton param
+            if (activateButton) {
+                currentHashtag = hashtag; // Force set if coming from categories page
+            } else {
+                currentHashtag = currentHashtag === hashtag ? '' : hashtag;
+            }
             
-            // 更新按鈕狀態
             document.querySelectorAll('.hashtag-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.textContent === `#${hashtag}` && currentHashtag === hashtag);
             });
             
-            // 過濾文章
             if (currentHashtag) {
                 filteredArticles = articles.filter(article => 
-                    article.hashtags.includes(currentHashtag)
+                    Array.isArray(article.hashtags) && article.hashtags.includes(currentHashtag)
                 );
             } else {
                 filteredArticles = [...articles];
             }
-            
             sortAndDisplayArticles();
         }
 
-        // 清除過濾器
         function clearFilters() {
             currentHashtag = '';
             filteredArticles = [...articles];
-            document.querySelectorAll('.hashtag-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('.hashtag-btn').forEach(btn => btn.classList.remove('active'));
             sortAndDisplayArticles();
         }
 
-        // 排序和顯示文章
         function sortAndDisplayArticles() {
-            const sortBy = document.getElementById('sortSelect').value;
+            const sortSelect = document.getElementById('sortSelect');
+            if (!sortSelect) return;
+            const sortBy = sortSelect.value;
             
-            if (sortBy === 'newest') {
-                filteredArticles.sort((a, b) => b.date - a.date);
-            } else {
-                filteredArticles.sort((a, b) => a.date - b.date);
-            }
-            
+            filteredArticles.sort((a, b) => {
+                if (!a.date || !b.date) return 0; // Handle null dates
+                return sortBy === 'newest' ? b.date.getTime() - a.date.getTime() : a.date.getTime() - b.date.getTime();
+            });
             displayArticles();
         }
 
-        // 顯示文章
-        function displayArticles() {
-            const grid = document.getElementById('articlesGrid');
-            
-            if (filteredArticles.length === 0) {
-                grid.innerHTML = '<div class="loading">沒有找到相關文章</div>';
-                return;
-            }
-            
-            grid.innerHTML = filteredArticles.map(article => {
-                // 從 Markdown 內容中提取預覽文字（取前150字）
-                const plainText = article.content.replace(/[#*`>\-\[\]()!]/g, '').replace(/\n/g, ' ').trim();
-                const preview = plainText.length > 150 ? plainText.substring(0, 150) + '...' : plainText;
-                
-                return `
-                <article class="article-card" onclick="openArticle('${encodeURIComponent(JSON.stringify(article))}')">
-                    <img src="${article.image}" alt="${article.title}" class="article-image">
-                    <div class="article-content">
-                        <h3 class="article-title">${article.title}</h3>
-                        <div class="article-date">${article.date.toLocaleDateString('zh-TW')}</div>
-                        <p class="article-preview">${preview}</p>
-                        <div class="article-tags">
-                            ${article.hashtags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
-                        </div>
-                    </div>
-                </article>
-            `;
-            }).join('');
-        }
-
-        // 顯示文章
         function displayArticles() {
             const grid = document.getElementById('articlesGrid');
             if (!grid) return;
-            
+            grid.innerHTML = ''; 
             if (filteredArticles.length === 0) {
                 grid.innerHTML = '<div class="loading">沒有找到相關文章</div>';
                 return;
             }
-            
-            grid.innerHTML = ''; // 清空現有內容，準備重新渲染
-
-            filteredArticles.forEach((article, index) => { // 使用 forEach 和 index
+            filteredArticles.forEach(article => {
                 const plainTextContent = (article.content || "").replace(/[#*`>\-\[\]()!]/g, '').replace(/\n/g, ' ').trim();
                 const preview = plainTextContent.length > 100 ? plainTextContent.substring(0, 100) + '...' : plainTextContent;
                 const displayDate = article.date instanceof Date && !isNaN(article.date)
-                                    ? article.date.toLocaleDateString('zh-TW')
-                                    : '日期未知';
-
+                                    ? article.date.toLocaleDateString('zh-TW') : '日期未知';
                 const articleCard = document.createElement('article');
                 articleCard.className = 'article-card';
-                // 使用 data-* 屬性來存儲文章的索引，以便在點擊時查找
-                // 或者，如果 articles 陣列不會在渲染後立即改變，可以直接在閉包中引用 article 物件
-                // articleCard.dataset.articleIndex = index; // 一種方式
-
                 articleCard.innerHTML = `
                     <img src="${article.image || 'https://via.placeholder.com/400x200.png?text=No+Image'}" alt="${escapeHtml(article.title)}" class="article-image">
                     <div class="article-content">
@@ -1031,33 +916,18 @@ def build_habit(cue, routine, reward):
                         </div>
                     </div>
                 `;
-
-                // 為每個卡片添加點擊事件監聽器
-                articleCard.addEventListener('click', function() {
-                    // 當卡片被點擊時，直接傳遞 JavaScript 物件
-                    // 如果使用 dataset.articleIndex:
-                    // const clickedArticle = filteredArticles[parseInt(this.dataset.articleIndex)];
-                    // openArticle(clickedArticle);
-
-                    // 直接在閉包中引用 article 物件 (更簡潔)
-                    openArticle(article);
-                });
-
+                articleCard.addEventListener('click', () => openArticle(article));
                 grid.appendChild(articleCard);
             });
         }
         
-        // openArticle 函數保持不變，它已經預期接收一個 article 物件
-        function openArticle(article) { // article is an object
+        function openArticle(article) {
             const renderedContent = markdownToHtml(article.content);
             const displayDate = article.date instanceof Date && !isNaN(article.date)
-                                ? article.date.toLocaleDateString('zh-TW')
-                                : '日期未知';
-            
+                                ? article.date.toLocaleDateString('zh-TW') : '日期未知';
             const articlePageId = 'article-detail-page';
             let articlePage = document.getElementById(articlePageId);
             if (articlePage) articlePage.remove(); 
-
             articlePage = document.createElement('div');
             articlePage.id = articlePageId; 
             articlePage.style.display = 'block'; 
@@ -1070,53 +940,42 @@ def build_habit(cue, routine, reward):
                         ${(article.hashtags || []).map(tag => `<span class="tag" style="margin: 0 0.2rem;">#${escapeHtml(tag)}</span>`).join('')}
                     </div>
                 </header>
-                <div style="background: rgba(255, 253, 249, 0.9); padding: 2rem; border-radius: 20px; box-shadow: 0 8px 30px rgba(139, 115, 85, 0.1); margin-top: 2rem;">
-                    <div class="markdown-content">
-                        ${renderedContent}
-                    </div>
-                </div>
-            `;
-            
-            document.querySelectorAll('.main-content > div[id$="-page"]').forEach(page => {
-                page.style.display = 'none';
-            });
-            
+                <div class="page-container">
+                    <div class="markdown-content">${renderedContent}</div>
+                </div>`;
+            document.querySelectorAll('.main-content > div[id$="-page"]').forEach(page => page.style.display = 'none');
             document.querySelector('.main-content').appendChild(articlePage);
             window.scrollTo(0, 0); 
-            
             setTimeout(() => {
                 if (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {
                      mermaid.run({ nodes: articlePage.querySelectorAll('.mermaid') });
-                } else if (typeof mermaid !== 'undefined' && typeof mermaid.init === 'function') { 
-                    mermaid.init(undefined, articlePage.querySelectorAll('.mermaid'));
                 }
-                if (typeof Prism !== 'undefined') {
-                    Prism.highlightAllUnder(articlePage);
-                }
+                if (typeof Prism !== 'undefined') Prism.highlightAllUnder(articlePage);
             }, 100);
         }
 
-        // 關閉文章詳細頁面
         function closeArticle() {
             const articlePage = document.getElementById('article-detail-page');
-            if (articlePage) {
-                articlePage.remove();
-            }
-            
-            // 顯示首頁
-            document.getElementById('home-page').style.display = 'block';
-            
-            // 更新導航狀態
+            if (articlePage) articlePage.remove();
+            const homePage = document.getElementById('home-page');
+            if (homePage) homePage.style.display = 'block';
+            if (articles.length > 0) sortAndDisplayArticles();
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            document.querySelector('[data-page="home"]').classList.add('active');
+            const homeLink = document.querySelector('.nav-link[data-page="home"]');
+            if (homeLink) homeLink.classList.add('active');
         }
 
-        // 排序選擇器事件
-        document.getElementById('sortSelect').addEventListener('change', sortAndDisplayArticles);
+        const sortSelectElement = document.getElementById('sortSelect');
+        if (sortSelectElement) {
+            sortSelectElement.addEventListener('change', sortAndDisplayArticles);
+        }
 
-        // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            loadArticles();
+            loadData(); // Load all data initially
+            const initialActiveLink = document.querySelector('.nav-link[data-page="home"]');
+            if(initialActiveLink) initialActiveLink.classList.add('active');
+            const homePage = document.getElementById('home-page');
+            if(homePage) homePage.style.display = 'block';
         });
     </script>
 </body>
