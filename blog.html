@@ -995,43 +995,103 @@ def build_habit(cue, routine, reward):
             }).join('');
         }
 
-        // 打開文章詳細頁面
-        function openArticle(articleJson) {
-            const article = JSON.parse(decodeURIComponent(articleJson));
-            const renderedContent = markdownToHtml(article.content);
+        // 顯示文章
+        function displayArticles() {
+            const grid = document.getElementById('articlesGrid');
+            if (!grid) return;
             
-            // 創建文章詳細頁面
-            const articlePage = document.createElement('div');
-            articlePage.id = 'article-detail-page';
+            if (filteredArticles.length === 0) {
+                grid.innerHTML = '<div class="loading">沒有找到相關文章</div>';
+                return;
+            }
+            
+            grid.innerHTML = ''; // 清空現有內容，準備重新渲染
+
+            filteredArticles.forEach((article, index) => { // 使用 forEach 和 index
+                const plainTextContent = (article.content || "").replace(/[#*`>\-\[\]()!]/g, '').replace(/\n/g, ' ').trim();
+                const preview = plainTextContent.length > 100 ? plainTextContent.substring(0, 100) + '...' : plainTextContent;
+                const displayDate = article.date instanceof Date && !isNaN(article.date)
+                                    ? article.date.toLocaleDateString('zh-TW')
+                                    : '日期未知';
+
+                const articleCard = document.createElement('article');
+                articleCard.className = 'article-card';
+                // 使用 data-* 屬性來存儲文章的索引，以便在點擊時查找
+                // 或者，如果 articles 陣列不會在渲染後立即改變，可以直接在閉包中引用 article 物件
+                // articleCard.dataset.articleIndex = index; // 一種方式
+
+                articleCard.innerHTML = `
+                    <img src="${article.image || 'https://via.placeholder.com/400x200.png?text=No+Image'}" alt="${escapeHtml(article.title)}" class="article-image">
+                    <div class="article-content">
+                        <h3 class="article-title">${escapeHtml(article.title)}</h3>
+                        <div class="article-date">${displayDate}</div>
+                        <p class="article-preview">${escapeHtml(preview)}</p>
+                        <div class="article-tags">
+                            ${(article.hashtags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+
+                // 為每個卡片添加點擊事件監聽器
+                articleCard.addEventListener('click', function() {
+                    // 當卡片被點擊時，直接傳遞 JavaScript 物件
+                    // 如果使用 dataset.articleIndex:
+                    // const clickedArticle = filteredArticles[parseInt(this.dataset.articleIndex)];
+                    // openArticle(clickedArticle);
+
+                    // 直接在閉包中引用 article 物件 (更簡潔)
+                    openArticle(article);
+                });
+
+                grid.appendChild(articleCard);
+            });
+        }
+        
+        // openArticle 函數保持不變，它已經預期接收一個 article 物件
+        function openArticle(article) { // article is an object
+            const renderedContent = markdownToHtml(article.content);
+            const displayDate = article.date instanceof Date && !isNaN(article.date)
+                                ? article.date.toLocaleDateString('zh-TW')
+                                : '日期未知';
+            
+            const articlePageId = 'article-detail-page';
+            let articlePage = document.getElementById(articlePageId);
+            if (articlePage) articlePage.remove(); 
+
+            articlePage = document.createElement('div');
+            articlePage.id = articlePageId; 
+            articlePage.style.display = 'block'; 
             articlePage.innerHTML = `
                 <header class="header">
-                    <button onclick="closeArticle()" style="float: right; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #8b7355;">✕</button>
-                    <h1>${article.title}</h1>
-                    <p>發布於 ${article.date.toLocaleDateString('zh-TW')}</p>
+                    <button onclick="closeArticle()" style="float: right; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #8b7355; padding: 0.5rem 1rem; line-height: 1;">✕</button>
+                    <h1>${escapeHtml(article.title)}</h1>
+                    <p>發布於 ${displayDate}</p>
                     <div style="text-align: center; margin-top: 1rem;">
-                        ${article.hashtags.map(tag => `<span class="tag" style="margin: 0 0.2rem;">#${tag}</span>`).join('')}
+                        ${(article.hashtags || []).map(tag => `<span class="tag" style="margin: 0 0.2rem;">#${escapeHtml(tag)}</span>`).join('')}
                     </div>
                 </header>
-                <div style="background: rgba(255, 253, 249, 0.9); padding: 2rem; border-radius: 20px; box-shadow: 0 8px 30px rgba(139, 115, 85, 0.1);">
+                <div style="background: rgba(255, 253, 249, 0.9); padding: 2rem; border-radius: 20px; box-shadow: 0 8px 30px rgba(139, 115, 85, 0.1); margin-top: 2rem;">
                     <div class="markdown-content">
                         ${renderedContent}
                     </div>
                 </div>
             `;
             
-            // 隱藏其他頁面，顯示文章詳細頁面
-            document.querySelectorAll('[id$="-page"]').forEach(page => {
+            document.querySelectorAll('.main-content > div[id$="-page"]').forEach(page => {
                 page.style.display = 'none';
             });
             
             document.querySelector('.main-content').appendChild(articlePage);
+            window.scrollTo(0, 0); 
             
-            // 重新初始化 Mermaid 圖表
             setTimeout(() => {
-                mermaid.init(undefined, document.querySelectorAll('.mermaid'));
-                // 重新初始化 Prism 語法高亮
+                if (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {
+                     mermaid.run({ nodes: articlePage.querySelectorAll('.mermaid') });
+                } else if (typeof mermaid !== 'undefined' && typeof mermaid.init === 'function') { 
+                    mermaid.init(undefined, articlePage.querySelectorAll('.mermaid'));
+                }
                 if (typeof Prism !== 'undefined') {
-                    Prism.highlightAll();
+                    Prism.highlightAllUnder(articlePage);
                 }
             }, 100);
         }
