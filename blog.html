@@ -45,6 +45,10 @@
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth; /* For smooth anchor scrolling */
+        }
+
         body {
             font-family: var(--font-body);
             background: var(--color-bg-body);
@@ -54,6 +58,49 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+
+        /* Loading Animation Styles */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-bg-sidebar); 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; 
+            color: var(--color-text-on-dark);
+            font-family: var(--font-body);
+            transition: opacity 0.5s ease-out; 
+            opacity: 1; /* Start visible */
+        }
+
+        #loadingAnimation {
+            font-size: 1.5rem; 
+            line-height: 1.2;
+            text-align: center;
+            white-space: pre; 
+            margin-bottom: 1.5rem;
+            min-height: 200px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--color-accent); /* Fish color */
+        }
+
+        #loadingText {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        #loadingOverlay.hidden {
+            opacity: 0;
+            pointer-events: none; 
+        }
+
 
         .container {
             display: flex;
@@ -82,28 +129,26 @@
         .sidebar-toggle {
             position: absolute;
             top: 1.5rem;
-            right: -18px; /* Adjusted for no border */
-            background: transparent; /* No background initially */
-            border: none; /* No border */
+            right: -18px; 
+            background: transparent; 
+            border: none; 
             border-radius: 50%;
-            width: 36px; /* Slightly larger for emoji */
-            height: 36px; /* Slightly larger for emoji */
+            width: 36px; 
+            height: 36px; 
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px; /* Adjusted for emoji size */
-            color: var(--color-text-on-dark); /* Icon color for visibility on sidebar edge */
+            font-size: 20px; 
+            color: var(--color-text-on-dark); 
             transition: all 0.3s ease;
-            box-shadow: none; /* No shadow */
+            box-shadow: none; 
             z-index: 10;
-            /* Optional: Add a subtle background on hover if needed */
         }
 
         .sidebar-toggle:hover {
-            /* background: rgba(255, 255, 255, 0.1); Optional hover effect */
-            transform: scale(1.2); /* Slightly larger pop on hover */
-            color: var(--color-accent); /* Change color on hover */
+            transform: scale(1.2); 
+            color: var(--color-accent); 
         }
 
 
@@ -196,6 +241,12 @@
             overflow-y: auto;
         }
 
+        .page-section { /* Used for anchor scrolling */
+            padding-top: 1px; /* Prevents content from hiding under fixed headers if any */
+            margin-top: -1px;
+        }
+
+
         .page-container {
             background: var(--color-bg-card);
             padding: 2rem;
@@ -223,12 +274,12 @@
             font-size: 2.2rem;
             color: var(--color-text-heading);
             margin-bottom: 0.5rem;
-            text-align: center;
+            text-align: left;
             font-weight: 600;
         }
 
         .header p {
-            text-align: center;
+            text-align: left;
             font-size: 1.05rem;
             color: var(--color-text-secondary);
         }
@@ -246,19 +297,19 @@
             border: 1px solid var(--color-border);
         }
 
-        .sort-controls, .filter-controls {
+        .sort-controls, .filter-controls, .search-keyword-controls {
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
 
-        .sort-controls label, .filter-controls label {
+        .sort-controls label, .filter-controls label, .search-keyword-controls label {
             font-weight: 500;
             color: var(--color-text-primary);
             font-size: 0.9rem;
         }
 
-        select, button {
+        select, input[type="text"], button {
             padding: 0.6rem 1rem;
             border: 1px solid var(--color-border);
             border-radius: var(--border-radius-sm);
@@ -268,8 +319,11 @@
             transition: all 0.2s ease-in-out;
             font-size: 0.9rem;
         }
+        input[type="text"] {
+            min-width: 180px;
+        }
 
-        select:focus, button:focus {
+        select:focus, input[type="text"]:focus, button:focus {
             outline: none;
             border-color: var(--color-accent);
             box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
@@ -290,12 +344,17 @@
             color: var(--color-text-on-dark);
             border-color: var(--color-accent);
         }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
 
         .hashtag-filters {
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
-            margin-top: 0.5rem;
+            margin-top: 0.5rem; 
+            width: 100%; 
         }
 
         .hashtag-btn {
@@ -400,6 +459,24 @@
             border-color: var(--color-accent);
         }
 
+        /* Pagination Controls */
+        .pagination-controls-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem 0;
+            gap: 0.5rem;
+        }
+        .pagination-controls-container button {
+            padding: 0.5rem 1rem;
+        }
+        .pagination-controls-container span {
+            font-size: 0.9rem;
+            color: var(--color-text-secondary);
+            margin: 0 0.5rem;
+        }
+
+
         /* Markdown Content Styles */
         .markdown-content {
             line-height: 1.8;
@@ -411,10 +488,19 @@
         .markdown-content h4, .markdown-content h5, .markdown-content h6 {
             font-family: var(--font-heading);
             color: var(--color-text-heading);
-            margin: 2rem 0 1rem 0;
+            margin: 1.5rem 0 0.5rem 0; /* Adjusted for tighter layout */
             font-weight: 600;
             line-height: 1.3;
         }
+        .markdown-content h1:has(+ .code-block-container),
+        .markdown-content h2:has(+ .code-block-container),
+        .markdown-content h3:has(+ .code-block-container),
+        .markdown-content h4:has(+ .code-block-container),
+        .markdown-content h5:has(+ .code-block-container),
+        .markdown-content h6:has(+ .code-block-container) {
+            margin-bottom: 0.3rem; 
+        }
+
 
         .markdown-content h1 { font-size: 2em; border-bottom: 2px solid var(--color-border); padding-bottom: 0.5rem; }
         .markdown-content h2 { font-size: 1.7em; border-bottom: 1px solid var(--color-border); padding-bottom: 0.4rem; }
@@ -424,11 +510,11 @@
         .markdown-content h6 { font-size: 1em; color: var(--color-text-secondary); text-transform: uppercase; }
 
         .markdown-content p {
-            margin: 0 0 1.2rem 0;
+            margin: 0 0 0.8rem 0; /* Adjusted for tighter layout */
         }
 
         .markdown-content ul, .markdown-content ol {
-            margin: 0 0 1.2rem 1.5rem;
+            margin: 0 0 0.8rem 1.5rem; /* Adjusted for tighter layout */
             padding-left: 1.5rem;
         }
         .markdown-content ul { list-style-type: disc; }
@@ -438,6 +524,16 @@
             margin: 0.5rem 0;
         }
         .markdown-content li p { margin-bottom: 0.3rem; }
+        .markdown-content li:has(+ .code-block-container) {
+            margin-bottom: 0;
+        }
+        .markdown-content li > p:has(+ .code-block-container) {
+             margin-bottom: 0.2rem; 
+        }
+        .markdown-content li > p:last-child:has(+ .code-block-container) {
+             margin-bottom: 0.2rem;
+        }
+
 
         .markdown-content a {
             color: var(--color-accent);
@@ -460,45 +556,67 @@
             color: var(--color-text-primary);
             border: 1px solid var(--color-border);
         }
+        
+        /* Code Block Container and Copy Button */
+        .code-block-container {
+            position: relative; 
+            margin-top: 0.5rem;  
+            margin-bottom: 0.8rem; 
+        }
 
-        .markdown-content pre {
-            background: #2d2d2d;
+        .code-block-container pre {
+            margin: 0; 
+            background: #2d2d2d; 
             border-radius: var(--border-radius-sm);
-            padding: 1.2rem;
+            padding: 1rem; 
             overflow-x: auto;
-            margin: 1.5rem 0;
             box-shadow: 0 4px 10px var(--color-shadow);
             border: 1px solid #444;
         }
-
-        .markdown-content pre code {
+        .code-block-container pre code { 
             background: none !important;
             padding: 0 !important;
-            color: #ccc !important;
+            color: #ccc !important; 
             font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace !important;
             font-size: 0.9em !important;
             border: none !important;
-            text-shadow: none !important;
-            direction: ltr !important;
-            text-align: left !important;
-            white-space: pre !important;
-            word-spacing: normal !important;
-            word-break: normal !important;
-            word-wrap: normal !important;
-            line-height: 1.5 !important;
-            -moz-tab-size: 4 !important;
-            -o-tab-size: 4 !important;
-            tab-size: 4 !important;
-            -webkit-hyphens: none !important;
-            -moz-hyphens: none !important;
-            -ms-hyphens: none !important;
-            hyphens: none !important;
         }
+
+        .copy-code-button {
+            position: absolute;
+            top: 0.3em;  
+            right: 0.5em; 
+            padding: 0.3em 0.6em;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--color-text-on-dark); 
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            font-size: 0.8em;
+            opacity: 0.3; 
+            transition: opacity 0.2s ease-in-out, background-color 0.2s ease-in-out;
+            z-index: 1; 
+        }
+
+        .code-block-container:hover .copy-code-button,
+        .copy-code-button:focus, 
+        .copy-code-button:hover {
+            opacity: 1;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .copy-code-button.copied {
+            background-color: var(--color-accent) !important; 
+            color: var(--color-text-on-dark) !important;
+            border-color: var(--color-accent) !important;
+            opacity: 1 !important;
+        }
+
 
         .markdown-content blockquote {
             border-left: 4px solid var(--color-accent);
             padding: 0.5rem 1.5rem;
-            margin: 1.5rem 0;
+            margin: 1rem 0; /* Adjusted margin */
             background: rgba(52, 152, 219, 0.05);
             color: var(--color-text-secondary);
             border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
@@ -514,14 +632,14 @@
             border: none;
             height: 1px;
             background: var(--color-border);
-            margin: 2.5rem 0;
+            margin: 2rem 0; /* Adjusted margin */
         }
 
         .markdown-content img {
             max-width: 100%;
             height: auto;
             border-radius: var(--border-radius-sm);
-            margin: 1.5rem 0;
+            margin: 1rem 0; /* Adjusted margin */
             box-shadow: 0 4px 15px var(--color-shadow);
             display: block;
             margin-left: auto;
@@ -531,7 +649,7 @@
         .markdown-content table {
             width: 100%;
             border-collapse: collapse;
-            margin: 1.5rem 0;
+            margin: 1rem 0; /* Adjusted margin */
             background: var(--color-bg-card);
             border-radius: var(--border-radius-sm);
             overflow: hidden;
@@ -559,7 +677,7 @@
             background: var(--color-bg-card);
             border-radius: var(--border-radius-sm);
             padding: 1.5rem;
-            margin: 1.5rem 0;
+            margin: 1rem 0; /* Adjusted margin */
             text-align: center;
             box-shadow: 0 4px 10px var(--color-shadow);
             border: 1px solid var(--color-border);
@@ -591,13 +709,13 @@
                 padding: 0 1rem;
                 overflow: hidden;
             }
-            .sidebar-toggle { /* Adjusted for mobile and no border */
-                background: transparent; /* Ensure transparent on mobile too */
-                color: var(--color-text-on-dark); /* Make it visible on dark bar */
+            .sidebar-toggle { 
+                background: transparent; 
+                color: var(--color-text-on-dark); 
                 border: none;
-                top: 50%; /* Vertically center */
-                transform: translateY(-50%) translateX(5px); /* Adjust horizontal position */
-                right: 1rem; /* Position from the right edge */
+                top: 50%; 
+                transform: translateY(-50%) translateX(5px); 
+                right: 1rem; 
             }
             .sidebar.collapsed .logo { display: none; }
             .sidebar .logo { margin-bottom: 1rem; font-size: 1.4rem; }
@@ -627,19 +745,25 @@
             .header h1 { font-size: 1.6rem; }
             .page-container { padding: 1.5rem; margin-top: 1rem;}
             .controls { padding: 1rem; gap: 1rem; }
+            .search-keyword-controls { flex-direction: column; align-items: stretch; } 
+            .search-keyword-controls input[type="text"] { width: 100%; }
+            .search-keyword-controls button { width: 100%; margin-top: 0.5rem; }
+            .search-keyword-controls label { margin-bottom: 0.25rem; }
+
+
             .markdown-content { font-size: 0.95rem; }
             .markdown-content h1 {font-size: 1.8em;}
             .markdown-content h2 {font-size: 1.5em;}
             .markdown-content h3 {font-size: 1.25em;}
         }
 
-        /* Loading Animation */
+        /* Loading Animation (specific for old browsers, a simple text if needed) */
         .loading {
             text-align: center; padding: 3rem;
             color: var(--color-text-secondary); font-size: 1.1rem;
         }
-        .loading::after { content: '...'; animation: dots 1.5s infinite; }
-        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; } }
+        /* .loading::after { content: '...'; animation: dots 1.5s infinite; } */
+        /* @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; } } */
 
         /* Category and Archive Page Specific Styles */
         .categories-list, .archive-list { list-style: none; padding: 0; }
@@ -700,33 +824,40 @@
 </head>
 
 <body>
+    <div id="loadingOverlay">
+        <div id="loadingAnimation">
+            <!-- 魚動畫將會在這裡 -->
+        </div>
+        <div id="loadingText">努力捕撈文章中...<br>Currently fishing for articles...</div>
+    </div>
+
     <div class="container">
         <nav class="sidebar" id="sidebar">
-            <button class="sidebar-toggle" onclick="toggleSidebar()">🎣</button>
+            <button class="sidebar-toggle" onclick="toggleSidebar()">🐟</button>
             <div class="logo">Fisher Blog</div>
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="#" class="nav-link active" data-page="home">
+                    <a href="#home" class="nav-link" data-page="home">
                         <span class="nav-icon">🏠</span><span class="nav-text">首頁</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="about">
+                    <a href="#about" class="nav-link" data-page="about">
                         <span class="nav-icon">😎</span><span class="nav-text">關於我</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="categories">
+                    <a href="#categories" class="nav-link" data-page="categories">
                         <span class="nav-icon">📚</span><span class="nav-text">分類</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="archive">
+                    <a href="#archive" class="nav-link" data-page="archive">
                         <span class="nav-icon">📂</span><span class="nav-text">文章歸檔</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" data-page="contact">
+                    <a href="#contact" class="nav-link" data-page="contact">
                         <span class="nav-icon">📧</span><span class="nav-text">聯絡我</span>
                     </a>
                 </li>
@@ -734,69 +865,109 @@
         </nav>
 
         <main class="main-content">
-            <div id="home-page" style="display: block;">
+            <div id="home-page" class="page-section" style="display: none;">
                 <header class="header">
                     <h1>Life Hack & Tech Journal</h1>
-                    <p>Welcome every Hacking Happy Day🙂</p>
+                    <p>Welcoming each day as an adventure in creativity, brainstorming, and joyful life hacks. 😎</p>
                 </header>
                 <div class="page-container">
                     <div class="controls">
                         <div class="sort-controls">
-                            <label>排序：</label>
+                            <label for="sortSelect">排序：</label>
                             <select id="sortSelect">
                                 <option value="newest">最新</option>
                                 <option value="oldest">最舊</option>
                             </select>
                         </div>
+                        <div class="search-keyword-controls">
+                            <label for="keywordSearchInput">關鍵字搜尋：</label>
+                            <input type="text" id="keywordSearchInput" placeholder="輸入標題或內容 (多關鍵字用空格)">
+                            <button id="keywordSearchButton" type="button">搜尋</button>
+                            <button id="keywordClearButton" type="button">清除</button>
+                        </div>
                         <div class="filter-controls">
                             <label>標籤：</label>
-                            <button onclick="clearFilters()">全部</button>
+                            <button id="clearFiltersButton">全部</button>
                         </div>
-                        <div class="hashtag-filters" id="hashtagFilters"></div>
+                        <div class="hashtag-filters" id="hashtagFilters">
+                            <!-- Hashtag buttons will be populated here -->
+                        </div>
                     </div>
                     <div class="articles-grid" id="articlesGrid">
-                        <div class="loading">載入文章中...</div>
+                        <!-- Articles will be populated here. No loading div needed now. -->
+                    </div>
+                    <div id="paginationControlsContainer" class="pagination-controls-container">
+                        <!-- Pagination controls will be populated here -->
                     </div>
                 </div>
             </div>
 
-            <div id="about-page" style="display: none;">
+            <div id="about-page" class="page-section" style="display: none;">
                 <header class="header"><h1 id="about-title">關於我</h1></header>
                 <div class="page-container">
                     <div class="markdown-content" id="about-content"><div class="loading">載入內容中...</div></div>
                 </div>
             </div>
 
-            <div id="categories-page" style="display: none;">
+            <div id="categories-page" class="page-section" style="display: none;">
                 <header class="header"><h1 id="categories-title">文章分類</h1></header>
                 <div class="page-container">
                     <div id="categories-content"><div class="loading">載入分類中...</div></div>
                 </div>
             </div>
 
-            <div id="archive-page" style="display: none;">
+            <div id="archive-page" class="page-section" style="display: none;">
                 <header class="header"><h1 id="archive-title">文章歸檔</h1></header>
                 <div class="page-container">
                     <div id="archive-content"><div class="loading">載入歸檔中...</div></div>
                 </div>
             </div>
 
-            <div id="contact-page" style="display: none;">
+            <div id="contact-page" class="page-section" style="display: none;">
                 <header class="header"><h1 id="contact-title">聯絡方式</h1></header>
                 <div class="page-container">
                     <div class="markdown-content" id="contact-content"><div class="loading">載入內容中...</div></div>
                 </div>
+            </div>
+            
+            <div id="article-detail-page" class="page-section" style="display: none;">
+                 <!-- Content injected by openArticle -->
             </div>
         </main>
     </div>
 
     <script>
         let allData = { articles: [], pages: {} };
-        let articles = [];
+        let articles = []; 
         let pagesContent = {};
-        let filteredArticles = [];
-        let currentHashtag = '';
+        let filteredArticles = []; 
+        let currentHashtags = []; 
+        let currentKeywordsArray = []; 
+
+        let currentPage = 1;
+        const articlesPerPage = 30;
+        let currentSortBy = 'newest';
+        let activePageId = 'home'; 
+
+        const sortSelectElement = document.getElementById('sortSelect');
+        const keywordSearchInput = document.getElementById('keywordSearchInput');
+        const keywordSearchButton = document.getElementById('keywordSearchButton');
+        const keywordClearButton = document.getElementById('keywordClearButton');
+        const clearFiltersButton = document.getElementById('clearFiltersButton');
+        const articlesGridElement = document.getElementById('articlesGrid');
+        const paginationContainerElement = document.getElementById('paginationControlsContainer');
         
+        // --- Dynamic Fish Animation ---
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingAnimationElement = document.getElementById('loadingAnimation');
+        let loadingInterval;
+        const animationRows = 16; 
+        const animationCols = 7;
+        let dynamicFishFrames = [];
+        let currentFrameIndex_anim = 0; 
+        let animationStage_anim = 0; 
+        // --- END Dynamic Fish Animation ---
+
         mermaid.initialize({ 
             startOnLoad: false,
             theme: 'neutral',
@@ -807,93 +978,339 @@
                 lineColor: getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#3498db',
             }
         });
+
+        function generateFishFrames(rows, cols) {
+            const frames = [];
+            let currentGrid = [];
+            for (let r = 0; r < rows; r++) {
+                currentGrid[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    currentGrid[r][c] = ' ';
+                }
+            }
+            const maxDiagonalSum = rows + cols - 2;
+            for (let diagSum = 0; diagSum <= maxDiagonalSum; diagSum++) {
+                let frameGrid = currentGrid.map(arr => arr.slice()); 
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (r + c <= diagSum) {
+                            if (frameGrid[r][c] === ' ') { 
+                                frameGrid[r][c] = '🐟';
+                            }
+                        }
+                    }
+                }
+                frames.push(gridToString(frameGrid, rows, cols));
+                currentGrid = frameGrid; 
+            }
+            const finalFullGrid = [];
+            for (let r = 0; r < rows; r++) {
+                finalFullGrid[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    finalFullGrid[r][c] = '🐟';
+                }
+            }
+            const lastFrameString = gridToString(finalFullGrid, rows, cols);
+            if (frames.length === 0 || frames[frames.length - 1] !== lastFrameString) {
+                 frames.push(lastFrameString);
+            }
+            const uniqueFrames = [];
+            const seenFrames = new Set();
+            for (const frame of frames) {
+                if (!seenFrames.has(frame)) {
+                    uniqueFrames.push(frame);
+                    seenFrames.add(frame);
+                }
+            }
+            return uniqueFrames;
+        }
+
+        function gridToString(grid, totalRows, totalCols) {
+            let frameStr = "";
+            for (let r = 0; r < totalRows; r++) {
+                if (grid[r]) { 
+                    let rowStr = "";
+                    for (let c = 0; c < totalCols; c++) {
+                        rowStr += (grid[r][c] || ' '); 
+                    }
+                    frameStr += rowStr + (r < totalRows - 1 ? "\n" : "");
+                } else { 
+                    frameStr += ' '.repeat(totalCols) + (r < totalRows - 1 ? "\n" : "");
+                }
+            }
+            return frameStr;
+        }
+
+        function startLoadingAnimation() {
+            if (!loadingAnimationElement || !loadingOverlay) return;
+            dynamicFishFrames = generateFishFrames(animationRows, animationCols);
+            if (dynamicFishFrames.length === 0) { 
+                loadingAnimationElement.textContent = "🐟🐟🐟"; 
+                return;
+            }
+            loadingOverlay.classList.remove('hidden'); 
+            currentFrameIndex_anim = 0;
+            animationStage_anim = 0; 
+
+            loadingInterval = setInterval(() => {
+                if (loadingAnimationElement) {
+                    loadingAnimationElement.textContent = dynamicFishFrames[currentFrameIndex_anim];
+                }
+                if (animationStage_anim === 0) { 
+                    currentFrameIndex_anim++;
+                    if (currentFrameIndex_anim >= dynamicFishFrames.length) {
+                        currentFrameIndex_anim = dynamicFishFrames.length - 1; 
+                        animationStage_anim = 1; 
+                    }
+                } else if (animationStage_anim === 1) { 
+                    // Holding last frame.
+                    currentFrameIndex_anim = 0;
+                    animationStage_anim = 0; 
+                }
+            }, 80); 
+        }
+
+        function stopLoadingAnimation() {
+            clearInterval(loadingInterval);
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
         
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('collapsed');
             const toggleBtn = document.querySelector('.sidebar-toggle');
-            // For simplicity, always show rocket. Could use different icons for open/closed state.
-            // toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '🚀' : '💨'; // Example
-             toggleBtn.textContent = '🎣'; // Always rocket for now
+            toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '🎣' : '🐟'; 
+        }
+        
+        function updateURL(params = {}, replace = false) {
+            const currentParams = new URLSearchParams(); 
+            currentParams.set('page', activePageId);
+            if (activePageId === 'home') {
+                if (params.sort !== undefined) currentParams.set('sort', params.sort);
+                else currentParams.set('sort', currentSortBy); 
+                if (params.tags !== undefined && params.tags.length > 0) {
+                    currentParams.set('tags', params.tags.join(','));
+                } else if (currentHashtags.length > 0) {
+                    currentParams.set('tags', currentHashtags.map(t => encodeURIComponent(t)).join(','));
+                }
+                if (params.keywords !== undefined && params.keywords.length > 0) {
+                    currentParams.set('keywords', params.keywords.join('+'));
+                } else if (currentKeywordsArray.length > 0) {
+                    currentParams.set('keywords', currentKeywordsArray.map(k => encodeURIComponent(k)).join('+'));
+                }
+                if (params.p !== undefined && params.p > 1) currentParams.set('p', params.p);
+                else if (currentPage > 1) currentParams.set('p', currentPage);
+            } else if (activePageId === 'article-detail') {
+                if (params.articleId !== undefined) {
+                    currentParams.set('article', params.articleId);
+                }
+            }
+            const newSearch = currentParams.toString();
+            const newHash = activePageId === 'article-detail' && params.articleId ? `#article-${params.articleId}` : `#${activePageId}`;
+            const newURL = `${window.location.pathname}${newSearch ? '?' + newSearch : ''}${newHash}`;
+            const state = { page: activePageId, articleId: activePageId === 'article-detail' ? params.articleId : null };
+            if (replace) {
+                history.replaceState(state, '', newURL);
+            } else {
+                history.pushState(state, '', newURL);
+            }
+        }
+
+        function navigateToPage(pageId, articleToOpen = null, options = {}) {
+            activePageId = pageId; 
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            const activeNavLink = document.querySelector(`.nav-link[data-page="${pageId === 'article-detail' ? 'home' : pageId}"]`); 
+            if (activeNavLink) activeNavLink.classList.add('active');
+            document.querySelectorAll('.main-content > .page-section').forEach(page => {
+                page.style.display = 'none';
+            });
+            const articleDetailPageElement = document.getElementById('article-detail-page');
+            if (pageId === 'article-detail' && articleToOpen) {
+                if (articleDetailPageElement) {
+                    articleDetailPageElement.style.display = 'block';
+                }
+            } else {
+                 if (articleDetailPageElement) { 
+                    articleDetailPageElement.style.display = 'none';
+                }
+                const targetPageElement = document.getElementById(pageId + '-page');
+                if (targetPageElement) {
+                    targetPageElement.style.display = 'block';
+                } else { 
+                    document.getElementById('home-page').style.display = 'block';
+                    activePageId = 'home'; 
+                }
+            }
+            if (!options.fromURL) { 
+                 updateURL({ 
+                    articleId: pageId === 'article-detail' && articleToOpen ? articleToOpen.id : undefined,
+                    p: (pageId === 'home' && options.preservePage) ? currentPage : undefined
+                });
+            }
+            if (pageId === 'home') {
+                sortAndDisplayArticles(options); 
+            } else if (pageId === 'about') {
+                renderStaticPage('about');
+            } else if (pageId === 'categories') {
+                renderCategoriesPage();
+            } else if (pageId === 'archive') {
+                renderArchivePage();
+            } else if (pageId === 'contact') {
+                renderStaticPage('contact');
+            }
         }
 
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                this.classList.add('active');
-                
-                document.querySelectorAll('.main-content > div[id$="-page"]').forEach(page => {
-                    page.style.display = 'none';
-                });
-                const articleDetailPage = document.getElementById('article-detail-page');
-                if (articleDetailPage) articleDetailPage.remove();
-                
-                const pageId = this.dataset.page + '-page';
-                const targetPage = document.getElementById(pageId);
-                if (targetPage) {
-                    targetPage.style.display = 'block';
-                    window.scrollTo(0, 0);
-                    if (pageId === 'home-page' && articles.length > 0) {
-                        sortAndDisplayArticles(); 
-                    } else if (pageId === 'about-page') {
-                        renderStaticPage('about');
-                    } else if (pageId === 'categories-page') {
-                        renderCategoriesPage();
-                    } else if (pageId === 'archive-page') {
-                        renderArchivePage();
-                    } else if (pageId === 'contact-page') {
-                        renderStaticPage('contact');
-                    }
-                } else {
-                    const homePage = document.getElementById('home-page');
-                    if (homePage) homePage.style.display = 'block';
-                }
+                const pageId = this.dataset.page;
+                navigateToPage(pageId, null, { fromURL: false, preservePage: false }); 
             });
         });
+        
+        window.addEventListener('popstate', function(event) {
+            loadStateFromURL();
+        });
 
-        function markdownToHtml(markdown) {
+        function loadStateFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            let hash = window.location.hash.substring(1); 
+            let pageIdFromParam = params.get('page');
+            let articleIdFromParam = params.get('article');
+            if (pageIdFromParam === 'article-detail' && articleIdFromParam) {
+                activePageId = 'article-detail';
+            } else if (pageIdFromParam) {
+                activePageId = pageIdFromParam;
+            } else if (hash && hash !== 'article-detail' && hash !== '') { 
+                 if (hash.startsWith('article-') && articles.length > 0) { 
+                    const articleIdFromHash = hash.substring('article-'.length);
+                    const articleToOpen = articles.find(art => art.id === articleIdFromHash);
+                    if (articleToOpen) {
+                        activePageId = 'article-detail';
+                        articleIdFromParam = articleIdFromHash; 
+                    } else {
+                        activePageId = 'home'; 
+                    }
+                 } else if (document.getElementById(hash + '-page')) {
+                    activePageId = hash;
+                 } else {
+                    activePageId = 'home'; 
+                 }
+            } else {
+                 activePageId = 'home'; 
+            }
+            currentSortBy = params.get('sort') || 'newest';
+            if (sortSelectElement) sortSelectElement.value = currentSortBy;
+            const tagsFromURL = params.get('tags');
+            currentHashtags = tagsFromURL ? tagsFromURL.split(',').map(t => decodeURIComponent(t)) : [];
+            const hashtagFiltersElement = document.getElementById('hashtagFilters');
+            if (hashtagFiltersElement && activePageId === 'home') { 
+                document.querySelectorAll('.hashtag-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                currentHashtags.forEach(tag => {
+                    const btn = hashtagFiltersElement.querySelector(`.hashtag-btn[data-hashtag="${CSS.escape(tag)}"]`);
+                    if (btn) btn.classList.add('active');
+                });
+            }
+            const keywordsFromURL = params.get('keywords');
+            currentKeywordsArray = keywordsFromURL ? keywordsFromURL.split('+').map(k => decodeURIComponent(k).trim()).filter(k => k) : [];
+            if (keywordSearchInput) keywordSearchInput.value = currentKeywordsArray.join(' ');
+            currentPage = parseInt(params.get('p')) || 1;
+            if (activePageId === 'article-detail' && articleIdFromParam && articles.length > 0) {
+                const articleToOpen = articles.find(art => art.id === articleIdFromParam);
+                if (articleToOpen) {
+                    openArticle(articleToOpen, null, true); 
+                } else {
+                    console.warn(`Article with ID "${articleIdFromParam}" not found from URL. Defaulting to home.`);
+                    navigateToPage('home', null, { fromURL: true, preservePage: true });
+                }
+            } else {
+                navigateToPage(activePageId, null, { fromURL: true, preservePage: true }); 
+            }
+        }
+
+         function markdownToHtml(markdown) {
             if (typeof markdown !== 'string' || !markdown) return '';
             let html = markdown;
-            html = html.replace(/```(\w+)?\n([\s\S]*?)```/gs, (match, lang, code) => {
-                const language = lang || 'plaintext';
-                return `<pre><code class="language-${language}">${escapeHtml(code.trim())}</code></pre>`;
-            });
+            
+            // Mermaid diagrams
             html = html.replace(/^```mermaid\n([\s\S]*?)\n```$/gm, (match, diagram) => {
                 const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
-                return `<div class="mermaid" id="${id}">${diagram.trim()}</div>`;
+                return `<div class="mermaid" id="${id}">${escapeHtml(diagram.trim())}</div>`;
             });
+
+            // Code blocks: Wrap with a container and add copy button
+            html = html.replace(/```(\w+)?\n([\s\S]*?)```/gs, (match, lang, code) => {
+                const language = lang || 'plaintext';
+                const escapedCode = escapeHtml(code.trim());
+                const preId = 'code-block-' + Math.random().toString(36).substr(2, 9); 
+                // MODIFIED LINE: Return HTML as a single line string
+                return `<div class="code-block-container"><button class="copy-code-button" data-clipboard-target="#${preId}" title="複製程式碼">📄</button><pre id="${preId}" tabindex="0"><code class="language-${language}">${escapedCode}</code></pre></div>`;
+            });
+
+            // Headings
             html = html.replace(/^###### (.*$)/gm, '<h6>$1</h6>');
             html = html.replace(/^##### (.*$)/gm, '<h5>$1</h5>');
             html = html.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
             html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
             html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
             html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+
+            // Horizontal Rule
             html = html.replace(/^(\*\*\*|---|\*\s\*\s\*)$/gm, '<hr>');
-            html = html.replace(/^[\s]*([*+-]) +([^\n]+)/gm, (m,b,i) => `<li>${i.trim()}</li>`);
-            html = html.replace(/(<li>.+?<\/li>\s*)+/gm, (match) => {
+
+            // Lists (simplified, works for basic cases)
+            // Unordered lists
+            html = html.replace(/^[\s]*([*+-]) +([^\n]+(?:(?!\n[\s]*[*+-] ).*\n?)*)/gm, (m,b,i) => `<li>${i.trim().replace(/\n(?!\s*([*+-]|\d+\.))/g, '<br>')}</li>`);
+            html = html.replace(/(<li>.*?<\/li>\s*)+/gm, (match) => {
                 if(!match.trim().startsWith("<li>")) return match; 
+                // Avoid re-wrapping if already inside a list (basic check)
+                if (match.includes("<ul>") || match.includes("<ol>")) return match;
                 return `<ul>\n${match.trim()}\n</ul>`;
             });
-            html = html.replace(/^[\s]*(\d+)\. +([^\n]+)/gm, (m,n,i) => `<li>${i.trim()}</li>`);
+            // Ordered lists
+            html = html.replace(/^[\s]*(\d+)\. +([^\n]+(?:(?!\n[\s]*\d+\.).*\n?)*)/gm, (m,n,i) => `<li>${i.trim().replace(/\n(?!\s*([*+-]|\d+\.))/g, '<br>')}</li>`);
+            html = html.replace(/(<li>.*?<\/li>\s*)+/gm, (match) => { 
+                 if(!match.trim().startsWith("<li>")) return match;
+                 if (match.includes("<ul>") || match.includes("<ol>")) return match;
+                 // A more robust check for list type might be needed if mixing list markers in unexpected ways
+                 const firstLiContent = match.substring(match.indexOf('<li>') + 4);
+                 const listType = /^\s*\d/.test(firstLiContent) ? 'ol' : 'ul'; 
+                 return `<${listType}>\n${match.trim()}\n</${listType}>`;
+            });
+
+            // Blockquotes
             html = html.replace(/^> +(.*)/gm, (match, content) => `<blockquote><p>${content.trim()}</p></blockquote>`);
-            html = html.replace(/<\/blockquote>\s*<blockquote>/g, '');
+            html = html.replace(/<\/blockquote>\s*<blockquote>/g, ''); // Merge adjacent blockquotes
+
+            // Paragraphs (handle after block elements)
             html = html.split(/\n\s*\n/).map(paragraph => {
                 const trimmed = paragraph.trim();
                 if (!trimmed) return '';
-                if (/^<\/?(h[1-6]|ul|ol|li|hr|blockquote|pre|div)/.test(trimmed)) {
-                    return paragraph;
+                // Check if it's already a block-level HTML element generated by previous rules
+                if (/^<\/?(h[1-6]|ul|ol|li|hr|blockquote|pre|div class="code-block-container"|div class="mermaid")/.test(trimmed)) {
+                    return paragraph; 
                 }
                 return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
             }).join('');
+
+            // Images and Links
             html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
             html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+            // Bold, Italic, Inline Code
             html = html.replace(/\*\*([^\s*](?:[^*]*[^\s*])?)\*\*/g, '<strong>$1</strong>');
-            html = html.replace(/\*([^\s*](?:[^*]*[^\s*])?)\*/g, '<em>$1</em>');
+            html = html.replace(/\*([^\s*](?:[^*]*[^\s*])?)\*/g, '<em>$1</em>'); // or _{1}_ for italics
             html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // Cleanup empty paragraphs or paragraphs wrapping block elements (order might matter)
             html = html.replace(/<p>\s*<\/(ul|ol|h[1-6]|hr|blockquote|pre|div)>/gi, '</$1>');
             html = html.replace(/<(ul|ol|h[1-6]|hr|blockquote|pre|div)>\s*<\/p>/gi, '<$1>');
-            html = html.replace(/<p>\s*<\/p>/g, '');
+            html = html.replace(/<p>\s*<\/p>/g, ''); // Remove genuinely empty paragraphs
+
             return html;
         }
 
@@ -905,64 +1322,91 @@
         }
 
         async function loadData() {
-            const mainLoadingIndicator = document.getElementById('articlesGrid').querySelector('.loading') || document.createElement('div');
-            mainLoadingIndicator.style.display = 'block';
-            mainLoadingIndicator.textContent = '載入資料中...';
-
+            startLoadingAnimation();
             try {
                 const gasUrl = 'https://script.google.com/macros/s/AKfycbxrM67dWveK91ty2SWHY_Fz55Vtyf76hVc1lywYMRrHKLY1lz-DdYdm8ivu6dRDb_jE/exec';
-                
+                // await new Promise(resolve => setTimeout(resolve, 2000)); // For testing animation
                 const response = await fetch(gasUrl);
                 if (!response.ok) throw new Error(`HTTP 錯誤！狀態: ${response.status}`);
-                
                 const fetchedData = await response.json();
                 if (fetchedData.error) throw new Error(`GAS 錯誤: ${fetchedData.error} - ${fetchedData.message || ''}`);
-                
                 allData = fetchedData;
-                articles = (allData.articles || []).map(row => ({
-                    title: row[0] || "無標題",
-                    content: row[1] || "",
-                    date: row[2] ? new Date(row[2]) : null,
-                    image: row[3] || "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=200&fit=crop",
-                    hashtags: row[4] && typeof row[4] === 'string' ? row[4].split(',').map(tag => tag.trim()).filter(tag => tag) : []
-                })).filter(article => article.title !== "無標題" && article.date);
-
+                articles = (allData.articles || []).map(row => {
+                    const title = row[0] || "無標題";
+                    const content = row[1] || "";
+                    const date = row[2] ? new Date(row[2]) : null;
+                    const image = row[3] || "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=200&fit=crop";
+                    const hashtags = row[4] && typeof row[4] === 'string' ? row[4].split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+                    let articleHtmlId = 'article-invalid-id';
+                    if (title !== "無標題" && date && date instanceof Date && !isNaN(date)) {
+                        const displayDateForId = date.toLocaleDateString('zh-TW'); 
+                        articleHtmlId = CSS.escape(`${title} ${displayDateForId}`);
+                    }
+                    return { id: articleHtmlId, title, content, date, image, hashtags };
+                }).filter(article => article.title !== "無標題" && article.date);
                 pagesContent = allData.pages || {};
-
-                filteredArticles = [...articles];
-                generateHashtagFilters();
-                sortAndDisplayArticles();
-
+                generateHashtagFilters(); 
                 if(pagesContent.about) renderStaticPage('about');
                 if(pagesContent.contact) renderStaticPage('contact');
-                renderCategoriesPage();
-                renderArchivePage();
-
-                if (articles.length === 0 && !document.getElementById('article-detail-page')) {
-                    document.getElementById('articlesGrid').innerHTML = '<div class="loading">目前沒有文章。</div>';
-                }
-
+                renderCategoriesPage(); 
+                renderArchivePage();    
+                loadStateFromURL(); 
+                stopLoadingAnimation();
             } catch (error) {
                 console.error('載入資料失敗:', error);
-                const articlesGrid = document.getElementById('articlesGrid');
-                if(articlesGrid) articlesGrid.innerHTML = `<div class="loading">載入資料失敗: ${error.message}<br>請檢查 Google Sheets 設定和 GAS URL。</div>`;
+                if(articlesGridElement) articlesGridElement.innerHTML = `<div class="loading">載入資料失敗: ${error.message}<br>請檢查 Google Sheets 設定和 GAS URL。</div>`;
+                renderPaginationControls();
+                stopLoadingAnimation();
             }
         }
         
+        function initializeCopyCodeButtons(parentElement = document) {
+            const copyButtons = parentElement.querySelectorAll('.copy-code-button');
+            copyButtons.forEach(button => {
+                button.removeEventListener('click', handleCopyCodeClick); 
+                button.addEventListener('click', handleCopyCodeClick);
+            });
+        }
+
+        function handleCopyCodeClick(event) {
+            const button = event.currentTarget;
+            const targetId = button.dataset.clipboardTarget; 
+            if (!targetId) return;
+            const preElement = document.querySelector(targetId);
+            if (!preElement) return;
+            const codeElement = preElement.querySelector('code');
+            if (!codeElement) return;
+            const codeToCopy = codeElement.textContent;
+            navigator.clipboard.writeText(codeToCopy).then(() => {
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ 已複製!'; 
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.innerHTML = originalText; 
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('無法複製程式碼: ', err);
+                const originalText = button.innerHTML;
+                button.innerHTML = '❌ 失敗';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+
         function renderStaticPage(pageName) {
             const pageData = pagesContent[pageName];
             const titleElement = document.getElementById(`${pageName}-title`);
             const contentElement = document.getElementById(`${pageName}-content`);
             if (!contentElement) return;
-
             if (pageData && pageData.content) {
                 if (titleElement && pageData.title) titleElement.textContent = pageData.title;
                 contentElement.innerHTML = markdownToHtml(pageData.content);
                 setTimeout(() => {
-                    if (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {
-                        mermaid.run({ nodes: contentElement.querySelectorAll('.mermaid') });
-                    }
+                    if (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {  mermaid.run({ nodes: contentElement.querySelectorAll('.mermaid') }); }
                     if (typeof Prism !== 'undefined') Prism.highlightAllUnder(contentElement);
+                    initializeCopyCodeButtons(contentElement); 
                 }, 100);
             } else {
                 if (titleElement) titleElement.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
@@ -973,13 +1417,13 @@
         function renderCategoriesPage() {
             const contentElement = document.getElementById('categories-content');
             if (!contentElement) return;
-            const allHashtags = new Set();
-            articles.forEach(article => (article.hashtags || []).forEach(tag => allHashtags.add(tag)));
-            if (allHashtags.size === 0) {
+            const allUniqueHashtags = new Set();
+            articles.forEach(article => (article.hashtags || []).forEach(tag => allUniqueHashtags.add(tag)));
+            if (allUniqueHashtags.size === 0) {
                 contentElement.innerHTML = '<p>目前沒有分類標籤。</p>'; return;
             }
             let html = '<ul class="categories-list">';
-            allHashtags.forEach(tag => {
+            allUniqueHashtags.forEach(tag => {
                 html += `<li><a href="#" class="category-link" data-hashtag="${escapeHtml(tag)}">#${escapeHtml(tag)}</a></li>`;
             });
             html += '</ul>';
@@ -988,8 +1432,9 @@
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const hashtag = e.target.dataset.hashtag;
-                    document.querySelector('.nav-link[data-page="home"]').click();
-                    setTimeout(() => filterByHashtag(hashtag, true), 100);
+                    currentHashtags = [hashtag]; 
+                    currentPage = 1;
+                    navigateToPage('home', null, { fromURL: false, preservePage: false }); 
                 });
             });
         }
@@ -1001,23 +1446,23 @@
                 return;
             }
             const articlesByYearMonth = {};
-            articles.sort((a, b) => b.date.getTime() - a.date.getTime())
+            articles.sort((a, b) => b.date.getTime() - a.date.getTime()) 
                    .forEach(article => {
                 const year = article.date.getFullYear();
-                const month = article.date.getMonth();
+                const month = article.date.getMonth(); 
                 if (!articlesByYearMonth[year]) articlesByYearMonth[year] = {};
                 if (!articlesByYearMonth[year][month]) articlesByYearMonth[year][month] = [];
                 articlesByYearMonth[year][month].push(article);
             });
             let html = '<ul class="archive-list">';
             const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
-            Object.keys(articlesByYearMonth).sort((a, b) => b - a).forEach(year => {
+            Object.keys(articlesByYearMonth).sort((a, b) => b - a).forEach(year => { 
                 html += `<li class="archive-year">${year}</li>`;
-                Object.keys(articlesByYearMonth[year]).sort((a, b) => b - a).forEach(monthIndex => {
+                Object.keys(articlesByYearMonth[year]).sort((a, b) => b - a).forEach(monthIndex => { 
                     html += `<li class="archive-month">${monthNames[parseInt(monthIndex)]}</li>`;
                     articlesByYearMonth[year][monthIndex].forEach(article => {
                         const articleDateStr = article.date.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' });
-                        html += `<li><span class="archive-date">${articleDateStr}</span> <a href="#" class="archive-link" data-article-title="${escapeHtml(article.title)}">${escapeHtml(article.title)}</a></li>`;
+                        html += `<li><span class="archive-date">${articleDateStr}</span> <a href="#" class="archive-link" data-article-id="${article.id}">${escapeHtml(article.title)}</a></li>`;
                     });
                 });
             });
@@ -1026,73 +1471,131 @@
             contentElement.querySelectorAll('.archive-link').forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const articleTitle = e.target.dataset.articleTitle;
-                    const articleToOpen = articles.find(art => art.title === articleTitle);
-                    if(articleToOpen) openArticle(articleToOpen);
+                    const articleId = e.target.dataset.articleId;
+                    const articleToOpen = articles.find(art => art.id === articleId);
+                    if(articleToOpen) {
+                        openArticle(articleToOpen);
+                    }
                 });
             });
         }
 
         function generateHashtagFilters() {
-            const allHashtags = new Set();
-            articles.forEach(article => (article.hashtags || []).forEach(tag => allHashtags.add(tag)));
+            const allUniqueHashtags = new Set();
+            articles.forEach(article => (article.hashtags || []).forEach(tag => allUniqueHashtags.add(tag)));
             const filtersContainer = document.getElementById('hashtagFilters');
             if (!filtersContainer) return;
-            filtersContainer.innerHTML = '';
-            allHashtags.forEach(tag => {
+            filtersContainer.innerHTML = ''; 
+            allUniqueHashtags.forEach(tag => {
                 const btn = document.createElement('button');
                 btn.className = 'hashtag-btn';
                 btn.textContent = `#${tag}`;
+                btn.dataset.hashtag = tag; 
                 btn.onclick = () => filterByHashtag(tag);
                 filtersContainer.appendChild(btn);
             });
         }
 
-        function filterByHashtag(hashtag, activateButton = false) {
-            if (activateButton) {
-                currentHashtag = hashtag;
+        function filterByHashtag(hashtag) { 
+            const index = currentHashtags.indexOf(hashtag);
+            if (index > -1) {
+                currentHashtags.splice(index, 1); 
             } else {
-                currentHashtag = currentHashtag === hashtag ? '' : hashtag;
+                currentHashtags.push(hashtag); 
             }
             document.querySelectorAll('.hashtag-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.textContent === `#${hashtag}` && currentHashtag === hashtag);
+                 btn.classList.toggle('active', currentHashtags.includes(btn.dataset.hashtag));
             });
-            filteredArticles = currentHashtag ? articles.filter(article => (article.hashtags || []).includes(currentHashtag)) : [...articles];
-            sortAndDisplayArticles();
+            currentPage = 1; 
+            sortAndDisplayArticles({ preservePage: false }); 
+            updateURL({ tags: currentHashtags.map(t => encodeURIComponent(t)), p: currentPage });
         }
 
-        function clearFilters() {
-            currentHashtag = '';
-            filteredArticles = [...articles];
+        function clearAllHashtagFilters() { 
+            currentHashtags = [];
             document.querySelectorAll('.hashtag-btn').forEach(btn => btn.classList.remove('active'));
-            sortAndDisplayArticles();
+            currentPage = 1;
+            sortAndDisplayArticles({ preservePage: false }); 
+            updateURL({ tags: [], p: currentPage });
+        }
+        if (clearFiltersButton) {
+            clearFiltersButton.onclick = clearAllHashtagFilters;
+        }
+        
+        function performKeywordSearch() {
+            currentKeywordsArray = keywordSearchInput.value.trim().toLowerCase().split(/\s+/).filter(k => k); 
+            currentPage = 1;
+            if (activePageId === 'home') {
+                sortAndDisplayArticles({ preservePage: false });
+            }
+            updateURL({ keywords: currentKeywordsArray.map(k => encodeURIComponent(k)), p: currentPage });
         }
 
-        function sortAndDisplayArticles() {
-            const sortSelect = document.getElementById('sortSelect');
-            if (!sortSelect) return;
-            const sortBy = sortSelect.value;
+        function clearKeywordSearch() {
+            if (keywordSearchInput) keywordSearchInput.value = '';
+            currentKeywordsArray = [];
+            currentPage = 1;
+            if (activePageId === 'home') {
+                sortAndDisplayArticles({ preservePage: false });
+            }
+            updateURL({ keywords: [], p: currentPage });
+        }
+
+        function applyFiltersAndSearch() {
+            let tempArticles = [...articles];
+            if (currentHashtags.length > 0) {
+                tempArticles = tempArticles.filter(article => 
+                    currentHashtags.every(ht => (article.hashtags || []).includes(ht))
+                );
+            }
+            if (currentKeywordsArray.length > 0) {
+                tempArticles = tempArticles.filter(article => {
+                    return currentKeywordsArray.every(keyword => {
+                        const titleMatch = article.title.toLowerCase().includes(keyword);
+                        const contentMatch = article.content.toLowerCase().includes(keyword);
+                        return titleMatch || contentMatch;
+                    });
+                });
+            }
+            filteredArticles = tempArticles;
+        }
+
+        function sortAndDisplayArticles(options = {}) { 
+            applyFiltersAndSearch(); 
             filteredArticles.sort((a, b) => {
                 if (!a.date || !b.date) return 0;
-                return sortBy === 'newest' ? b.date.getTime() - a.date.getTime() : a.date.getTime() - b.date.getTime();
+                return currentSortBy === 'newest' ? b.date.getTime() - a.date.getTime() : a.date.getTime() - b.date.getTime();
             });
-            displayArticles();
+            displayArticles(); 
+            if (options.scrollToId && activePageId === 'home') { 
+                 setTimeout(() => {
+                    const targetArticleElement = document.getElementById(options.scrollToId);
+                    if (targetArticleElement) {
+                        targetArticleElement.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+                    }
+                }, 120); 
+            }
         }
 
         function displayArticles() {
-            const grid = document.getElementById('articlesGrid');
-            if (!grid) return;
-            grid.innerHTML = ''; 
-            if (filteredArticles.length === 0) {
-                grid.innerHTML = '<div class="loading">沒有找到相關文章。</div>'; return;
+            if (!articlesGridElement) return;
+            articlesGridElement.innerHTML = ''; 
+            const startIndex = (currentPage - 1) * articlesPerPage;
+            const endIndex = startIndex + articlesPerPage;
+            const paginatedArticles = filteredArticles.slice(startIndex, endIndex);
+            if (paginatedArticles.length === 0 && filteredArticles.length === 0) { 
+                 articlesGridElement.innerHTML = '<div class="loading">沒有找到相關文章。</div>';
+            } else if (paginatedArticles.length === 0 && filteredArticles.length > 0) { 
+                 articlesGridElement.innerHTML = '<div class="loading">此頁沒有文章。</div>';
             }
-            filteredArticles.forEach(article => {
+            paginatedArticles.forEach(article => {
                 const plainTextContent = (article.content || "").replace(/[#*`>\-\[\]()!]/g, '').replace(/\n/g, ' ').trim();
                 const preview = plainTextContent.length > 100 ? plainTextContent.substring(0, 100) + '...' : plainTextContent;
                 const displayDate = article.date instanceof Date && !isNaN(article.date)
                                     ? article.date.toLocaleDateString('zh-TW') : '日期未知';
                 const articleCard = document.createElement('article');
                 articleCard.className = 'article-card';
+                articleCard.id = article.id; 
                 articleCard.innerHTML = `
                     <img src="${article.image || 'https://via.placeholder.com/400x200.png?text=No+Image'}" alt="${escapeHtml(article.title)}" class="article-image">
                     <div class="article-content">
@@ -1103,73 +1606,149 @@
                             ${(article.hashtags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
                         </div>
                     </div>`;
-                articleCard.addEventListener('click', () => openArticle(article));
-                grid.appendChild(articleCard);
+                articleCard.addEventListener('click', () => openArticle(article, articleCard)); 
+                articlesGridElement.appendChild(articleCard);
             });
+            renderPaginationControls();
+        }
+
+        function renderPaginationControls() {
+            if (!paginationContainerElement) return;
+            paginationContainerElement.innerHTML = '';
+            const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
+            if (totalPages <= 1) return; 
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '上一頁';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayArticles(); 
+                    window.scrollTo(0, articlesGridElement.offsetTop - 20); 
+                    updateURL({ p: currentPage });
+                }
+            });
+            paginationContainerElement.appendChild(prevButton);
+            const pageInfo = document.createElement('span');
+            pageInfo.textContent = ` 第 ${currentPage} / ${totalPages} 頁 `;
+            paginationContainerElement.appendChild(pageInfo);
+            const nextButton = document.createElement('button');
+            nextButton.textContent = '下一頁';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayArticles(); 
+                    window.scrollTo(0, articlesGridElement.offsetTop - 20); 
+                    updateURL({ p: currentPage });
+                }
+            });
+            paginationContainerElement.appendChild(nextButton);
         }
         
-        function openArticle(article) {
+        function openArticle(article, articleCardElement = null, fromURL = false) {
+            if (!article) {
+                console.error("Attempted to open a null article.");
+                navigateToPage('home', null, { fromURL: true, preservePage: false }); 
+                return;
+            }
+            if (!fromURL) { 
+                sessionStorage.setItem('previousPageURL', window.location.href);
+                sessionStorage.removeItem('clickedArticleId');
+                sessionStorage.removeItem('clickedArticlePage');
+                sessionStorage.removeItem('sourcePageIdForArticle');
+            }
+            navigateToPage('article-detail', article, { fromURL: fromURL, preservePage: false }); 
+            const articlePageContainer = document.getElementById('article-detail-page');
+            if (!articlePageContainer) return; 
             const renderedContent = markdownToHtml(article.content);
             const displayDate = article.date instanceof Date && !isNaN(article.date)
                                 ? article.date.toLocaleDateString('zh-TW') : '日期未知';
-            const articlePageId = 'article-detail-page';
-            let articlePage = document.getElementById(articlePageId);
-            if (articlePage) articlePage.remove(); 
-            articlePage = document.createElement('div');
-            articlePage.id = articlePageId; 
-            articlePage.style.display = 'block'; 
-            articlePage.innerHTML = `
+            articlePageContainer.innerHTML = `
                 <header class="header">
                     <button onclick="closeArticle()" style="float: right; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-text-primary); padding: 0.5rem 1rem; line-height: 1;">✕</button>
                     <h1>${escapeHtml(article.title)}</h1>
                     <p>發布於 ${displayDate}</p>
-                    <div style="text-align: center; margin-top: 1rem;">
+                    <div style="text-align: left; margin-top: 1rem;">
                         ${(article.hashtags || []).map(tag => `<span class="tag" style="margin: 0 0.2rem;">#${escapeHtml(tag)}</span>`).join('')}
                     </div>
                 </header>
                 <div class="page-container">
                     <div class="markdown-content">${renderedContent}</div>
                 </div>`;
-            document.querySelectorAll('.main-content > div[id$="-page"]').forEach(page => page.style.display = 'none');
-            document.querySelector('.main-content').appendChild(articlePage);
             window.scrollTo(0, 0); 
             setTimeout(() => {
                 if (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {
-                     mermaid.run({ nodes: articlePage.querySelectorAll('.mermaid') });
+                     mermaid.run({ nodes: articlePageContainer.querySelectorAll('.mermaid') });
                 }
-                if (typeof Prism !== 'undefined') Prism.highlightAllUnder(articlePage);
+                if (typeof Prism !== 'undefined') Prism.highlightAllUnder(articlePageContainer);
+                initializeCopyCodeButtons(articlePageContainer);
             }, 100);
         }
 
         function closeArticle() {
-            const articlePage = document.getElementById('article-detail-page');
-            if (articlePage) articlePage.remove();
-            const homePage = document.getElementById('home-page');
-            if (homePage) homePage.style.display = 'block';
-            if (articles.length > 0) sortAndDisplayArticles();
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            const homeLink = document.querySelector('.nav-link[data-page="home"]');
-            if (homeLink) homeLink.classList.add('active');
-        }
-
-        const sortSelectElement = document.getElementById('sortSelect');
-        if (sortSelectElement) {
-            sortSelectElement.addEventListener('change', sortAndDisplayArticles);
+            const previousPageURL = sessionStorage.getItem('previousPageURL');
+            sessionStorage.removeItem('previousPageURL'); 
+            if (previousPageURL) {
+                try {
+                    history.pushState(null, '', previousPageURL); 
+                    loadStateFromURL(); 
+                } catch (e) {
+                    console.error("Error navigating to previousPageURL, defaulting to home:", e);
+                    navigateToPage('home', null, { fromURL: false, preservePage: false });
+                }
+            } else {
+                navigateToPage('home', null, { fromURL: false, preservePage: false });
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            loadData();
-            // Ensure the toggle button icon is set correctly on load
             const sidebar = document.getElementById('sidebar');
             const toggleBtn = document.querySelector('.sidebar-toggle');
             if (sidebar && toggleBtn) {
-                 toggleBtn.textContent = '🚀'; // Set initial icon for toggle button
+                 toggleBtn.textContent = '🐟'; 
             }
-
-            const initialActiveLink = document.querySelector('.nav-link[data-page="home"]');
-            if(initialActiveLink) initialActiveLink.classList.add('active');
-            const homePage = document.getElementById('home-page');
-            if(homePage) homePage.style.display = 'block';
+            loadData(); 
+            if (sortSelectElement) {
+                sortSelectElement.addEventListener('change', () => {
+                    currentSortBy = sortSelectElement.value;
+                    currentPage = 1; 
+                    sortAndDisplayArticles({preservePage: false}); 
+                    updateURL({ sort: currentSortBy, p: currentPage }); 
+                });
+            }
+            if (keywordSearchButton) {
+                keywordSearchButton.addEventListener('click',() => {
+                    currentPage = 1; 
+                    performKeywordSearch(); 
+                    if(activePageId === 'home') sortAndDisplayArticles({ preservePage: false });
+                    // updateURL is called by performKeywordSearch implicitly if state is updated
+                });
+            }
+            if (keywordClearButton) {
+                keywordClearButton.addEventListener('click', () => {
+                    currentPage = 1; 
+                    clearKeywordSearch();
+                    if(activePageId === 'home') sortAndDisplayArticles({ preservePage: false });
+                    // updateURL is called by clearKeywordSearch implicitly
+                });
+            }
+            if (keywordSearchInput) {
+                keywordSearchInput.addEventListener('keyup', (event) => {
+                    if (event.key === 'Enter') {
+                        currentPage = 1; 
+                        performKeywordSearch();
+                        if(activePageId === 'home') sortAndDisplayArticles({ preservePage: false });
+                        // updateURL is called by performKeywordSearch implicitly
+                    }
+                });
+            }
+            if (clearFiltersButton) { 
+                clearFiltersButton.onclick = () => {
+                    currentPage = 1; 
+                    clearAllHashtagFilters(); 
+                };
+            }
         });
     </script>
 </body>
