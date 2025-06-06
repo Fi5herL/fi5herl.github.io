@@ -507,6 +507,62 @@
         }
         /* --- End Global rule --- */
 
+        /* --- 新增：文章加密提示框樣式 --- */
+        .password-prompt-container {
+            background-color: rgba(224, 230, 237, 0.7);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem auto;
+            max-width: 500px;
+        }
+        .password-prompt-container h3 {
+            font-family: var(--font-heading);
+            color: var(--color-text-heading);
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+        .password-prompt-container p {
+            color: var(--color-text-secondary);
+            margin-bottom: 1.5rem;
+        }
+        .password-prompt-container input[type="password"] {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        .password-prompt-container input[type="password"]:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        .password-prompt-container button {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background-color: var(--color-accent);
+            color: var(--color-text-on-dark);
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .password-prompt-container button:hover {
+            background-color: var(--color-accent-hover);
+        }
+        .password-prompt-container .decrypt-message {
+            margin-top: 1rem;
+            margin-bottom: 0;
+            color: #e74c3c; /* Red for errors */
+            font-weight: 500;
+            min-height: 1.2em;
+        }
+        /* --- 新增樣式結束 --- */
 
         /* Responsive Design */
         @media (max-width: 992px) { /* Tablet and smaller */
