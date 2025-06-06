@@ -1028,19 +1028,153 @@
             const nextBtn = document.createElement('button'); nextBtn.textContent = '下一頁'; nextBtn.disabled = currentPage === totalPages; nextBtn.addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; displayArticles(); updateURL({ p: currentPage }); window.scrollTo(0,0); } });
             paginationContainerElement.append(prevBtn, pageInfo, nextBtn);
         }
-        function openArticle(article, articleCardElement = null, fromURL = false) {
-            if (!article) { navigateToPage('home', null, { fromURL: true }); return; }
-            if (!fromURL) sessionStorage.setItem('previousPageURL', window.location.href);
-            navigateToPage('article-detail', article, { fromURL: fromURL });
-            const articlePageContainer = document.getElementById('article-detail-page'); if (!articlePageContainer) return;
-            const renderedContent = markdownToHtml(article.content); const displayDate = article.date.toLocaleDateString('zh-TW');
-            articlePageContainer.innerHTML = `<header class="header"><button onclick="closeArticle()" style="float: right; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-text-primary); padding: 0.5rem 1rem; line-height: 1;">✕</button><h1>${escapeHtml(article.title)}</h1><p>發布於 ${displayDate}</p><div style="text-align: left; margin-top: 1rem;">${(article.hashtags || []).map(tag => `<span class="tag" style="margin: 0 0.2rem;">#${escapeHtml(tag)}</span>`).join('')}</div></header><div class="page-container"><div class="markdown-content">${renderedContent}</div></div>`;
-            window.scrollTo(0, 0);
-            setTimeout(() => { if (typeof mermaid !== 'undefined') mermaid.run({ nodes: articlePageContainer.querySelectorAll('.mermaid') }); if (typeof Prism !== 'undefined') Prism.highlightAllUnder(articlePageContainer); initializeCopyCodeButtons(articlePageContainer); }, 0);
+        // --- 新增：後處理渲染內容的輔助函數 ---
+        function processRenderedContent(parentElement) {
+            if (!parentElement) return;
+            // 使用 setTimeout 以確保 DOM 已完全更新
+            setTimeout(() => {
+                // 重新執行 Mermaid
+                if (typeof mermaid !== 'undefined') {
+                    try {
+                        mermaid.run({ nodes: parentElement.querySelectorAll('.mermaid') });
+                    } catch(e) {
+                        console.error("Mermaid 渲染失敗:", e);
+                    }
+                }
+                // 重新執行 Prism 語法高亮
+                if (typeof Prism !== 'undefined') {
+                    Prism.highlightAllUnder(parentElement);
+                }
+                // 重新初始化複製按鈕
+                initializeCopyCodeButtons(parentElement);
+            }, 0);
         }
+
+        // --- 新增：產生密碼輸入框的 HTML ---
+        function generatePasswordPromptHtml(articleId) {
+            const safeArticleId = CSS.escape(articleId);
+            return `
+                <div class="password-prompt-container">
+                    <h3>🔒 這篇文章已加密</h3>
+                    <p>請輸入密碼以閱讀文章內容。</p>
+                    <input type="password" id="password-input-${safeArticleId}" placeholder="請在此輸入密碼" onkeyup="if(event.key==='Enter') document.getElementById('decrypt-button-${safeArticleId}').click()">
+                    <button id="decrypt-button-${safeArticleId}">解鎖文章</button>
+                    <p id="decrypt-message-${safeArticleId}" class="decrypt-message"></p>
+                </div>
+            `;
+        }
+        
+        // --- 新增：設定解密事件處理 ---
+        function setupDecryptionHandler(articleId, mainContent, correctPassword) {
+            const safeArticleId = CSS.escape(articleId);
+            const decryptButton = document.getElementById(`decrypt-button-${safeArticleId}`);
+            const passwordInput = document.getElementById(`password-input-${safeArticleId}`);
+            const messageElement = document.getElementById(`decrypt-message-${safeArticleId}`);
+            const contentWrapper = document.getElementById(`article-detail-page`).querySelector('.markdown-content');
+
+            if (!decryptButton || !passwordInput || !messageElement || !contentWrapper) {
+                console.error("無法設定解密處理程序：缺少必要元素。");
+                return;
+            }
+
+            decryptButton.addEventListener('click', () => {
+                const userInput = passwordInput.value;
+                if (userInput === correctPassword) {
+                    messageElement.textContent = '';
+                    contentWrapper.innerHTML = markdownToHtml(mainContent);
+                    // 內容解鎖後，執行渲染
+                    processRenderedContent(contentWrapper);
+                } else {
+                    messageElement.textContent = '密碼錯誤，請再試一次。';
+                    passwordInput.focus();
+                    passwordInput.select();
+                }
+            });
+        }
+
+        // --- 修改後的 openArticle 函數 ---
+        function openArticle(article, articleCardElement = null, fromURL = false) {
+            if (!article) {
+                navigateToPage('home', null, { fromURL: true });
+                return;
+            }
+            if (!fromURL) {
+                sessionStorage.setItem('previousPageURL', window.location.href);
+            }
+            navigateToPage('article-detail', article, { fromURL: fromURL });
+
+            const articlePageContainer = document.getElementById('article-detail-page');
+            if (!articlePageContainer) return;
+
+            // --- 加密邏輯開始 ---
+            const isEncrypted = article.hashtags && article.hashtags.includes('加密');
+            let mainContent = article.content || "";
+            let correctPassword = '';
+            let showPrompt = false;
+
+            if (isEncrypted) {
+                const lines = mainContent.trim().split('\n');
+                if (lines.length > 1) {
+                    // 取出最後一行作為密碼
+                    correctPassword = lines.pop().trim();
+                    // 剩餘部分作為主要內容
+                    mainContent = lines.join('\n');
+                    showPrompt = true;
+                }
+            }
+            // --- 加密邏輯結束 ---
+            
+            const displayDate = article.date.toLocaleDateString('zh-TW');
+            
+            // 構建文章頁面HTML，但內容區域先留空
+            articlePageContainer.innerHTML = `
+                <header class="header">
+                    <button onclick="closeArticle()" style="float: right; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-text-primary); padding: 0.5rem 1rem; line-height: 1;">✕</button>
+                    <h1>${escapeHtml(article.title)}</h1>
+                    <p>發布於 ${displayDate}</p>
+                    <div style="text-align: left; margin-top: 1rem;">
+                        ${(article.hashtags || []).map(tag => `<span class="tag" style="margin: 0 0.2rem;">#${escapeHtml(tag)}</span>`).join('')}
+                    </div>
+                </header>
+                <div class="page-container">
+                    <div class="markdown-content">
+                        <!-- 內容或密碼提示框將被注入此處 -->
+                    </div>
+                </div>`;
+
+            const contentWrapper = articlePageContainer.querySelector('.markdown-content');
+
+            if (showPrompt && correctPassword) {
+                // 如果是加密文章，顯示密碼提示框
+                contentWrapper.innerHTML = generatePasswordPromptHtml(article.id);
+                setupDecryptionHandler(article.id, mainContent, correctPassword);
+            } else {
+                // 如果是普通文章，直接顯示內容
+                contentWrapper.innerHTML = markdownToHtml(mainContent);
+                processRenderedContent(contentWrapper); // 處理渲染
+            }
+            
+            window.scrollTo(0, 0);
+        }
+
+        // --- 修改後的 closeArticle 函數 ---
         function closeArticle() {
-            const previousPageURL = sessionStorage.getItem('previousPageURL'); sessionStorage.removeItem('previousPageURL');
-            if (previousPageURL) { try { history.pushState(null, '', previousPageURL); loadStateFromURL(); } catch (e) { navigateToPage('home'); } } else navigateToPage('home');
+            const articlePageContainer = document.getElementById('article-detail-page');
+            if(articlePageContainer) {
+                articlePageContainer.innerHTML = ''; // 清空內容以停止任何可能的背景活動
+            }
+            const previousPageURL = sessionStorage.getItem('previousPageURL');
+            sessionStorage.removeItem('previousPageURL');
+            if (previousPageURL) {
+                try {
+                    history.pushState(null, '', previousPageURL);
+                    loadStateFromURL();
+                } catch (e) {
+                    navigateToPage('home');
+                }
+            } else {
+                navigateToPage('home');
+            }
         }
 
         // --- DOMContentLoaded ---
