@@ -377,7 +377,6 @@
         .mermaid {
             background: var(--color-bg-card); border-radius: var(--border-radius-sm); padding: 1.5rem; margin: 1rem 0;
             text-align: center; box-shadow: 0 4px 10px var(--color-shadow); border: 1px solid var(--color-border);
-            /* display: flex; justify-content: center; align-items: center; */
         }
         .mermaid svg { width: 100%; }
 
@@ -576,31 +575,49 @@
         @media (max-width: 768px) { /* Mobile */
             .container { flex-direction: column; }
             .sidebar {
-                width: 100%; height: auto; padding: 0.75rem 1rem; position: relative;
+                width: 100%; height: auto; padding: 0.75rem 1rem;
                 border-right: none; border-bottom: 1px solid #3a5068;
                 box-shadow: 0 3px 10px var(--color-shadow);
             }
             .sidebar.collapsed {
-                height: 50px; padding: 0 1rem; overflow: hidden;
+                height: 50px; width: 100%; padding: 0 1rem; overflow: hidden;
                 flex-direction: row; align-items: center;
             }
-            /* ADDED: Add padding to the expanded sidebar to make room for the FAB */
+
+            /* ADDED: Add padding to the expanded sidebar to avoid overlapping the FAB */
             .sidebar:not(.collapsed) {
-                padding-bottom: 60px; /* Extra space at the bottom */
+                padding-bottom: 70px; /* Space for the button */
             }
+            
+            /* MODIFIED: Make toggle a Fixed Action Button (FAB) on mobile */
             .sidebar-toggle {
-                position: absolute; top: auto; right: auto; transform: none;
-                margin-left: auto;
+                position: fixed; /* Position relative to the viewport */
+                bottom: 20px;
+                right: 20px;
+                z-index: 1000; /* Ensure it's on top of other content */
+                
+                /* Reset desktop and other styles */
+                top: auto;
+                left: auto;
+                transform: none;
+                margin: 0;
+                
+                /* FAB styling */
+                width: 50px; 
+                height: 50px;
+                background-color: var(--color-accent);
+                border-radius: 50%;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                font-size: 26px;
+                border: none;
             }
-            /* MODIFIED: Override general hover for a more suitable FAB hover */
+            
+            /* MODIFIED: FAB hover effect */
             .sidebar-toggle:hover {
                 transform: scale(1.1);
                 background-color: var(--color-accent-hover);
-                color: var(--color-text-on-dark); /* Ensure text color remains consistent */
             }
-/*             .sidebar:not(.collapsed) .sidebar-toggle {
-                align-self: flex-start; margin-bottom: 0.5rem; margin-left: 0;
-            } */
+            
             .sidebar.collapsed .logo { display: none; }
             .sidebar:not(.collapsed) .logo { margin-bottom: 1rem; font-size: 1.4rem; text-align: left; }
 
@@ -666,10 +683,10 @@
             .header { padding: 1rem 1.5rem; margin-bottom: 1rem; }
             .header h1 { font-size: 1.6rem; }
             .page-container { padding: 1.5rem; margin-top: 1rem;}
-            .markdown-content { font-size: 1.3rem; }
-            .markdown-content h1 {font-size: 1.7em;}
+            .markdown-content { font-size: 1.25rem; }
+            .markdown-content h1 {font-size: 1.5em;}
             .markdown-content h2 {font-size: 1.4em;}
-            .markdown-content h3 {font-size: 1.2em;}
+            .markdown-content h3 {font-size: 1.3em;}
         }
 
         /* Tech Blogger Theme CSS - End */
