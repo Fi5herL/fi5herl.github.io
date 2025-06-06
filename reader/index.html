@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 網頁標題 -->
+    <title>Docs Reader</title>
+    
+    <!-- 網頁圖示 (使用 Emoji) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+    
+    <style>
+        /*
+         * 讓 iframe 填滿整個畫面的關鍵 CSS
+         */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* 防止頁面本身出現滾動條 */
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none; /* 移除 iframe 的預設邊框 */
+            display: block; /* 確保它像一個塊級元素，避免底部出現小空隙 */
+        }
+    </style>
+</head>
+<body>
+
+    <!--
+      將你的 Google Apps Script 網頁應用程式 URL 貼在下方的 src 屬性中
+    -->
+    <iframe 
+        id="gas-iframe" 
+        src="https://script.google.com/macros/s/AKfycbwsmyhtnE0B-y4lhPhNwXM4QMNpIP1704VK5hDpmIM8IrXUnhsmQcXJOPeaahzgoMb27w/exec" 
+        title="Google Apps Script Content">
+    </iframe>
+
+</body>
+</html>
