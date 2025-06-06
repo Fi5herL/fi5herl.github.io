@@ -1057,14 +1057,14 @@
                 <div class="password-prompt-container">
                     <h3>🔒 這篇文章已加密</h3>
                     <p>請輸入密碼以閱讀文章內容。</p>
-                    <input type="password" id="password-input-${safeArticleId}" placeholder="請在此輸入密碼" onkeyup="if(event.key==='Enter') document.getElementById('decrypt-button-${safeArticleId}').click()">
+                    <input type="password" id="password-input-${safeArticleId}" placeholder="請在此輸入密碼">
                     <button id="decrypt-button-${safeArticleId}">解鎖文章</button>
                     <p id="decrypt-message-${safeArticleId}" class="decrypt-message"></p>
                 </div>
             `;
         }
         
-        // --- 新增：設定解密事件處理 ---
+        // --- 新增：設定解密事件處理 (已修改) ---
         function setupDecryptionHandler(articleId, mainContent, correctPassword) {
             const safeArticleId = CSS.escape(articleId);
             const decryptButton = document.getElementById(`decrypt-button-${safeArticleId}`);
@@ -1077,7 +1077,7 @@
                 return;
             }
 
-            decryptButton.addEventListener('click', () => {
+            const handleDecryption = () => {
                 const userInput = passwordInput.value;
                 if (userInput === correctPassword) {
                     messageElement.textContent = '';
@@ -1088,6 +1088,20 @@
                     messageElement.textContent = '密碼錯誤，請再試一次。';
                     passwordInput.focus();
                     passwordInput.select();
+                }
+            };
+
+            // 監聽按鈕點擊
+            decryptButton.addEventListener('click', handleDecryption);
+
+            // 【新的部分】監聽輸入框的按鍵事件
+            passwordInput.addEventListener('keyup', (event) => {
+                // 如果按下的鍵是 "Enter"
+                if (event.key === 'Enter') {
+                    // 阻止預設行為 (例如提交表單)
+                    event.preventDefault();
+                    // 手動觸發解密處理
+                    handleDecryption();
                 }
             });
         }
