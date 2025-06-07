@@ -957,8 +957,11 @@
                 const appsScriptUrl = "https://script.google.com/macros/s/AKfycbxrM67dWveK91ty2SWHY_Fz55Vtyf76hVc1lywYMRrHKLY1lz-DdYdm8ivu6dRDb_jE/exec";
                 
                 // 在發送請求時，將當前網頁的來源 (window.location.origin) 作為 'origin' 參數傳遞
+                // --- 建議的修改：主動移除 origin 字串結尾可能存在的斜線 ---
+                const origin = window.location.origin.replace(/\/$/, '');
+                
                 // 這就是「驗證」步驟，Apps Script 會檢查這個來源是否被允許
-                const response = await fetch(`${appsScriptUrl}?origin=${encodeURIComponent(window.location.origin)}`);
+                const response = await fetch(`${appsScriptUrl}?origin=${encodeURIComponent(origin)}`);
 
                 // 處理 HTTP 錯誤（例如 401 Unauthorized - 這就是驗證失敗的情況）
                 if (!response.ok) {
