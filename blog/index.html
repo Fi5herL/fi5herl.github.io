@@ -951,64 +951,18 @@
         async function loadData() {
             startLoadingAnimation();
             try {
-                // --- 修改開始：整合您的驗證程式碼 ---
-                
-                // 替換成你部署的 Google Apps Script Web App URL
-                const appsScriptUrl = "https://script.google.com/macros/s/AKfycbxrM67dWveK91ty2SWHY_Fz55Vtyf76hVc1lywYMRrHKLY1lz-DdYdm8ivu6dRDb_jE/exec";
-                
-                // 在發送請求時，將當前網頁的來源 (window.location.origin) 作為 'origin' 參數傳遞
-                // --- 建議的修改：主動移除 origin 字串結尾可能存在的斜線 ---
-                const origin = window.location.origin.replace(/\/$/, '');
-                
-                // 這就是「驗證」步驟，Apps Script 會檢查這個來源是否被允許
-                const response = await fetch(`${appsScriptUrl}?origin=${encodeURIComponent(origin)}`);
-
-                // 處理 HTTP 錯誤（例如 401 Unauthorized - 這就是驗證失敗的情況）
-                if (!response.ok) {
-                    // 嘗試解析錯誤訊息的 JSON 主體
-                    try {
-                        const errorData = await response.json();
-                        // 拋出從後端來的具體錯誤訊息
-                        throw new Error(errorData.message || `網路回應不正確，狀態碼：${response.status}`);
-                    } catch (jsonError) {
-                        // 如果回應不是 JSON 或解析失敗，拋出通用的 HTTP 狀態錯誤
-                        throw new Error(`網路回應不正確，狀態碼：${response.status}`);
-                    }
-                }
-
-                const fetchedData = await response.json();
-
-                // 檢查從 Apps Script 返回的應用層級錯誤
-                if (fetchedData.error) {
-                    throw new Error(`Apps Script 錯誤：${fetchedData.message || fetchedData.error}`);
-                }
-                
-                // --- 修改結束 ---
-
+                const gasUrl = 'https://script.google.com/macros/s/AKfycbxrM67dWveK91ty2SWHY_Fz55Vtyf76hVc1lywYMRrHKLY1lz-DdYdm8ivu6dRDb_jE/exec';
+                const response = await fetch(gasUrl); if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const fetchedData = await response.json(); if (fetchedData.error) throw new Error(`GAS Error: ${fetchedData.error} - ${fetchedData.message || ''}`);
                 allData = fetchedData;
                 articles = (allData.articles || []).map(row => ({ id: CSS.escape(`${row[0] || "Untitled"} ${(row[2] ? new Date(row[2]) : new Date()).toLocaleDateString('zh-TW')}`), title: row[0] || "無標題", content: row[1] || "", date: row[2] ? new Date(row[2]) : null, image: row[3] || null, hashtags: row[4] && typeof row[4] === 'string' ? row[4].split(',').map(tag => tag.trim()).filter(tag => tag) : [] })).filter(article => article.title !== "無標題" && article.date);
                 pagesContent = allData.pages || {};
-                
                 generateHashtagFilters();
                 if (pagesContent.about) renderStaticPage('about');
                 renderArchivePage();
                 loadStateFromURL();
-            } catch (error) { 
-                console.error('獲取數據時發生錯誤:', error); 
-                // 在頁面上顯示更友善的錯誤訊息
-                if (articlesGridElement) {
-                    articlesGridElement.innerHTML = `<div class="loading">資料載入失敗: ${error.message}</div>`;
-                }
-                // 也可以在載入動畫上顯示錯誤
-                const loadingText = document.getElementById('loadingText');
-                if(loadingText) {
-                    loadingText.innerHTML = `資料載入失敗<br>${error.message}`;
-                }
-            }
-            finally { 
-                // 無論成功或失敗，都在短暫延遲後隱藏載入動畫
-                setTimeout(stopLoadingAnimation, 500); 
-            }
+            } catch (error) { console.error('Failed to load data:', error); if (articlesGridElement) articlesGridElement.innerHTML = `<div class="loading">資料載入失敗: ${error.message}</div>`; }
+            finally { stopLoadingAnimation(); }
         }
         function initializeCopyCodeButtons(parentElement = document) {
             parentElement.querySelectorAll('.copy-code-button').forEach(button => { button.removeEventListener('click', handleCopyCodeClick); button.addEventListener('click', handleCopyCodeClick); });
