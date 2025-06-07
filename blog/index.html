@@ -282,44 +282,34 @@
 
         /* Markdown Content Styles */
         .markdown-content {
-            line-height: 1.6;
+            line-height: 1.7; /* Increased for better readability */
             color: var(--color-text-primary);
-            font-size: 1.2rem;
+            font-size: 1.1rem; /* Slightly larger base font */
         }
         .markdown-content h1, .markdown-content h2, .markdown-content h3, 
         .markdown-content h4, .markdown-content h5, .markdown-content h6 {
             font-family: var(--font-heading);
             color: var(--color-text-heading);
-            margin: 1.5rem 0 0.5rem 0;
+            margin: 1.8rem 0 1rem 0;
             font-weight: 600;
             line-height: 1.3;
         }
-        .markdown-content h1:has(+ .code-block-container),
-        .markdown-content h2:has(+ .code-block-container),
-        .markdown-content h3:has(+ .code-block-container),
-        .markdown-content h4:has(+ .code-block-container),
-        .markdown-content h5:has(+ .code-block-container),
-        .markdown-content h6:has(+ .code-block-container) {
-            margin-bottom: 0.3rem; 
-        }
-        .markdown-content h1 { font-size: 2em; border-bottom: 2px solid var(--color-border); padding-bottom: 0.5rem; }
-        .markdown-content h2 { font-size: 1.7em; border-bottom: 1px solid var(--color-border); padding-bottom: 0.4rem; }
-        .markdown-content h3 { font-size: 1.4em; }
-        .markdown-content h4 { font-size: 1.2em; color: var(--color-text-secondary); }
+        .markdown-content h1 { font-size: 2.2em; border-bottom: 2px solid var(--color-border); padding-bottom: 0.5rem; }
+        .markdown-content h2 { font-size: 1.8em; border-bottom: 1px solid var(--color-border); padding-bottom: 0.4rem; }
+        .markdown-content h3 { font-size: 1.5em; }
+        .markdown-content h4 { font-size: 1.25em; }
         .markdown-content h5 { font-size: 1.1em; color: var(--color-text-secondary); }
         .markdown-content h6 { font-size: 1em; color: var(--color-text-secondary); text-transform: uppercase; }
-        .markdown-content p { margin: 0 0 0.8rem 0; }
-        .markdown-content ul, .markdown-content ol { margin: 0 0 0.8rem 1.5rem; padding-left: 1.5rem; }
+        .markdown-content p { margin-bottom: 1.2rem; }
+        .markdown-content ul, .markdown-content ol { margin: 0 0 1.2rem 1.5rem; padding-left: 1.5rem; }
         .markdown-content ul { list-style-type: disc; }
         .markdown-content ol { list-style-type: decimal; }
-        .markdown-content li { margin: 0.5rem 0; }
-        .markdown-content li p { margin-bottom: 0.3rem; }
-        .markdown-content li:has(+ .code-block-container) { margin-bottom: 0; }
-        .markdown-content li > p:has(+ .code-block-container) { margin-bottom: 0.2rem; }
-        .markdown-content li > p:last-child:has(+ .code-block-container) { margin-bottom: 0.2rem; }
+        .markdown-content li { margin-bottom: 0.5rem; }
+        .markdown-content li p { margin-bottom: 0.5rem; }
         .markdown-content a {
             color: var(--color-accent); text-decoration: none;
             border-bottom: 1px solid transparent; transition: all 0.2s ease;
+            font-weight: 500;
         }
         .markdown-content a:hover { color: var(--color-accent-hover); border-bottom-color: var(--color-accent-hover); }
         .markdown-content code:not(pre > code) {
@@ -327,7 +317,7 @@
             font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
             font-size: 0.9em; color: var(--color-text-primary); border: 1px solid var(--color-border);
         }
-        .code-block-container { position: relative; margin-top: 0.5rem; margin-bottom: 0.8rem; }
+        .code-block-container { position: relative; margin: 1.2rem 0; }
         .code-block-container pre {
             margin: 0; background: #2d2d2d; border-radius: var(--border-radius-sm);
             padding: 1rem; overflow-x: auto; box-shadow: 0 4px 10px var(--color-shadow); border: 1px solid #444;
@@ -338,7 +328,7 @@
             font-size: 0.9em !important; border: none !important;
         }
         .copy-code-button {
-            position: absolute; top: 0.3em; right: 0.5em; padding: 0.3em 0.6em;
+            position: absolute; top: 0.5em; right: 0.5em; padding: 0.3em 0.6em;
             background-color: rgba(255, 255, 255, 0.1); color: var(--color-text-on-dark); 
             border: 1px solid var(--color-border-on-dark); border-radius: var(--border-radius-sm);
             cursor: pointer; font-size: 0.8em; opacity: 0.3; 
@@ -352,7 +342,7 @@
             border-color: var(--color-accent) !important; opacity: 1 !important;
         }
         .markdown-content blockquote {
-            border-left: 4px solid var(--color-accent); padding: 0.5rem 1.5rem; margin: 1rem 0;
+            border-left: 4px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.2rem 0;
             background: rgba(52, 152, 219, 0.05); color: var(--color-text-secondary);
             border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
         }
@@ -360,11 +350,11 @@
         .markdown-content blockquote p:last-child { margin-bottom: 0; }
         .markdown-content hr { border: none; height: 1px; background: var(--color-border); margin: 2rem 0; }
         .markdown-content img {
-            max-width: 100%; height: auto; border-radius: var(--border-radius-sm); margin: 1rem 0;
+            max-width: 100%; height: auto; border-radius: var(--border-radius-sm); margin: 1.2rem 0;
             box-shadow: 0 4px 15px var(--color-shadow); display: block; margin-left: auto; margin-right: auto;
         }
         .markdown-content table {
-            width: 100%; border-collapse: collapse; margin: 1rem 0; background: var(--color-bg-card);
+            width: 100%; border-collapse: collapse; margin: 1.2rem 0; background: var(--color-bg-card);
             border-radius: var(--border-radius-sm); overflow: hidden; border: 1px solid var(--color-border);
             box-shadow: 0 2px 8px var(--color-shadow);
         }
@@ -372,10 +362,11 @@
         .markdown-content tr:last-child td { border-bottom: none; }
         .markdown-content th { background: var(--color-bg-body); font-weight: 600; color: var(--color-text-heading); }
         .mermaid {
-            background: var(--color-bg-card); border-radius: var(--border-radius-sm); padding: 1.5rem; margin: 1rem 0;
+            background: var(--color-bg-card); border-radius: var(--border-radius-sm); padding: 1.5rem; margin: 1.2rem 0;
             text-align: center; box-shadow: 0 4px 10px var(--color-shadow); border: 1px solid var(--color-border);
+            overflow-x: auto;
         }
-        .mermaid svg { width: 100%; }
+        .mermaid svg { max-width: 100%; height: auto; }
 
         /* Loading class for content areas */
         .loading { text-align: center; padding: 3rem; color: var(--color-text-secondary); font-size: 1.1rem; }
@@ -675,14 +666,16 @@
             .header { padding: 1rem 1.5rem; margin-bottom: 1rem; }
             .header h1 { font-size: 1.6rem; }
             .page-container { padding: 1.5rem; margin-top: 1rem;}
-            .markdown-content { font-size: 1.25rem; }
-            .markdown-content h1 {font-size: 1.5em;}
-            .markdown-content h2 {font-size: 1.4em;}
+            .markdown-content { font-size: 1.1rem; }
+            .markdown-content h1 {font-size: 1.8em;}
+            .markdown-content h2 {font-size: 1.5em;}
             .markdown-content h3 {font-size: 1.3em;}
         }
 
         /* Tech Blogger Theme CSS - End */
     </style>
+    <!-- ✨ [新增] 引入 marked.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.0/dist/mermaid.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
@@ -831,6 +824,47 @@
             if (typeof text !== 'string') return '';
             const div = document.createElement('div'); div.textContent = text; return div.innerHTML;
         }
+
+        // ✨ [新增] 來自參考網頁的輔助函式，用於解碼被 marked.js 轉義的 HTML 實體
+        function unescapeHtml(safe) {
+            const temp = document.createElement('textarea');
+            temp.innerHTML = safe;
+            return temp.value;
+        }
+
+        // ✨ [新增] 全新的 Markdown 渲染核心函式
+        function renderMarkdown(markdownString, targetElement) {
+            if (!targetElement || typeof markdownString !== 'string') {
+                if(targetElement) targetElement.innerHTML = '';
+                return;
+            }
+
+            // 1. 使用 marked.js 進行主要轉換
+            let html = marked.parse(markdownString, {
+                breaks: true,
+                gfm: true,
+                sanitize: false
+            });
+
+            // 2. 處理 Mermaid 圖表
+            const mermaidRegex = /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g;
+            html = html.replace(mermaidRegex, (match, mermaidContent) => {
+                return `<div class="mermaid">${unescapeHtml(mermaidContent)}</div>`;
+            });
+            
+            // 3. 處理一般程式碼區塊
+            const codeBlockRegex = /(<pre><code( class="language-[^"]+")?>[\s\S]*?<\/code><\/pre>)/g;
+            html = html.replace(codeBlockRegex, (match) => {
+                if (match.includes('class="language-mermaid"')) return match;
+                return `<div class="code-block-container">${match}</div>`;
+            });
+
+            // 4. 將最終的 HTML 放入目標元素
+            targetElement.innerHTML = html;
+
+            // 5. 執行後續渲染
+            processRenderedContent(targetElement);
+        }
         
         // --- Loading Animation Functions ---
         const oceanCreatures = ['🐠', '🐡', '🦈', '🐳', '🐟', '🐙', '🦑', '🐢', '🦀', '🐚', '🐬', '🦞'];
@@ -932,24 +966,7 @@
             } else navigateToPage(activePageId, null, { fromURL: true, preservePage: true });
         }
 
-        // --- Markdown to HTML ---
-        function markdownToHtml(markdown) {
-            if (typeof markdown !== 'string' || !markdown) return ''; let html = markdown;
-            html = html.replace(/^```mermaid\n([\s\S]*?)\n```$/gm, (m, d) => `<div class="mermaid">${escapeHtml(d.trim())}</div>`);
-            html = html.replace(/```(\w+)?\n([\s\S]*?)```/gs, (m, l, c) => { const lang = l || 'plaintext'; const escC = escapeHtml(c.trim()); const pId = 'cb-' + Math.random().toString(36).slice(2,11); return `<div class="code-block-container"><button class="copy-code-button" data-clipboard-target="#${pId}">📄</button><pre id="${pId}" tabIndex="0"><code class="language-${lang}">${escC}</code></pre></div>`; });
-            html = html.replace(/^###### (.*$)/gm, '<h6>$1</h6>').replace(/^##### (.*$)/gm, '<h5>$1</h5>').replace(/^#### (.*$)/gm, '<h4>$1</h4>').replace(/^### (.*$)/gm, '<h3>$1</h3>').replace(/^## (.*$)/gm, '<h2>$1</h2>').replace(/^# (.*$)/gm, '<h1>$1</h1>');
-            html = html.replace(/^(\*\*\*|---|\*\s\*\s\*)$/gm, '<hr>');
-            html = html.replace(/^[\s]*([*+-]) +([^\n]+(?:(?!\n[\s]*[*+-] ).*\n?)*)/gm, (m,b,i) => `<li>${i.trim().replace(/\n(?!\s*([*+-]|\d+\.))/g, '<br>')}</li>`);
-            html = html.replace(/(<li>.*?<\/li>\s*)+/gm, (match) => (!match.trim().startsWith("<li>")||match.includes("<ul>")||match.includes("<ol>"))?match:`<ul>\n${match.trim()}\n</ul>`);
-            html = html.replace(/^[\s]*(\d+)\. +([^\n]+(?:(?!\n[\s]*\d+\.).*\n?)*)/gm, (m,n,i) => `<li>${i.trim().replace(/\n(?!\s*([*+-]|\d+\.))/g, '<br>')}</li>`);
-            html = html.replace(/(<li>.*?<\/li>\s*)+/gm, (match) => { if(!match.trim().startsWith("<li>")||match.includes("<ul>")||match.includes("<ol>")) return match; const lt= /^\s*\d/.test(match.substring(match.indexOf('<li>')+4))?'ol':'ul'; return `<${lt}>\n${match.trim()}\n</${lt}>`; });
-            html = html.replace(/^> +(.*)/gm, (m, c) => `<blockquote><p>${c.trim()}</p></blockquote>`).replace(/<\/blockquote>\s*<blockquote>/g, '');
-            html = html.split(/\n\s*\n/).map(p => { const t = p.trim(); if(!t) return ''; if (/^<\/?(h[1-6]|ul|ol|li|hr|blockquote|pre|div)/.test(t)) return p; return `<p>${t.replace(/\n/g, '<br>')}</p>`; }).join('');
-            html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">').replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-            html = html.replace(/\*\*([^\s*](?:[^*]*[^\s*])?)\*\*/g, '<strong>$1</strong>').replace(/\*([^\s*](?:[^*]*[^\s*])?)\*/g, '<em>$1</em>').replace(/`([^`]+)`/g, '<code>$1</code>');
-            html = html.replace(/<p>\s*<\/(ul|ol|h[1-6]|hr|blockquote|pre|div)>/gi,'</$1>').replace(/<(ul|ol|h[1-6]|hr|blockquote|pre|div)>\s*<\/p>/gi,'<$1>').replace(/<p>\s*<\/p>/g,'');
-            return html;
-        }
+        // ✨ [已刪除] 舊的 markdownToHtml 函式已被移除
 
         // --- Data Handling & Rendering ---
         async function loadData() {
@@ -972,20 +989,47 @@
             parentElement.querySelectorAll('.copy-code-button').forEach(button => { button.removeEventListener('click', handleCopyCodeClick); button.addEventListener('click', handleCopyCodeClick); });
         }
         function handleCopyCodeClick(event) {
-            const button = event.currentTarget; const targetId = button.dataset.clipboardTarget; if (!targetId) return;
-            const preElement = document.querySelector(targetId); if (!preElement) return; const codeElement = preElement.querySelector('code'); if (!codeElement) return;
-            const codeToCopy = codeElement.textContent;
-            navigator.clipboard.writeText(codeToCopy).then(() => { const o = button.innerHTML; button.innerHTML = '✅ 已複製!'; button.classList.add('copied'); setTimeout(() => { button.innerHTML = o; button.classList.remove('copied'); }, 2000);
-            }).catch(err => { console.error('無法複製: ', err); const o = button.innerHTML; button.innerHTML = '❌ 失敗'; setTimeout(() => { button.innerHTML = o; }, 2000);});
+            const button = event.currentTarget;
+            const codeBlockContainer = button.closest('.code-block-container');
+            if (!codeBlockContainer) return;
+            const codeElement = codeBlockContainer.querySelector('code');
+            if (!codeElement) return;
+
+            const codeToCopy = codeElement.innerText; // Use innerText to get the rendered text
+            navigator.clipboard.writeText(codeToCopy).then(() => {
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ 已複製!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('無法複製: ', err);
+                const originalText = button.innerHTML;
+                button.innerHTML = '❌ 失敗';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 2000);
+            });
         }
+        
         function renderStaticPage(pageName) {
-            const pageData = pagesContent[pageName]; const titleElement = document.getElementById(`${pageName}-title`); const contentElement = document.getElementById(`${pageName}-content`); if (!contentElement) return;
+            const pageData = pagesContent[pageName];
+            const titleElement = document.getElementById(`${pageName}-title`);
+            const contentElement = document.getElementById(`${pageName}-content`);
+            if (!contentElement) return;
+
             if (pageData && pageData.content) {
                 if (titleElement && pageData.title) titleElement.textContent = pageData.title;
-                contentElement.innerHTML = markdownToHtml(pageData.content);
-                setTimeout(() => { if (typeof mermaid !== 'undefined') mermaid.run({ nodes: contentElement.querySelectorAll('.mermaid') }); if (typeof Prism !== 'undefined') Prism.highlightAllUnder(contentElement); initializeCopyCodeButtons(contentElement); }, 0);
-            } else { if (titleElement) titleElement.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1); contentElement.innerHTML = `<p>此頁面 (${pageName}) 內容尚未設定。</p>`; }
+                // ✨ [修改] 使用新的渲染函式
+                renderMarkdown(pageData.content, contentElement);
+            } else {
+                if (titleElement) titleElement.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+                contentElement.innerHTML = `<p>此頁面 (${pageName}) 內容尚未設定。</p>`;
+            }
         }
+
         function renderArchivePage() {
             const contentElement = document.getElementById('archive-content'); if (!contentElement || articles.length === 0) { if(contentElement) contentElement.innerHTML = '<p>目前沒有文章可供歸檔。</p>'; return; }
             const articlesByYearMonth = {}; articles.sort((a,b) => b.date.getTime() - a.date.getTime()).forEach(article => { const y = article.date.getFullYear(); const m = article.date.getMonth(); if(!articlesByYearMonth[y]) articlesByYearMonth[y]={}; if(!articlesByYearMonth[y][m]) articlesByYearMonth[y][m]=[]; articlesByYearMonth[y][m].push(article); });
@@ -1036,15 +1080,12 @@
             const startIndex = (currentPage - 1) * articlesPerPage;
             const paginatedArticles = filteredArticles.slice(startIndex, startIndex + articlesPerPage);
             if (paginatedArticles.length === 0) {
-                articlesGridElement.innerHTML = `<div class="loading">${filteredArticles.length === 0 ? '沒有找到相關文章。' : '此頁沒有文章。'}</div>`;
+                articlesGridElement.innerHTML = `<div class="loading">${filteredArticles.length === 0 && (currentHashtags.length > 0 || currentKeywordsArray.length > 0) ? '沒有找到符合條件的文章。' : '此處沒有文章。'}</div>`;
             } else {
                 paginatedArticles.forEach(article => {
                     const plainTextContent = (article.content || "").replace(/[#*`>\-\[\]()!]/g, '').replace(/\n/g, ' ').trim();
-                    // MODIFIED: Shorten preview text to 40 characters
                     const preview = plainTextContent.substring(0, 40) + (plainTextContent.length > 40 ? '...' : '');
                     const displayDate = article.date.toLocaleDateString('zh-TW');
-                    
-                    // MODIFIED: Conditionally create the image HTML
                     const imageHtml = article.image 
                         ? `<img itemprop="image" src="${article.image}" alt="${escapeHtml(article.title)}" class="article-image">`
                         : '';
@@ -1053,7 +1094,6 @@
                     articleCard.className = 'article-card';
                     articleCard.id = article.id;
                     
-                    // MODIFIED: New HTML structure for side-by-side layout
                     articleCard.innerHTML = `
                         ${imageHtml}
                         <div class="article-content">
@@ -1081,24 +1121,21 @@
             const nextBtn = document.createElement('button'); nextBtn.textContent = '下一頁'; nextBtn.disabled = currentPage === totalPages; nextBtn.addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; displayArticles(); updateURL({ p: currentPage }); window.scrollTo(0,0); } });
             paginationContainerElement.append(prevBtn, pageInfo, nextBtn);
         }
+        
         // --- 新增：後處理渲染內容的輔助函數 ---
         function processRenderedContent(parentElement) {
             if (!parentElement) return;
-            // 使用 setTimeout 以確保 DOM 已完全更新
             setTimeout(() => {
-                // 重新執行 Mermaid
-                if (typeof mermaid !== 'undefined') {
-                    try {
+                try {
+                    if (typeof mermaid !== 'undefined') {
                         mermaid.run({ nodes: parentElement.querySelectorAll('.mermaid') });
-                    } catch(e) {
-                        console.error("Mermaid 渲染失敗:", e);
                     }
-                }
-                // 重新執行 Prism 語法高亮
+                } catch(e) { console.error("Mermaid 渲染失敗:", e); }
+                
                 if (typeof Prism !== 'undefined') {
                     Prism.highlightAllUnder(parentElement);
                 }
-                // 重新初始化複製按鈕
+                
                 initializeCopyCodeButtons(parentElement);
             }, 0);
         }
@@ -1134,9 +1171,8 @@
                 const userInput = passwordInput.value;
                 if (userInput === correctPassword) {
                     messageElement.textContent = '';
-                    contentWrapper.innerHTML = markdownToHtml(mainContent);
-                    // 內容解鎖後，執行渲染
-                    processRenderedContent(contentWrapper);
+                    // ✨ [修改] 使用新的渲染函式
+                    renderMarkdown(mainContent, contentWrapper);
                 } else {
                     messageElement.textContent = '密碼錯誤，請再試一次。';
                     passwordInput.focus();
@@ -1144,16 +1180,10 @@
                 }
             };
 
-            // 監聽按鈕點擊
             decryptButton.addEventListener('click', handleDecryption);
-
-            // 【新的部分】監聽輸入框的按鍵事件
             passwordInput.addEventListener('keyup', (event) => {
-                // 如果按下的鍵是 "Enter"
                 if (event.key === 'Enter') {
-                    // 阻止預設行為 (例如提交表單)
                     event.preventDefault();
-                    // 手動觸發解密處理
                     handleDecryption();
                 }
             });
@@ -1173,7 +1203,6 @@
             const articlePageContainer = document.getElementById('article-detail-page');
             if (!articlePageContainer) return;
 
-            // --- 加密邏輯開始 ---
             const isEncrypted = article.hashtags && article.hashtags.includes('加密');
             let mainContent = article.content || "";
             let correctPassword = '';
@@ -1182,18 +1211,14 @@
             if (isEncrypted) {
                 const lines = mainContent.trim().split('\n');
                 if (lines.length > 1) {
-                    // 取出最後一行作為密碼
                     correctPassword = lines.pop().trim();
-                    // 剩餘部分作為主要內容
                     mainContent = lines.join('\n');
                     showPrompt = true;
                 }
             }
-            // --- 加密邏輯結束 ---
             
             const displayDate = article.date.toLocaleDateString('zh-TW');
             
-            // 構建文章頁面HTML，但內容區域先留空
             articlePageContainer.innerHTML = `
                 <header class="header">
                     <button onclick="closeArticle()" style="float: right; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-text-primary); padding: 0.5rem 1rem; line-height: 1;">✕</button>
@@ -1212,13 +1237,11 @@
             const contentWrapper = articlePageContainer.querySelector('.markdown-content');
 
             if (showPrompt && correctPassword) {
-                // 如果是加密文章，顯示密碼提示框
                 contentWrapper.innerHTML = generatePasswordPromptHtml(article.id);
                 setupDecryptionHandler(article.id, mainContent, correctPassword);
             } else {
-                // 如果是普通文章，直接顯示內容
-                contentWrapper.innerHTML = markdownToHtml(mainContent);
-                processRenderedContent(contentWrapper); // 處理渲染
+                // ✨ [修改] 使用新的渲染函式
+                renderMarkdown(mainContent, contentWrapper);
             }
             
             window.scrollTo(0, 0);
@@ -1253,37 +1276,32 @@
             if (sidebarElement && navMenuElement && sidebarControlsElement) {
                 const mobileMediaQuery = window.matchMedia("(max-width: 768px)");
                 function handleControlsPosition(mq) {
-                    if (!sidebarControlsElement || !sidebarControlsElement.parentNode) return; // Element might have been removed or not found
-                    if (mq.matches) { // Mobile view
-                        // If controls are in navMenu AND sidebar is NOT collapsed, move them to be a direct child of sidebar
+                    if (!sidebarControlsElement || !sidebarControlsElement.parentNode) return;
+                    if (mq.matches) {
                         if (sidebarControlsElement.parentNode === navMenuElement && !sidebarElement.classList.contains('collapsed')) {
                             sidebarElement.appendChild(sidebarControlsElement);
                         }
-                    } else { // Desktop view
-                        // If controls are a direct child of sidebar, move them back into navMenu
+                    } else {
                         if (sidebarControlsElement.parentNode === sidebarElement) {
                             navMenuElement.appendChild(sidebarControlsElement);
                         }
                     }
                 }
-                handleControlsPosition(mobileMediaQuery); // Initial check
+                handleControlsPosition(mobileMediaQuery); 
 
-                // Observe class changes on sidebar (e.g., 'collapsed') to re-evaluate position
                 const sidebarObserver = new MutationObserver((mutationsList) => {
                     for(const mutation of mutationsList) {
                         if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                           handleControlsPosition(mobileMediaQuery); // Re-check position based on new class and media query state
+                           handleControlsPosition(mobileMediaQuery);
                         }
                     }
                 });
                 sidebarObserver.observe(sidebarElement, { attributes: true });
 
-                // Listen for screen width changes
                 mobileMediaQuery.addEventListener('change', () => handleControlsPosition(mobileMediaQuery));
             } else { console.error("Essential sidebar elements not found for controls repositioning logic."); }
 
             if (navMenuElement) {
-                // Attach event listeners only to nav-items that are NOT the controls block
                 navMenuElement.querySelectorAll('.nav-item:not(.sidebar-controls) .nav-link').forEach(link => {
                     link.addEventListener('click', function(e) { e.preventDefault(); const pageId = this.dataset.page; navigateToPage(pageId); });
                 });
