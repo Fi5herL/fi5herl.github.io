@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Editor (Offline cannot paste img)</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖼️</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; display: flex; flex-direction: column; align-items: center; }
+        .container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1600px;
+        }
+        .controls {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-self: flex-start;
+            max-height: 90vh;
+            overflow-y: auto;
+            /* 新增 sticky 效果 */
+            position: sticky;
+            top: 20px;
+            left: 0;
+            z-index: 10;
+        }
+        .controls h3 { margin-top: 0; margin-bottom: 8px; color: #333; }
+        .controls label, .controls button, .controls input, .controls select { display: block; width: calc(100% - 16px); margin-bottom: 6px; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; font-size: 0.9em; }
+        .controls button, .button-like-label { background-color: #007bff; color: white; border: none; cursor: pointer; transition: background-color 0.2s; }
+        .controls button:hover, .button-like-label:hover { background-color: #0056b3; }
+        .controls .tool-button.active { background-color: #28a745; }
+        #canvasContainer {
+            border: 1px solid #ccc;
+            background-color: #e9e9e9;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: auto;
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        canvas { display: block; cursor: default; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.15); }
+        .hidden-input { display: none; }
+        .color-picker-wrapper { display: flex; align-items: center; gap: 5px; }
+        .color-picker-wrapper input[type="color"] { padding: 0; width: 40px; height: 30px; }
+
+        .guideline { position: absolute; background-color: rgba(255, 0, 0, 0.5); z-index: 9999; }
+        .guideline.horizontal { width: 100%; height: 1px; left: 0; }
+        .guideline.vertical { height: 100%; width: 1px; top: 0; }
+
+        .button-like-label {
+            display: inline-block;
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            margin-bottom: 8px;
+            width: calc(100% - 16px);
+            box-sizing: border-box;
+        }
+        hr { border: 0; height: 1px; background: #ddd; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <!-- <h1>圖片編輯與PDF輸出工具 (離線版)</h1> --> <!-- 移除標題欄 -->
+
+    <div class="container">
+        <div class="controls">
+            <h3>控制面板</h3>
+            <label for="imageUpload" class="button-like-label">上傳圖片 (可多選)</label>
+            <input type="file" id="imageUpload" accept="image/*" multiple class="hidden-input">
+            <p style="font-size:0.8em; color:#555; margin-top:-5px;">或直接貼上圖片 (Ctrl+V / Cmd+V)</p>
+
+            <hr>
+            <h3>工具</h3>
+            <button id="selectTool" class="tool-button active">選擇/移動/縮放 (V)</button>
+            <button id="drawTool" class="tool-button">畫筆 (B)</button>
+            <button id="textTool" class="tool-button">文字 (T)</button>
+
+            <div id="drawingOptions" style="display:none;">
+                <h4>畫筆選項</h4>
+                <label for="strokeColor">顏色:</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="strokeColor" value="#FF0000">
+                </div>
+                <label for="lineWidth">線寬:</label>
+                <input type="range" id="lineWidth" min="1" max="30" value="3">
+            </div>
+
+            <div id="textOptions" style="display:none;">
+                <h4>文字選項</h4>
+                <label for="textColor">顏色:</label>
+                 <div class="color-picker-wrapper">
+                    <input type="color" id="textColor" value="#000000">
+                </div>
+                <label for="fontSize">字號 (px):</label>
+                <input type="number" id="fontSize" value="20" min="8">
+                <label for="fontFamily">字型:</label>
+                <select id="fontFamily">
+                    <option value="Arial">Arial</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Microsoft JhengHei, sans-serif">微軟正黑體 (Sans-Serif)</option>
+                    <option value="MingLiU, serif">細明體 (Serif)</option>
+                    <option value="sans-serif">Sans-Serif (預設)</option>
+                </select>
+            </div>
+
+            <hr>
+            <div id="selectedObjectControls" style="display:none;">
+                <h3>選中物件</h3>
+                <label for="objectName">顯示名稱:</label>
+                <input type="text" id="objectName" placeholder="輸入物件名稱">
+                <!-- 新增：僅當選中文字時顯示 -->
+                <div id="textEditFields" style="display:none;">
+                    <label for="editTextContent">內容:</label>
+                    <input type="text" id="editTextContent" placeholder="輸入文字內容">
+                    <label for="editTextColor">顏色:</label>
+                    <input type="color" id="editTextColor">
+                    <label for="editFontSize">字號 (px):</label>
+                    <input type="number" id="editFontSize" min="8">
+                    <label for="editFontFamily">字型:</label>
+                    <select id="editFontFamily">
+                        <option value="Arial">Arial</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Microsoft JhengHei, sans-serif">微軟正黑體 (Sans-Serif)</option>
+                        <option value="MingLiU, serif">細明體 (Serif)</option>
+                        <option value="sans-serif">Sans-Serif (預設)</option>
+                    </select>
+                </div>
+                <button id="deleteSelected">刪除選中物件 (Del)</button>
+                <button id="bringToFront">移到最上層</button>
+                <button id="sendToBack">移到最下層</button>
+            </div>
+
+            <hr>
+            <h3>畫布設定</h3>
+            <label for="pageSize">紙張大小:</label>
+            <select id="pageSize">
+                <option value="A4">A4 (210 x 297 mm)</option>
+                <option value="A3">A3 (297 x 420 mm)</option>
+                <option value="Letter">Letter (8.5 x 11 in)</option>
+                <option value="Custom">自訂 (使用下方寬高)</option>
+            </select>
+            <label for="pageOrientation">方向:</label>
+            <select id="pageOrientation">
+                <option value="portrait">縱向</option>
+                <option value="landscape">橫向</option>
+            </select>
+            <div id="customSizeInputs" style="display:none;">
+                <label for="customCanvasWidth">自訂寬度 (px):</label>
+                <input type="number" id="customCanvasWidth" value="800">
+                <label for="customCanvasHeight">自訂高度 (px):</label>
+                <input type="number" id="customCanvasHeight" value="1000">
+            </div>
+            <label for="numPages">預計頁數 (非自訂時):</label>
+            <input type="number" id="numPages" value="1" min="1">
+            <button id="updateCanvasLayout">更新畫布佈局</button>
+            <button id="clearAnnotations">清空標註 (保留圖片)</button>
+
+            <hr>
+            <h3>專案</h3>
+            <button id="exportProject">匯出專案 (.json)</button>
+            <label for="importProjectInput" class="button-like-label">匯入專案 (.json)</label>
+            <input type="file" id="importProjectInput" accept=".json" class="hidden-input">
+
+            <hr>
+            <h3>輸出</h3>
+            <button id="exportPdf">輸出為 PDF</button>
+            <p style="font-size:0.8em; color: #555;">提示: PDF輸出預設無邊框。請參考畫布上<span style="color:gray; border-bottom: 1px dashed gray;">灰色虛線(視覺分頁)</span>與<span style="color:blue; border-bottom: 1px dashed blue;">藍色虛線(PDF實際分頁)</span>調整圖片位置。</p>
+        </div>
+
+        <div id="canvasContainer">
+            <canvas id="editorCanvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        const canvas = document.getElementById('editorCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageUpload = document.getElementById('imageUpload');
+
+        const selectToolBtn = document.getElementById('selectTool');
+        const drawToolBtn = document.getElementById('drawTool');
+        const textToolBtn = document.getElementById('textTool');
+
+        const drawingOptionsDiv = document.getElementById('drawingOptions');
+        const strokeColorInput = document.getElementById('strokeColor');
+        const lineWidthInput = document.getElementById('lineWidth');
+
+        const textOptionsDiv = document.getElementById('textOptions');
+        const textColorInput = document.getElementById('textColor');
+        const fontSizeInput = document.getElementById('fontSize');
+        const fontFamilySelect = document.getElementById('fontFamily');
+
+        const selectedObjectControlsDiv = document.getElementById('selectedObjectControls');
+        const objectNameInput = document.getElementById('objectName');
+        const deleteSelectedBtn = document.getElementById('deleteSelected');
+        const bringToFrontBtn = document.getElementById('bringToFront');
+        const sendToBackBtn = document.getElementById('sendToBack');
+        // 新增
+        const textEditFields = document.getElementById('textEditFields');
+        const editTextContent = document.getElementById('editTextContent');
+        const editTextColor = document.getElementById('editTextColor');
+        const editFontSize = document.getElementById('editFontSize');
+        const editFontFamily = document.getElementById('editFontFamily');
+
+        const pageSizeSelect = document.getElementById('pageSize');
+        const pageOrientationSelect = document.getElementById('pageOrientation');
+        const customSizeInputsDiv = document.getElementById('customSizeInputs');
+        const customCanvasWidthInput = document.getElementById('customCanvasWidth');
+        const customCanvasHeightInput = document.getElementById('customCanvasHeight');
+        const numPagesInput = document.getElementById('numPages');
+        const updateCanvasLayoutBtn = document.getElementById('updateCanvasLayout');
+        const clearAnnotationsBtn = document.getElementById('clearAnnotations');
+
+        const exportProjectBtn = document.getElementById('exportProject');
+        const importProjectInput = document.getElementById('importProjectInput');
+        const exportPdfBtn = document.getElementById('exportPdf');
+
+        let canvasObjects = [];
+        let selectedObject = null;
+        let currentTool = 'select';
+
+        let isDragging = false;
+        let isResizing = false;
+        let resizeHandle = null;
+        let dragOffsetX, dragOffsetY;
+
+        let isDrawing = false;
+        let currentPath = [];
+
+        const RESIZE_HANDLE_SIZE = 8;
+        const ALIGNMENT_THRESHOLD = 8;
+        const DPI = 96;
+        const MM_TO_INCH = 1 / 25.4;
+        let singlePagePixelHeight = 0;
+
+        const PAGE_DIMENSIONS = {
+            'A4': { width: 210, height: 297 },
+            'A3': { width: 297, height: 420 },
+            'Letter': { width: 215.9, height: 279.4 }
+        };
+
+        let lastCanvasMouseX = null;
+        let lastCanvasMouseY = null;
+
+        const ROTATE_BUTTON_SIZE = 20;
+        const ROTATE_BUTTON_OFFSET = 5;
+
+
+        // --- Initialization ---
+        function getPixelDimensions(size, orientation, pages) {
+            let W_mm, H_mm;
+            if (size === 'Custom') {
+                return {
+                    width: parseInt(customCanvasWidthInput.value) || 800,
+                    height: parseInt(customCanvasHeightInput.value) || 1000,
+                    isCustom: true
+                };
+            }
+
+            const dims = PAGE_DIMENSIONS[size];
+            if (!dims) return { width: 800, height: 1000, isCustom: true };
+
+            if (orientation === 'portrait') {
+                W_mm = dims.width; H_mm = dims.height;
+            } else {
+                W_mm = dims.height; H_mm = dims.width;
+            }
+            const W_px = Math.round(W_mm * MM_TO_INCH * DPI);
+            const H_px_single = Math.round(H_mm * MM_TO_INCH * DPI);
+
+            return { width: W_px, height: H_px_single * pages, singlePageH: H_px_single, isCustom: false };
+        }
+
+        function updateCanvasLayout() {
+            const selectedSize = pageSizeSelect.value;
+            const selectedOrientation = pageOrientationSelect.value;
+            const pages = (selectedSize === 'Custom') ? 1 : (parseInt(numPagesInput.value) || 1);
+
+            const dims = getPixelDimensions(selectedSize, selectedOrientation, pages);
+            canvas.width = dims.width;
+            canvas.height = dims.height;
+            singlePagePixelHeight = dims.isCustom ? 0 : dims.singlePageH;
+
+            lastCanvasMouseX = canvas.width / 2;
+            lastCanvasMouseY = canvas.height / 2;
+
+            redrawCanvas();
+        }
+
+        pageSizeSelect.addEventListener('change', () => {
+            const isCustom = pageSizeSelect.value === 'Custom';
+            customSizeInputsDiv.style.display = isCustom ? 'block' : 'none';
+            numPagesInput.disabled = isCustom;
+            if(!isCustom) updateCanvasLayout();
+        });
+        pageOrientationSelect.addEventListener('change', updateCanvasLayout);
+        numPagesInput.addEventListener('change', () => {
+            if (pageSizeSelect.value !== 'Custom') updateCanvasLayout();
+        });
+        customCanvasWidthInput.addEventListener('input', () => { if(pageSizeSelect.value === 'Custom') updateCanvasLayout(); });
+        customCanvasHeightInput.addEventListener('input', () => { if(pageSizeSelect.value === 'Custom') updateCanvasLayout(); });
+
+
+        updateCanvasLayoutBtn.addEventListener('click', updateCanvasLayout);
+
+        function initCanvas() {
+            updateCanvasLayout();
+            setTool('select');
+        }
+        initCanvas();
+
+        // --- Tool Selection ---
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-button').forEach(btn => btn.classList.remove('active'));
+            drawingOptionsDiv.style.display = 'none';
+            textOptionsDiv.style.display = 'none';
+
+            if (tool === 'select') {
+                selectToolBtn.classList.add('active');
+                canvas.style.cursor = 'default';
+            } else if (tool === 'draw') {
+                drawToolBtn.classList.add('active');
+                drawingOptionsDiv.style.display = 'block';
+                canvas.style.cursor = 'crosshair';
+            } else if (tool === 'text') {
+                textToolBtn.classList.add('active');
+                textOptionsDiv.style.display = 'block';
+                canvas.style.cursor = 'text';
+            }
+            deselectObject();
+        }
+
+        selectToolBtn.addEventListener('click', () => setTool('select'));
+        drawToolBtn.addEventListener('click', () => setTool('draw'));
+        textToolBtn.addEventListener('click', () => setTool('text'));
+
+        // --- Image Upload ---
+        imageUpload.addEventListener('change', (e) => {
+            handleImageFiles(e.target.files);
+            imageUpload.value = '';
+        });
+
+        function handleImageFiles(files, pastePos = null) {
+             for (const file of files) {
+                if (!file.type.startsWith('image/')) continue;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const aspectRatio = img.naturalWidth / img.naturalHeight;
+                        let defaultWidth = Math.min(img.naturalWidth, canvas.width * 0.25);
+                        defaultWidth = Math.max(50, defaultWidth);
+                        const defaultHeight = defaultWidth / aspectRatio;
+
+                        let x, y;
+                        if (pastePos && pastePos.x !== null && pastePos.y !== null) {
+                            x = pastePos.x - defaultWidth / 2;
+                            y = pastePos.y - defaultHeight / 2;
+                        } else {
+                            x = (canvas.width - defaultWidth) / 2 + (canvasObjects.filter(obj => obj.type === 'image').length * 10);
+                            y = (canvas.height - defaultHeight) / 2 + (canvasObjects.filter(obj => obj.type === 'image').length * 10);
+                        }
+                        x = Math.max(0, Math.min(x, canvas.width - defaultWidth));
+                        y = Math.max(0, Math.min(y, canvas.height - defaultHeight));
+
+                        canvasObjects.push({
+                            type: 'image',
+                            id: Date.now() + Math.random(),
+                            image: img,
+                            src: img.src,
+                            x: x, y: y,
+                            width: defaultWidth, height: defaultHeight,
+                            name: file.name ? file.name.split('.')[0] : ('PastedImage-' + Date.now()),
+                            rotation: 0, // Initial rotation
+                        });
+                        redrawCanvas();
+                    }
+                    img.onerror = () => {
+                        console.error("Error loading image for paste/upload");
+                        alert("圖片載入失敗，請確認檔案格式或來源。");
+                    }
+                    img.src = event.target.result;
+                }
+                reader.onerror = () => {
+                    console.error("FileReader error for image.");
+                    alert("讀取圖片檔案時發生錯誤。");
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // --- Drawing Logic ---
+        function drawPath(targetCtx, points, color, width) {
+            targetCtx.save();
+            targetCtx.beginPath();
+            targetCtx.strokeStyle = color;
+            targetCtx.lineWidth = width;
+            targetCtx.lineCap = 'round';
+            targetCtx.lineJoin = 'round';
+            points.forEach((p, index) => {
+                if (index === 0) targetCtx.moveTo(p.x, p.y);
+                else targetCtx.lineTo(p.x, p.y);
+            });
+            targetCtx.stroke();
+            targetCtx.restore();
+        }
+
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (pageSizeSelect.value !== 'Custom' && singlePagePixelHeight > 0) {
+                const numActualPages = Math.ceil(canvas.height / singlePagePixelHeight);
+                if (numActualPages > 1) {
+                    ctx.save();
+                    ctx.strokeStyle = '#CCCCCC';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([5, 3]);
+                    for (let i = 1; i < numActualPages; i++) {
+                        const y = i * singlePagePixelHeight;
+                        if (y < canvas.height) {
+                           ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+                        }
+                    }
+                    ctx.restore();
+                }
+            }
+
+            if (exportPdfBtn && pageSizeSelect.value !== 'Custom' && canvas.height > 0) {
+                try {
+                    const pdfOrientationPrev = pageOrientationSelect.value;
+                    const pdfPageTypePrev = pageSizeSelect.value.toLowerCase();
+                    const tempPdf = new jsPDF({ orientation: pdfOrientationPrev, unit: 'pt', format: pdfPageTypePrev });
+                    const MARGIN_PT_PREV = 0;
+                    const contentWidthPtPrev = tempPdf.internal.pageSize.getWidth() - 2 * MARGIN_PT_PREV;
+                    const contentHeightPtPrev = tempPdf.internal.pageSize.getHeight() - 2 * MARGIN_PT_PREV;
+                    if (canvas.width > 0) {
+                        let scaleToFitPdfWidthPrev = contentWidthPtPrev / canvas.width;
+                        const pdfPageHeightInCanvasPixels = contentHeightPtPrev / scaleToFitPdfWidthPrev;
+                        if (pdfPageHeightInCanvasPixels > 0 && pdfPageHeightInCanvasPixels < canvas.height) {
+                            ctx.save();
+                            ctx.strokeStyle = 'rgba(0, 0, 255, 0.6)';
+                            ctx.lineWidth = 1.5;
+                            ctx.setLineDash([8, 4]);
+                            let numPdfLinesToDraw = Math.floor(canvas.height / pdfPageHeightInCanvasPixels);
+                            for (let i = 1; i <= numPdfLinesToDraw; i++) {
+                                const y = i * pdfPageHeightInCanvasPixels;
+                                if (y < canvas.height) {
+                                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+                                }
+                            }
+                            ctx.restore();
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Could not draw PDF preview lines:", e);
+                }
+            }
+
+
+            canvasObjects.forEach(obj => {
+                ctx.save();
+                if (obj.type === 'image') {
+                    if (obj.image && obj.image.complete && obj.image.naturalHeight !== 0) {
+                        ctx.save();
+                        ctx.translate(obj.x + obj.width / 2, obj.y + obj.height / 2);
+                        ctx.rotate(obj.rotation || 0);
+                        ctx.drawImage(obj.image, -obj.width / 2, -obj.height / 2, obj.width, obj.height);
+                        ctx.restore();
+                    } else if (!obj.image) {
+                        ctx.fillStyle = '#ccc'; ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                        ctx.fillStyle = 'black'; ctx.textAlign='center'; ctx.fillText("Image error", obj.x + obj.width/2, obj.y + obj.height/2);
+                    }
+                    if (obj.name) { // Draw name without rotation for simplicity
+                        ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.font = '12px Arial'; ctx.textAlign = 'center';
+                        let nameY = obj.y + obj.height + 15;
+                         // A very basic attempt to adjust name position if rotated significantly, might need better logic
+                        if (obj.rotation && (Math.abs(obj.rotation % Math.PI) > 0.1)) { // if rotated (not 0 or 180 deg)
+                            nameY = Math.max(obj.y + obj.height, obj.y + obj.width) + 15; // Take max of rotated bounds approx.
+                        }
+                        if (nameY > canvas.height - 5 && obj.y - 15 > 0) nameY = obj.y - 15; // Try to put above if below canvas
+                        else if (nameY > canvas.height -5) nameY = obj.y + obj.height/2; // Fallback to center
+
+                        ctx.fillText(obj.name, obj.x + obj.width / 2, nameY);
+                    }
+                } else if (obj.type === 'drawing') {
+                    drawPath(ctx, obj.points, obj.color, obj.lineWidth);
+                } else if (obj.type === 'text') {
+                    ctx.fillStyle = obj.color; ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+                    ctx.fillText(obj.text, obj.x, obj.y);
+                }
+                ctx.restore();
+            });
+
+            if (selectedObject && currentTool === 'select') {
+                drawSelectionHandles(selectedObject);
+            }
+
+            if (isDrawing && currentPath.length > 0) {
+                drawPath(ctx, currentPath, strokeColorInput.value, lineWidthInput.value);
+            }
+        }
+
+        function drawSelectionHandles(obj) {
+            // For non-image objects, the selection box does not rotate with the object
+            // For images, the selection box itself is drawn unrotated, but handles/buttons are placed considering rotation.
+            let x = obj.x; let y = obj.y; let w = obj.width; let h = obj.height;
+            let selectionCenterX = x + w / 2;
+            let selectionCenterY = y + h / 2;
+
+            ctx.save();
+            if (obj.type === 'image' && obj.rotation) { // For rotated images, draw un-rotated bounding box for handles
+                 // The visual selection box will still be axis-aligned for simplicity of resize handles.
+                 // The rotation button will be placed relative to this box.
+            } else if (obj.type === 'text') {
+                ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                const metrics = ctx.measureText(obj.text);
+                w = metrics.width; h = obj.fontSize * 1.2;
+                const padding = 5; x -= padding; y -= padding; w += padding * 2; h += padding * 2;
+            } else if (obj.type === 'drawing') {
+                if (obj.points && obj.points.length > 0) {
+                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                    obj.points.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
+                    x = minX - obj.lineWidth / 2; y = minY - obj.lineWidth / 2;
+                    w = maxX - minX + obj.lineWidth; h = maxY - minY + obj.lineWidth;
+                } else { ctx.restore(); return; }
+            } else if (obj.type !== 'image') { ctx.restore(); return; }
+
+
+            // Draw the axis-aligned selection rectangle
+            ctx.strokeStyle = '#007bff'; ctx.lineWidth = 1; ctx.setLineDash([4, 2]);
+            ctx.strokeRect(x, y, w, h);
+            ctx.setLineDash([]);
+            ctx.restore(); // Restore from potential text/drawing specific changes if any
+
+            if (obj.type === 'image') {
+                ctx.save();
+                // Translate to the image's un-rotated top-left for handle placement, then apply rotation
+                // for drawing the rotate button in its correct rotated position.
+                ctx.translate(obj.x + obj.width / 2, obj.y + obj.height / 2);
+                ctx.rotate(obj.rotation || 0);
+                ctx.translate(-(obj.x + obj.width / 2), -(obj.y + obj.height / 2));
+
+
+                // Draw resize handles (these are on the un-rotated bounding box corners)
+                const handles = getResizeHandles(obj); // getResizeHandles uses obj.x,y,width,height directly
+                ctx.fillStyle = '#007bff';
+                for (const handleName in handles) {
+                    const pos = handles[handleName];
+                    ctx.fillRect(pos.x - RESIZE_HANDLE_SIZE / 2, pos.y - RESIZE_HANDLE_SIZE / 2, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE);
+                }
+
+
+                // --- 繪製旋轉按鈕 (position relative to the un-rotated box, but drawn in rotated context) ---
+                // The button's visual position will be rotated with the image.
+                const buttonAttachX = obj.x + obj.width + ROTATE_BUTTON_OFFSET;
+                const buttonAttachY = obj.y + obj.height + ROTATE_BUTTON_OFFSET;
+
+                ctx.fillStyle = '#28a745'; // Green button
+                ctx.beginPath();
+                ctx.arc(buttonAttachX + ROTATE_BUTTON_SIZE / 2, buttonAttachY + ROTATE_BUTTON_SIZE / 2, ROTATE_BUTTON_SIZE / 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                const btnCenterX = buttonAttachX + ROTATE_BUTTON_SIZE / 2;
+                const btnCenterY = buttonAttachY + ROTATE_BUTTON_SIZE / 2;
+                const arrowRadius = ROTATE_BUTTON_SIZE / 3;
+                ctx.arc(btnCenterX, btnCenterY, arrowRadius, -Math.PI * 0.6, Math.PI * 0.9);
+                ctx.moveTo(btnCenterX + arrowRadius * Math.cos(Math.PI * 0.9), btnCenterY + arrowRadius * Math.sin(Math.PI * 0.9));
+                ctx.lineTo(btnCenterX + arrowRadius * Math.cos(Math.PI * 0.9) - 3, btnCenterY + arrowRadius * Math.sin(Math.PI * 0.9) - 3); // Arrowhead
+                ctx.moveTo(btnCenterX + arrowRadius * Math.cos(Math.PI * 0.9), btnCenterY + arrowRadius * Math.sin(Math.PI * 0.9));
+                ctx.lineTo(btnCenterX + arrowRadius * Math.cos(Math.PI * 0.9) + 3, btnCenterY + arrowRadius * Math.sin(Math.PI * 0.9) - 3); // Arrowhead
+                ctx.stroke();
+
+                ctx.restore(); // Restore from rotation transform
+            }
+        }
+
+
+        function getMousePos(event) {
+            const rect = canvas.getBoundingClientRect();
+            return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        }
+        function isPointInRect(px, py, rx, ry, rw, rh) {
+            return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh;
+        }
+
+        function getObjectAtPosition(x, y) { // This will select based on un-rotated bounding box
+            for (let i = canvasObjects.length - 1; i >= 0; i--) {
+                const obj = canvasObjects[i];
+                let ox, oy, ow, oh;
+                if (obj.type === 'image') {
+                    // For selection, use the axis-aligned bounding box of the unrotated image for simplicity
+                    ox = obj.x; oy = obj.y; ow = obj.width; oh = obj.height;
+                } else if (obj.type === 'text') {
+                    ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                    const metrics = ctx.measureText(obj.text);
+                    const padding = 5; ox = obj.x - padding; oy = obj.y - padding;
+                    ow = metrics.width + padding * 2; oh = obj.fontSize * 1.2 + padding * 2;
+                } else if (obj.type === 'drawing' && obj.points && obj.points.length > 0) {
+                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                    obj.points.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
+                    const pathBuffer = obj.lineWidth / 2 + 5;
+                    ox = minX - pathBuffer; oy = minY - pathBuffer;
+                    ow = (maxX - minX) + pathBuffer * 2; oh = (maxY - minY) + pathBuffer * 2;
+                } else { continue; }
+
+                // If image is rotated, point-in-rect test needs to account for rotation
+                if (obj.type === 'image' && obj.rotation) {
+                    const cx = ox + ow / 2;
+                    const cy = oy + oh / 2;
+                    const angle = -(obj.rotation || 0); // Inverse rotation for mouse point
+
+                    const localMouseX = cx + (x - cx) * Math.cos(angle) - (y - cy) * Math.sin(angle);
+                    const localMouseY = cy + (x - cx) * Math.sin(angle) + (y - cy) * Math.cos(angle);
+                    if (isPointInRect(localMouseX, localMouseY, ox, oy, ow, oh)) return obj;
+
+                } else {
+                     if (isPointInRect(x, y, ox, oy, ow, oh)) { return obj; }
+                }
+            }
+            return null;
+        }
+
+        function getResizeHandles(obj) { // Returns handles for the un-rotated bounding box
+             if (obj.type !== 'image') return {};
+            return {
+                topLeft: { x: obj.x, y: obj.y }, topRight: { x: obj.x + obj.width, y: obj.y },
+                bottomLeft: { x: obj.x, y: obj.y + obj.height }, bottomRight: { x: obj.x + obj.width, y: obj.y + obj.height },
+            };
+        }
+
+        function getResizeHandleAtPosition(obj, mouseX, mouseY) { // Mouse coords are canvas coords
+            if (obj.type !== 'image') return null;
+            // Resize handles are on the un-rotated bounding box.
+            // Transform mouse point to be relative to un-rotated box if image is rotated.
+            let mX = mouseX;
+            let mY = mouseY;
+
+            if (obj.rotation) {
+                const cx = obj.x + obj.width / 2;
+                const cy = obj.y + obj.height / 2;
+                const angle = -(obj.rotation); // inverse rotation
+
+                mX = cx + (mouseX - cx) * Math.cos(angle) - (mouseY - cy) * Math.sin(angle);
+                mY = cy + (mouseX - cx) * Math.sin(angle) + (mouseY - cy) * Math.cos(angle);
+            }
+
+            const handles = getResizeHandles(obj);
+            for (const name in handles) {
+                const pos = handles[name];
+                // Check against transformed mouse point mX, mY
+                if (isPointInRect(mX, mY, pos.x - RESIZE_HANDLE_SIZE, pos.y - RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE * 2, RESIZE_HANDLE_SIZE * 2)) {
+                    return name;
+                }
+            }
+            return null;
+        }
+
+        function getRotateButtonAtPosition(obj, mouseX, mouseY) { // mouseX, mouseY are canvas coordinates
+            if (!obj || obj.type !== 'image') return null;
+
+            // The button is visually rotated with the image.
+            // So, transform the mouse point into the image's rotated coordinate system
+            // where the button is at a fixed position relative to the image's un-rotated bottom-right.
+            const cx = obj.x + obj.width / 2;
+            const cy = obj.y + obj.height / 2;
+            const angle = -(obj.rotation || 0); // Inverse rotation for the mouse point
+
+            const localMouseX = cx + (mouseX - cx) * Math.cos(angle) - (mouseY - cy) * Math.sin(angle);
+            const localMouseY = cy + (mouseX - cx) * Math.sin(angle) + (mouseY - cy) * Math.cos(angle);
+
+            // Button's position in the image's un-rotated local space
+            const buttonRectX = obj.x + obj.width + ROTATE_BUTTON_OFFSET;
+            const buttonRectY = obj.y + obj.height + ROTATE_BUTTON_OFFSET;
+
+            if (isPointInRect(localMouseX, localMouseY, buttonRectX, buttonRectY, ROTATE_BUTTON_SIZE, ROTATE_BUTTON_SIZE)) {
+                return 'rotate';
+            }
+            return null;
+        }
+
+
+        function deselectObject() { selectedObject = null; selectedObjectControlsDiv.style.display = 'none'; redrawCanvas(); }
+        function selectObject(obj) { selectedObject = obj; selectedObjectControlsDiv.style.display = 'block'; objectNameInput.value = obj.name || ''; 
+            // 根據物件型態顯示/隱藏文字編輯欄位
+            if (obj.type === 'text') {
+                textEditFields.style.display = '';
+                editTextContent.value = obj.text || '';
+                editTextColor.value = obj.color || '#000000';
+                editFontSize.value = obj.fontSize || 20;
+                editFontFamily.value = obj.fontFamily || 'Arial';
+            } else {
+                textEditFields.style.display = 'none';
+            }
+            redrawCanvas(); 
+        }
+
+        // 綁定文字屬性編輯事件
+        editTextContent.addEventListener('input', function() {
+            if (selectedObject && selectedObject.type === 'text') {
+                selectedObject.text = this.value;
+                redrawCanvas();
+            }
+        });
+        editTextColor.addEventListener('input', function() {
+            if (selectedObject && selectedObject.type === 'text') {
+                selectedObject.color = this.value;
+                redrawCanvas();
+            }
+        });
+        editFontSize.addEventListener('input', function() {
+            if (selectedObject && selectedObject.type === 'text') {
+                selectedObject.fontSize = parseInt(this.value) || 20;
+                redrawCanvas();
+            }
+        });
+        editFontFamily.addEventListener('change', function() {
+            if (selectedObject && selectedObject.type === 'text') {
+                selectedObject.fontFamily = this.value;
+                redrawCanvas();
+            }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            const mousePos = getMousePos(e);
+            if (currentTool === 'select') {
+                isResizing = false; resizeHandle = null;
+
+                if (selectedObject && selectedObject.type === 'image') {
+                    const clickedRotateButton = getRotateButtonAtPosition(selectedObject, mousePos.x, mousePos.y);
+                    if (clickedRotateButton === 'rotate') {
+                        selectedObject.rotation = (selectedObject.rotation || 0) + Math.PI / 2;
+                        if (selectedObject.rotation >= Math.PI * 2) {
+                            selectedObject.rotation -= Math.PI * 2;
+                        }
+                        redrawCanvas();
+                        return;
+                    }
+                }
+
+                if (selectedObject && selectedObject.type === 'image') {
+                    resizeHandle = getResizeHandleAtPosition(selectedObject, mousePos.x, mousePos.y);
+                    if (resizeHandle) { isResizing = true; canvas.style.cursor = getResizeCursor(resizeHandle); return; }
+                }
+
+                const clickedObject = getObjectAtPosition(mousePos.x, mousePos.y);
+                if (clickedObject) {
+                    if (selectedObject !== clickedObject) { // Only re-select if different object
+                        selectObject(clickedObject);
+                    }
+                    isDragging = true; // Always allow dragging if an object is clicked
+                    dragOffsetX = mousePos.x - clickedObject.x; // Use clickedObject here
+                    dragOffsetY = mousePos.y - clickedObject.y;
+                    canvas.style.cursor = 'grabbing';
+                } else {
+                    deselectObject();
+                }
+            } else if (currentTool === 'draw') { isDrawing = true; currentPath = [{ x: mousePos.x, y: mousePos.y }]; }
+            else if (currentTool === 'text') {
+                const text = prompt("請輸入文字:", "在此輸入");
+                if (text) {
+                    canvasObjects.push({ type: 'text', id: Date.now() + Math.random(), text: text, x: mousePos.x, y: mousePos.y, color: textColorInput.value, fontSize: parseInt(fontSizeInput.value), fontFamily: fontFamilySelect.value, name: 'Text-' + (canvasObjects.filter(o=>o.type==='text').length + 1) });
+                    redrawCanvas(); setTool('select');
+                }
+            }
+        });
+
+        let lastMouseMoveTime = 0; const mouseMoveThrottle = 16;
+
+        canvas.addEventListener('mousemove', (e) => {
+            const currentTime = performance.now();
+            if (currentTime - lastMouseMoveTime < mouseMoveThrottle && (isDragging || isResizing || isDrawing)) { /* Throttling */ }
+            lastMouseMoveTime = currentTime;
+            const mousePos = getMousePos(e);
+            lastCanvasMouseX = mousePos.x;
+            lastCanvasMouseY = mousePos.y;
+
+            if (currentTool === 'select') {
+                if (isResizing && selectedObject && selectedObject.type === 'image') {
+                    const obj = selectedObject;
+                    // Store original center
+                    const origCenterX = obj.x + obj.width / 2;
+                    const origCenterY = obj.y + obj.height / 2;
+
+                    let newX = obj.x, newY = obj.y, newWidth = obj.width, newHeight = obj.height;
+                    const prevWidth = obj.width; const prevHeight = obj.height;
+
+                    // Transform mouse to unrotated image space for consistent resize logic
+                    let mX = mousePos.x;
+                    let mY = mousePos.y;
+                    if (obj.rotation) {
+                        const angle = -(obj.rotation);
+                        mX = origCenterX + (mousePos.x - origCenterX) * Math.cos(angle) - (mousePos.y - origCenterY) * Math.sin(angle);
+                        mY = origCenterY + (mousePos.x - origCenterX) * Math.sin(angle) + (mousePos.y - origCenterY) * Math.cos(angle);
+                    }
+
+
+                    const aspectRatio = (obj.image && obj.image.naturalWidth > 0 && obj.image.naturalHeight > 0)
+                                        ? (obj.image.naturalWidth / obj.image.naturalHeight)
+                                        : (prevWidth / prevHeight);
+
+                    // Resize logic based on mX, mY in unrotated space
+                    switch (resizeHandle) { // resizeHandle refers to corners of the unrotated box
+                        case 'topLeft':
+                            newWidth = (obj.x + prevWidth) - mX;
+                            newHeight = newWidth / aspectRatio;
+                            newX = (obj.x + prevWidth) - newWidth;
+                            newY = (obj.y + prevHeight) - newHeight;
+                            break;
+                        case 'topRight':
+                            newWidth = mX - obj.x;
+                            newHeight = newWidth / aspectRatio;
+                            // newX remains obj.x
+                            newY = (obj.y + prevHeight) - newHeight;
+                            break;
+                        case 'bottomLeft':
+                            newWidth = (obj.x + prevWidth) - mX;
+                            newHeight = newWidth / aspectRatio;
+                            newX = (obj.x + prevWidth) - newWidth;
+                            // newY remains obj.y
+                            break;
+                        case 'bottomRight':
+                            newWidth = mX - obj.x;
+                            newHeight = newWidth / aspectRatio;
+                            // newX, newY remain obj.x, obj.y
+                            break;
+                    }
+
+                    const minSize = 20;
+                    if (newWidth >= minSize && newHeight >= minSize) {
+                        // Calculate new center based on unrotated newX, newY, newWidth, newHeight
+                        const newUnrotatedCenterX = newX + newWidth / 2;
+                        const newUnrotatedCenterY = newY + newHeight / 2;
+
+                        // Apply rotation to the difference from original center to find new top-left for drawing
+                        if (obj.rotation) {
+                            const dx = newUnrotatedCenterX - origCenterX;
+                            const dy = newUnrotatedCenterY - origCenterY;
+                            const angle = obj.rotation;
+
+                            const rotatedDx = dx * Math.cos(angle) - dy * Math.sin(angle);
+                            const rotatedDy = dx * Math.sin(angle) + dy * Math.cos(angle);
+
+                            obj.x = origCenterX + rotatedDx - newWidth / 2;
+                            obj.y = origCenterY + rotatedDy - newHeight / 2;
+
+                        } else {
+                             obj.x = newX;
+                             obj.y = newY;
+                        }
+                        obj.width = newWidth;
+                        obj.height = newHeight;
+                    }
+                    redrawCanvas();
+                } else if (isDragging && selectedObject) {
+                    selectedObject.x = mousePos.x - dragOffsetX;
+                    selectedObject.y = mousePos.y - dragOffsetY;
+                    clearAlignmentGuides();
+                    // Alignment guides for rotated objects are complex, disable for now or simplify
+                    // if (selectedObject.type === 'image' || selectedObject.type === 'text') {
+                    //     if (performance.now() % 3 === 0) { showAlignmentGuides(selectedObject); }
+                    // }
+                    redrawCanvas();
+                } else {
+                    let onHandle = false;
+                    let onRotateButton = false;
+                    if (selectedObject && selectedObject.type === 'image') {
+                        const rotateButton = getRotateButtonAtPosition(selectedObject, mousePos.x, mousePos.y);
+                        if (rotateButton) {
+                            canvas.style.cursor = 'pointer';
+                            onRotateButton = true;
+                        } else {
+                            const handle = getResizeHandleAtPosition(selectedObject, mousePos.x, mousePos.y);
+                            if (handle) { canvas.style.cursor = getResizeCursor(handle); onHandle = true; }
+                        }
+                    }
+                    if (!onHandle && !onRotateButton) {
+                        const hoverObject = getObjectAtPosition(mousePos.x, mousePos.y);
+                        canvas.style.cursor = hoverObject ? 'grab' : (currentTool === 'draw' ? 'crosshair' : (currentTool === 'text' ? 'text' : 'default'));
+                    }
+                }
+            } else if (currentTool === 'draw' && isDrawing) { currentPath.push({ x: mousePos.x, y: mousePos.y }); redrawCanvas(); }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (currentTool === 'select') {
+                if (isDragging && selectedObject) {
+                    // snapToAlignmentGuides(selectedObject); // Complex for rotated objects
+                    clearAlignmentGuides();
+                 }
+                isDragging = false; isResizing = false; resizeHandle = null;
+                // Set cursor based on whether an object (and potentially a handle/button) is under mouse
+                const mousePos = getMousePos(e);
+                if (selectedObject && selectedObject.type === 'image') {
+                    if (getRotateButtonAtPosition(selectedObject, mousePos.x, mousePos.y)) {
+                        canvas.style.cursor = 'pointer';
+                    } else if (getResizeHandleAtPosition(selectedObject, mousePos.x, mousePos.y)) {
+                        // Cursor already set by mousemove
+                    } else if (getObjectAtPosition(mousePos.x, mousePos.y) === selectedObject) {
+                        canvas.style.cursor = 'grab';
+                    } else {
+                        canvas.style.cursor = 'default';
+                    }
+                } else if (selectedObject && getObjectAtPosition(mousePos.x, mousePos.y) === selectedObject) {
+                    canvas.style.cursor = 'grab';
+                }
+                 else {
+                    canvas.style.cursor = 'default';
+                }
+
+            } else if (currentTool === 'draw' && isDrawing) {
+                isDrawing = false;
+                if (currentPath.length > 1) { canvasObjects.push({ type: 'drawing', id: Date.now()+Math.random(), points: [...currentPath], color: strokeColorInput.value, lineWidth: parseInt(lineWidthInput.value), name: 'Drawing-' + Date.now() }); }
+                currentPath = [];
+            }
+            redrawCanvas();
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            if (isDragging || isResizing) { isDragging = false; isResizing = false; clearAlignmentGuides(); redrawCanvas(); }
+            if (isDrawing) { isDrawing = false; if(currentPath.length > 1) canvasObjects.push({ type: 'drawing', id: Date.now()+Math.random(), points: [...currentPath], color: strokeColorInput.value, lineWidth: parseInt(lineWidthInput.value), name: 'Drawing-' + Date.now() }); currentPath = []; redrawCanvas(); }
+        });
+
+        canvas.addEventListener('mouseenter', (e) => {
+             const mousePos = getMousePos(e);
+             lastCanvasMouseX = mousePos.x;
+             lastCanvasMouseY = mousePos.y;
+        });
+
+
+        function getResizeCursor(handleName) {
+            switch (handleName) {
+                case 'topLeft': case 'bottomRight': return 'nwse-resize';
+                case 'topRight': case 'bottomLeft': return 'nesw-resize';
+                default: return 'default';
+            }
+        }
+
+        objectNameInput.addEventListener('input', (e) => { if (selectedObject) { selectedObject.name = e.target.value; redrawCanvas(); } });
+        deleteSelectedBtn.addEventListener('click', () => { if (selectedObject) { canvasObjects = canvasObjects.filter(obj => obj.id !== selectedObject.id); deselectObject(); } });
+        bringToFrontBtn.addEventListener('click', () => { if (selectedObject) { const index = canvasObjects.findIndex(obj => obj.id === selectedObject.id); if (index > -1 && index < canvasObjects.length - 1) { const item = canvasObjects.splice(index, 1)[0]; canvasObjects.push(item); redrawCanvas(); } } });
+        sendToBackBtn.addEventListener('click', () => { if (selectedObject) { const index = canvasObjects.findIndex(obj => obj.id === selectedObject.id); if (index > 0) { const item = canvasObjects.splice(index, 1)[0]; canvasObjects.unshift(item); redrawCanvas(); } } });
+        clearAnnotationsBtn.addEventListener('click', () => { if (confirm('確定要清除所有標註 (繪畫和文字) 嗎？圖片將保留。')) { canvasObjects = canvasObjects.filter(obj => obj.type === 'image'); deselectObject(); redrawCanvas(); } });
+
+        const canvasContainerElement = document.getElementById('canvasContainer');
+        function clearAlignmentGuides() { const existingGuides = canvasContainerElement.querySelectorAll('.guideline'); existingGuides.forEach(guide => guide.remove()); }
+        function getObjectBounds(obj) { // This returns un-rotated bounds
+            let x = obj.x, y = obj.y, width = obj.width, height = obj.height;
+            if (obj.type === 'text') { ctx.font = `${obj.fontSize}px ${obj.fontFamily}`; const metrics = ctx.measureText(obj.text); width = metrics.width; height = obj.fontSize * 1.2; }
+            else if (obj.type === 'drawing') { if (!obj.points || obj.points.length === 0) return { left:0, right:0, top:0, bottom:0, centerX:0, centerY:0, width:0, height:0}; let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity; obj.points.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); }); x = minX; y = minY; width = maxX - minX; height = maxY - minY; }
+            return { left: x, right: x + width, top: y, bottom: y + height, centerX: x + width / 2, centerY: y + height / 2, width: width, height: height };
+        }
+        function checkAndDrawGuide(pos1, pos2, orientation, container) {
+            if (Math.abs(pos1 - pos2) < ALIGNMENT_THRESHOLD) { const guide = document.createElement('div'); guide.classList.add('guideline', orientation); if (orientation === 'horizontal') { guide.style.top = `${pos2}px`; } else { guide.style.left = `${pos2}px`; } container.appendChild(guide); return true; } return false;
+        }
+        function showAlignmentGuides(movingObj) { // Note: Guides are for un-rotated bounding boxes
+            clearAlignmentGuides(); if (!movingObj || movingObj.rotation) return; // Disable for rotated for now
+            const objBounds = getObjectBounds(movingObj);
+            canvasObjects.forEach(staticObj => { if (staticObj.id === movingObj.id || staticObj.rotation) return; // Don't align with other rotated objects
+                const staticBounds = getObjectBounds(staticObj);
+                checkAndDrawGuide(objBounds.centerY, staticBounds.centerY, 'horizontal', canvasContainerElement); checkAndDrawGuide(objBounds.top, staticBounds.top, 'horizontal', canvasContainerElement); checkAndDrawGuide(objBounds.bottom, staticBounds.bottom, 'horizontal', canvasContainerElement);
+                checkAndDrawGuide(objBounds.centerX, staticBounds.centerX, 'vertical', canvasContainerElement); checkAndDrawGuide(objBounds.left, staticBounds.left, 'vertical', canvasContainerElement); checkAndDrawGuide(objBounds.right, staticBounds.right, 'vertical', canvasContainerElement);
+            });
+        }
+        function snapToAlignmentGuides(movingObj) { // Note: Snapping is for un-rotated bounding boxes
+            if (!movingObj || movingObj.rotation) return; // Disable for rotated
+            let snappedX = false, snappedY = false; const objBounds = getObjectBounds(movingObj);
+            canvasObjects.forEach(staticObj => { if (staticObj.id === movingObj.id || staticObj.rotation) return; const staticBounds = getObjectBounds(staticObj);
+                if (Math.abs(objBounds.left - staticBounds.left) < ALIGNMENT_THRESHOLD) { movingObj.x = staticBounds.left; snappedX = true; } else if (Math.abs(objBounds.right - staticBounds.right) < ALIGNMENT_THRESHOLD) { movingObj.x = staticBounds.right - objBounds.width; snappedX = true; } else if (Math.abs(objBounds.centerX - staticBounds.centerX) < ALIGNMENT_THRESHOLD) { movingObj.x = staticBounds.centerX - objBounds.width / 2; snappedX = true; }
+                if (Math.abs(objBounds.top - staticBounds.top) < ALIGNMENT_THRESHOLD) { movingObj.y = staticBounds.top; snappedY = true; } else if (Math.abs(objBounds.bottom - staticBounds.bottom) < ALIGNMENT_THRESHOLD) { movingObj.y = staticBounds.bottom - objBounds.height; snappedY = true; } else if (Math.abs(objBounds.centerY - staticBounds.centerY) < ALIGNMENT_THRESHOLD) { movingObj.y = staticBounds.centerY - objBounds.height / 2; snappedY = true; }
+            });
+            if (snappedX || snappedY) redrawCanvas();
+        }
+
+        function getPastePosition(){
+            return {
+                x: lastCanvasMouseX !== null ? lastCanvasMouseX : canvas.width / 2,
+                y: lastCanvasMouseY !== null ? lastCanvasMouseY : canvas.height / 2
+            };
+        }
+
+        // 支援 Ctrl+V/右鍵貼上圖片（Clipboard API）
+        document.addEventListener('paste', async (event) => {
+            const activeElement = document.activeElement;
+            if (
+                activeElement &&
+                (activeElement.tagName === 'INPUT' ||
+                    activeElement.tagName === 'TEXTAREA' ||
+                    activeElement.isContentEditable)
+            ) {
+                return;
+            }
+            let inControlPanelInput = false;
+            if (activeElement && activeElement.closest && activeElement.closest('.controls')) {
+                if (['INPUT', 'SELECT', 'TEXTAREA'].includes(activeElement.tagName)) {
+                    inControlPanelInput = true;
+                }
+            }
+            if (inControlPanelInput) return;
+
+            // 先處理 clipboardData（舊瀏覽器或瀏覽器自帶的貼圖）
+            const items = (event.clipboardData || event.originalEvent?.clipboardData)?.items;
+            if (items) {
+                let filesToHandle = [];
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        filesToHandle.push(item.getAsFile());
+                    }
+                }
+                if (filesToHandle.length > 0) {
+                    event.preventDefault();
+                    handleImageFiles(filesToHandle, getPastePosition());
+                    return;
+                }
+            }
+
+            // 若支援 Clipboard API，嘗試讀取圖片
+            if (navigator.clipboard && navigator.clipboard.read) {
+                try {
+                    const clipboardItems = await navigator.clipboard.read();
+                    for (const clipboardItem of clipboardItems) {
+                        for (const type of clipboardItem.types) {
+                            if (type.startsWith('image/')) {
+                                const blob = await clipboardItem.getType(type);
+                                const file = new File([blob], 'ClipboardImage.png', { type: blob.type });
+                                handleImageFiles([file], getPastePosition());
+                                event.preventDefault();
+                                return;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    // Clipboard API 可能被拒絕權限，忽略即可
+                }
+            }
+        });
+
+        exportProjectBtn.addEventListener('click', () => {
+            const projectData = {
+                canvasSettings: {
+                    pageSize: pageSizeSelect.value,
+                    orientation: pageOrientationSelect.value,
+                    numPages: parseInt(numPagesInput.value),
+                    customWidth: customCanvasWidthInput.value,
+                    customHeight: customCanvasHeightInput.value,
+                },
+                objects: canvasObjects.map(obj => {
+                    if (obj.type === 'image') {
+                        // Make sure to include rotation
+                        return { ...obj, imageSrc: obj.src, rotation: obj.rotation || 0 };
+                    }
+                    return obj;
+                })
+            };
+            projectData.objects.forEach(obj => { if(obj.type === 'image') delete obj.image; }); // Remove actual image object for JSON
+            const jsonString = JSON.stringify(projectData, null, 2); const blob = new Blob([jsonString], { type: 'application/json' }); const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'canvas_project.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); alert('專案已匯出!');
+        });
+
+        importProjectInput.addEventListener('change', (event) => {
+            const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = (e_reader) => {
+                try {
+                    const projectData = JSON.parse(e_reader.target.result);
+                    pageSizeSelect.value = projectData.canvasSettings.pageSize || 'A4'; pageOrientationSelect.value = projectData.canvasSettings.orientation || 'portrait'; numPagesInput.value = projectData.canvasSettings.numPages || 1; customCanvasWidthInput.value = projectData.canvasSettings.customWidth || 800; customCanvasHeightInput.value = projectData.canvasSettings.customHeight || 1000;
+                    customSizeInputsDiv.style.display = pageSizeSelect.value === 'Custom' ? 'block' : 'none'; numPagesInput.disabled = pageSizeSelect.value === 'Custom';
+                    updateCanvasLayout();
+
+                    const loadedObjects = []; const imageLoadPromises = [];
+                    (projectData.objects || []).forEach(objData => {
+                        if (objData.type === 'image' && objData.imageSrc) {
+                            const img = new Image();
+                            const promise = new Promise((resolve, reject) => {
+                                img.onload = () => {
+                                    loadedObjects.push({
+                                        ...objData,
+                                        image: img,
+                                        src: img.src,
+                                        rotation: objData.rotation || 0 // Ensure rotation is loaded
+                                    });
+                                    resolve();
+                                };
+                                img.onerror = () => { console.warn(`Failed to load image: ${objData.name || 'Unknown'}. Skipping.`); resolve(); };
+                                img.src = objData.imageSrc;
+                            });
+                            imageLoadPromises.push(promise);
+                        } else { loadedObjects.push(objData); }
+                    });
+
+                    Promise.all(imageLoadPromises).then(() => { canvasObjects = loadedObjects; deselectObject(); redrawCanvas(); alert('專案已成功匯入!'); }).catch(err => { console.error("Error loading images:", err); alert('匯入專案時部分圖片載入失敗。'); canvasObjects = loadedObjects.filter(obj => (obj.type === 'image' && obj.image && obj.image.complete && obj.image.naturalHeight !== 0) || obj.type !== 'image'); deselectObject(); redrawCanvas(); });
+                } catch (error) { console.error("Import error:", error); alert('匯入專案失敗: 檔案格式錯誤或內容損毀。');}
+                finally { importProjectInput.value = ''; }
+            };
+            reader.readAsText(file);
+        });
+
+        exportPdfBtn.addEventListener('click', () => {
+            const currentCanvasWidth = canvas.width; const currentCanvasHeight = canvas.height; const tempSelected = selectedObject; deselectObject();
+            redrawCanvas();
+            const resolutionScaleFactor = 2;
+            const pdfOrientation = pageOrientationSelect.value;
+            const pdfPageType = (pageSizeSelect.value === 'Custom' ? 'a4' : pageSizeSelect.value.toLowerCase());
+            const pdf = new jsPDF({ orientation: pdfOrientation, unit: 'pt', format: pdfPageType });
+            const MARGIN_PT = 0;
+            const contentWidthPt = pdf.internal.pageSize.getWidth() - 2 * MARGIN_PT;
+            const contentHeightPt = pdf.internal.pageSize.getHeight() - 2 * MARGIN_PT;
+            let scaleToFitPdfWidth = contentWidthPt / currentCanvasWidth;
+            const tempRenderCanvas = document.createElement('canvas');
+            tempRenderCanvas.width = currentCanvasWidth * resolutionScaleFactor;
+            tempRenderCanvas.height = currentCanvasHeight * resolutionScaleFactor;
+            const tempRenderCtx = tempRenderCanvas.getContext('2d');
+            tempRenderCtx.scale(resolutionScaleFactor, resolutionScaleFactor);
+            tempRenderCtx.fillStyle = '#FFFFFF';
+            tempRenderCtx.fillRect(0, 0, currentCanvasWidth, currentCanvasHeight);
+
+            canvasObjects.forEach(obj => {
+                tempRenderCtx.save();
+                if (obj.type === 'image') {
+                    if (obj.image && obj.image.complete && obj.image.naturalHeight !==0) {
+                        tempRenderCtx.save();
+                        tempRenderCtx.translate(obj.x + obj.width / 2, obj.y + obj.height / 2);
+                        tempRenderCtx.rotate(obj.rotation || 0);
+                        tempRenderCtx.drawImage(obj.image, -obj.width / 2, -obj.height / 2, obj.width, obj.height);
+                        tempRenderCtx.restore();
+                    }
+                    if (obj.name) {
+                        tempRenderCtx.save();
+                        tempRenderCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                        tempRenderCtx.font = `12px Arial`;
+                        tempRenderCtx.textAlign = 'center';
+                        tempRenderCtx.textBaseline = 'top';
+                        // For PDF, place name relative to unrotated box for consistency, adjust Y if needed
+                        let nameY = obj.y + obj.height + 5;
+                         if (obj.rotation && (Math.abs(obj.rotation % Math.PI) > 0.1)) {
+                             // Simple adjustment if rotated significantly to avoid overlap
+                             const rotatedHeight = obj.width * Math.abs(Math.sin(obj.rotation)) + obj.height * Math.abs(Math.cos(obj.rotation));
+                             nameY = obj.y + rotatedHeight/2  + obj.height/2 + 5; // Approx
+                         }
+                        tempRenderCtx.fillText(obj.name, obj.x + obj.width / 2, nameY);
+                        tempRenderCtx.restore();
+                    }
+                } else if (obj.type === 'drawing') {
+                    drawPath(tempRenderCtx, obj.points, obj.color, obj.lineWidth);
+                } else if (obj.type === 'text') {
+                    tempRenderCtx.fillStyle = obj.color;
+                    tempRenderCtx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                    tempRenderCtx.textAlign = 'left';
+                    tempRenderCtx.textBaseline = 'top';
+                    tempRenderCtx.fillText(obj.text, obj.x, obj.y);
+                }
+                tempRenderCtx.restore();
+            });
+
+            const imgData = tempRenderCanvas.toDataURL('image/png');
+            const scaledCanvasWidthOnPdf = currentCanvasWidth * scaleToFitPdfWidth;
+            const scaledCanvasHeightOnPdf = currentCanvasHeight * scaleToFitPdfWidth;
+            const numPdfPages = Math.ceil(scaledCanvasHeightOnPdf / contentHeightPt);
+
+            for (let i = 0; i < numPdfPages; i++) {
+                if (i > 0) { pdf.addPage(pdfPageType, pdfOrientation); }
+                pdf.addImage(imgData, 'PNG', MARGIN_PT, MARGIN_PT - (i * contentHeightPt), scaledCanvasWidthOnPdf, scaledCanvasHeightOnPdf);
+            }
+            pdf.save('canvas_export_hires_no_margin.pdf');
+            if (tempSelected) selectObject(tempSelected);
+            redrawCanvas();
+            alert('高解析度PDF (無邊框) 已開始下載！');
+        });
+
+
+        document.addEventListener('keydown', (e) => {
+            const activeEl = document.activeElement;
+            if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.isContentEditable)) { if (e.key === 'Escape') activeEl.blur(); return; }
+            let consumed = false;
+            switch(e.key.toUpperCase()) {
+                case 'V': setTool('select'); consumed=true; break;
+                case 'B': setTool('draw'); consumed=true; break;
+                case 'T': setTool('text'); consumed=true; break;
+                case 'DELETE': case 'BACKSPACE': if (selectedObject) { deleteSelectedBtn.click(); consumed=true; } break;
+            }
+            if (consumed) e.preventDefault();
+        });
+
+    </script>
+</body>
+</html>
