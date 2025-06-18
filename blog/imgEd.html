@@ -139,7 +139,12 @@
         }
 
         .hidden-input { display: none; }
-        .color-picker-wrapper { display: flex; align-items: center; gap: 5px; }
+        /* 統一顏色選擇器樣式 */
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
         .color-picker-wrapper input[type="color"] {
             width: 32px;
             height: 32px;
@@ -149,21 +154,11 @@
             background: none;
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
             cursor: pointer;
+            display: inline-block;
         }
-
-        #selectedObjectControls input[type="color"],
-        #textEditFields input[type="color"] {
-            width: 32px !important;
-            height: 32px !important;
-            min-width: 32px !important;
-            min-height: 32px !important;
-            padding: 0 !important;
-            border: none !important;
-            border-radius: 4px !important;
-            background: none !important;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-            cursor: pointer;
-            display: inline-block !important;
+        /* 讓label和顏色選擇器同一行 */
+        .controls .input-row, .controls .color-picker-wrapper {
+            flex-wrap: nowrap;
         }
 
         .guideline { position: absolute; background-color: rgba(255, 0, 0, 0.5); z-index: 9999; }
@@ -282,9 +277,11 @@
 
                 <div id="drawingOptions" style="display:none;">
                     <h4>畫筆選項</h4>
-                    <label for="strokeColor">顏色:</label>
-                    <div class="color-picker-wrapper">
-                        <input type="color" id="strokeColor" value="#FF0000">
+                    <div class="input-row">
+                        <label for="strokeColor">顏色:</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="strokeColor" value="#FF0000">
+                        </div>
                     </div>
                     <label for="lineWidth">線寬:</label>
                     <input type="range" id="lineWidth" min="1" max="30" value="3">
@@ -292,9 +289,11 @@
 
                 <div id="textOptions" style="display:none;">
                     <h4>文字選項</h4>
-                    <label for="textColor">顏色:</label>
-                     <div class="color-picker-wrapper">
-                        <input type="color" id="textColor" value="#000000">
+                    <div class="input-row">
+                        <label for="textColor">顏色:</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="textColor" value="#000000">
+                        </div>
                     </div>
                     <label for="fontSize">大小:</label>
                     <input type="number" id="fontSize" value="20" min="8">
@@ -380,8 +379,8 @@
                         <input type="number" id="numPages" value="1" min="1">
                     </div>
                     <div class="input-row">
-                        <button class="btn" id="updateCanvasLayout">更新畫布佈局</button>
-                        <button class="btn btn-secondary" id="clearAnnotations">清空標註 (保留圖片)</button>
+                        <button class="btn" id="updateCanvasLayout">更新畫布</button>
+                        <button class="btn btn-secondary" id="clearAnnotations">清空筆畫、文字</button>
                     </div>
                 </div>
             </div>
@@ -576,7 +575,7 @@
 
         // --- Image Upload ---
         imageUpload.addEventListener('change', (e) => {
-            handleImageFiles(e.target.files);
+            handleImageFiles(e.target.files); // 恢復原本行為
             imageUpload.value = '';
         });
 
@@ -727,7 +726,7 @@
                     drawPath(targetCtx, obj.points, obj.color, obj.lineWidth);
                 } else if (obj.type === 'text') {
                     targetCtx.fillStyle = obj.color; targetCtx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-                    targetCtx.textAlign = 'left'; targetCtx.textBaseline = 'top';
+                    targetCtx.textAlign = 'center'; targetCtx.textBaseline = 'top';
                     targetCtx.fillText(obj.text, obj.x, obj.y);
                 }
                 targetCtx.restore();
@@ -742,82 +741,74 @@
         }
 
         function drawSelectionHandles(obj) {
-            // For non-image objects, the selection box does not rotate with the object
-            // For images, the selection box itself is drawn unrotated, but handles/buttons are placed considering rotation.
-            let x = obj.x; let y = obj.y; let w = obj.width; let h = obj.height;
-            let selectionCenterX = x + w / 2;
-            let selectionCenterY = y + h / 2;
-
+            let x = obj.x, y = obj.y, w = obj.width, h = obj.height;
             ctx.save();
-            if (obj.type === 'image' && obj.rotation) { // For rotated images, draw un-rotated bounding box for handles
-                 // The visual selection box will still be axis-aligned for simplicity of resize handles.
-                 // The rotation button will be placed relative to this box.
+            if (obj.type === 'image') {
+                // 旋轉選取框與handle
+                ctx.translate(x + w / 2, y + h / 2);
+                ctx.rotate(obj.rotation || 0);
+                ctx.translate(-(x + w / 2), -(y + h / 2));
+                // 畫旋轉後的虛線框
+                ctx.strokeStyle = '#007bff';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 2]);
+                ctx.strokeRect(x, y, w, h);
+                ctx.setLineDash([]);
+                // 畫旋轉後的resize handle
+                ctx.fillStyle = '#007bff';
+                const handles = [
+                    { x: x, y: y },
+                    { x: x + w, y: y },
+                    { x: x, y: y + h },
+                    { x: x + w, y: y + h }
+                ];
+                handles.forEach(pos => {
+                    ctx.fillRect(pos.x - RESIZE_HANDLE_SIZE / 2, pos.y - RESIZE_HANDLE_SIZE / 2, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE);
+                });
+                // 畫旋轉按鈕（跟著旋轉）
+                const buttonAttachX = x + w + ROTATE_BUTTON_OFFSET;
+                const buttonAttachY = y + h + ROTATE_BUTTON_OFFSET;
+                ctx.fillStyle = '#28a745';
+                ctx.beginPath();
+                ctx.arc(buttonAttachX + ROTATE_BUTTON_SIZE / 2, buttonAttachY + ROTATE_BUTTON_SIZE / 2, ROTATE_BUTTON_SIZE / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.font = `${ROTATE_BUTTON_SIZE - 2}px system-ui,Segoe UI Emoji,Apple Color Emoji,sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'white';
+                ctx.fillText('🔄️', buttonAttachX + ROTATE_BUTTON_SIZE / 2, buttonAttachY + ROTATE_BUTTON_SIZE / 2 + 1);
+                ctx.restore();
             } else if (obj.type === 'text') {
                 ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
                 const metrics = ctx.measureText(obj.text);
                 w = metrics.width; h = obj.fontSize * 1.2;
                 const padding = 5; x -= padding; y -= padding; w += padding * 2; h += padding * 2;
+                ctx.strokeStyle = '#007bff'; ctx.lineWidth = 1; ctx.setLineDash([4, 2]);
+                ctx.strokeRect(x, y, w, h);
+                ctx.setLineDash([]);
             } else if (obj.type === 'drawing') {
                 if (obj.points && obj.points.length > 0) {
                     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                     obj.points.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
                     x = minX - obj.lineWidth / 2; y = minY - obj.lineWidth / 2;
                     w = maxX - minX + obj.lineWidth; h = maxY - minY + obj.lineWidth;
-                } else { ctx.restore(); return; }
-            } else if (obj.type !== 'image') { ctx.restore(); return; }
-
-
-            // Draw the axis-aligned selection rectangle
-            ctx.strokeStyle = '#007bff'; ctx.lineWidth = 1; ctx.setLineDash([4, 2]);
-            ctx.strokeRect(x, y, w, h);
-            ctx.setLineDash([]);
-            ctx.restore(); // Restore from potential text/drawing specific changes if any
-
-            if (obj.type === 'image') {
-                ctx.save();
-                // Translate to the image's un-rotated top-left for handle placement, then apply rotation
-                // for drawing the rotate button in its correct rotated position.
-                ctx.translate(obj.x + obj.width / 2, obj.y + obj.height / 2);
-                ctx.rotate(obj.rotation || 0);
-                ctx.translate(-(obj.x + obj.width / 2), -(obj.y + obj.height / 2));
-
-
-                // Draw resize handles (these are on the un-rotated bounding box corners)
-                const handles = getResizeHandles(obj); // getResizeHandles uses obj.x,y,width,height directly
-                ctx.fillStyle = '#007bff';
-                for (const handleName in handles) {
-                    const pos = handles[handleName];
-                    ctx.fillRect(pos.x - RESIZE_HANDLE_SIZE / 2, pos.y - RESIZE_HANDLE_SIZE / 2, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE);
+                    ctx.strokeStyle = '#007bff'; ctx.lineWidth = 1; ctx.setLineDash([4, 2]);
+                    ctx.strokeRect(x, y, w, h);
+                    ctx.setLineDash([]);
                 }
-
-
-                // --- 繪製旋轉按鈕 (position relative to the un-rotated box, but drawn in rotated context) ---
-                // The button's visual position will be rotated with the image.
-                const buttonAttachX = obj.x + obj.width + ROTATE_BUTTON_OFFSET;
-                const buttonAttachY = obj.y + obj.height + ROTATE_BUTTON_OFFSET;
-
-                ctx.fillStyle = '#28a745'; // Green button
-                ctx.beginPath();
-                ctx.arc(buttonAttachX + ROTATE_BUTTON_SIZE / 2, buttonAttachY + ROTATE_BUTTON_SIZE / 2, ROTATE_BUTTON_SIZE / 2, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                const btnCenterX = buttonAttachX + ROTATE_BUTTON_SIZE / 2;
-                const btnCenterY = buttonAttachY + ROTATE_BUTTON_SIZE / 2;
-                const arrowRadius = ROTATE_BUTTON_SIZE / 3;
-                ctx.arc(btnCenterX, btnCenterY, arrowRadius, -Math.PI * 0.6, Math.PI * 0.9);
-                ctx.moveTo(btnCenterX + arrowRadius * Math.cos(Math.PI * 0.9), btnCenterY + arrowRadius * Math.sin(Math.PI * 0.9));
-                ctx.lineTo(btnCenterX + arrowRadius * Math.cos(Math.PI * 0.9) - 3, btnCenterY + arrowRadius * Math.sin(Math.PI * 0.9) - 3); // Arrowhead
-                ctx.moveTo(btnCenterX + arrowRadius * Math.cos(Math.PI * 0.9), btnCenterY + arrowRadius * Math.sin(Math.PI * 0.9));
-                ctx.lineTo(btnCenterX + arrowRadius * Math.cos(Math.PI * 0.9) + 3, btnCenterY + arrowRadius * Math.sin(Math.PI * 0.9) - 3); // Arrowhead
-                ctx.stroke();
-
-                ctx.restore(); // Restore from rotation transform
             }
         }
 
+
+        // 將文字物件貼齊選取圖片的實際底部中心，offset 沿著圖片法線方向
+        function placeTextAtImageBottom(textObj, imageObj, offset = 10) {
+            const cx = imageObj.x + imageObj.width / 2;
+            const cy = imageObj.y + imageObj.height / 2;
+            const theta = imageObj.rotation || 0;
+            // offset 沿著圖片旋轉後的法線方向
+            textObj.x = cx + (imageObj.height / 2) * Math.sin(theta) + offset * Math.sin(theta);
+            textObj.y = cy + (imageObj.height / 2) * Math.cos(theta) + offset * Math.cos(theta);
+        }
 
         function getMousePos(event) {
             const rect = canvas.getBoundingClientRect();
@@ -1007,7 +998,12 @@
             else if (currentTool === 'text') {
                 const text = prompt("請輸入文字:", "在此輸入");
                 if (text) {
-                    canvasObjects.push({ type: 'text', id: Date.now() + Math.random(), text: text, x: mousePos.x, y: mousePos.y, color: textColorInput.value, fontSize: parseInt(fontSizeInput.value), fontFamily: fontFamilySelect.value, name: 'Text-' + (canvasObjects.filter(o=>o.type==='text').length + 1) });
+                    let textObj = { type: 'text', id: Date.now() + Math.random(), text: text, x: mousePos.x, y: mousePos.y, color: textColorInput.value, fontSize: parseInt(fontSizeInput.value), fontFamily: fontFamilySelect.value, name: 'Text-' + (canvasObjects.filter(o=>o.type==='text').length + 1) };
+                    // 如果有選取圖片，預設貼齊底部
+                    if (selectedObject && selectedObject.type === 'image') {
+                        placeTextAtImageBottom(textObj, selectedObject, 10);
+                    }
+                    canvasObjects.push(textObj);
                     redrawCanvas(); setTool('select');
                 }
             }
@@ -1403,7 +1399,7 @@
                 } else if (obj.type === 'text') {
                     tempRenderCtx.fillStyle = obj.color;
                     tempRenderCtx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-                    tempRenderCtx.textAlign = 'left';
+                    tempRenderCtx.textAlign = 'center';
                     tempRenderCtx.textBaseline = 'top';
                     tempRenderCtx.fillText(obj.text, obj.x, obj.y);
                 }
