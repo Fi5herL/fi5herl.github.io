@@ -286,7 +286,7 @@
                         </div>
                     </div>
                     <label for="lineWidth">線寬:</label>
-                    <input type="range" id="lineWidth" min="1" max="30" value="3">
+                    <input type="range" id="lineWidth" min="1" max="10" value="1">
                 </div>
 
                 <div id="textOptions" style="display:none;">
@@ -298,7 +298,7 @@
                         </div>
                     </div>
                     <label for="fontSize">大小:</label>
-                    <input type="number" id="fontSize" value="20" min="8">
+                    <input type="number" id="fontSize" value="16" min="8">
                     <label for="fontFamily">字型:</label>
                     <select id="fontFamily">
                         <option value="Arial">Arial</option>
@@ -729,23 +729,8 @@
                             // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
                         } else if (obj.rotation === Math.PI / 2 || obj.rotation === 3 * Math.PI / 2) {
                             // For 90 and 270 degrees
+                            textY = obj.y + (obj.width+obj.height)/2 + 15;
                             // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
-                            if (obj.height/obj.width > 1 && obj.height/obj.width < 2.5) {
-                                textY = obj.y + obj.height - obj.width / 8 + 5;
-                            }
-                            else if (obj.height/obj.width == 1) {
-                                textY = obj.y + obj.height + 15;
-                                console.log("==1 and textY="+textY);
-                            }
-                            else if (obj.height/obj.width < 1) {
-                                textY = obj.y + obj.height + obj.width/8 + 15;
-                                // console.log("<1 and textY="+textY);
-                            }
-                            else if (obj.height/obj.width > 2.5) {
-                                textY = obj.y + obj.height - obj.width*2.4 + 10;
-                                // console.log(">2.5 and textY="+textY);
-                            }
-                            // textY = obj.y - obj.height + obj.width;
                         }
 
                         targetCtx.fillText(obj.name, textX, textY);
@@ -771,63 +756,94 @@
 
         function drawSelectionHandles(obj) {
             let x = obj.x, y = obj.y, w = obj.width, h = obj.height;
-            ctx.save();
+            ctx.save(); // ★ 儲存畫布初始狀態
+
             if (obj.type === 'image') {
-                // 旋轉選取框與handle
+                // === 第一部分：繪製需要旋轉的內容 ===
                 ctx.translate(x + w / 2, y + h / 2);
                 ctx.rotate(obj.rotation || 0);
                 ctx.translate(-(x + w / 2), -(y + h / 2));
-                // 畫旋轉後的虛線框
+                
+                // 繪製旋轉後的虛線框
                 ctx.strokeStyle = '#007bff';
                 ctx.lineWidth = 1;
                 ctx.setLineDash([4, 2]);
                 ctx.strokeRect(x, y, w, h);
                 ctx.setLineDash([]);
-                // 畫旋轉後的resize handle
+                
+                // 繪製旋轉後的縮放控點 (這部分也跟著轉)
                 ctx.fillStyle = '#007bff';
-                const handles = [
-                    { x: x, y: y },
-                    { x: x + w, y: y },
-                    { x: x, y: y + h },
-                    { x: x + w, y: y + h }
-                ];
+                const handles = [{ x: x, y: y }, { x: x + w, y: y }, { x: x, y: y + h }, { x: x + w, y: y + h }];
                 handles.forEach(pos => {
                     ctx.fillRect(pos.x - RESIZE_HANDLE_SIZE / 2, pos.y - RESIZE_HANDLE_SIZE / 2, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE);
                 });
-                // 畫旋轉按鈕（跟著旋轉）
-                const buttonAttachX = x + w + ROTATE_BUTTON_OFFSET;
-                const buttonAttachY = y + h + ROTATE_BUTTON_OFFSET;
-                ctx.fillStyle = '#28a745';
+                
+                // ★ 關鍵改變：在這裡就恢復畫布狀態，不再旋轉！
+                ctx.restore(); 
+
+                // === 第二部分：計算視覺邊界，並繪製不旋轉的按鈕 ===
+                
+                // 計算圖片旋轉後的四個頂點的實際螢幕座標
+                const cx = x + w / 2;
+                const cy = y + h / 2;
+                const angle = obj.rotation || 0;
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                
+                const corners = [
+                    {x: x, y: y}, {x: x + w, y: y},
+                    {x: x + w, y: y + h}, {x: x, y: y + h}
+                ].map(p => ({
+                    x: cx + (p.x - cx) * cos - (p.y - cy) * sin,
+                    y: cy + (p.x - cx) * sin + (p.y - cy) * cos
+                }));
+
+                // 找到視覺上的最大和最小 x, y 值
+                const minX = Math.min(...corners.map(p => p.x));
+                const maxX = Math.max(...corners.map(p => p.x));
+                const minY = Math.min(...corners.map(p => p.y));
+                const maxY = Math.max(...corners.map(p => p.y));
+
+                // ★ 使用視覺邊界的右下角來定位按鈕
+                const buttonAttachX = maxX + ROTATE_BUTTON_OFFSET;
+                const buttonAttachY = maxY + ROTATE_BUTTON_OFFSET;
+
+                // 在一個「沒有被旋轉」的畫布上繪製按鈕
+                // ctx.fillStyle = '#28a745';
                 ctx.beginPath();
-                ctx.arc(buttonAttachX + ROTATE_BUTTON_SIZE / 2, buttonAttachY + ROTATE_BUTTON_SIZE / 2, ROTATE_BUTTON_SIZE / 2, 0, Math.PI * 2);
-                ctx.fill();
+                // ctx.arc(buttonAttachX + ROTATE_BUTTON_SIZE / 2, buttonAttachY + ROTATE_BUTTON_SIZE / 2, ROTATE_BUTTON_SIZE / 2, 0, Math.PI * 2);
+                // ctx.fill();
                 ctx.font = `${ROTATE_BUTTON_SIZE - 2}px system-ui,Segoe UI Emoji,Apple Color Emoji,sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = 'white';
                 ctx.fillText('🔄️', buttonAttachX + ROTATE_BUTTON_SIZE / 2, buttonAttachY + ROTATE_BUTTON_SIZE / 2 + 1);
-                ctx.restore();
-            } else if (obj.type === 'text') {
-                ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-                const metrics = ctx.measureText(obj.text);
-                w = metrics.width; h = obj.fontSize * 1.2;
-                const padding = 5; x -= padding; y -= padding; w += padding * 2; h += padding * 2;
-                ctx.strokeStyle = '#007bff'; ctx.lineWidth = 1; ctx.setLineDash([4, 2]);
-                ctx.strokeRect(x, y, w, h);
-                ctx.setLineDash([]);
-            } else if (obj.type === 'drawing') {
-                if (obj.points && obj.points.length > 0) {
-                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                    obj.points.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
-                    x = minX - obj.lineWidth / 2; y = minY - obj.lineWidth / 2;
-                    w = maxX - minX + obj.lineWidth; h = maxY - minY + obj.lineWidth;
+                
+            } else if (obj.type === 'text' || obj.type === 'drawing') {
+                // 其他物件的處理邏輯不變...
+                // ... (省略原本的 text 和 drawing 邏輯)
+                if (obj.type === 'text') {
+                    ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                    const metrics = ctx.measureText(obj.text);
+                    w = metrics.width; h = obj.fontSize * 1.2;
+                    const padding = 5; x -= padding; y -= padding; w += padding * 2; h += padding * 2;
                     ctx.strokeStyle = '#007bff'; ctx.lineWidth = 1; ctx.setLineDash([4, 2]);
                     ctx.strokeRect(x, y, w, h);
                     ctx.setLineDash([]);
+                } else if (obj.type === 'drawing') {
+                    if (obj.points && obj.points.length > 0) {
+                        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                        obj.points.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
+                        x = minX - obj.lineWidth / 2; y = minY - obj.lineWidth / 2;
+                        w = maxX - minX + obj.lineWidth; h = maxY - minY + obj.lineWidth;
+                        ctx.strokeStyle = '#007bff'; ctx.lineWidth = 1; ctx.setLineDash([4, 2]);
+                        ctx.strokeRect(x, y, w, h);
+                        ctx.setLineDash([]);
+                    }
                 }
+                ctx.restore(); // 確保其他物件的 save() 有對應的 restore()
             }
         }
-
 
         // 將文字物件貼齊選取圖片的實際底部中心，offset 沿著圖片法線方向
         function placeTextAtImageBottom(textObj, imageObj, offset = 10) {
@@ -919,29 +935,37 @@
             return null;
         }
 
-        function getRotateButtonAtPosition(obj, mouseX, mouseY) { // mouseX, mouseY are canvas coordinates
+        function getRotateButtonAtPosition(obj, mouseX, mouseY) {
             if (!obj || obj.type !== 'image') return null;
 
-            // The button is visually rotated with the image.
-            // So, transform the mouse point into the image's rotated coordinate system
-            // where the button is at a fixed position relative to the image's un-rotated bottom-right.
+            // ★ 再次計算出視覺邊界，和繪製時的邏輯完全一樣
             const cx = obj.x + obj.width / 2;
             const cy = obj.y + obj.height / 2;
-            const angle = -(obj.rotation || 0); // Inverse rotation for the mouse point
+            const angle = obj.rotation || 0;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            
+            const corners = [
+                {x: obj.x, y: obj.y}, {x: obj.x + obj.width, y: obj.y},
+                {x: obj.x + obj.width, y: obj.y + obj.height}, {x: obj.x, y: obj.y + obj.height}
+            ].map(p => ({
+                x: cx + (p.x - cx) * cos - (p.y - cy) * sin,
+                y: cy + (p.x - cx) * sin + (p.y - cy) * cos
+            }));
 
-            const localMouseX = cx + (mouseX - cx) * Math.cos(angle) - (mouseY - cy) * Math.sin(angle);
-            const localMouseY = cy + (mouseX - cx) * Math.sin(angle) + (mouseY - cy) * Math.cos(angle);
+            const maxX = Math.max(...corners.map(p => p.x));
+            const maxY = Math.max(...corners.map(p => p.y));
 
-            // Button's position in the image's un-rotated local space
-            const buttonRectX = obj.x + obj.width + ROTATE_BUTTON_OFFSET;
-            const buttonRectY = obj.y + obj.height + ROTATE_BUTTON_OFFSET;
+            // ★ 計算按鈕在螢幕上的實際矩形區域
+            const buttonRectX = maxX + ROTATE_BUTTON_OFFSET;
+            const buttonRectY = maxY + ROTATE_BUTTON_OFFSET;
 
-            if (isPointInRect(localMouseX, localMouseY, buttonRectX, buttonRectY, ROTATE_BUTTON_SIZE, ROTATE_BUTTON_SIZE)) {
+            // ★ 直接用滑鼠座標進行簡單的矩形碰撞偵測，不再需要旋轉
+            if (isPointInRect(mouseX, mouseY, buttonRectX, buttonRectY, ROTATE_BUTTON_SIZE, ROTATE_BUTTON_SIZE)) {
                 return 'rotate';
             }
             return null;
         }
-
 
         function deselectObject() { selectedObject = null; selectedObjectControlsDiv.style.display = 'none'; redrawCanvas(); }
         function selectObject(obj) {
