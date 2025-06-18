@@ -7,51 +7,164 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖼️</text></svg>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; display: flex; flex-direction: column; align-items: center; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
         .container {
             display: flex;
             gap: 20px;
             width: 100%;
-            max-width: 1600px;
+            max-width: 1800px;
         }
         .controls {
             background-color: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            width: 320px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            width: 360px;
             align-self: flex-start;
-            max-height: 90vh;
-            overflow-y: auto;
-            /* 新增 sticky 效果 */
             position: sticky;
             top: 20px;
-            left: 0;
-            z-index: 10;
+            overflow: hidden;
         }
-        .controls h3 { margin-top: 0; margin-bottom: 8px; color: #333; }
-        .controls label, .controls button, .controls input, .controls select { display: block; width: calc(100% - 16px); margin-bottom: 6px; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; font-size: 0.9em; }
-        .controls button, .button-like-label { background-color: #007bff; color: white; border: none; cursor: pointer; transition: background-color 0.2s; }
-        .controls button:hover, .button-like-label:hover { background-color: #0056b3; }
-        .controls .tool-button.active { background-color: #28a745; }
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+        }
+        .tab {
+            padding: 12px 16px;
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+            color: #666;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            color: #007aff;
+            border-bottom-color: #007aff;
+            background: #fff;
+        }
+        .tab:hover:not(.active) {
+            background: #f0f0f0;
+        }
+        .tab-content {
+            display: none;
+            padding: 16px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .control-group {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
         #canvasContainer {
-            border: 1px solid #ccc;
-            background-color: #e9e9e9;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
             position: relative;
             overflow: auto;
             flex-grow: 1;
             display: flex;
             justify-content: center;
             align-items: flex-start;
+            border-radius: 12px;
         }
-        canvas { display: block; cursor: default; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.15); }
+        canvas {
+            display: block;
+            cursor: default;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 12px;
+            border-radius: 8px;
+        }
+
+        .controls h3 { margin-top: 0; margin-bottom: 8px; color: #333; }
+        .controls .input-row, .controls .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .controls label {
+            display: inline-block;
+            width: auto;
+            margin-bottom: 0;
+            margin-right: 8px;
+            padding: 0;
+            border: none;
+            background: none;
+            font-weight: 500;
+            vertical-align: middle;
+            min-width: 60px;
+        }
+        .controls input,
+        .controls select {
+            display: inline-block;
+            width: auto;
+            min-width: 80px;
+            margin-bottom: 0;
+            margin-right: 0;
+            vertical-align: middle;
+        }
+        .controls button, .button-like-label {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 18px;
+            padding: 5px 5px;
+        }
+        .controls button:hover, .button-like-label:hover { background-color: #0056b3; }
+        .controls .tool-button.active { background-color: #28a745; }
+        .controls .tool-button {
+            font-size: 18px;
+            padding: 5px 5px;
+        }
+        .keyboard-shortcut {
+            font-size: 16px;
+        }
+
         .hidden-input { display: none; }
         .color-picker-wrapper { display: flex; align-items: center; gap: 5px; }
-        .color-picker-wrapper input[type="color"] { padding: 0; width: 40px; height: 30px; }
+        .color-picker-wrapper input[type="color"] {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            background: none;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            cursor: pointer;
+        }
+
+        #selectedObjectControls input[type="color"],
+        #textEditFields input[type="color"] {
+            width: 32px !important;
+            height: 32px !important;
+            min-width: 32px !important;
+            min-height: 32px !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 4px !important;
+            background: none !important;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            cursor: pointer;
+            display: inline-block !important;
+        }
 
         .guideline { position: absolute; background-color: rgba(255, 0, 0, 0.5); z-index: 9999; }
         .guideline.horizontal { width: 100%; height: 1px; left: 0; }
@@ -71,6 +184,10 @@
             box-sizing: border-box;
         }
         hr { border: 0; height: 1px; background: #ddd; margin: 15px 0; }
+
+        input[type="file"] {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -78,62 +195,46 @@
 
     <div class="container">
         <div class="controls">
-            <h3>控制面板</h3>
-            <label for="imageUpload" class="button-like-label">上傳圖片 (可多選)</label>
-            <input type="file" id="imageUpload" accept="image/*" multiple class="hidden-input">
-            <p style="font-size:0.8em; color:#555; margin-top:-5px;">或直接貼上圖片 (Ctrl+V / Cmd+V)</p>
-
-            <hr>
-            <h3>工具</h3>
-            <button id="selectTool" class="tool-button active">選擇/移動/縮放 (V)</button>
-            <button id="drawTool" class="tool-button">畫筆 (B)</button>
-            <button id="textTool" class="tool-button">文字 (T)</button>
-
-            <div id="drawingOptions" style="display:none;">
-                <h4>畫筆選項</h4>
-                <label for="strokeColor">顏色:</label>
-                <div class="color-picker-wrapper">
-                    <input type="color" id="strokeColor" value="#FF0000">
-                </div>
-                <label for="lineWidth">線寬:</label>
-                <input type="range" id="lineWidth" min="1" max="30" value="3">
+            <div class="tab-container">
+                <div class="tab active" data-tab="tools">工具</div>
+                <div class="tab" data-tab="canvas">畫布</div>
+                <div class="tab" data-tab="export">匯出</div>
             </div>
-
-            <div id="textOptions" style="display:none;">
-                <h4>文字選項</h4>
-                <label for="textColor">顏色:</label>
-                 <div class="color-picker-wrapper">
-                    <input type="color" id="textColor" value="#000000">
+            <div class="tab-content active" id="tools-content">
+                <div class="control-group">
+                    <h3>基本操作</h3>
+                    <button class="btn" id="imageUploadBtn">
+                        <span>上傳圖片</span>
+                    </button>
+                    <input type="file" id="imageUpload" accept="image/*" multiple class="hidden-input">
                 </div>
-                <label for="fontSize">字號 (px):</label>
-                <input type="number" id="fontSize" value="20" min="8">
-                <label for="fontFamily">字型:</label>
-                <select id="fontFamily">
-                    <option value="Arial">Arial</option>
-                    <option value="Verdana">Verdana</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Courier New">Courier New</option>
-                    <option value="Microsoft JhengHei, sans-serif">微軟正黑體 (Sans-Serif)</option>
-                    <option value="MingLiU, serif">細明體 (Serif)</option>
-                    <option value="sans-serif">Sans-Serif (預設)</option>
-                </select>
-            </div>
+                <div class="control-group">
+                    <h3>工具選擇</h3>
+                    <button id="selectTool" class="tool-button active">移動 <span class="keyboard-shortcut">V</span></button>
+                    <button id="drawTool" class="tool-button">畫筆 <span class="keyboard-shortcut">B</span></button>
+                    <button id="textTool" class="tool-button">文字 <span class="keyboard-shortcut">T</span></button>
+                </div>
 
-            <hr>
-            <div id="selectedObjectControls" style="display:none;">
-                <h3>選中物件</h3>
-                <label for="objectName">顯示名稱:</label>
-                <input type="text" id="objectName" placeholder="輸入物件名稱">
-                <!-- 新增：僅當選中文字時顯示 -->
-                <div id="textEditFields" style="display:none;">
-                    <label for="editTextContent">內容:</label>
-                    <input type="text" id="editTextContent" placeholder="輸入文字內容">
-                    <label for="editTextColor">顏色:</label>
-                    <input type="color" id="editTextColor">
-                    <label for="editFontSize">字號 (px):</label>
-                    <input type="number" id="editFontSize" min="8">
-                    <label for="editFontFamily">字型:</label>
-                    <select id="editFontFamily">
+                <div id="drawingOptions" style="display:none;">
+                    <h4>畫筆選項</h4>
+                    <label for="strokeColor">顏色:</label>
+                    <div class="color-picker-wrapper">
+                        <input type="color" id="strokeColor" value="#FF0000">
+                    </div>
+                    <label for="lineWidth">線寬:</label>
+                    <input type="range" id="lineWidth" min="1" max="30" value="3">
+                </div>
+
+                <div id="textOptions" style="display:none;">
+                    <h4>文字選項</h4>
+                    <label for="textColor">顏色:</label>
+                     <div class="color-picker-wrapper">
+                        <input type="color" id="textColor" value="#000000">
+                    </div>
+                    <label for="fontSize">字號 (px):</label>
+                    <input type="number" id="fontSize" value="20" min="8">
+                    <label for="fontFamily">字型:</label>
+                    <select id="fontFamily">
                         <option value="Arial">Arial</option>
                         <option value="Verdana">Verdana</option>
                         <option value="Times New Roman">Times New Roman</option>
@@ -143,46 +244,95 @@
                         <option value="sans-serif">Sans-Serif (預設)</option>
                     </select>
                 </div>
-                <button id="deleteSelected">刪除選中物件 (Del)</button>
-                <button id="bringToFront">移到最上層</button>
-                <button id="sendToBack">移到最下層</button>
+
+                <hr>
+                <div id="selectedObjectControls" style="display:none;">
+                    <h3>選中物件</h3>
+                    <div class="input-row" id="objectNameRow">
+                        <label for="objectName">顯示名稱:</label>
+                        <input type="text" id="objectName" placeholder="輸入物件名稱">
+                    </div>
+                    <div id="textEditFields" style="display:none;">
+                        <div class="input-row">
+                            <label for="editTextContent">內容:</label>
+                            <input type="text" id="editTextContent" placeholder="輸入文字內容">
+                        </div>
+                        <div class="input-row">
+                            <label for="editTextColor">顏色:</label>
+                            <input type="color" id="editTextColor">
+                        </div>
+                        <div class="input-row">
+                            <label for="editFontSize">字號:</label>
+                            <input type="number" id="editFontSize" min="8">
+                        </div>
+                        <div class="input-row">
+                            <label for="editFontFamily">字型:</label>
+                            <select id="editFontFamily">
+                                <option value="Arial">Arial</option>
+                                <option value="Verdana">Verdana</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Courier New">Courier New</option>
+                                <option value="Microsoft JhengHei, sans-serif">微軟正黑體 (Sans-Serif)</option>
+                                <option value="MingLiU, serif">細明體 (Serif)</option>
+                                <option value="sans-serif">Sans-Serif (預設)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <button id="deleteSelected">刪除選中物件 (Del)</button>
+                        <button id="bringToFront">移到最上層</button>
+                        <button id="sendToBack">移到最下層</button>
+                    </div>
+                </div>
             </div>
-
-            <hr>
-            <h3>畫布設定</h3>
-            <label for="pageSize">紙張大小:</label>
-            <select id="pageSize">
-                <option value="A4">A4 (210 x 297 mm)</option>
-                <option value="A3">A3 (297 x 420 mm)</option>
-                <option value="Letter">Letter (8.5 x 11 in)</option>
-                <option value="Custom">自訂 (使用下方寬高)</option>
-            </select>
-            <label for="pageOrientation">方向:</label>
-            <select id="pageOrientation">
-                <option value="portrait">縱向</option>
-                <option value="landscape">橫向</option>
-            </select>
-            <div id="customSizeInputs" style="display:none;">
-                <label for="customCanvasWidth">自訂寬度 (px):</label>
-                <input type="number" id="customCanvasWidth" value="800">
-                <label for="customCanvasHeight">自訂高度 (px):</label>
-                <input type="number" id="customCanvasHeight" value="1000">
+            <div class="tab-content" id="canvas-content">
+                <div class="control-group">
+                    <h3>畫布設定</h3>
+                    <div class="input-row">
+                        <label for="pageSize">紙張大小:</label>
+                        <select id="pageSize">
+                            <option value="A4">A4 (210 x 297 mm)</option>
+                            <option value="A3">A3 (297 x 420 mm)</option>
+                            <option value="Letter">Letter (8.5 x 11 in)</option>
+                            <option value="Custom">自訂 (使用下方寬高)</option>
+                        </select>
+                    </div>
+                    <div class="input-row">
+                        <label for="pageOrientation">頁面方向:</label>
+                        <select id="pageOrientation">
+                            <option value="portrait">縱向</option>
+                            <option value="landscape">橫向</option>
+                        </select>
+                    </div>
+                    <div id="customSizeInputs" style="display:none;" class="input-row">
+                        <label for="customCanvasWidth">自訂寬度 (px):</label>
+                        <input type="number" id="customCanvasWidth" value="800">
+                        <label for="customCanvasHeight">自訂高度 (px):</label>
+                        <input type="number" id="customCanvasHeight" value="1000">
+                    </div>
+                    <div class="input-row">
+                        <label for="numPages">預計頁數:</label>
+                        <input type="number" id="numPages" value="1" min="1">
+                    </div>
+                    <div class="input-row">
+                        <button class="btn" id="updateCanvasLayout">更新畫布佈局</button>
+                        <button class="btn btn-secondary" id="clearAnnotations">清空標註 (保留圖片)</button>
+                    </div>
+                </div>
             </div>
-            <label for="numPages">預計頁數 (非自訂時):</label>
-            <input type="number" id="numPages" value="1" min="1">
-            <button id="updateCanvasLayout">更新畫布佈局</button>
-            <button id="clearAnnotations">清空標註 (保留圖片)</button>
-
-            <hr>
-            <h3>專案</h3>
-            <button id="exportProject">匯出專案 (.json)</button>
-            <label for="importProjectInput" class="button-like-label">匯入專案 (.json)</label>
-            <input type="file" id="importProjectInput" accept=".json" class="hidden-input">
-
-            <hr>
-            <h3>輸出</h3>
-            <button id="exportPdf">輸出為 PDF</button>
-            <p style="font-size:0.8em; color: #555;">提示: PDF輸出預設無邊框。請參考畫布上<span style="color:gray; border-bottom: 1px dashed gray;">灰色虛線(視覺分頁)</span>與<span style="color:blue; border-bottom: 1px dashed blue;">藍色虛線(PDF實際分頁)</span>調整圖片位置。</p>
+            <div class="tab-content" id="export-content">
+                <div class="control-group">
+                    <h3>專案</h3>
+                    <button class="btn" id="exportProject">匯出專案 (.json)</button>
+                    <button class="btn btn-secondary" id="importProjectBtn">匯入專案</button>
+                    <input type="file" id="importProjectInput" accept=".json" class="hidden-input">
+                </div>
+                <div class="control-group">
+                    <h3>輸出</h3>
+                    <button class="btn" id="exportPdf">輸出PDF</button>
+                    <p class="hint">PDF輸出預設無邊框。請參考畫布上的分頁指示線調整圖片位置</p>
+                </div>
+            </div>
         </div>
 
         <div id="canvasContainer">
@@ -707,16 +857,21 @@
 
 
         function deselectObject() { selectedObject = null; selectedObjectControlsDiv.style.display = 'none'; redrawCanvas(); }
-        function selectObject(obj) { selectedObject = obj; selectedObjectControlsDiv.style.display = 'block'; objectNameInput.value = obj.name || ''; 
+        function selectObject(obj) {
+            selectedObject = obj;
+            selectedObjectControlsDiv.style.display = 'block';
+            objectNameInput.value = obj.name || '';
             // 根據物件型態顯示/隱藏文字編輯欄位
             if (obj.type === 'text') {
                 textEditFields.style.display = '';
+                document.getElementById('objectNameRow').style.display = 'none';
                 editTextContent.value = obj.text || '';
                 editTextColor.value = obj.color || '#000000';
                 editFontSize.value = obj.fontSize || 20;
                 editFontFamily.value = obj.fontFamily || 'Arial';
             } else {
                 textEditFields.style.display = 'none';
+                document.getElementById('objectNameRow').style.display = '';
             }
             redrawCanvas(); 
         }
@@ -869,7 +1024,6 @@
 
                             obj.x = origCenterX + rotatedDx - newWidth / 2;
                             obj.y = origCenterY + rotatedDy - newHeight / 2;
-
                         } else {
                              obj.x = newX;
                              obj.y = newY;
@@ -1207,6 +1361,32 @@
             if (consumed) e.preventDefault();
         });
 
+        // 分頁切換邏輯（只註冊一次，並確保初始狀態正確）
+(function() {
+    function showTab(tabName) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+        document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+        document.getElementById(`${tabName}-content`).classList.add('active');
+    }
+    // 預設顯示 tools 分頁
+    showTab('tools');
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            showTab(tab.dataset.tab);
+        });
+    });
+})();
+
+        const importProjectBtn = document.getElementById('importProjectBtn');
+        importProjectBtn.addEventListener('click', function() {
+            importProjectInput.click();
+        });
+
+        const imageUploadBtn = document.getElementById('imageUploadBtn');
+        imageUploadBtn.addEventListener('click', function() {
+            imageUpload.click();
+        });
     </script>
 </body>
 </html>
