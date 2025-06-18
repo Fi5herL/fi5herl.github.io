@@ -126,13 +126,15 @@
             cursor: pointer;
             transition: background-color 0.2s;
             font-size: 18px;
-            padding: 5px 5px;
+            padding: 5px 10px;
+            border-radius: 10px;
         }
         .controls button:hover, .button-like-label:hover { background-color: #0056b3; }
         .controls .tool-button.active { background-color: #28a745; }
         .controls .tool-button {
             font-size: 18px;
-            padding: px 5px;
+            padding: 5px 10px;
+            border-radius: 10px;
         }
         .keyboard-shortcut {
             font-size: 16px;
@@ -712,21 +714,48 @@
                         targetCtx.fillStyle = 'black'; targetCtx.textAlign='center'; targetCtx.fillText("Image error", obj.x + obj.width/2, obj.y + obj.height/2);
                     }
                     if (obj.name) {
-                        targetCtx.fillStyle = 'rgba(0,0,0,0.7)'; targetCtx.font = '12px Arial'; targetCtx.textAlign = 'center';
-                        let nameY = obj.y + obj.height + 15;
-                        if (obj.rotation && (Math.abs(obj.rotation % Math.PI) > 0.1)) {
-                            nameY = Math.max(obj.y + obj.height, obj.y + obj.width) + 15;
-                        }
-                        if (nameY > targetCanvas.height - 5 && obj.y - 15 > 0) nameY = obj.y - 15;
-                        else if (nameY > targetCanvas.height -5) nameY = obj.y + obj.height/2;
+                        // Ensure text is placed correctly based on explicit rotation angles
+                        targetCtx.save();
+                        targetCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                        targetCtx.font = `12px Arial`;
+                        targetCtx.textAlign = 'center';
 
-                        targetCtx.fillText(obj.name, obj.x + obj.width / 2, nameY);
+                        // Calculate the position based on the image's rotation angle
+                        const textX = obj.x + obj.width / 2;
+                        let textY;
+                        if (obj.rotation === 0 || obj.rotation === Math.PI) {
+                            // For 0 and 180 degrees
+                            textY = obj.y + obj.height + 15;
+                            // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
+                        } else if (obj.rotation === Math.PI / 2 || obj.rotation === 3 * Math.PI / 2) {
+                            // For 90 and 270 degrees
+                            // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
+                            if (obj.height/obj.width > 1 && obj.height/obj.width < 2.5) {
+                                textY = obj.y + obj.height - obj.width / 8 + 5;
+                            }
+                            else if (obj.height/obj.width == 1) {
+                                textY = obj.y + obj.height + 15;
+                                console.log("==1 and textY="+textY);
+                            }
+                            else if (obj.height/obj.width < 1) {
+                                textY = obj.y + obj.height + obj.width/8 + 15;
+                                // console.log("<1 and textY="+textY);
+                            }
+                            else if (obj.height/obj.width > 2.5) {
+                                textY = obj.y + obj.height - obj.width*2.4 + 10;
+                                // console.log(">2.5 and textY="+textY);
+                            }
+                            // textY = obj.y - obj.height + obj.width;
+                        }
+
+                        targetCtx.fillText(obj.name, textX, textY);
+                        targetCtx.restore();
                     }
                 } else if (obj.type === 'drawing') {
                     drawPath(targetCtx, obj.points, obj.color, obj.lineWidth);
                 } else if (obj.type === 'text') {
                     targetCtx.fillStyle = obj.color; targetCtx.font = `${obj.fontSize}px ${obj.fontFamily}`;
-                    targetCtx.textAlign = 'center'; targetCtx.textBaseline = 'top';
+                    targetCtx.textAlign = 'left'; targetCtx.textBaseline = 'top';
                     targetCtx.fillText(obj.text, obj.x, obj.y);
                 }
                 targetCtx.restore();
@@ -1379,19 +1408,21 @@
                         tempRenderCtx.restore();
                     }
                     if (obj.name) {
+                        // 只計算旋轉後圖片的下方中心點，文字不旋轉
                         tempRenderCtx.save();
                         tempRenderCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
                         tempRenderCtx.font = `12px Arial`;
                         tempRenderCtx.textAlign = 'center';
-                        tempRenderCtx.textBaseline = 'top';
-                        // For PDF, place name relative to unrotated box for consistency, adjust Y if needed
-                        let nameY = obj.y + obj.height + 5;
-                         if (obj.rotation && (Math.abs(obj.rotation % Math.PI) > 0.1)) {
-                             // Simple adjustment if rotated significantly to avoid overlap
-                             const rotatedHeight = obj.width * Math.abs(Math.sin(obj.rotation)) + obj.height * Math.abs(Math.cos(obj.rotation));
-                             nameY = obj.y + rotatedHeight/2  + obj.height/2 + 5; // Approx
-                         }
-                        tempRenderCtx.fillText(obj.name, obj.x + obj.width / 2, nameY);
+                        // 計算旋轉後的下方中心點
+                        const theta = obj.rotation || 0;
+                        const cx = obj.x + obj.width / 2;
+                        const cy = obj.y + obj.height / 2;
+                        const offset = 5;
+                        const bottomX = cx + (obj.height / 2) * Math.sin(theta);
+                        const bottomY = cy + (obj.height / 2) * Math.cos(theta);
+                        const nameX = bottomX;
+                        const nameY = bottomY + offset;
+                        tempRenderCtx.fillText(obj.name, nameX, nameY);
                         tempRenderCtx.restore();
                     }
                 } else if (obj.type === 'drawing') {
