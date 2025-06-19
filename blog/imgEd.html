@@ -725,11 +725,11 @@
                         let textY;
                         if (obj.rotation === 0 || obj.rotation === Math.PI) {
                             // For 0 and 180 degrees
-                            textY = obj.y + obj.height + 15;
+                            textY = obj.y + obj.height + 10;
                             // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
                         } else if (obj.rotation === Math.PI / 2 || obj.rotation === 3 * Math.PI / 2) {
                             // For 90 and 270 degrees
-                            textY = obj.y + (obj.width+obj.height)/2 + 15;
+                            textY = obj.y + (obj.width+obj.height)/2 + 10;
                             // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
                         }
 
@@ -1437,16 +1437,19 @@
                         tempRenderCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
                         tempRenderCtx.font = `12px Arial`;
                         tempRenderCtx.textAlign = 'center';
-                        // 計算旋轉後的下方中心點
-                        const theta = obj.rotation || 0;
-                        const cx = obj.x + obj.width / 2;
-                        const cy = obj.y + obj.height / 2;
-                        const offset = 5;
-                        const bottomX = cx + (obj.height / 2) * Math.sin(theta);
-                        const bottomY = cy + (obj.height / 2) * Math.cos(theta);
-                        const nameX = bottomX;
-                        const nameY = bottomY + offset;
-                        tempRenderCtx.fillText(obj.name, nameX, nameY);
+                        // Calculate the position based on the image's rotation angle
+                        const textX = obj.x + obj.width / 2;
+                        let textY;
+                        if (obj.rotation === 0 || obj.rotation === Math.PI) {
+                            // For 0 and 180 degrees
+                            textY = obj.y + obj.height + 10;
+                            // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
+                        } else if (obj.rotation === Math.PI / 2 || obj.rotation === 3 * Math.PI / 2) {
+                            // For 90 and 270 degrees
+                            textY = obj.y + (obj.width+obj.height)/2 + 10;
+                            // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
+                        }
+                        tempRenderCtx.fillText(obj.name, textX, textY);
                         tempRenderCtx.restore();
                     }
                 } else if (obj.type === 'drawing') {
@@ -1464,7 +1467,8 @@
             const imgData = tempRenderCanvas.toDataURL('image/png');
             const scaledCanvasWidthOnPdf = currentCanvasWidth * scaleToFitPdfWidth;
             const scaledCanvasHeightOnPdf = currentCanvasHeight * scaleToFitPdfWidth;
-            const numPdfPages = Math.ceil(scaledCanvasHeightOnPdf / contentHeightPt);
+            const numPagesInputValue = parseInt(numPagesInput.value) || 1; // 預計頁數
+            const numPdfPages = Math.min(Math.ceil(scaledCanvasHeightOnPdf / contentHeightPt), numPagesInputValue); // 限制頁數
 
             for (let i = 0; i < numPdfPages; i++) {
                 if (i > 0) { pdf.addPage(pdfPageType, pdfOrientation); }
