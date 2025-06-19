@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ways of Working Performance Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #c41e3a 0%, #a01729 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="white" opacity="0.1"><polygon points="0,0 1000,0 1000,100 0,100"/><circle cx="100" cy="50" r="30"/><circle cx="200" cy="20" r="15"/><circle cx="300" cy="70" r="20"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateX(0px); }
+            50% { transform: translateX(30px); }
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .input-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e1e5e9;
+        }
+
+        .input-section h2 {
+            color: #c41e3a;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-icon {
+            margin-right: 12px;
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .label-description {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: normal;
+            margin-top: 5px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 15px 18px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #c41e3a;
+            box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+            line-height: 1.6;
+        }
+
+        .examples-box {
+            background: #f8f9fa;
+            border-left: 4px solid #c41e3a;
+            padding: 20px;
+            margin-top: 15px;
+            border-radius: 8px;
+        }
+
+        .examples-title {
+            font-weight: 600;
+            color: #c41e3a;
+            margin-bottom: 12px;
+        }
+
+        .examples-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .examples-list li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .examples-list li::before {
+            content: "•";
+            color: #c41e3a;
+            font-size: 1.2rem;
+            position: absolute;
+            left: 0;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #c41e3a 0%, #a01729 100%);
+            color: white;
+            border: none;
+            padding: 18px 45px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(196, 30, 58, 0.3);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(196, 30, 58, 0.4);
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-icon {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .prompt-container {
+            background: #1a1a1a;
+            border-radius: 15px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .prompt-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .prompt-title {
+            color: #fff;
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .copy-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .copy-btn:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        .copy-btn.copied {
+            background: #2196F3;
+        }
+
+        .prompt-content {
+            background: #2d2d2d;
+            border-radius: 10px;
+            padding: 25px;
+            color: #f0f0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            border: 1px solid #444;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .usage-instructions {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            border-left: 5px solid #2196F3;
+        }
+
+        .usage-title {
+            color: #1565C0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .usage-steps {
+            list-style: none;
+            padding: 0;
+        }
+
+        .usage-steps li {
+            margin-bottom: 12px;
+            padding-left: 35px;
+            position: relative;
+            color: #424242;
+            line-height: 1.5;
+        }
+
+        .usage-steps li::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #2196F3;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .usage-steps {
+            counter-reset: step-counter;
+        }
+
+        .ai-platforms {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .platform-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 2px solid #e1e5e9;
+        }
+
+        .platform-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            border-color: #c41e3a;
+        }
+
+        .platform-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .platform-desc {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .input-section {
+                padding: 20px;
+            }
+            
+            .prompt-container {
+                padding: 20px;
+            }
+            
+            .prompt-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Ways of Working Performance Analyzer</h1>
+            <p>Generate AI prompts to analyze your work performance against UL competency framework</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-section">
+                <h2>
+                    <span class="section-icon">📝</span>
+                    Describe Your Work Performance
+                </h2>
+                
+                <div class="form-group">
+                    <label for="achievements">
+                        Work Achievements & Results
+                        <div class="label-description">Describe specific accomplishments, projects completed, goals achieved, or measurable outcomes</div>
+                    </label>
+                    <textarea id="achievements" placeholder="Example: Led a cross-functional team of 8 people to successfully implement a new customer service system, resulting in 25% faster response times and 90% customer satisfaction score. Managed a $500K budget and delivered the project 2 weeks ahead of schedule."></textarea>
+                    
+                    <div class="examples-box">
+                        <div class="examples-title">Examples of Achievements:</div>
+                        <ul class="examples-list">
+                            <li>Successfully managed budget of $X and delivered project on time</li>
+                            <li>Improved team productivity by X% through process optimization</li>
+                            <li>Led change initiative that resulted in X% cost savings</li>
+                            <li>Mentored X team members, with Y promoted to leadership roles</li>
+                            <li>Resolved customer complaints, achieving X% satisfaction rate</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="behaviors">
+                        Key Behaviors & Actions
+                        <div class="label-description">Describe how you approached challenges, worked with others, made decisions, or demonstrated leadership</div>
+                    </label>
+                    <textarea id="behaviors" placeholder="Example: When facing resistance to the new system, I organized individual meetings with each stakeholder to understand their concerns, provided additional training sessions, and created a feedback loop to address issues quickly. I also established clear communication channels and held weekly progress meetings to ensure transparency."></textarea>
+                    
+                    <div class="examples-box">
+                        <div class="examples-title">Examples of Behaviors:</div>
+                        <ul class="examples-list">
+                            <li>How you handled conflict or difficult conversations</li>
+                            <li>Methods used to motivate and engage team members</li>
+                            <li>Approach to problem-solving and decision-making</li>
+                            <li>Ways you collaborated across departments or functions</li>
+                            <li>Steps taken to learn new skills or adapt to changes</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="challenges">
+                        Challenges Overcome
+                        <div class="label-description">Describe obstacles faced and how you overcame them</div>
+                    </label>
+                    <textarea id="challenges" placeholder="Example: The biggest challenge was getting buy-in from senior management who were skeptical about the ROI. I prepared a comprehensive business case with data from similar implementations, arranged demos with other successful companies, and proposed a phased rollout to minimize risk."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="context">
+                        Work Context (Optional)
+                        <div class="label-description">Your role, team size, industry, or any relevant background information</div>
+                    </label>
+                    <input type="text" id="context" placeholder="e.g., Senior Manager, Technology team of 15, Manufacturing industry, Matrix organization">
+                </div>
+                
+                <button class="generate-btn" onclick="generatePrompt()">
+                    <span class="btn-icon">🤖</span>
+                    Generate AI Analysis Prompt
+                </button>
+            </div>
+            
+            <div class="results-section" id="results">
+                <div class="prompt-container">
+                    <div class="prompt-header">
+                        <div class="prompt-title">
+                            <span style="margin-right: 10px;">🎯</span>
+                            Generated AI Prompt
+                        </div>
+                        <button class="copy-btn" onclick="copyPrompt()">
+                            <span id="copy-icon" style="margin-right: 8px;">📋</span>
+                            <span id="copy-text">Copy Prompt</span>
+                        </button>
+                    </div>
+                    <div class="prompt-content" id="promptContent"></div>
+                </div>
+                
+                <div class="usage-instructions">
+                    <div class="usage-title">
+                        <span style="margin-right: 10px;">💡</span>
+                        How to Use This Prompt
+                    </div>
+                    <ol class="usage-steps">
+                        <li>Copy the generated prompt above using the "Copy Prompt" button</li>
+                        <li>Open your preferred AI platform (ChatGPT, Claude, Gemini, etc.)</li>
+                        <li>Paste the prompt into the AI chat interface</li>
+                        <li>The AI will analyze your performance and identify which competency areas and job levels match your demonstrated behaviors</li>
+                        <li>Review the AI's assessment to understand your strengths and development areas</li>
+                    </ol>
+                    
+                    <div class="ai-platforms">
+                        <div class="platform-card">
+                            <div class="platform-name">ChatGPT</div>
+                            <div class="platform-desc">OpenAI's GPT-4</div>
+                        </div>
+                        <div class="platform-card">
+                            <div class="platform-name">Claude</div>
+                            <div class="platform-desc">Anthropic's AI</div>
+                        </div>
+                        <div class="platform-card">
+                            <div class="platform-name">Gemini</div>
+                            <div class="platform-desc">Google's AI</div>
+                        </div>
+                        <div class="platform-card">
+                            <div class="platform-name">Copilot</div>
+                            <div class="platform-desc">Microsoft's AI</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generatePrompt() {
+            const achievements = document.getElementById('achievements').value.trim();
+            const behaviors = document.getElementById('behaviors').value.trim();
+            const challenges = document.getElementById('challenges').value.trim();
+            const context = document.getElementById('context').value.trim();
+            
+            if (!achievements && !behaviors && !challenges) {
+                alert('Please fill in at least one section describing your work performance.');
+                return;
+            }
+            
+            const prompt = createAnalysisPrompt(achievements, behaviors, challenges, context);
+            
+            document.getElementById('promptContent').textContent = prompt;
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function createAnalysisPrompt(achievements, behaviors, challenges, context) {
+            const prompt = `You are an expert in organizational competency assessment, specifically trained in analyzing work performance against the UL Ways of Working framework. 
+
+**Your Task:**
+Analyze the following work performance description and identify:
+1. Which of the 5 competency areas are demonstrated
+2. What job level (A, B, C, D, E) the behaviors align with
+3. Specific evidence supporting your assessment
+
+**UL Ways of Working Framework:**
+
+**5 Core Competencies:**
+
+**1. Change Mindset** - Drive change with a forward-looking mindset
+- Level A: Accepts and embraces change, uses new tools and processes, analyzes existing processes with others, asks questions to learn
+- Level B: Contributes to change initiatives, offers improvement ideas, teaches others to rethink processes, encourages learning
+- Level C: Enables others to embrace change, recognizes innovation, evaluates improvement ideas, seeks change information
+- Level D: Coaches change implementation, leads by example with new processes, empowers agile work processes, enables learning
+- Level E: Leads business through change, forecasts new tools/processes, develops improvement culture, creates learning environment
+
+**2. Connectivity** - Create connections to help others feel motivated, engaged and included
+- Level A: Builds strong relationships, seeks cultural understanding, welcomes feedback, shares information openly, communicates clearly
+- Level B: Helps others build relationships, ensures inclusive actions, seeks feedback and mentors others, uses network for work
+- Level C: Seeks cross-functional collaboration, values diverse opinions, coaches with feedback, uses network for team priorities
+- Level D: Builds trusted partnerships, creates inclusive environments, develops others through feedback, maintains broad networks
+- Level E: Champions collaboration across enterprise, prioritizes diversity, builds organizational communication channels, influences stakeholders
+
+**3. Customer Centricity** - Bring passion and determined focus to deliver value for customers
+- Level A: Works to understand customer needs, displays empathy, works to deliver value beyond expectations, seeks multiple perspectives
+- Level B: Assists others in understanding customers, guides empathy, teaches value delivery, shares expertise for problem-solving
+- Level C: Translates customer voice to needs, leads future needs understanding, focuses on exceeding expectations, enables unified solutions
+- Level D: Builds customer stakeholder networks, coaches proactive anticipation, connects others for unique value, ensures consistent approach
+- Level E: Develops trusted customer partnerships, creates empathetic environment, leads expectation-exceeding culture, promotes unified approach
+
+**4. Decisiveness** - Work urgently to enable decisions with bigger picture in mind
+- Level A: Makes practical decisions, shares information proactively, reaches timely decisions, uses business acumen and data
+- Level B: Supports others in decision-making, helps see impact on team/customer, makes timely decisions, mentors with data insights
+- Level C: Communicates decision requirements, considers stakeholder impact, ensures others have decision support, applies strong business acumen
+- Level D: Coaches balanced decision-making, makes informed decisions in ambiguity, engages stakeholders for buy-in, ensures data integration
+- Level E: Fosters urgent decision environment, solicits appropriate stakeholder input, creates empowering decision culture, champions data-driven decisions
+
+**5. Accountability** - Hold ourselves and others accountable to achieve results
+- Level A: Shows motivation and drive, considers impact on team/resources, owns commitments, completes quality work on time
+- Level B: Demonstrates work motivation, teaches resource impact consideration, delivers on commitments, collaborates for quality outcomes
+- Level C: Allows autonomous work while supporting, uses resources effectively, holds others accountable, ensures quality outcomes
+- Level D: Coaches teams for results, recognizes fiscal responsibility, ensures team commitments, teaches consistent delivery
+- Level E: Role models results drive, embodies profitability focus, acts as accountability role model, creates execution excellence culture
+
+**Performance to Analyze:**
+${context ? `**Context:** ${context}\n\n` : ''}${achievements ? `**Achievements & Results:**\n${achievements}\n\n` : ''}${behaviors ? `**Key Behaviors & Actions:**\n${behaviors}\n\n` : ''}${challenges ? `**Challenges Overcome:**\n${challenges}\n\n` : ''}
+**Analysis Instructions:**
+1. **Competency Identification:** For each of the 5 competencies, assess if there is evidence in the performance description. Rate the strength of evidence (Strong/Moderate/Weak/None).
+
+2. **Level Assessment:** For competencies with evidence, determine the most appropriate job level (A-E) based on the complexity, scope, and nature of the behaviors described.
+
+3. **Evidence Mapping:** Quote specific phrases or examples from the performance description that support your competency and level assessments.
+
+4. **Summary Assessment:** Provide an overall assessment of the person's demonstrated competency profile and suggest potential development areas.
+
+**Output Format:**
+Please structure your analysis as follows:
+
+**COMPETENCY ANALYSIS:**
+
+**Change Mindset:** [Evidence Level] - Level [X]
+- Evidence: [Specific quotes/examples]
+- Rationale: [Why this level]
+
+**Connectivity:** [Evidence Level] - Level [X]  
+- Evidence: [Specific quotes/examples]
+- Rationale: [Why this level]
+
+**Customer Centricity:** [Evidence Level] - Level [X]
+- Evidence: [Specific quotes/examples] 
+- Rationale: [Why this level]
+
+**Decisiveness:** [Evidence Level] - Level [X]
+- Evidence: [Specific quotes/examples]
+- Rationale: [Why this level]
+
+**Accountability:** [Evidence Level] - Level [X]
+- Evidence: [Specific quotes/examples]
+- Rationale: [Why this level]
+
+**OVERALL ASSESSMENT:**
+- Primary Competency Strengths: [Top 2-3 areas with strongest evidence]
+- Suggested Job Level Range: [A-E based on overall evidence] 
+- Development Opportunities: [Areas with limited evidence or lower levels]
+- Key Success Indicators: [Most impressive achievements or behaviors]
+
+Please provide a thorough, evidence-based analysis that would be useful for performance evaluation and career development planning.`;
+
+            return prompt;
+        }
+        
+        function copyPrompt() {
+            const promptContent = document.getElementById('promptContent').textContent;
+            
+            navigator.clipboard.writeText(promptContent).then(function() {
+                // Success feedback
+                const copyBtn = document.querySelector('.copy-btn');
+                const copyIcon = document.getElementById('copy-icon');
+                const copyText = document.getElementById('copy-text');
+                
+                copyBtn.classList.add('copied');
+                copyIcon.textContent = '✅';
+                copyText.textContent = 'Copied!';
+                
+                setTimeout(() => {
+                    copyBtn.classList.remove('copied');
+                    copyIcon.textContent = '📋';
+                    copyText.textContent = 'Copy Prompt';
+                }, 2000);
+            }).catch(function(err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = promptContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                alert('Prompt copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>
