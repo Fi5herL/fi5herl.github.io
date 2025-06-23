@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UL 60730-1 電氣間隙評估系統 - 硬體工程師判定流程</title>
+    <style>
+        :root {
+            --primary-color: #00529B;
+            --secondary-color: #0073E6;
+            --accent-color: #FFC107;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --light-bg: #f8f9fa;
+            --dark-text: #2c3e50;
+            --light-text: #7f8c8d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft JhengHei', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: var(--dark-text);
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--light-text);
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .step-section {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 3rem;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+            animation: slideIn 0.6s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-header {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .step-number {
+            background: rgba(255, 255, 255, 0.2);
+            min-width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .step-content { padding: 2rem; }
+
+        .step-description {
+            background: #eaf5ff;
+            border-left: 4px solid var(--secondary-color);
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        /* [STYLES FROM ORIGINAL CODE]... The existing styles for navigation, forms, tables, etc. are kept the same */
+        .mockup-screen { background: var(--light-bg); border: 1px solid #dee2e6; border-radius: 12px; padding: 1rem; margin: 1rem 0; position: relative; overflow: hidden; }
+        .mockup-canvas { background: radial-gradient(circle, #e1e8ed 1px, transparent 1px); background-size: 20px 20px; min-height: 300px; border-radius: 8px; position: relative; overflow: hidden; }
+        .node { position: absolute; min-width: 160px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); border: 1px solid #ccc; font-size: 0.9rem; }
+        .node-header { padding: 0.7rem; border-radius: 6px 6px 0 0; color: white; font-weight: 600; font-size: 0.85rem; }
+        .node-header.input { background: linear-gradient(135deg, #55efc4, #00b894); }
+        .node-content { padding: 0.8rem; background: white; border-radius: 0 0 6px 6px; font-size: 0.8rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; color: #555; }
+        .form-group input, .form-group select { width: 100%; padding: 0.6rem; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.9rem; }
+        .form-group small { color: #777; font-size: 0.8rem; margin-top: 4px; display: block; }
+        .table-display { overflow-x: auto; margin: 1rem 0; }
+        .table-display table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .table-display th, .table-display td { border: 1px solid #dee2e6; padding: 0.6rem; text-align: center; }
+        .table-display th { background: #f2f2f2; font-weight: 600; }
+        .navigation { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 50; }
+        .nav-button { background: linear-gradient(135deg, #74b9ff, var(--secondary-color)); color: white; border: none; padding: 0.7rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.3s ease; }
+        .nav-button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
+        .nav-button:disabled { background: #95a5a6; cursor: not-allowed; transform: none; }
+        .progress-bar { background: #e9ecef; border-radius: 10px; height: 8px; margin: 1rem 0; overflow: hidden; flex-grow: 1; max-width: 400px; }
+        .progress-fill { background: linear-gradient(90deg, var(--secondary-color), var(--primary-color)); height: 100%; border-radius: 10px; transition: width 0.3s ease; }
+        .control-panel { background: linear-gradient(135deg, #6a737d, #343a40); color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+        .control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .control-grid label { color: white; }
+        .control-grid select, .control-grid input { border: 2px solid #fff; }
+        .live-result { border: 2px solid; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; transition: all 0.3s ease; }
+        .live-result.pass { background: linear-gradient(135deg, #e8f5e8, #d4edda); border-color: var(--success-color); }
+        .live-result.fail { background: linear-gradient(135deg, #f8d7da, #f5c6cb); border-color: var(--danger-color); }
+        .live-result.info { background: linear-gradient(135deg, #fff3cd, #ffeeba); border-color: var(--accent-color); }
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1rem; }
+        .result-item { font-family: 'Courier New', monospace; background: rgba(255, 255, 255, 0.7); padding: 0.8rem; border-radius: 6px; }
+        .table-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 992px) { .table-grid { grid-template-columns: 1fr; } }
+        .highlight-cell { background-color: var(--accent-color) !important; border: 2px solid #e6a800 !important; font-weight: bold !important; }
+        .highlight-row { background-color: #fff3cd !important; }
+        .btn { background: linear-gradient(135deg, #74b9ff, var(--secondary-color)); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.3s ease; margin: 0.5rem 0.5rem 0.5rem 0; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
+        .btn-danger { background: linear-gradient(135deg, #ff7675, var(--danger-color)); }
+
+
+        /* --- NEW/REVISED Flowchart Styles --- */
+        .flowchart-section {
+            padding-top: 2rem;
+            border-top: 2px solid #e9ecef;
+            margin-top: 2rem;
+        }
+        .flowchart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px; /* Space between vertical nodes */
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+        }
+        .flow-node {
+            position: relative;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 280px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            border: 1px solid #ccc;
+        }
+        /* Vertical connector line for all nodes EXCEPT the one right before a split */
+        .flow-node:not(:last-child):not(.pre-split)::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 100%;
+            width: 2px;
+            height: 15px;
+            background-color: #999;
+            transform: translateX(-50%);
+        }
+        .flow-node.input { background-color: #e3f2fd; border-color: #90caf9; }
+        .flow-node.process { background-color: #e8f5e9; border-color: #a5d6a7; }
+        .flow-node.decision {
+            background-color: #fff3e0;
+            border-color: #ffcc80;
+            width: 240px;
+            height: 100px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); /* Diamond shape */
+        }
+        .flow-node.result { font-weight: bold; border-width: 2px; }
+        .flow-node.pass { background-color: #d4edda; border-color: var(--success-color); color: #155724; }
+        .flow-node.fail { background-color: #f8d7da; border-color: var(--danger-color); color: #721c24; }
+        .flow-node.info { background-color: #fff3cd; border-color: var(--accent-color); color: #856404; }
+        .flow-node strong { color: var(--primary-color); }
+
+        /* The container for Pass/Fail branches */
+        .flow-path-split {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 450px;
+            margin-top: 30px; /* Space for T-connector */
+        }
+        /* Vertical line coming down to the T-junction */
+        .flow-path-split::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 15px;
+            background-color: #999;
+        }
+        /* Horizontal line of the T-junction */
+        .flow-path-split::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #999;
+        }
+        
+        .flow-path-branch {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            flex-grow: 1;
+        }
+        /* Vertical line dropping down from the T-junction to each branch node */
+        .flow-path-branch::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 15px;
+            background-color: #999;
+        }
+        .flow-path-branch .flow-node {
+            margin-top: 15px;
+            min-width: 150px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header and Navigation sections remain unchanged -->
+    <header class="header"><h1>🔧 UL 60730-1 電氣間隙評估系統</h1><p>硬體工程師的標準化判定流程</p></header>
+    <nav class="navigation"><button class="nav-button" onclick="previousStep()" id="prevBtn" disabled>← 上一步</button><div style="display: flex; align-items: center; gap: 1rem;"><span id="stepIndicator">步驟 1 / 5</span><div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 20%"></div></div></div><button class="nav-button" onclick="nextStep()" id="nextBtn">下一步 →</button></nav>
+
+    <div class="container">
+        <!-- Steps 1-4 remain unchanged -->
+        <div class="step-section" id="step1" style="display: block;"><div class="step-header"><div class="step-number">1</div><div><h2>建立評估案例</h2><p>為一個 240V AC 工業用溫控器建立電氣間隙評估</p></div></div><div class="step-content"><div class="step-description"><strong>情境：</strong>UL 工程師需要評估一個 240V AC 工業用溫控器電路板的電氣間隙。他開始建立一個標準化的評估流程。</div><div class="mockup-screen"><div style="padding: 1rem; background: white; border-radius: 8px;"><h4>建立新評估</h4><div class="form-group"><label>評估名稱</label><input type="text" value="240V溫控器電氣間隙評估" style="border: 2px solid var(--secondary-color);"></div><div class="form-group"><label>描述</label><input type="text" value="基於 IEC 60730-1 Table 21 &amp; 22 的電氣間隙判定"></div><div class="form-group"><label>適用標準</label><select><option selected="">IEC 60730-1:2013+A1:2015</option></select></div><button class="btn">✨ 開始評估</button></div></div></div></div>
+        <div class="step-section" id="step2" style="display: none;"><div class="step-header"><div class="step-number">2</div><div><h2>定義輸入參數</h2><p>設定所有評估所需的關鍵參數</p></div></div><div class="step-content"><div class="step-description"><strong>操作：</strong>工程師根據產品規格書和電路設計，設定工作電壓、系統類型、絕緣類型等所有必要的輸入參數。</div><div class="mockup-canvas"><div class="node highlight" style="left: 50px; top: 30px; animation: 1.5s ease 0s infinite normal none running pulse;"><div class="node-header input">⚡ 工作電壓</div><div class="node-content">值: <strong>240V AC</strong></div></div><div class="node" style="left: 250px; top: 30px;"><div class="node-header input">🔌 系統類型</div><div class="node-content">類型: <strong>三相四線</strong></div></div><div class="node" style="left: 450px; top: 30px;"><div class="node-header input">🔒 絕緣類型</div><div class="node-content">類型: <strong>基本絕緣</strong></div></div><div class="node" style="left: 50px; top: 130px;"><div class="node-header input">🌫️ 汙染等級</div><div class="node-content">等級: <strong>PD2</strong></div></div><div class="node" style="left: 250px; top: 130px;"><div class="node-header input">📏 量測間隙</div><div class="node-content">值: <strong>2.8 mm</strong></div></div></div></div></div>
+        <div class="step-section" id="step3" style="display: none;"><div class="step-header"><div class="step-number">3</div><div><h2>查閱 Table 21</h2><p>從工作電壓確定額定脈衝電壓</p></div></div><div class="step-content"><div class="step-description"><strong>操作：</strong>根據工作電壓 (240V)、系統類型 (三相) 和過電壓類別 (預設為 II)，從 Table 21 查得額定脈衝電壓。</div><div class="table-display"><table><thead><tr><th>工作電壓範圍 (V)</th><th>系統類型</th><th>過電壓類別 II (V)</th></tr></thead><tbody><tr><td>≤ 50</td><td>三相</td><td>500</td></tr><tr class="highlight-row"><td class="highlight-cell">150-300</td><td>三相</td><td class="highlight-cell">2500</td></tr><tr><td>300-600</td><td>三相</td><td>4000</td></tr></tbody></table></div><div class="result-panel"><strong>查詢結果:</strong> 工作電壓 240V 落在 "150-300V" 範圍內，對應額定脈衝電壓為 <strong>2500V (2.5kV)</strong>。</div></div></div>
+        <div class="step-section" id="step4" style="display: none;"><div class="step-header"><div class="step-number">4</div><div><h2>查閱 Table 22</h2><p>從脈衝電壓確定最小電氣間隙</p></div></div><div class="step-content"><div class="step-description"><strong>操作：</strong>使用上一步得到的額定脈衝電壓 (2.5kV)，結合絕緣類型 (基本絕緣 → Case B) 和汙染等級 (PD2)，從 Table 22 查得要求的最小電氣間隙。</div><div class="table-display"><table><thead><tr><th>脈衝電壓 (kV)</th><th>Case</th><th>PD1 (mm)</th><th>PD2 (mm)</th><th>PD3 (mm)</th></tr></thead><tbody><tr><td>1.5</td><td>B</td><td>0.5</td><td>0.8</td><td>1.5</td></tr><tr class="highlight-row"><td class="highlight-cell">2.5</td><td>B</td><td>1.5</td><td class="highlight-cell">2.0</td><td>3.0</td></tr><tr><td>4.0</td><td>B</td><td>3.0</td><td>4.0</td><td>5.5</td></tr></tbody></table></div><div class="result-panel"><strong>查詢結果:</strong> 2.5kV + Case B + PD2 → <strong>2.0mm</strong> 間隙要求。<br><strong>最終判定:</strong> 量測值 2.8mm ≥ 要求值 2.0mm → <span style="color: var(--success-color); font-weight: bold;">PASS ✅</span></div></div></div>
+        
+        <!-- 步驟 5: 即時判定系統與流程圖 (重大修改) -->
+        <div class="step-section" id="step5" style="display: none;">
+            <div class="step-header">
+                <div class="step-number">5</div>
+                <div>
+                    <h2>整合判定系統與流程圖</h2>
+                    <p>即時互動查詢並可視化完整判定邏輯</p>
+                </div>
+            </div>
+            <div class="step-content">
+                <div class="step-description">
+                    <strong>UL 工程師的判定工作台：</strong>下方所有參數均可即時調整。調整後，系統將自動重新計算，並在高亮表格和流程圖中反映出新的判定路徑和結果。
+                </div>
+                
+                <div class="control-panel">
+                    <h3>🎛️ 即時判定控制面板</h3>
+                    <div class="control-grid">
+                        <div class="form-group"><label for="workingVoltage">工作電壓 (V)</label><select id="workingVoltage" onchange="updateLiveJudgment()"><option value="50">50</option><option value="120">120</option><option value="240" selected>240 ⭐</option><option value="480">480</option><option value="600">600</option></select></div>
+                        <div class="form-group"><label for="systemType">系統類型</label><select id="systemType" onchange="updateLiveJudgment()"><option value="three-phase" selected>三相四線 ⭐</option><option value="single-phase">單相</option></select></div>
+                        <div class="form-group"><label for="overvoltageCategory">過電壓類別</label><select id="overvoltageCategory" onchange="updateLiveJudgment()"><option value="I">I</option><option value="II" selected>II ⭐</option><option value="III">III</option><option value="IV">IV</option></select></div>
+                        <div class="form-group"><label for="insulationType">絕緣類型</label><select id="insulationType" onchange="updateLiveJudgment()"><option value="basic" selected>基本絕緣</option><option value="functional">功能絕緣</option><option value="reinforced">加強絕緣</option></select><small>基本/加強: Case B, 功能: Case A</small></div>
+                        <div class="form-group"><label for="pollutionDegree">汙染等級</label><select id="pollutionDegree" onchange="updateLiveJudgment()"><option value="PD1">PD1</option><option value="PD2" selected>PD2 ⭐</option><option value="PD3">PD3</option></select></div>
+                        <div class="form-group"><label for="measuredGap">量測間隙 (mm)</label><input type="number" id="measuredGap" value="2.8" step="0.1" min="0" oninput="updateLiveJudgment()"></div>
+                    </div>
+                </div>
+
+                <div class="live-result" id="liveResultPanel">
+                    <h3>🎯 即時判定結果</h3>
+                    <div class="result-grid">
+                        <div><h4>📋 Table 21 查詢</h4><div class="result-item" id="table21Result"></div></div>
+                        <div><h4>📊 Table 22 查詢</h4><div class="result-item" id="table22Result"></div></div>
+                        <div><h4>⚖️ 最終判定</h4><div class="result-item" id="finalJudgment" style="font-weight: bold;"></div></div>
+                    </div>
+                </div>
+                
+                <div class="table-grid" style="margin-top: 2rem;">
+                    <div>
+                        <h4>📋 Table H.21 - 額定脈衝電壓 (V)</h4>
+                        <div class="table-display"><table id="table21_display"></table></div>
+                    </div>
+                    <div>
+                        <h4>📊 Table H.22 - 電氣間隙 (mm) for Case A/B</h4>
+                        <div class="table-display"><table id="table22_display"></table></div>
+                    </div>
+                </div>
+
+                <div style="background: var(--light-bg); padding: 1.5rem; border-radius: 8px; margin-top: 2rem; border: 1px solid #ddd;">
+                    <h4>🧪 快速測試案例</h4>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+                        <button class="btn" onclick="loadTestCase('pass_case')">案例1: 標準通過</button>
+                        <button class="btn" onclick="loadTestCase('high_voltage')">案例2: 高壓工業</button>
+                        <button class="btn" onclick="loadTestCase('functional_fail')">案例3: 功能絕緣 (需測試)</button>
+                        <button class="btn btn-danger" onclick="loadTestCase('fail_case')">案例4: 明顯失效</button>
+                    </div>
+                </div>
+
+                <!-- 位置已調整：判定邏輯流程圖 -->
+                <div class="flowchart-section">
+                    <h3 style="text-align: center; margin-bottom: 2rem;">🔎 判定邏輯流程圖</h3>
+                    <div class="flowchart-container" id="flowchart-container">
+                        <!-- Flowchart is dynamically generated here by JS -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        // --- 標準數據 (根據 IEC 60730-1:2013+A1:2015) ---
+        const table21Data = {
+            "≤50":     { "three-phase": { I: 330, II: 500, III: 800, IV: 1500 }, "single-phase": { I: 500, II: 800, III: 1500, IV: 2500 } },
+            "50-150":  { "three-phase": null,                                     "single-phase": { I: 800, II: 1500, III: 2500, IV: 4000 } },
+            "150-300": { "three-phase": { I: 1500, II: 2500, III: 4000, IV: 6000 }, "single-phase": { I: 1500, II: 2500, III: 4000, IV: 6000 } },
+            "300-600": { "three-phase": { I: 2500, II: 4000, III: 6000, IV: 8000 }, "single-phase": null }
+        };
+        
+        const table22Data = {
+            "0.33": { A: { PD1: 0.01, PD2: null, PD3: null }, B: { PD1: 0.01, PD2: 0.02, PD3: 0.03 }},
+            "0.5":  { A: { PD1: 0.04, PD2: null, PD3: null }, B: { PD1: 0.04, PD2: 0.06, PD3: 0.1 }},
+            "0.8":  { A: { PD1: 0.1,  PD2: null, PD3: null }, B: { PD1: 0.1,  PD2: 0.2,  PD3: 0.4 }},
+            "1.5":  { A: { PD1: 0.5,  PD2: null, PD3: null }, B: { PD1: 0.5,  PD2: 0.8,  PD3: 1.5 }},
+            "2.5":  { A: { PD1: 1.5,  PD2: null, PD3: null }, B: { PD1: 1.5,  PD2: 2.0,  PD3: 3.0 }},
+            "4.0":  { A: { PD1: 3.0,  PD2: null, PD3: null }, B: { PD1: 3.0,  PD2: 4.0,  PD3: 5.5 }},
+            "6.0":  { A: { PD1: 5.5,  PD2: null, PD3: null }, B: { PD1: 5.5,  PD2: 7.0,  PD3: 9.5 }},
+            "8.0":  { A: { PD1: 8.0,  PD2: null, PD3: null }, B: { PD1: 8.0,  PD2: 10.0, PD3: 12.5 }}
+        };
+
+        // --- Helper Functions ---
+        function getVoltageRange(v) {
+            if (v <= 50) return "≤50"; if (v <= 150) return "50-150";
+            if (v <= 300) return "150-300"; if (v <= 600) return "300-600";
+            return "300-600";
+        }
+        function getPulseVoltage(v, sys, cat) {
+            const range = getVoltageRange(v);
+            const data = table21Data[range];
+            return data?.[sys]?.[cat] ?? null;
+        }
+        function determineInsulationCase(type) {
+            return (type === 'basic' || type === 'reinforced') ? 'B' : 'A';
+        }
+        function getClearanceRequirement(pulseV, caseType, pd) {
+            if (!pulseV) return null;
+            const pulseKey = (pulseV / 1000).toFixed(2).replace(/\.0+$/, '').replace(/0+$/, '');
+            const data = table22Data[pulseKey];
+            return data?.[caseType]?.[pd] ?? null;
+        }
+
+        // --- Main Logic ---
+        function updateLiveJudgment() {
+            if (currentStep !== 5) return;
+            const inputs = {
+                workingVoltage: parseInt(document.getElementById('workingVoltage').value),
+                systemType: document.getElementById('systemType').value,
+                overvoltageCategory: document.getElementById('overvoltageCategory').value,
+                insulationType: document.getElementById('insulationType').value,
+                pollutionDegree: document.getElementById('pollutionDegree').value,
+                measuredGap: parseFloat(document.getElementById('measuredGap').value)
+            };
+            const pulseVoltage = getPulseVoltage(inputs.workingVoltage, inputs.systemType, inputs.overvoltageCategory);
+            const caseType = determineInsulationCase(inputs.insulationType);
+            const requiredClearance = getClearanceRequirement(pulseVoltage, caseType, inputs.pollutionDegree);
+            updateResultDisplay(inputs, pulseVoltage, caseType, requiredClearance);
+            updateTableHighlights(inputs, pulseVoltage, caseType);
+            updateFlowchart(inputs, pulseVoltage, caseType, requiredClearance);
+        }
+
+        function updateResultDisplay(inputs, pulseV, caseT, reqC) {
+            const systemText = inputs.systemType === 'three-phase' ? '三相' : '單相';
+            const resultPanel = document.getElementById('liveResultPanel');
+            const finalJudgmentEl = document.getElementById('finalJudgment');
+            document.getElementById('table21Result').textContent = pulseV ? `${inputs.workingVoltage}V + ${systemText} + ${inputs.overvoltageCategory} → ${pulseV}V (${pulseV/1000}kV)` : '輸入條件不適用 (N/A)';
+            let table22Text;
+            if (pulseV === null) {
+                table22Text = 'N/A';
+            } else if (reqC === null) {
+                table22Text = `${pulseV/1000}kV + Case ${caseT} + ${inputs.pollutionDegree} → 需電氣強度測試`;
+            } else {
+                table22Text = `${pulseV/1000}kV + Case ${caseT} + ${inputs.pollutionDegree} → ${reqC.toFixed(2)}mm`;
+            }
+            document.getElementById('table22Result').textContent = table22Text;
+            if (reqC !== null && !isNaN(inputs.measuredGap)) {
+                const isPassed = inputs.measuredGap >= reqC;
+                finalJudgmentEl.textContent = `${inputs.measuredGap.toFixed(1)}mm ${isPassed ? '≥' : '<'} ${reqC.toFixed(2)}mm → ${isPassed ? 'PASS ✅' : 'FAIL ❌'}`;
+                resultPanel.className = 'live-result ' + (isPassed ? 'pass' : 'fail');
+            } else if (reqC === null) {
+                finalJudgmentEl.textContent = '需依標準進行電氣強度測試';
+                resultPanel.className = 'live-result info';
+            } else {
+                finalJudgmentEl.textContent = '判定所需資訊不完整';
+                resultPanel.className = 'live-result info';
+            }
+        }
+        
+        function updateFlowchart(inputs, pulseV, caseT, reqC) {
+            const container = document.getElementById('flowchart-container');
+            let finalHtml = '';
+            
+            if (reqC !== null) { // Pass or Fail path
+                const isPassed = inputs.measuredGap >= reqC;
+                finalHtml = `
+                    <div class="flow-node process">要求間隙: <strong>${reqC.toFixed(2)}mm</strong></div>
+                    <div class="flow-node decision pre-split">量測值 <strong>${inputs.measuredGap.toFixed(1)}mm</strong> &ge; 要求值?</div>
+                    <div class="flow-path-split">
+                        <div class="flow-path-branch">
+                            <div class="flow-node result ${isPassed ? 'pass' : ''}" style="opacity:${isPassed ? 1 : 0.3}">PASS ✅</div>
+                        </div>
+                        <div class="flow-path-branch">
+                            <div class="flow-node result ${!isPassed ? 'fail' : ''}" style="opacity:${!isPassed ? 1 : 0.3}">FAIL ❌</div>
+                        </div>
+                    </div>`;
+            } else { // Testing Required path
+                finalHtml = `<div class="flow-node result info">結果: 需進行電氣強度測試</div>`;
+            }
+            
+            container.innerHTML = `
+                <div class="flow-node input"><strong>輸入：</strong>${inputs.workingVoltage}V, ${inputs.overvoltageCategory}, ${inputs.insulationType}, ${inputs.pollutionDegree}</div>
+                <div class="flow-node process"><strong>Table 21 查表：</strong>由工作電壓等 → 額定脈衝電壓 <strong>${pulseV ? `${pulseV/1000}kV` : 'N/A'}</strong></div>
+                <div class="flow-node process"><strong>Case 判定：</strong>由絕緣類型 → <strong>Case ${caseT}</strong></div>
+                <div class="flow-node decision ${reqC === null ? '' : 'pre-split'}"><div>Table 22 查表<br>(${pulseV ? `${pulseV/1000}kV` : 'N/A'}, Case ${caseT}, ${inputs.pollutionDegree})</div></div>
+                ${finalHtml}
+            `;
+        }
+
+        function createTables() {
+            const t21 = document.getElementById('table21_display');
+            let t21Html = '<thead><tr><th>電壓 (V)</th><th>系統</th><th>I</th><th>II</th><th>III</th><th>IV</th></tr></thead><tbody>';
+            const ranges = ["≤50", "50-150", "150-300", "300-600"];
+            ranges.forEach(r => {
+                ["single-phase", "three-phase"].forEach(s => {
+                    if(table21Data[r]?.[s]) {
+                        const d = table21Data[r][s];
+                        t21Html += `<tr data-range="${r}" data-system="${s}"><td>${r}</td><td>${s==='single-phase'?'單相':'三相'}</td><td>${d.I}</td><td>${d.II}</td><td>${d.III}</td><td>${d.IV}</td></tr>`;
+                    }
+                });
+            });
+            t21.innerHTML = t21Html + '</tbody>';
+            const t22 = document.getElementById('table22_display');
+            let t22Html = '<thead><tr><th>脈衝 (kV)</th><th>Case</th><th>PD1</th><th>PD2</th><th>PD3</th></tr></thead><tbody>';
+            Object.keys(table22Data).forEach(kv => {
+                ['A', 'B'].forEach(c => {
+                    const d = table22Data[kv][c];
+                    t22Html += `<tr data-kv="${kv}" data-case="${c}"><td>${kv}</td><td>${c}</td><td>${d.PD1??'測試'}</td><td>${d.PD2??'測試'}</td><td>${d.PD3??'測試'}</td></tr>`;
+                });
+            });
+            t22.innerHTML = t22Html + '</tbody>';
+        }
+
+        function updateTableHighlights(inputs, pulseV, caseT) {
+            document.querySelectorAll('#table21_display tr, #table22_display tr').forEach(r => r.classList.remove('highlight-row'));
+            document.querySelectorAll('#table21_display td, #table22_display td').forEach(c => c.classList.remove('highlight-cell'));
+            const range = getVoltageRange(inputs.workingVoltage);
+            const catIndex = {I:2, II:3, III:4, IV:5}[inputs.overvoltageCategory];
+            const t21Row = document.querySelector(`#table21_display tr[data-range="${range}"][data-system="${inputs.systemType}"]`);
+            if (t21Row) {
+                t21Row.classList.add('highlight-row');
+                t21Row.cells[catIndex]?.classList.add('highlight-cell');
+            }
+            if (pulseV) {
+                const pulseKey = (pulseV / 1000).toFixed(2).replace(/\.0+$/, '').replace(/0+$/, '');
+                const pdIndex = {PD1:2, PD2:3, PD3:4}[inputs.pollutionDegree];
+                const t22Row = document.querySelector(`#table22_display tr[data-kv="${pulseKey}"][data-case="${caseT}"]`);
+                if (t22Row) {
+                    t22Row.classList.add('highlight-row');
+                    t22Row.cells[pdIndex]?.classList.add('highlight-cell');
+                }
+            }
+        }
+        
+        const testCases = {
+            'pass_case':     { v: '240', sys: 'three-phase', cat: 'II', ins: 'basic', pd: 'PD2', gap: '2.8' },
+            'high_voltage':  { v: '480', sys: 'three-phase', cat: 'III', ins: 'reinforced', pd: 'PD2', gap: '8.0' },
+            'functional_fail':{ v: '240', sys: 'single-phase', cat: 'II', ins: 'functional', pd: 'PD2', gap: '1.0' },
+            'fail_case':     { v: '240', sys: 'three-phase', cat: 'II', ins: 'basic', pd: 'PD2', gap: '1.5' },
+        };
+        function loadTestCase(caseName) {
+            const c = testCases[caseName];
+            document.getElementById('workingVoltage').value = c.v;
+            document.getElementById('systemType').value = c.sys;
+            document.getElementById('overvoltageCategory').value = c.cat;
+            document.getElementById('insulationType').value = c.ins;
+            document.getElementById('pollutionDegree').value = c.pd;
+            document.getElementById('measuredGap').value = c.gap;
+            updateLiveJudgment();
+        }
+
+        function updateDisplay() {
+            for (let i = 1; i <= totalSteps; i++) document.getElementById(`step${i}`).style.display = i === currentStep ? 'block' : 'none';
+            document.getElementById('stepIndicator').textContent = `步驟 ${currentStep} / ${totalSteps}`;
+            document.getElementById('progressFill').style.width = `${(currentStep / totalSteps) * 100}%`;
+            document.getElementById('prevBtn').disabled = currentStep === 1;
+            document.getElementById('nextBtn').disabled = currentStep === totalSteps;
+            document.getElementById('nextBtn').textContent = currentStep === totalSteps ? '完成 ✅' : '下一步 →';
+            if (currentStep === 5) setTimeout(updateLiveJudgment, 50);
+        }
+        function nextStep() { if (currentStep < totalSteps) { currentStep++; updateDisplay(); window.scrollTo(0,0); } }
+        function previousStep() { if (currentStep > 1) { currentStep--; updateDisplay(); window.scrollTo(0,0); } }
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            if (e.key === 'ArrowLeft') previousStep();
+            else if (e.key === 'ArrowRight') nextStep();
+        });
+        window.onload = () => { createTables(); updateDisplay(); };
+    </script>
+</body>
+</html>
