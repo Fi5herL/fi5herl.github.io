@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UL安全功能描述Prompt產生器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: block;
+            margin: 20px auto;
+            min-width: 200px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #218838;
+        }
+
+        .output-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+            margin-top: 30px;
+        }
+
+        .output-text {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 400px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #2c3e50;
+        }
+
+        .help-text {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .example-box {
+            background: #e8f4f8;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .example-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .char-counter {
+            text-align: right;
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .feature-highlight {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba240 100%);
+            border: 1px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .feature-highlight h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .feature-list {
+            color: #34495e;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .file-drop-zone {
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-drop-zone:hover {
+            background: #e9ecef;
+            border-color: #5a6fd8;
+        }
+
+        .file-drop-zone.dragover {
+            background: #e8f4f8;
+            border-color: #28a745;
+        }
+
+        .import-success {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .import-error {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .data-preview {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.8em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 UL安全功能描述Prompt產生器</h1>
+            <p>專業生成prompt，包含L3 Reviewer技術審查功能</p>
+        </div>
+
+        <!-- 檔案匯入區 -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                </svg>
+                標準語句庫匯入 (選填)
+            </h2>
+
+            <div class="form-group">
+                <label for="fileInput">匯入CSV/Excel檔案</label>
+                <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" onchange="handleFileUpload(event)">
+                <div class="help-text">
+                    支援CSV和Excel格式。建議檔案包含以下欄位：
+                    <br>• <strong>Category</strong> (類別): Safety, Protection, Control, Monitoring等
+                    <br>• <strong>Description</strong> (描述): 標準描述語句
+                    <br>• <strong>Usage</strong> (用途): 使用場景說明
+                </div>
+            </div>
+
+            <div class="example-box">
+                <div class="example-title">📄 檔案格式範例</div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                    <tr style="background: #f8f9fa;">
+                        <th style="border: 1px solid #ddd; padding: 8px;">Category</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Description</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Usage</th>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">Safety</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">The system immediately disconnected all power sources</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">Emergency shutdown</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">Protection</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">The temperature monitoring function was activated</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">Thermal protection</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div id="importStatus" style="display: none; margin-top: 10px;">
+                <div id="importMessage"></div>
+                <div id="previewData" style="max-height: 200px; overflow-y: auto; margin-top: 10px;"></div>
+            </div>
+        </div>
+
+        <!-- 功能描述區 -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                </svg>
+                安全功能邏輯描述
+            </h2>
+
+            <div class="form-group">
+                <label for="functionDescription">完整功能描述 <span class="required">*</span></label>
+                <textarea id="functionDescription" placeholder="請詳細描述安全功能的完整作動邏輯，包含：
+
+1. 觸發條件或輸入訊號（具體數值、閾值）
+2. 系統的響應動作（精確步驟）
+3. 執行順序和時間要求
+4. 輸出結果或預期效果
+5. 失效保護機制
+6. 復位條件和程序
+
+範例：
+當溫度感測器檢測到超過85°C±2°C時，控制系統在50ms內啟動冷卻風扇並發出聲光警報。如果溫度持續上升達到95°C±1°C，系統會在2秒±0.5秒內自動切斷主電源並進入安全停機模式。斷電後系統保持鎖定狀態，需要手動按下復位按鈕並確認溫度降至75°C以下才能重新啟動。" oninput="updateCharCount('functionDescription', 'descCharCount')"></textarea>
+                <div class="char-counter" id="descCharCount">0 字元</div>
+            </div>
+
+            <div class="example-box">
+                <div class="example-title">💡 詳細描述範例</div>
+                當急停按鈕被按下時，控制器在10ms內切斷所有馬達電源，同時啟動機械煞車系統。設備必須在3秒±0.2秒內完全停止運轉，停止後的殘餘轉速不得超過5 RPM。系統進入鎖定狀態，需要手動轉動復位開關至解除位置並確認所有安全條件滿足後方可重新啟動。
+            </div>
+        </div>
+
+        <!-- L3 Reviewer 功能說明 -->
+        <div class="feature-highlight">
+            <h3>🔍 L3 Reviewer 技術審查功能</h3>
+            <div class="feature-list">
+                生成的prompt將包含L3 Reviewer角色，會從以下技術面向檢查您的功能描述：
+                <br>• <strong>觸發條件精確度</strong>：閾值、容差、環境條件等技術參數
+                <br>• <strong>時序要求完整性</strong>：響應時間、延遲規格、時序圖需求
+                <br>• <strong>安全設計合規性</strong>：失效模式、冗餘設計、診斷覆蓋率
+                <br>• <strong>測試驗證要求</strong>：測試條件、驗收標準、認證要求
+            </div>
+        </div>
+
+        <!-- 生成按鈕 -->
+        <button class="btn-primary" onclick="generatePrompt()">
+            🚀 生成專業Prompt（含L3技術審查）
+        </button>
+
+        <!-- 數值代號轉換說明 -->
+        <div class="feature-highlight" id="codeInfo" style="display: none;">
+            <h3>🔒 數值保護機制</h3>
+            <div class="feature-list">
+                為保護客戶關鍵數據，系統已自動將敏感數值轉換為代號：
+                <div id="codeMapping" style="margin-top: 10px; font-family: monospace; background: white; padding: 10px; border-radius: 5px;"></div>
+            </div>
+        </div>
+
+        <!-- 輸出區 -->
+        <div class="output-section" id="outputSection" style="display: none;">
+            <h2 class="section-title">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M7.07,18.28C7.5,17.38 10.12,16.5 12,16.5C13.88,16.5 16.5,17.38 16.93,18.28C15.57,19.36 13.86,20 12,20C10.14,20 8.43,19.36 7.07,18.28M18.36,16.83C16.93,15.09 13.46,14.5 12,14.5C10.54,14.5 7.07,15.09 5.64,16.83C4.62,15.5 4,13.82 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,13.82 19.38,15.5 18.36,16.83M12,6C10.06,6 8.5,7.56 8.5,9.5C8.5,11.44 10.06,13 12,13C13.94,13 15.5,11.44 15.5,9.5C15.5,7.56 13.94,6 12,6M12,11A1.5,1.5 0 0,1 10.5,9.5A1.5,1.5 0 0,1 12,8A1.5,1.5 0 0,1 13.5,9.5A1.5,1.5 0 0,1 12,11Z"/>
+                </svg>
+                生成的專業Prompt（可直接複製給LLM使用）
+            </h2>
+            
+            <div class="output-text" id="outputText"></div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn-secondary" onclick="copyToClipboard()">
+                    📋 複製到剪貼簿
+                </button>
+                <button class="btn-secondary" onclick="downloadPrompt()">
+                    💾 下載為文字檔
+                </button>
+                <button class="btn-secondary" onclick="clearForm()">
+                    🔄 清除重填
+                </button>
+            </div>
+        </div>
+
+        <!-- AI回復轉換區 -->
+        <div class="output-section">
+            <h2 class="section-title">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M12,11A1,1 0 0,0 11,12A1,1 0 0,0 12,13A1,1 0 0,0 13,12A1,1 0 0,0 12,11M12.5,2C17,2 20.5,5.5 20.5,10C20.5,12.5 19.4,14.7 17.7,16.1C16.8,16.8 16.2,17.8 16.2,19V21.5C16.2,22.3 15.5,23 14.7,23H9.2C8.4,23 7.7,22.3 7.7,21.5V19C7.7,17.8 7.1,16.8 6.2,16.1C4.5,14.7 3.4,12.5 3.4,10C3.4,5.5 6.9,2 11.4,2H12.5Z"/>
+                </svg>
+                AI回復數值還原
+            </h2>
+
+            <div class="form-group">
+                <label for="aiResponse">AI回復內容</label>
+                <textarea id="aiResponse" placeholder="將AI的回復內容貼入此處，系統會自動將代號 [AAA], [BBB], [CCC] 等還原為原始數值..."></textarea>
+                <div class="help-text">貼入AI回復後，點擊下方按鈕自動還原所有數值代號</div>
+            </div>
+
+            <button class="btn-secondary" onclick="restoreNumbers()" id="restoreBtn" style="display: none;">
+                🔄 還原數值代號
+            </button>
+
+            <div class="form-group">
+                <label for="restoredResponse">還原後內容</label>
+                <textarea id="restoredResponse" placeholder="還原數值後的內容將顯示在這裡..." readonly></textarea>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn-secondary" onclick="copyRestored()">
+                    📋 複製還原內容
+                </button>
+                <button class="btn-secondary" onclick="downloadRestored()">
+                    💾 下載還原內容
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script>
+        let importedData = null;
+        let numberMapping = {}; // 儲存數值對應關係
+        let codeCounter = 0;
+
+        function generateCode() {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            let code = '';
+            let num = codeCounter;
+            
+            // 生成三位字母代號
+            for (let i = 0; i < 3; i++) {
+                code = letters[num % 26] + code;
+                num = Math.floor(num / 26);
+            }
+            
+            codeCounter++;
+            return code;
+        }
+
+        function replaceNumbersWithCodes(text) {
+            // 重置對應表和計數器
+            numberMapping = {};
+            codeCounter = 0;
+
+            // 新的核心數字匹配模式，增加了一個"負向先行斷言" (?!...)
+            // 這會確保我們匹配的數字後面不會緊跟著 °C 或 °F
+            const numberPattern = /(\d+(?:\.\d+)?(?:\s*[±~]\s*\d+(?:\.\d+)?)?|\d+(?:\.\d+)?)(?![\s]*(?:°C|°F))/g;
+
+            return text.replace(numberPattern, (match, ...args) => {
+                // `replace` 函式會傳入多個參數，我們需要倒數第二個參數 `offset`
+                const offset = args[args.length - 2];
+                const fullString = args[args.length - 1];
+
+                // 檢查前一個字元是否為英文字母 (避免替換型號，如 UL60950)
+                if (offset > 0) {
+                    const charBefore = fullString.charAt(offset - 1);
+                    // 如果前面是字母或度數符號(°)，則不替換
+                    if (/[a-zA-Z°]/.test(charBefore)) {
+                        return match; // 返回原始匹配，不做任何事
+                    }
+                }
+
+                // 清理匹配到的字串，去除前後空白
+                const cleanedMatch = match.trim();
+                if (cleanedMatch === '') return match; // 如果是空字串，不處理
+
+                // 檢查此數值是否已經有對應的代號
+                let code = Object.keys(numberMapping).find(key => numberMapping[key] === cleanedMatch);
+
+                // 如果沒有，則創建一個新的代號
+                if (!code) {
+                    code = generateCode();
+                    numberMapping[code] = cleanedMatch;
+                }
+                
+                // 返回替換後的代號，並保留原始匹配字串中的空白
+                return match.replace(cleanedMatch, `[${code}]`);
+            });
+        }        
+
+        function displayCodeMapping() {
+            const codeMappingDiv = document.getElementById('codeMapping');
+            const codeInfoDiv = document.getElementById('codeInfo');
+            
+            if (Object.keys(numberMapping).length === 0) {
+                codeInfoDiv.style.display = 'none';
+                document.getElementById('restoreBtn').style.display = 'none';
+                return;
+            }
+            
+            let mappingHtml = '<strong>數值代號對應表：</strong><br>';
+            for (const [code, value] of Object.entries(numberMapping)) {
+                mappingHtml += `[${code}] &harr; ${value}<br>`;
+            }
+            
+            codeMappingDiv.innerHTML = mappingHtml;
+            codeInfoDiv.style.display = 'block';
+            
+            // 顯示還原按鈕
+            document.getElementById('restoreBtn').style.display = 'inline-block';
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileName = file.name.toLowerCase();
+            const isCSV = fileName.endsWith('.csv');
+            const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+
+            if (!isCSV && !isExcel) {
+                showImportStatus('請選擇CSV或Excel檔案', 'error');
+                return;
+            }
+
+            showImportStatus('正在讀取檔案...', 'processing');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    if (isCSV) {
+                        parseCSV(e.target.result);
+                    } else {
+                        parseExcel(e.target.result);
+                    }
+                } catch (error) {
+                    showImportStatus('檔案讀取失敗: ' + error.message, 'error');
+                }
+            };
+
+            if (isCSV) {
+                reader.readAsText(file);
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function parseCSV(csvData) {
+            Papa.parse(csvData, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.errors.length > 0) {
+                        showImportStatus('CSV解析錯誤: ' + results.errors[0].message, 'error');
+                        return;
+                    }
+                    processImportedData(results.data);
+                }
+            });
+        }
+
+        function parseExcel(arrayBuffer) {
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            if (data.length < 2) {
+                showImportStatus('Excel檔案需要至少包含標題行和一行資料', 'error');
+                return;
+            }
+
+            const headers = data[0].map(h => h.trim());
+            const objects = data.slice(1).map(row => {
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = row[index] || '';
+                });
+                return obj;
+            });
+
+            processImportedData(objects);
+        }
+
+        function processImportedData(data) {
+            if (!data || data.length === 0) {
+                showImportStatus('檔案中沒有找到資料', 'error');
+                return;
+            }
+
+            const firstRow = data[0];
+            const hasCategory = 'Category' in firstRow || 'category' in firstRow;
+            const hasDescription = 'Description' in firstRow || 'description' in firstRow;
+
+            if (!hasCategory || !hasDescription) {
+                showImportStatus('檔案必須包含 "Category" 和 "Description" 欄位', 'error');
+                return;
+            }
+
+            importedData = data.map(row => ({
+                category: row.Category || row.category || '',
+                description: row.Description || row.description || '',
+                usage: row.Usage || row.usage || row.Use || row.use || ''
+            })).filter(row => row.category && row.description);
+
+            showImportStatus(`成功匯入 ${importedData.length} 筆標準語句`, 'success');
+            showDataPreview(importedData.slice(0, 5));
+        }
+
+        function showImportStatus(message, type) {
+            const statusDiv = document.getElementById('importStatus');
+            const messageDiv = document.getElementById('importMessage');
+            
+            statusDiv.style.display = 'block';
+            messageDiv.textContent = message;
+            
+            messageDiv.className = type === 'success' ? 'import-success' : 
+                                 type === 'error' ? 'import-error' : '';
+        }
+
+        function showDataPreview(data) {
+            const previewDiv = document.getElementById('previewData');
+            
+            if (data.length === 0) {
+                previewDiv.innerHTML = '';
+                return;
+            }
+
+            let html = '<div class="data-preview"><strong>資料預覽 (前5筆):</strong><table>';
+            html += '<tr><th>Category</th><th>Description</th><th>Usage</th></tr>';
+            
+            data.forEach(row => {
+                html += `<tr>
+                    <td>${row.category}</td>
+                    <td>${row.description.substring(0, 50)}${row.description.length > 50 ? '...' : ''}</td>
+                    <td>${row.usage}</td>
+                </tr>`;
+            });
+            
+            html += '</table></div>';
+            previewDiv.innerHTML = html;
+        }
+
+        function updateCharCount(textareaId, counterId) {
+            const textarea = document.getElementById(textareaId);
+            const counter = document.getElementById(counterId);
+            counter.textContent = `${textarea.value.length} 字元`;
+        }
+
+        function generatePrompt() {
+            const functionDescription = document.getElementById('functionDescription').value.trim();
+
+            if (!functionDescription) {
+                alert('請填寫安全功能邏輯描述');
+                return;
+            }
+
+            const protectedDescription = replaceNumbersWithCodes(functionDescription);
+            displayCodeMapping();
+
+            const prompt = generatePromptText(protectedDescription);
+
+            document.getElementById('outputText').textContent = prompt;
+            document.getElementById('outputSection').style.display = 'block';
+            document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function generatePromptText(functionDescription) {
+            let prompt = `# UL安全功能描述專業翻譯與技術審查Prompt
+
+## 雙重角色設定
+
+### 角色1：UL安規工程師 & 技術翻譯專家
+你是一位資深的UL（Underwriters Laboratories）安規工程師和技術翻譯專家，具備：
+- 豐富的產品安全標準知識和英文技術寫作經驗
+- 深度了解IEC/UL/EN等國際安全標準
+- 精通安全功能的技術文件撰寫
+
+### 角色2：L3 Reviewer（資深技術審查員）
+同時你也是一位L3 level的技術審查員，負責：
+- 審查安全功能描述的技術完整性
+- 識別工程師可能遺漏的關鍵技術細節
+- 提出專業的技術改善建議
+
+## 任務說明
+請完成以下兩個任務：
+
+**任務1**：將功能邏輯描述翻譯成專業、準確且符合UL標準的英文安全功能描述
+**任務2**：以L3 Reviewer身份檢查描述中可能遺漏的技術細節並提出改善建議
+
+## 翻譯要求
+
+### 語言要求：
+- **時態**：全部使用過去式（past tense）
+- **語調**：客觀、專業、技術性
+- **用詞**：使用UL和國際安全標準常用術語
+- **句式**：清晰、直接、避免冗長複雜的句子
+
+### 結構要求：
+1. **觸發條件**（Trigger Conditions）- 明確描述啟動條件和精確參數
+2. **執行動作**（Implementation Actions）- 詳細說明系統響應和時序
+3. **安全結果**（Safe State, Defined State）- 說明預期的安全效果和驗證方法
+4. **時間規格**（Timing Specifications）- 包含所有相關時間參數和容差(包含偵測週期時間、偵測防抖時間、動作時間、重啟休息時間)
+5. **失效保護**（Fail-safe Measures）- 描述失效保護機制和診斷功能
+6. **重啟動作** (Reset Action) - 描述重新啟動機制:重新上電(手動重啟)、自動重啟、最大重啟次數、無限重啟
+
+## 輸入內容
+
+**安全功能邏輯描述**：
+\`\`\`
+${functionDescription}
+\`\`\``;
+
+            if (importedData && importedData.length > 0) {
+                prompt += `\n\n## 標準語句庫參考
+請在翻譯時參考以下已驗證的標準描述語句，並適當應用於翻譯結果中：
+
+### 可參考的標準語句：`;
+
+                const groupedData = {};
+                importedData.forEach(item => {
+                    if (!groupedData[item.category]) {
+                        groupedData[item.category] = [];
+                    }
+                    groupedData[item.category].push(item);
+                });
+
+                Object.keys(groupedData).forEach(category => {
+                    prompt += `\n\n**${category}類型語句：**`;
+                    groupedData[category].forEach((item, index) => {
+                        prompt += `\n${index + 1}. "${item.description}"`;
+                        if (item.usage) {
+                            prompt += ` (${item.usage})`;
+                        }
+                    });
+                });
+
+                prompt += `\n\n**語句庫使用指引：**
+- 優先使用上述標準語句作為翻譯的基礎結構
+- 可以根據具體功能調整語句內容，但保持專業用詞和句式結構
+- 確保選用的語句與功能類型相符
+- 如需要組合多個語句，請確保邏輯順序正確`;
+            }
+
+            prompt += `\n\n## 輸出格式要求
+
+### 第一部分：Professional English Description
+[提供主要的英文翻譯，確保使用過去式和專業術語${importedData ? '，並適當應用標準語句庫中的表達方式' : ''}]
+
+### 第二部分：Technical Specifications
+- **Activation Condition**: [觸發條件的英文描述，包含精確參數]
+- **System Response**: [系統響應的英文描述，包含時序要求]  
+- **Safety Outcome**: [安全結果的英文描述，包含驗證標準]
+- **Response Time**: [響應時間規格，包含容差範圍]
+- **Fail-safe Mode**: [失效保護模式，包含診斷功能]
+
+### 第三部分：Alternative Professional Phrasing
+[提供1-2個同義但略有不同表達方式的專業版本${importedData ? '，可使用語句庫中的不同表達方式' : ''}]
+
+### 第四部分：L3 Reviewer Technical Analysis
+**作為L3 Reviewer，我識別出以下可能需要補強的技術細節：**
+
+**❗ Critical Technical Questions（關鍵技術問題）：**
+
+1. **[技術問題1]**: [具體指出可能遺漏的技術細節，例如觸發準位的精確度、環境條件影響、校準要求等]
+
+2. **[技術問題2]**: [指出時序相關的技術細節，例如響應時間的測量方法、延遲分析、時序圖要求等]
+
+3. **[技術問題3]**: [指出安全設計相關的技術細節，例如失效模式分析、冗餘設計、診斷覆蓋率等]
+
+**🔧 Technical Recommendations（技術建議）：**
+- [建議需要補充的技術規格]
+- [建議的測試驗證方法]
+- [建議的標準合規性檢查]
+
+**📋 Missing Documentation Requirements（可能缺少的文件要求）：**
+- [建議需要準備的技術文件]
+- [建議的測試報告格式]
+- [建議的認證策略]
+
+### 第五部分：UL Standard Compliance Check
+[確認使用的術語是否符合UL標準，並提供任何建議的改進${importedData ? '，驗證是否正確應用了標準語句庫' : ''}]
+
+## 重要提醒
+- 確保所有動詞都使用過去式
+- 使用精確的技術術語和數值規格
+- 保持描述的客觀性和專業性
+- L3 Reviewer的分析要具體且可操作
+- 識別的技術問題要能夠幫助工程師改善設計文件${importedData ? '\n- 善用標準語句庫提升翻譯的專業性和一致性' : ''}
+
+請開始執行上述兩項任務。`;
+
+            return prompt;
+        }
+
+        function showCopySuccess(buttonElement, originalText) {
+            buttonElement.textContent = '✅ 已複製！';
+            const originalBg = buttonElement.style.backgroundColor;
+            buttonElement.style.background = '#218838';
+            
+            setTimeout(() => {
+                buttonElement.textContent = originalText;
+                buttonElement.style.background = originalBg;
+            }, 2000);
+        }
+        
+        function fallbackCopyTextToClipboard(text, buttonElement, originalText) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showCopySuccess(buttonElement, originalText);
+            } catch (err) {
+                alert('複製失敗，請手動選取文字複製');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function copyToClipboard() {
+            const outputText = document.getElementById('outputText').textContent;
+            const btn = event.target;
+            const originalText = btn.textContent;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputText).then(() => {
+                    showCopySuccess(btn, originalText);
+                }).catch(err => {
+                    fallbackCopyTextToClipboard(outputText, btn, originalText);
+                });
+            } else {
+                fallbackCopyTextToClipboard(outputText, btn, originalText);
+            }
+        }
+
+        function downloadFile(filename, text) {
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadPrompt() {
+            const outputText = document.getElementById('outputText').textContent;
+            downloadFile(`UL_Safety_Function_Prompt_${new Date().getTime()}.txt`, outputText);
+        }
+
+        function clearForm() {
+            if (confirm('確定要清除所有內容重新填寫嗎？')) {
+                document.getElementById('functionDescription').value = '';
+                document.getElementById('descCharCount').textContent = '0 字元';
+                document.getElementById('outputSection').style.display = 'none';
+                document.getElementById('codeInfo').style.display = 'none';
+                document.getElementById('restoreBtn').style.display = 'none';
+                document.getElementById('aiResponse').value = '';
+                document.getElementById('restoredResponse').value = '';
+                numberMapping = {};
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function restoreNumbers() {
+            const aiResponse = document.getElementById('aiResponse').value;
+            const restoredResponseTextarea = document.getElementById('restoredResponse');
+
+            if (!aiResponse.trim()) {
+                restoredResponseTextarea.value = "請先在上方欄位貼入AI的回復內容。";
+                return;
+            }
+
+            if (Object.keys(numberMapping).length === 0) {
+                 restoredResponseTextarea.value = "錯誤：沒有可用的數值對應表。請先生成Prompt才能進行還原。";
+                 return;
+            }
+
+            let restoredText = aiResponse;
+            for (const [code, value] of Object.entries(numberMapping)) {
+                // 建立一個正規表達式來尋找 `[CODE]`，並全域、不分大小寫地替換
+                const codePattern = new RegExp(`\\[${code}\\]`, 'gi');
+                restoredText = restoredText.replace(codePattern, value);
+            }
+
+            restoredResponseTextarea.value = restoredText;
+        }
+        
+        function copyRestored() {
+            const restoredText = document.getElementById('restoredResponse').value;
+            const btn = event.target;
+            const originalText = btn.textContent;
+
+            if (!restoredText.trim()) {
+                alert('沒有可複製的內容。');
+                return;
+            }
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(restoredText).then(() => {
+                    showCopySuccess(btn, originalText);
+                }).catch(err => {
+                    fallbackCopyTextToClipboard(restoredText, btn, originalText);
+                });
+            } else {
+                fallbackCopyTextToClipboard(restoredText, btn, originalText);
+            }
+        }
+
+        function downloadRestored() {
+            const restoredText = document.getElementById('restoredResponse').value;
+            if (!restoredText.trim()) {
+                alert('沒有可下載的內容。');
+                return;
+            }
+            downloadFile(`Restored_Description_${new Date().getTime()}.txt`, restoredText);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCharCount('functionDescription', 'descCharCount');
+        });
+    </script>
+</body>
+</html>
