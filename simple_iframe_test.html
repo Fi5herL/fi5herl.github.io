@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡單 iframe 測試</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            padding: 2rem;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .test-container {
+            border: 1px solid #ddd;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 比例 */
+            margin: 1rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: white;
+        }
+        .iframe-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .simple-iframe {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .status {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0.5rem;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .html-content {
+            background: white;
+            padding: 1rem;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>iframe 嵌入測試</h1>
+    <p>測試各種 iframe 嵌入方式，診斷載入問題。</p>
+
+    <div class="test-container">
+        <h2>測試 1：簡單 iframe（固定高度）</h2>
+        <p>使用固定高度的 iframe：</p>
+        <iframe class="simple-iframe" 
+                src="https://www.canva.com/design/DAGpjD9BDs0/Z_UOLjLv8E0uVUnV9geqUA/view?embed" 
+                allowfullscreen 
+                allow="fullscreen">
+        </iframe>
+        <div id="status1" class="status info">載入中...</div>
+    </div>
+
+    <div class="test-container">
+        <h2>測試 2：響應式 iframe 容器</h2>
+        <p>使用響應式容器的 iframe：</p>
+        <div class="iframe-wrapper">
+            <iframe src="https://www.canva.com/design/DAGpjD9BDs0/Z_UOLjLv8E0uVUnV9geqUA/view?embed" 
+                    allowfullscreen 
+                    allow="fullscreen">
+            </iframe>
+        </div>
+        <div id="status2" class="status info">載入中...</div>
+    </div>
+
+    <div class="test-container">
+        <h2>測試 3：HTML 字串渲染</h2>
+        <p>測試將 HTML 字串直接插入 DOM：</p>
+        <button onclick="testHTMLInsertion()">插入 iframe HTML</button>
+        <div id="html-container"></div>
+        <div id="status3" class="status info">等待測試...</div>
+    </div>
+
+    <div class="test-container">
+        <h2>測試 4：Google Slides</h2>
+        <p>測試 Google Slides 嵌入：</p>
+        <div class="iframe-wrapper">
+            <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vRPDJfn8RirXVghoq0YgovUhgkBwzy20MPJ30Bf7rz8pQqCEGg4-K5zcnt6xITsaa-N_WPhN0C2_OjP/embed?start=false&loop=false&delayms=3000" 
+                    allowfullscreen 
+                    allow="fullscreen">
+            </iframe>
+        </div>
+        <div id="status4" class="status info">載入中...</div>
+    </div>
+
+    <div class="test-container">
+        <h2>診斷資訊</h2>
+        <div id="diagnostic-info">
+            <p><strong>當前 URL：</strong><span id="current-url"></span></p>
+            <p><strong>協議：</strong><span id="protocol"></span></p>
+            <p><strong>瀏覽器：</strong><span id="browser"></span></p>
+            <p><strong>載入時間：</strong><span id="load-time"></span></p>
+        </div>
+    </div>
+
+    <script>
+        const startTime = Date.now();
+
+        function updateStatus(id, message, type) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = message;
+                element.className = `status ${type}`;
+            }
+        }
+
+        function testHTMLInsertion() {
+            const container = document.getElementById('html-container');
+            const htmlString = `
+                <div class="iframe-wrapper">
+                    <iframe src="https://www.canva.com/design/DAGpjD9BDs0/Z_UOLjLv8E0uVUnV9geqUA/view?embed" 
+                            allowfullscreen 
+                            allow="fullscreen">
+                    </iframe>
+                </div>
+            `;
+            
+            container.innerHTML = htmlString;
+            
+            // 檢查插入的 iframe
+            const iframe = container.querySelector('iframe');
+            if (iframe) {
+                updateStatus('status3', '已插入 iframe，等待載入...', 'info');
+                
+                iframe.onload = function() {
+                    updateStatus('status3', '✅ HTML 插入的 iframe 載入成功！', 'success');
+                };
+                
+                iframe.onerror = function() {
+                    updateStatus('status3', '❌ HTML 插入的 iframe 載入失敗', 'error');
+                };
+                
+                // 超時檢查
+                setTimeout(() => {
+                    const status = document.getElementById('status3');
+                    if (status && status.textContent.includes('等待載入')) {
+                        updateStatus('status3', '⚠️ HTML 插入的 iframe 載入超時', 'error');
+                    }
+                }, 10000);
+            } else {
+                updateStatus('status3', '❌ 無法插入 iframe', 'error');
+            }
+        }
+
+        // 頁面載入完成時
+        document.addEventListener('DOMContentLoaded', function() {
+            // 填入診斷資訊
+            document.getElementById('current-url').textContent = window.location.href;
+            document.getElementById('protocol').textContent = window.location.protocol;
+            document.getElementById('browser').textContent = navigator.userAgent.split(' ').slice(-2).join(' ');
+            document.getElementById('load-time').textContent = (Date.now() - startTime) + 'ms';
+
+            // 監聽所有 iframe 載入事件
+            const iframes = document.querySelectorAll('iframe');
+            
+            iframes.forEach((iframe, index) => {
+                const statusId = `status${index + 1}`;
+                
+                iframe.onload = function() {
+                    updateStatus(statusId, '✅ iframe 載入成功！', 'success');
+                    console.log(`iframe ${index + 1} 載入成功:`, iframe.src);
+                };
+                
+                iframe.onerror = function() {
+                    updateStatus(statusId, '❌ iframe 載入失敗', 'error');
+                    console.error(`iframe ${index + 1} 載入失敗:`, iframe.src);
+                };
+                
+                // 超時檢查
+                setTimeout(() => {
+                    const status = document.getElementById(statusId);
+                    if (status && status.textContent === '載入中...') {
+                        updateStatus(statusId, '⚠️ iframe 載入超時', 'error');
+                        console.warn(`iframe ${index + 1} 載入超時:`, iframe.src);
+                    }
+                }, 15000); // 15秒超時
+            });
+
+            // 全域錯誤監聽
+            window.addEventListener('error', function(e) {
+                console.error('全域錯誤:', e);
+                if (e.target && e.target.tagName === 'IFRAME') {
+                    console.error('iframe 錯誤:', e.target.src);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

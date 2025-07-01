@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid + iframe 測試</title>
+    
+    <!-- 載入所需的庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.0/dist/mermaid.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            padding: 2rem;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        .result {
+            background: white;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .status {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            margin: 1rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .iframe-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mermaid + iframe 混合測試</h1>
+    <p>測試 Markdown 中同時包含 Mermaid 圖表和 iframe 嵌入的渲染效果。</p>
+
+    <div class="test-section">
+        <h2>測試 Markdown 內容</h2>
+        <p>在下方文本框中編輯包含 Mermaid 和 iframe 的 Markdown：</p>
+        
+        <textarea id="markdown-input">---
+title: PPT PARTY 測試
+date: 2025-06-01
+---
+
+# PPT PARTY | June 2025
+
+## 活動流程圖
+
+```mermaid
+graph TD
+    A[報名參加] --> B[準備簡報]
+    B --> C[到場分享]
+    C --> D[午餐交流]
+    D --> E[觀賞其他簡報]
+    E --> F[投票評分]
+    F --> G[頒獎結束]
+```
+
+## 參與者類型分析
+
+```mermaid
+pie title 參與者分布
+    "設計師" : 35
+    "工程師" : 25
+    "產品經理" : 20
+    "學生" : 15
+    "其他" : 5
+```
+
+## 夜景TOP 5 by penny ping
+
+<iframe src="https://www.canva.com/design/DAGpjD9BDs0/Z_UOLjLv8E0uVUnV9geqUA/view?embed" 
+        style="width: 100%; height: 400px; border: none; border-radius: 8px;" 
+        allowfullscreen allow="fullscreen">
+</iframe>
+
+## 技術架構圖
+
+```mermaid
+graph LR
+    A[GitHub Repo] --> B[Markdown Files]
+    B --> C[marked.js]
+    C --> D[HTML Output]
+    D --> E[Mermaid Render]
+    D --> F[iframe Setup]
+    E --> G[Complete Page]
+    F --> G
+```
+
+## 上班划水V2 by fisherlee1997
+
+<iframe src="https://www.canva.com/design/DAGptgAgnwI/n6SdQMLWlczjR7piiYeACw/view?embed" 
+        style="width: 100%; height: 400px; border: none; border-radius: 8px;" 
+        allowfullscreen allow="fullscreen">
+</iframe>
+
+## 時間軸
+
+```mermaid
+gantt
+    title PPT Party 時間安排
+    dateFormat HH:mm
+    axisFormat %H:%M
+    
+    section 準備階段
+    場地佈置    :11:30, 12:00
+    
+    section 活動進行
+    午餐時間    :12:00, 12:30
+    簡報分享    :12:30, 13:30
+    
+    section 結束
+    清理收拾    :13:30, 14:00
+```</textarea>
+        
+        <button onclick="testMermaidAndIframe()">渲染測試</button>
+        <button onclick="clearTest()">清除</button>
+        
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>渲染結果</h2>
+        <div id="render-result" class="result">
+            <p>點擊「渲染測試」按鈕查看結果</p>
+        </div>
+    </div>
+
+    <script>
+        // 初始化 Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'neutral',
+            themeVariables: {
+                primaryColor: '#ffffff',
+                primaryTextColor: '#2c3e50',
+                primaryBorderColor: '#dee2e6',
+                lineColor: '#3498db'
+            }
+        });
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        function processMermaidDiagrams(html) {
+            // 處理 Mermaid 圖表 - 將程式碼區塊轉換為 mermaid div
+            const mermaidRegex = /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g;
+            return html.replace(mermaidRegex, (match, mermaidContent) => {
+                // 解碼 HTML 實體
+                const temp = document.createElement('textarea');
+                temp.innerHTML = mermaidContent;
+                const decodedContent = temp.value;
+                return `<div class="mermaid">${decodedContent}</div>`;
+            });
+        }
+
+        function setupIframes(container) {
+            // 處理 iframe 響應式容器
+            container.querySelectorAll('iframe').forEach((iframe, index) => {
+                if (!iframe.closest('.iframe-wrapper') && iframe.style.height === '400px') {
+                    // 只包裝那些設定固定高度的 iframe
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'iframe-wrapper';
+                    
+                    iframe.parentElement.insertBefore(wrapper, iframe);
+                    wrapper.appendChild(iframe);
+                    
+                    // 重設 iframe 樣式為響應式
+                    iframe.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        border: none;
+                        border-radius: 0;
+                    `;
+                    
+                    console.log(`iframe ${index + 1} 已設置為響應式`);
+                }
+            });
+        }
+
+        function testMermaidAndIframe() {
+            const input = document.getElementById('markdown-input').value;
+            const resultDiv = document.getElementById('render-result');
+            
+            showStatus('開始渲染...', 'success');
+            
+            try {
+                // 檢查必要的庫
+                if (typeof marked === 'undefined') {
+                    throw new Error('marked.js 未載入');
+                }
+                if (typeof mermaid === 'undefined') {
+                    throw new Error('mermaid.js 未載入');
+                }
+                
+                // 配置 marked.js
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true,
+                    sanitize: false
+                });
+                
+                // 轉換 Markdown 為 HTML
+                let html = marked.parse(input);
+                console.log('Markdown 轉換完成');
+                
+                // 處理 Mermaid 圖表
+                html = processMermaidDiagrams(html);
+                console.log('Mermaid 處理完成');
+                
+                // 插入 HTML
+                resultDiv.innerHTML = html;
+                
+                // 延遲處理，確保 DOM 更新完成
+                setTimeout(() => {
+                    // 渲染 Mermaid 圖表
+                    const mermaidElements = resultDiv.querySelectorAll('.mermaid');
+                    if (mermaidElements.length > 0) {
+                        console.log(`找到 ${mermaidElements.length} 個 Mermaid 圖表`);
+                        mermaid.run({ nodes: mermaidElements });
+                    }
+                    
+                    // 設置 iframe
+                    const iframes = resultDiv.querySelectorAll('iframe');
+                    if (iframes.length > 0) {
+                        console.log(`找到 ${iframes.length} 個 iframe`);
+                        setupIframes(resultDiv);
+                        
+                        // 監聽 iframe 載入
+                        iframes.forEach((iframe, index) => {
+                            iframe.onload = () => console.log(`iframe ${index + 1} 載入完成`);
+                            iframe.onerror = () => console.error(`iframe ${index + 1} 載入失敗`);
+                        });
+                    }
+                    
+                    showStatus(`✅ 渲染完成！包含 ${mermaidElements.length} 個圖表和 ${iframes.length} 個 iframe`, 'success');
+                }, 100);
+                
+            } catch (error) {
+                console.error('渲染錯誤:', error);
+                showStatus(`❌ 渲染失敗: ${error.message}`, 'error');
+                resultDiv.innerHTML = `<p style="color: red;">錯誤: ${error.message}</p>`;
+            }
+        }
+
+        function clearTest() {
+            document.getElementById('render-result').innerHTML = '<p>點擊「渲染測試」按鈕查看結果</p>';
+            document.getElementById('status').style.display = 'none';
+        }
+
+        // 頁面載入檢查
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('頁面載入完成');
+            console.log('marked.js:', typeof marked !== 'undefined' ? '✅ 已載入' : '❌ 未載入');
+            console.log('mermaid.js:', typeof mermaid !== 'undefined' ? '✅ 已載入' : '❌ 未載入');
+            
+            if (typeof marked !== 'undefined' && typeof mermaid !== 'undefined') {
+                showStatus('✅ 所有庫已載入，可以開始測試', 'success');
+            } else {
+                showStatus('❌ 某些庫未載入，可能影響功能', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
