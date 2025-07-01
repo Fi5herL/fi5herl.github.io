@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的部落格</title>
     
+    <!-- 修正 CSP 政策，允許 iframe 嵌入 -->
+    <meta http-equiv="Content-Security-Policy" content="frame-src 'self' https://www.canva.com https://docs.google.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;">
+    
     <!-- 外部資源 -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.0/dist/mermaid.min.js"></script>
@@ -814,11 +817,23 @@
                         z-index: 2;
                     `;
                     
-                    // 確保 iframe 有必要的屬性
+                    // 設定 iframe 屬性以解決載入問題
                     iframe.setAttribute('allowfullscreen', 'true');
-                    iframe.setAttribute('allow', 'fullscreen');
-                    if (!iframe.hasAttribute('loading')) {
-                        iframe.setAttribute('loading', 'lazy');
+                    iframe.setAttribute('webkitallowfullscreen', 'true');
+                    iframe.setAttribute('mozallowfullscreen', 'true');
+                    iframe.setAttribute('allow', 'fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+                    iframe.setAttribute('loading', 'lazy');
+                    iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+                    
+                    // 如果是 Canva，添加特殊處理
+                    if (iframe.src.includes('canva.com')) {
+                        // 確保 Canva iframe 有正確的參數
+                        const url = new URL(iframe.src);
+                        if (!url.searchParams.has('embed')) {
+                            url.searchParams.set('embed', 'true');
+                            iframe.src = url.toString();
+                        }
+                        console.log('Canva iframe 處理完成:', iframe.src);
                     }
                     
                     // 處理載入事件
@@ -826,24 +841,62 @@
                         console.log('iframe 載入成功:', iframe.src);
                         setTimeout(() => {
                             if (loadingDiv && loadingDiv.parentElement) {
-                                loadingDiv.remove();
+                                loadingDiv.style.opacity = '0';
+                                setTimeout(() => {
+                                    if (loadingDiv.parentElement) {
+                                        loadingDiv.remove();
+                                    }
+                                }, 300);
                             }
-                        }, 500);
+                        }, 1000); // 增加延遲確保內容載入
                     });
                     
                     iframe.addEventListener('error', function() {
                         console.error('iframe 載入失敗:', iframe.src);
-                        loadingDiv.textContent = '載入失敗，請檢查網路連線';
+                        loadingDiv.textContent = '載入失敗';
                         loadingDiv.style.color = '#dc3545';
+                        
+                        // 添加重試按鈕
+                        const retryBtn = document.createElement('button');
+                        retryBtn.textContent = '重試';
+                        retryBtn.style.cssText = `
+                            background: #007bff;
+                            color: white;
+                            border: none;
+                            padding: 0.5rem 1rem;
+                            border-radius: 4px;
+                            margin-top: 0.5rem;
+                            cursor: pointer;
+                        `;
+                        retryBtn.onclick = function() {
+                            const originalSrc = iframe.src;
+                            iframe.src = '';
+                            setTimeout(() => {
+                                iframe.src = originalSrc;
+                                loadingDiv.textContent = '重新載入中...';
+                                loadingDiv.style.color = '#666';
+                                retryBtn.remove();
+                            }, 100);
+                        };
+                        loadingDiv.appendChild(document.createElement('br'));
+                        loadingDiv.appendChild(retryBtn);
                     });
                     
-                    // 超時檢查
+                    // 視覺化檢查 - 添加邊框來確認 iframe 位置
                     setTimeout(() => {
                         if (loadingDiv && loadingDiv.parentElement && loadingDiv.textContent === '載入中...') {
-                            loadingDiv.textContent = '載入時間較長，請稍候...';
+                            loadingDiv.innerHTML = `
+                                載入時間較長...<br>
+                                <small style="color: #999;">如果持續無法顯示，可能是網站政策限制</small>
+                            `;
+                            
+                            // 添加除錯資訊
+                            wrapper.style.border = '2px dashed #ccc';
+                            wrapper.title = `iframe: ${iframe.src}`;
+                            
                             console.warn('iframe 載入超時:', iframe.src);
                         }
-                    }, 8000);
+                    }, 10000); // 10秒超時
                 }
             });
         }
