@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iframe 載入測試</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 1.5rem 0;
+            background: #f8f9fa;
+        }
+        .iframe-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>iframe 載入問題診斷</h1>
+    
+    <div class="test-section">
+        <h2>1. 基本 iframe 測試</h2>
+        <p>測試基本的 iframe 載入功能：</p>
+        
+        <button onclick="testBasicIframe()">測試基本 iframe</button>
+        <div id="basic-status" class="status" style="display: none;"></div>
+        
+        <div id="basic-iframe-container"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Canva 嵌入測試</h2>
+        <p>測試 Canva 設計的嵌入：</p>
+        
+        <button onclick="testCanvaEmbed()">測試 Canva 嵌入</button>
+        <div id="canva-status" class="status" style="display: none;"></div>
+        
+        <div id="canva-container"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Google Slides 測試</h2>
+        <p>測試 Google Slides 嵌入：</p>
+        
+        <button onclick="testGoogleSlides()">測試 Google Slides</button>
+        <div id="slides-status" class="status" style="display: none;"></div>
+        
+        <div id="slides-container"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. 安全政策檢查</h2>
+        <p>檢查瀏覽器的安全政策：</p>
+        
+        <button onclick="checkSecurityPolicies()">檢查安全政策</button>
+        <div id="security-info"></div>
+    </div>
+
+    <script>
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status ${type}`;
+            element.style.display = 'block';
+        }
+
+        function createIframeWrapper(container, src, title) {
+            container.innerHTML = '';
+            
+            const wrapper = document.createElement('div');
+            wrapper.className = 'iframe-wrapper';
+            
+            const loading = document.createElement('div');
+            loading.className = 'loading';
+            loading.textContent = '載入中...';
+            wrapper.appendChild(loading);
+            
+            const iframe = document.createElement('iframe');
+            iframe.src = src;
+            iframe.title = title;
+            iframe.setAttribute('allowfullscreen', 'true');
+            iframe.setAttribute('allow', 'fullscreen');
+            iframe.setAttribute('loading', 'lazy');
+            
+            iframe.onload = function() {
+                setTimeout(() => {
+                    if (loading.parentElement) {
+                        loading.remove();
+                    }
+                }, 1000);
+            };
+            
+            iframe.onerror = function() {
+                loading.textContent = '載入失敗';
+                loading.style.color = '#dc3545';
+            };
+            
+            wrapper.appendChild(iframe);
+            container.appendChild(wrapper);
+            
+            return iframe;
+        }
+
+        function testBasicIframe() {
+            showStatus('basic-status', '載入基本 iframe...', 'loading');
+            
+            const container = document.getElementById('basic-iframe-container');
+            const iframe = createIframeWrapper(
+                container, 
+                'https://www.example.com', 
+                '基本 iframe 測試'
+            );
+            
+            setTimeout(() => {
+                showStatus('basic-status', '基本 iframe 測試完成', 'success');
+            }, 3000);
+        }
+
+        function testCanvaEmbed() {
+            showStatus('canva-status', '載入 Canva 嵌入...', 'loading');
+            
+            const container = document.getElementById('canva-container');
+            const iframe = createIframeWrapper(
+                container,
+                'https://www.canva.com/design/DAGpjD9BDs0/Z_UOLjLv8E0uVUnV9geqUA/view?embed',
+                'Canva 設計嵌入測試'
+            );
+            
+            iframe.onload = function() {
+                showStatus('canva-status', 'Canva 嵌入載入成功！', 'success');
+            };
+            
+            iframe.onerror = function() {
+                showStatus('canva-status', 'Canva 嵌入載入失敗 - 可能被 CSP 政策阻擋', 'error');
+            };
+            
+            setTimeout(() => {
+                if (document.getElementById('canva-status').classList.contains('loading')) {
+                    showStatus('canva-status', 'Canva 載入時間過長，可能有連線問題', 'error');
+                }
+            }, 10000);
+        }
+
+        function testGoogleSlides() {
+            showStatus('slides-status', '載入 Google Slides...', 'loading');
+            
+            const container = document.getElementById('slides-container');
+            const iframe = createIframeWrapper(
+                container,
+                'https://docs.google.com/presentation/d/e/2PACX-1vRPDJfn8RirXVghoq0YgovUhgkBwzy20MPJ30Bf7rz8pQqCEGg4-K5zcnt6xITsaa-N_WPhN0C2_OjP/embed?start=false&loop=false&delayms=3000',
+                'Google Slides 嵌入測試'
+            );
+            
+            iframe.onload = function() {
+                showStatus('slides-status', 'Google Slides 載入成功！', 'success');
+            };
+            
+            iframe.onerror = function() {
+                showStatus('slides-status', 'Google Slides 載入失敗', 'error');
+            };
+            
+            setTimeout(() => {
+                if (document.getElementById('slides-status').classList.contains('loading')) {
+                    showStatus('slides-status', 'Google Slides 載入時間過長', 'error');
+                }
+            }, 8000);
+        }
+
+        function checkSecurityPolicies() {
+            const infoDiv = document.getElementById('security-info');
+            let info = '<h4>瀏覽器安全政策檢查：</h4><ul>';
+            
+            // 檢查 HTTPS
+            info += `<li><strong>協議：</strong>${location.protocol === 'https:' ? '✅ HTTPS' : '❌ HTTP (建議使用 HTTPS)'}</li>`;
+            
+            // 檢查 CSP
+            const metaCsp = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            info += `<li><strong>CSP Meta 標籤：</strong>${metaCsp ? '發現 CSP 限制' : '無 CSP Meta 限制'}</li>`;
+            
+            // 檢查 iframe 沙盒支援
+            const testIframe = document.createElement('iframe');
+            const supportsSandbox = 'sandbox' in testIframe;
+            info += `<li><strong>iframe 沙盒支援：</strong>${supportsSandbox ? '✅ 支援' : '❌ 不支援'}</li>`;
+            
+            // 檢查同源政策
+            info += `<li><strong>當前域名：</strong>${location.hostname}</li>`;
+            
+            // 檢查載入器屬性支援
+            const supportsLoading = 'loading' in testIframe;
+            info += `<li><strong>lazy loading 支援：</strong>${supportsLoading ? '✅ 支援' : '❌ 不支援'}</li>`;
+            
+            info += '</ul>';
+            
+            info += '<h4>建議解決方案：</h4><ul>';
+            info += '<li>確保使用 HTTPS 協議</li>';
+            info += '<li>檢查 Content Security Policy 設定</li>';
+            info += '<li>為 iframe 添加適當的 sandbox 屬性</li>';
+            info += '<li>使用 allowfullscreen 和 allow 屬性</li>';
+            info += '</ul>';
+            
+            infoDiv.innerHTML = info;
+        }
+
+        // 頁面載入時執行初始檢查
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('iframe 測試頁面載入完成');
+            
+            // 監聽所有 iframe 載入事件
+            document.addEventListener('load', function(e) {
+                if (e.target.tagName === 'IFRAME') {
+                    console.log('iframe 載入完成:', e.target.src);
+                }
+            }, true);
+            
+            document.addEventListener('error', function(e) {
+                if (e.target.tagName === 'IFRAME') {
+                    console.error('iframe 載入失敗:', e.target.src, e);
+                }
+            }, true);
+        });
+    </script>
+</body>
+</html>
