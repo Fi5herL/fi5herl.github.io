@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta name="google-site-verification" content="_S5OqP7e0fZyveRIAilFubPR5igGnHOS7oFXhDOTPe4" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Fi5her Blog - Tech & Life share 分享生活技巧、科技知識和個人想法。在這裡你可以找到關於生活、科技、程式設計等方面的文章。">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎣</text></svg>">
+    <title>Fi5her Blog</title>
+    <style>
+        /* Tech Blogger Theme CSS - Embedded */
+        /* Global Variables */
+        :root {
+            --font-body: 'Roboto', 'Open Sans', 'Helvetica Neue', sans-serif;
+            --font-heading: 'Montserrat', 'Roboto', sans-serif;
+
+            --color-bg-body: #f4f7f9;
+            --color-bg-sidebar: #2c3e50; /* Dark slate blue/charcoal */
+            --color-bg-card: #ffffff;
+            --color-bg-header-page: #ffffff;
+            --color-bg-controls: #fdfdfd; /* For controls in main content */
+            --color-bg-sidebar-controls: rgba(255, 255, 255, 0.05); /* Slightly lighter for inputs on dark sidebar */
+
+
+            --color-text-primary: #34495e; /* Dark grayish blue for body text */
+            --color-text-secondary: #7f8c8d; /* Medium gray for less important text */
+            --color-text-on-dark: #ecf0f1; /* Light gray/off-white for text on dark bg */
+            --color-text-heading: #2c3e50; /* Darker for headings */
+
+            --color-accent: #3498db;          /* Bright blue */
+            --color-accent-hover: #2980b9;    /* Darker blue for hover */
+            --color-tag-bg: rgba(52, 152, 219, 0.1); /* Light accent for tag bg */
+            --color-tag-text: var(--color-accent);
+
+            --color-border: #e0e6ed;          /* Light border color */
+            --color-border-on-dark: rgba(255, 255, 255, 0.2); /* Border for elements on dark bg */
+            --color-shadow: rgba(44, 62, 80, 0.15); /* Subtle shadow */
+
+            --border-radius-sm: 6px;
+            --border-radius-md: 12px;
+            --border-radius-lg: 20px;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap');
+
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--color-bg-body);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Loading Animation Styles */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--color-bg-sidebar);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 9999; color: var(--color-text-on-dark); font-family: var(--font-body);
+            transition: opacity 0.5s ease-out; opacity: 1;
+        }
+        #loadingAnimation {
+            font-size: 1.5rem; line-height: 1.2; text-align: center; white-space: pre;
+            margin-bottom: 1.5rem; min-height: 200px;
+            display: flex; justify-content: center; align-items: center;
+            color: var(--color-accent);
+        }
+        #loadingText { font-size: 1.2rem; font-weight: 500; }
+        #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
+
+        .container { display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px; background: var(--color-bg-sidebar); color: var(--color-text-on-dark);
+            padding: 1.5rem 1rem; transition: width 0.3s ease; position: relative;
+            box-shadow: 3px 0 15px var(--color-shadow);
+            display: flex; flex-direction: column;
+        }
+        .sidebar.collapsed { width: 70px; padding-left: 0.5rem; padding-right: 0.5rem; }
+
+        .sidebar-toggle {
+            position: absolute; top: 1.5rem; right: -18px;
+            background: transparent; border: none; border-radius: 50%;
+            width: 36px; height: 36px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: var(--color-text-on-dark);
+            transition: all 0.3s ease; box-shadow: none; z-index: 10;
+        }
+        .sidebar-toggle:hover { transform: scale(1.2); color: var(--color-accent); }
+
+        .logo {
+            font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700;
+            color: var(--color-text-on-dark); margin-bottom: 2.5rem; text-align: center;
+            opacity: 1; transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease, font-size 0.3s ease;
+            overflow: hidden; white-space: nowrap;
+        }
+        .sidebar.collapsed .logo { opacity: 0; height: 0; margin-bottom: 0; font-size: 0; }
+
+        .nav-menu { list-style: none; flex-grow: 1; }
+        .nav-item { margin-bottom: 0.5rem; }
+        .nav-link {
+            display: flex; align-items: center; padding: 0.8rem 1rem;
+            color: var(--color-text-on-dark); text-decoration: none;
+            border-radius: var(--border-radius-sm); transition: all 0.2s ease-in-out;
+            position: relative; overflow: hidden;
+        }
+        .sidebar.collapsed .nav-link { justify-content: center; padding: 0.8rem 0.25rem; }
+        .nav-link:hover { background: rgba(255, 255, 255, 0.1); }
+        .nav-link.active { background: var(--color-accent); color: var(--color-text-on-dark) !important; font-weight: 500; }
+        .nav-link.active .nav-icon { color: var(--color-text-on-dark); }
+        .nav-icon {
+            margin-right: 0.8rem; font-size: 1.2rem;
+            transition: opacity 0.3s ease, margin-right 0.3s ease, font-size 0.3s ease;
+            flex-shrink: 0; width: 24px; text-align: center;
+        }
+        .sidebar.collapsed .nav-icon { margin-right: 0; font-size: 1.3rem; }
+        .nav-text {
+            transition: opacity 0.3s ease 0.1s, width 0.3s ease 0.1s;
+            white-space: nowrap; overflow: hidden; font-size: 0.95rem;
+        }
+        .sidebar.collapsed .nav-text { opacity: 0; width: 0; }
+
+        /* Main Content Area */
+        .main-content { flex: 1; padding: 2rem; transition: all 0.3s ease; overflow-y: auto; }
+        .page-section { padding-top: 1px; margin-top: -1px; }
+        .page-container {
+            background: var(--color-bg-card); padding: 2rem; border-radius: var(--border-radius-md);
+            box-shadow: 0 5px 25px var(--color-shadow); margin-top: 1.5rem;
+        }
+        #home-page .page-container { background: none; padding: 0; box-shadow: none; margin-top: 0; }
+        .header {
+            background: var(--color-bg-header-page); padding: 2rem 2.5rem;
+            border-radius: var(--border-radius-md); margin-bottom: 1.5rem;
+            box-shadow: 0 5px 25px var(--color-shadow);
+        }
+        .header h1 {
+            font-family: var(--font-heading); font-size: 2.2rem; color: var(--color-text-heading);
+            margin-bottom: 0.5rem; text-align: left; font-weight: 600;
+        }
+        .header p { text-align: left; font-size: 1.05rem; color: var(--color-text-secondary); }
+
+        /* Controls Panel (For Main Content Area - if you have one there) */
+        .main-content .controls {
+            background: var(--color-bg-controls); padding: 1.5rem; border-radius: var(--border-radius-md);
+            margin-bottom: 2rem; display: flex; gap: 1.5rem; flex-wrap: wrap;
+            align-items: center; border: 1px solid var(--color-border);
+        }
+        .main-content .sort-controls, .main-content .filter-controls, .main-content .search-keyword-controls {
+            display: flex; flex-direction: row; align-items: center; gap: 0.75rem; flex: 1;
+        }
+        .main-content .sort-controls label, .main-content .filter-controls label, .main-content .search-keyword-controls label {
+            font-weight: 500; color: var(--color-text-primary); font-size: 0.9rem;
+        }
+        .main-content select, .main-content input[type="text"], .main-content button {
+            padding: 0.6rem 1rem; border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-sm); background: var(--color-bg-card);
+            color: var(--color-text-primary); font-family: var(--font-body);
+            transition: all 0.2s ease-in-out; font-size: 0.9rem;
+        }
+        .main-content input[type="text"] { min-width: 180px; }
+        .main-content select:focus, .main-content input[type="text"]:focus, .main-content button:focus {
+            outline: none; border-color: var(--color-accent);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        .main-content button { cursor: pointer; font-weight: 500; }
+        .main-content button:hover { border-color: var(--color-accent-hover); color: var(--color-accent-hover); }
+        .main-content button.active { background: var(--color-accent); color: var(--color-text-on-dark); border-color: var(--color-accent); }
+        .main-content button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .main-content .hashtag-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; width: 100%; }
+        .main-content .hashtag-btn {
+            padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 15px;
+            background: var(--color-bg-card); border: 1px solid var(--color-border);
+        }
+        .main-content .hashtag-btn:hover { border-color: var(--color-accent); color: var(--color-accent); }
+        .main-content .hashtag-btn.active { background: var(--color-accent); color: var(--color-text-on-dark); border-color: var(--color-accent); }
+
+
+        /* ----- NEW: Articles List/Compact Layout ----- */
+        .articles-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Each card takes full width */
+            gap: 1rem; /* Reduced gap */
+        }
+        .article-card {
+            background: var(--color-bg-card);
+            border-radius: var(--border-radius-sm); /* Smaller radius */
+            box-shadow: 0 2px 8px var(--color-shadow);
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+            display: flex; /* Key for side-by-side layout */
+            align-items: center; /* Vertically center content */
+            padding: 1rem;
+        }
+        .article-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(44, 62, 80, 0.18);
+        }
+        .article-image {
+            width: 80px; /* Fixed width for the image */
+            height: 80px;
+            object-fit: contain;
+            border-radius: var(--border-radius-sm);
+            margin-right: 1.25rem; /* Space between image and content */
+            flex-shrink: 0; /* Prevent image from shrinking */
+        }
+        .article-content {
+            padding: 0; /* Remove padding as it's on the card now */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center content vertically */
+            min-height: 0;
+        }
+        .article-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--color-text-heading);
+            margin-bottom: 0.25rem;
+            line-height: 1.3;
+        }
+        .article-date {
+            color: var(--color-text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .article-preview {
+            color: var(--color-text-primary);
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+        .article-tags {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin-top: 0.25rem;
+        }
+        .tag {
+            background: var(--color-tag-bg);
+            color: var(--color-tag-text);
+            padding: 0.2rem 0.5rem;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.7rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+        /* ----- END: New Articles List Layout ----- */
+        
+        /* Pagination Controls */
+        .pagination-controls-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem 0;
+            gap: 0.5rem;
+        }
+        .pagination-controls-container button {
+            padding: 0.5rem 1rem;
+        }
+        .pagination-controls-container span {
+            font-size: 0.9rem;
+            color: var(--color-text-secondary);
+            margin: 0 0.5rem;
+        }
+
+
+        /* Markdown Content Styles */
+        .markdown-content {
+            line-height: 1.7; /* Increased for better readability */
+            color: var(--color-text-primary);
+            font-size: 1.1rem; /* Slightly larger base font */
+        }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3, 
+        .markdown-content h4, .markdown-content h5, .markdown-content h6 {
+            font-family: var(--font-heading);
+            color: var(--color-text-heading);
+            margin: 1.8rem 0 1rem 0;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+        .markdown-content h1 { font-size: 2.2em; border-bottom: 2px solid var(--color-border); padding-bottom: 0.5rem; }
+        .markdown-content h2 { font-size: 1.8em; border-bottom: 1px solid var(--color-border); padding-bottom: 0.4rem; }
+        .markdown-content h3 { font-size: 1.5em; }
+        .markdown-content h4 { font-size: 1.25em; }
+        .markdown-content h5 { font-size: 1.1em; color: var(--color-text-secondary); }
+        .markdown-content h6 { font-size: 1em; color: var(--color-text-secondary); text-transform: uppercase; }
+        .markdown-content p { margin-bottom: 1.2rem; }
+        .markdown-content ul, .markdown-content ol { margin: 0 0 1.2rem 1.5rem; padding-left: 1.5rem; }
+        .markdown-content ul { list-style-type: disc; }
+        .markdown-content ol { list-style-type: decimal; }
+        .markdown-content li { margin-bottom: 0.5rem; }
+        .markdown-content li p { margin-bottom: 0.5rem; }
+        .markdown-content a {
+            color: var(--color-accent); text-decoration: none;
+            border-bottom: 1px solid transparent; transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        .markdown-content a:hover { color: var(--color-accent-hover); border-bottom-color: var(--color-accent-hover); }
+        .markdown-content code:not(pre > code) {
+            background: rgba(224, 230, 237, 0.7); padding: 0.2em 0.4em; border-radius: var(--border-radius-sm);
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            font-size: 0.9em; color: var(--color-text-primary); border: 1px solid var(--color-border);
+        }
+        .code-block-container { position: relative; margin: 1.2rem 0; }
+        .code-block-container pre {
+            margin: 0; background: #2d2d2d; border-radius: var(--border-radius-sm);
+            padding: 1rem; overflow-x: auto; box-shadow: 0 4px 10px var(--color-shadow); border: 1px solid #444;
+        }
+        .code-block-container pre code { 
+            background: none !important; padding: 0 !important; color: #ccc !important; 
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace !important;
+            font-size: 0.9em !important; border: none !important;
+        }
+        .copy-code-button {
+            position: absolute; top: 0.5em; right: 0.5em; padding: 0.3em 0.6em;
+            background-color: rgba(255, 255, 255, 0.1); color: var(--color-text-on-dark); 
+            border: 1px solid var(--color-border-on-dark); border-radius: var(--border-radius-sm);
+            cursor: pointer; font-size: 0.8em; opacity: 0.3; 
+            transition: opacity 0.2s ease-in-out, background-color 0.2s ease-in-out; z-index: 1; 
+        }
+        .code-block-container:hover .copy-code-button, .copy-code-button:focus, .copy-code-button:hover {
+            opacity: 1; background-color: rgba(255, 255, 255, 0.2);
+        }
+        .copy-code-button.copied {
+            background-color: var(--color-accent) !important; color: var(--color-text-on-dark) !important;
+            border-color: var(--color-accent) !important; opacity: 1 !important;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid var(--color-accent); padding: 1rem 1.5rem; margin: 1.2rem 0;
+            background: rgba(52, 152, 219, 0.05); color: var(--color-text-secondary);
+            border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+        }
+        .markdown-content blockquote p { margin-bottom: 0.5rem; }
+        .markdown-content blockquote p:last-child { margin-bottom: 0; }
+        .markdown-content hr { border: none; height: 1px; background: var(--color-border); margin: 2rem 0; }
+        .markdown-content img {
+            max-width: 100%; height: auto; border-radius: var(--border-radius-sm); margin: 1.2rem 0;
+            box-shadow: 0 4px 15px var(--color-shadow); display: block; margin-left: auto; margin-right: auto;
+        }
+        .markdown-content table {
+            width: 100%; border-collapse: collapse; margin: 1.2rem 0; background: var(--color-bg-card);
+            border-radius: var(--border-radius-sm); overflow: hidden; border: 1px solid var(--color-border);
+            box-shadow: 0 2px 8px var(--color-shadow);
+        }
+        .markdown-content th, .markdown-content td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--color-border); }
+        .markdown-content tr:last-child td { border-bottom: none; }
+        .markdown-content th { background: var(--color-bg-body); font-weight: 600; color: var(--color-text-heading); }
+        .mermaid {
+            background: var(--color-bg-card); border-radius: var(--border-radius-sm); padding: 1.5rem; margin: 1.2rem 0;
+            text-align: center; box-shadow: 0 4px 10px var(--color-shadow); border: 1px solid var(--color-border);
+            overflow-x: auto;
+        }
+        .mermaid svg { max-width: 100%; height: auto; }
+
+        /* Loading class for content areas */
+        .loading { text-align: center; padding: 3rem; color: var(--color-text-secondary); font-size: 1.1rem; }
+
+        /* Archive Page Specific Styles */
+        .archive-list { list-style: none; padding: 0; }
+        .archive-year {
+            font-family: var(--font-heading);
+            font-size: 1.6rem; color: var(--color-text-heading);
+            margin-top: 2rem; margin-bottom: 0.8rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .archive-month {
+            font-family: var(--font-heading);
+            font-size: 1.2rem; color: var(--color-text-primary);
+            margin-top: 1.2rem; margin-bottom: 0.5rem; padding-left: 1rem;
+            font-weight: 500;
+        }
+        .archive-list li { margin-bottom: 0.6rem; padding-left: 2rem; }
+        .archive-list .archive-link {
+            color: var(--color-text-primary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-weight: 500;
+        }
+        .archive-list .archive-link:hover { color: var(--color-accent); }
+        .archive-list .archive-date {
+            font-size: 0.8em; color: var(--color-text-secondary);
+            margin-right: 0.75em;
+            display: inline-block;
+            width: 45px;
+        }
+
+        /* --- Sidebar Controls Styling (Applies to Desktop and when moved on Mobile) --- */
+        .sidebar-controls { /* The LI element or direct child div */
+            margin-top: 1rem;
+            padding: 0.75rem 0.5rem;
+            border-top: 1px solid var(--color-border-on-dark);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: stretch;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        /* If .sidebar-controls is an LI, remove default list styling */
+        .nav-menu > .sidebar-controls {
+            list-style-type: none;
+        }
+
+        .sidebar-controls > div { /* .sort-controls, .search-keyword-controls, .filter-controls */
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .sidebar-controls label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--color-text-on-dark);
+            margin-bottom: 0.1rem;
+        }
+
+        .sidebar-controls select,
+        .sidebar-controls input[type="text"] {
+            padding: 0.5rem 0.75rem; font-size: 0.85rem;
+            border: 1px solid var(--color-border-on-dark); border-radius: var(--border-radius-sm);
+            background: var(--color-bg-sidebar-controls); color: var(--color-text-on-dark);
+            width: 100%; line-height: 1.3;
+        }
+        .sidebar-controls select:focus,
+        .sidebar-controls input[type="text"]:focus {
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+        }
+
+        .sidebar-controls .search-keyword-controls button {
+            padding: 0.5rem 0.75rem; font-size: 0.85rem;
+            border: 1px solid var(--color-border-on-dark); border-radius: var(--border-radius-sm);
+            background: var(--color-bg-sidebar-controls); color: var(--color-text-on-dark);
+            width: 100%; line-height: 1.3; cursor: pointer;
+        }
+        .sidebar-controls .search-keyword-controls input[type="text"] { margin-bottom: 0.4rem; }
+
+        /* --- Unified Styles for Filter Controls (Desktop & Mobile when expanded) --- */
+        .sidebar-controls .filter-controls {
+            display: flex; flex-direction: row; align-items: center;
+            flex-wrap: wrap; gap: 0.5rem;
+        }
+        .sidebar-controls .filter-controls label { margin-bottom: 0; flex-shrink: 0; }
+
+        .sidebar-controls .hashtag-filters {
+            display: flex; flex-direction: row; flex-wrap: wrap;
+            align-items: center; gap: 0.4rem; margin-top: 0;
+        }
+
+        .sidebar-controls .filter-controls button#clearFiltersButton,
+        .sidebar-controls .hashtag-filters .hashtag-btn {
+            padding: 0.3rem 0.8rem; font-size: 0.9rem; /* 調整hashtag標籤文字大小*/
+            border-radius: 20px; /* Capsule shape */
+            line-height: 1.2;
+            background-color: var(--color-bg-sidebar-controls); color: var(--color-text-on-dark);
+            border: 1px solid var(--color-border-on-dark);
+            width: auto; /* Width by content */
+            flex-shrink: 0; white-space: nowrap; cursor: pointer;
+        }
+        .sidebar-controls .filter-controls button#clearFiltersButton:hover,
+        .sidebar-controls .hashtag-filters .hashtag-btn:hover {
+            border-color: var(--color-accent); color: var(--color-accent);
+        }
+        .sidebar-controls .filter-controls button#clearFiltersButton.active,
+        .sidebar-controls .hashtag-filters .hashtag-btn.active {
+            background-color: var(--color-accent); border-color: var(--color-accent);
+            color: var(--color-text-on-dark);
+        }
+        /* --- END Unified Styles for Filter Controls --- */
+
+
+        /* --- Global rule for hiding controls when sidebar is collapsed --- */
+        .sidebar.collapsed .sidebar-controls {
+            display: none !important;
+        }
+        /* --- End Global rule --- */
+
+        /* --- 新增：文章加密提示框樣式 --- */
+        .password-prompt-container {
+            background-color: rgba(224, 230, 237, 0.7);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem auto;
+            max-width: 500px;
+        }
+        .password-prompt-container h3 {
+            font-family: var(--font-heading);
+            color: var(--color-text-heading);
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+        .password-prompt-container p {
+            color: var(--color-text-secondary);
+            margin-bottom: 1.5rem;
+        }
+        .password-prompt-container input[type="password"] {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        .password-prompt-container input[type="password"]:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        .password-prompt-container button {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background-color: var(--color-accent);
+            color: var(--color-text-on-dark);
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .password-prompt-container button:hover {
+            background-color: var(--color-accent-hover);
+        }
+        .password-prompt-container .decrypt-message {
+            margin-top: 1rem;
+            margin-bottom: 0;
+            color: #e74c3c; /* Red for errors */
+            font-weight: 500;
+            min-height: 1.2em;
+        }
+        /* --- 新增樣式結束 --- */
+
+        @media (max-width: 768px) { /* Mobile */
+            .container { flex-direction: column; }
+            .sidebar {
+                width: 100%; height: auto; 
+                /* padding: 0.75rem 1rem; */
+                border-right: none; border-bottom: 1px solid #3a5068;
+                box-shadow: 0 3px 10px var(--color-shadow);
+                transition: height 0.3s ease;
+            }
+            
+            .sidebar.collapsed {
+                width: 100%; 
+                height: 54px;
+                padding: 0;
+                overflow: hidden;
+                flex-direction: row;
+                align-items: center;
+            }
+            
+            .sidebar-toggle {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1000;
+                top: auto; left: auto; transform: none; margin: 0;
+                width: 50px; height: 50px;
+                background-color: var(--color-accent);
+                border-radius: 50%;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                font-size: 26px;
+                border: none;
+            }
+            
+            .sidebar-toggle:hover {
+                transform: scale(1.1);
+                background-color: var(--color-accent-hover);
+            }
+            
+            .sidebar.collapsed .logo,
+            .sidebar:not(.collapsed) .logo {
+                display: none;
+            }
+
+            .sidebar.collapsed .nav-menu {
+                display: flex;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                width: 100%;
+                height: 100%;
+                padding: 0 0.5rem;
+                align-items: center;
+            }
+            .sidebar.collapsed .nav-menu::-webkit-scrollbar {
+                display: none;
+            }
+
+            .sidebar.collapsed .nav-item {
+                flex-shrink: 0;
+                margin-bottom: 0;
+                margin-right: 0.25rem;
+            }
+            
+            .sidebar.collapsed .nav-link {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                padding: 0.5rem 0.8rem;
+                white-space: nowrap;
+            }
+
+            .sidebar.collapsed .nav-text {
+                display: inline-block;
+                opacity: 1;
+                width: auto;
+                font-size: 0.9rem;
+            }
+            .sidebar.collapsed .nav-icon {
+                font-size: 1rem;
+                /* margin-right: 0.5rem; */
+            }
+
+            .sidebar:not(.collapsed) .nav-menu{
+                display: flex; flex-direction: row; flex-wrap: wrap;
+                justify-content: flex-start; align-items: center; 
+                /* padding-bottom: 0.1rem; */
+            }
+            .sidebar:not(.collapsed) .nav-item:not(.sidebar-controls) {
+                 margin-bottom: 0.5rem; margin-right: 0.75rem; 
+                 /* flex-shrink: 0; */
+            }
+            
+            .sidebar:not(.collapsed) > .sidebar-controls {
+                /* margin-top: 1rem; */
+                /* margin-bottom: 1rem; /* Space for the FAB */
+                /* padding: 0.75rem 0;  */
+                /* border-top: 1px solid var(--color-border-on-dark); */
+            }
+            .sidebar:not(.collapsed) .sidebar-controls .search-keyword-controls {
+                display: flex; flex-direction: row; align-items: center; gap: 0.5rem;
+            }
+            .sidebar:not(.collapsed) .sidebar-controls .search-keyword-controls label { display: none; }
+            .sidebar:not(.collapsed) .sidebar-controls .search-keyword-controls input[type="text"]#keywordSearchInput {
+                min-width: 60%; margin-bottom: 0;
+            }
+            .sidebar:not(.collapsed) .sidebar-controls .search-keyword-controls button {
+                min-width: 0; padding: 0.6rem 0.5rem; font-size: 0.8rem; white-space: nowrap;
+            }
+
+
+            .main-content { padding: 1rem; }
+            .header { padding: 1rem 1.5rem; margin-bottom: 1rem; }
+            .header h1 { font-size: 1.6rem; }
+            .page-container { padding: 1.5rem; margin-top: 1rem;}
+            .markdown-content { font-size: 1.1rem; }
+            .markdown-content h1 {font-size: 1.8em;}
+            .markdown-content h2 {font-size: 1.5em;}
+            .markdown-content h3 {font-size: 1.3em;}
+        }
+
+        /* Tech Blogger Theme CSS - End */
+    </style>
+    <!-- ✨ [新增] 引入 marked.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.0/dist/mermaid.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</head>
+
+<body>
+    <div id="loadingOverlay">
+        <div id="loadingAnimation"></div>
+        <div id="loadingText">努力捕撈文章中...<br>Currently fishing for articles...</div>
+    </div>
+
+    <div class="container">
+        <nav class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">🐟</button>
+            <div class="logo">Fi5her Blog</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#home" class="nav-link" data-page="home">
+                        <span class="nav-icon">🏠</span><span class="nav-text">首頁</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#about" class="nav-link" data-page="about">
+                        <span class="nav-icon">😎</span><span class="nav-text">關於我</span>
+                    </a>
+                </li>
+                <!-- REMOVED Categories Link from HTML -->
+                <li class="nav-item">
+                    <a href="#archive" class="nav-link" data-page="archive">
+                        <span class="nav-icon">📂</span><span class="nav-text">文章歸檔</span>
+                    </a>
+                </li>
+                <!-- Search, Filter, Sort Controls - Initial position for desktop -->
+                <li class="nav-item controls sidebar-controls">
+                    <div class="sort-controls">
+                        <label for="sortSelect">排序：</label>
+                        <select id="sortSelect">
+                            <option value="newest">最新</option>
+                            <option value="oldest">最舊</option>
+                        </select>
+                    </div>
+                    <div class="search-keyword-controls">
+                        <label for="keywordSearchInput">搜尋內容：</label>
+                        <input type="text" id="keywordSearchInput" placeholder="輸入關鍵字...">
+                        <button id="keywordSearchButton" type="button">搜尋</button>
+                        <button id="keywordClearButton" type="button">清除</button>
+                    </div>
+                    <div class="filter-controls"> <!-- This div now contains label, clear button, and hashtag container -->
+                        <label>標籤篩選：</label>
+                        <button id="clearFiltersButton">全部標籤</button>
+                        <div class="hashtag-filters" id="hashtagFilters">
+                            <!-- Hashtag buttons will be populated here -->
+                        </div>
+                    </div>
+                </li>
+            </ul>
+            <!-- On mobile (when sidebar is not collapsed), .sidebar-controls will be moved here by JS -->
+        </nav>
+
+        <main class="main-content">
+            <!-- Home Page -->
+            <div id="home-page" class="page-section" style="display: none;">
+                <header class="header">
+                    <h1>Life Hack & Tech Journal</h1>
+                    <p>Welcoming each day as an adventure in creativity, brainstorming, and joyful life hacks. 😎</p>
+                </header>
+                <div class="page-container">
+                    <div class="articles-grid" id="articlesGrid"></div>
+                    <div id="paginationControlsContainer" class="pagination-controls-container"></div>
+                </div>
+            </div>
+
+            <!-- About Page -->
+            <div id="about-page" class="page-section" style="display: none;">
+                <header class="header"><h1 id="about-title">關於我</h1></header>
+                <div class="page-container">
+                    <div class="markdown-content" id="about-content"><div class="loading">載入內容中...</div></div>
+                </div>
+            </div>
+
+            <!-- REMOVED Categories Page Container from HTML -->
+
+            <!-- Archive Page -->
+            <div id="archive-page" class="page-section" style="display: none;">
+                <header class="header"><h1 id="archive-title">文章歸檔</h1></header>
+                <div class="page-container">
+                    <div id="archive-content"><div class="loading">載入歸檔中...</div></div>
+                </div>
+            </div>
+
+            <!-- Article Detail Page -->
+            <div id="article-detail-page" class="page-section" style="display: none;">
+                 <!-- Content injected by openArticle -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- Global Variables & Data ---
+        let allData = { articles: [], pages: {} };
+        let articles = [];
+        let pagesContent = {};
+        let filteredArticles = [];
+        let currentHashtags = [];
+        let currentKeywordsArray = [];
+        let currentPage = 1;
+        const articlesPerPage = 15;
+        let currentSortBy = 'newest';
+        let activePageId = 'home';
+
+        // --- DOM Elements ---
+        const sortSelectElement = document.getElementById('sortSelect');
+        const keywordSearchInput = document.getElementById('keywordSearchInput');
+        const keywordSearchButton = document.getElementById('keywordSearchButton');
+        const keywordClearButton = document.getElementById('keywordClearButton');
+        const clearFiltersButton = document.getElementById('clearFiltersButton');
+        const articlesGridElement = document.getElementById('articlesGrid');
+        const paginationContainerElement = document.getElementById('paginationControlsContainer');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingAnimationElement = document.getElementById('loadingAnimation');
+        const sidebarElement = document.getElementById('sidebar');
+        const navMenuElement = sidebarElement.querySelector('.nav-menu');
+        const sidebarControlsElement = sidebarElement.querySelector('.sidebar-controls'); // The LI or DIV
+
+        // --- Dynamic Fish Animation (variables) ---
+        let loadingInterval;
+        const animationRows = 1; const animationCols = 10;
+        let dynamicFishFrames = []; let currentFrameIndex_anim = 0; let animationStage_anim = 0;
+
+        // --- Mermaid Initialization ---
+        if (typeof mermaid !== 'undefined') {
+            mermaid.initialize({
+                startOnLoad: false, theme: 'neutral',
+                themeVariables: {
+                    primaryColor: getComputedStyle(document.documentElement).getPropertyValue('--color-bg-card').trim() || '#ffffff',
+                    primaryTextColor: getComputedStyle(document.documentElement).getPropertyValue('--color-text-primary').trim() || '#34495e',
+                    primaryBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-border').trim() || '#e0e6ed',
+                    lineColor: getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() || '#3498db',
+                }
+            });
+        }
+
+        // --- Utility Functions ---
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return '';
+            const div = document.createElement('div'); div.textContent = text; return div.innerHTML;
+        }
+
+        // ✨ [新增] 來自參考網頁的輔助函式，用於解碼被 marked.js 轉義的 HTML 實體
+        function unescapeHtml(safe) {
+            const temp = document.createElement('textarea');
+            temp.innerHTML = safe;
+            return temp.value;
+        }
+
+        // ✨ [新增] 全新的 Markdown 渲染核心函式
+        function renderMarkdown(markdownString, targetElement) {
+            if (!targetElement || typeof markdownString !== 'string') {
+                if(targetElement) targetElement.innerHTML = '';
+                return;
+            }
+
+            // 1. 使用 marked.js 進行主要轉換
+            let html = marked.parse(markdownString, {
+                breaks: true,
+                gfm: true,
+                sanitize: false
+            });
+
+            // 2. 處理 Mermaid 圖表
+            const mermaidRegex = /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g;
+            html = html.replace(mermaidRegex, (match, mermaidContent) => {
+                return `<div class="mermaid">${unescapeHtml(mermaidContent)}</div>`;
+            });
+            
+            // 3. 處理一般程式碼區塊
+            const codeBlockRegex = /(<pre><code( class="language-[^"]+")?>[\s\S]*?<\/code><\/pre>)/g;
+            html = html.replace(codeBlockRegex, (match) => {
+                if (match.includes('class="language-mermaid"')) return match;
+                return `<div class="code-block-container">${match}</div>`;
+            });
+
+            // 4. 將最終的 HTML 放入目標元素
+            targetElement.innerHTML = html;
+
+            // 5. 執行後續渲染
+            processRenderedContent(targetElement);
+        }
+        
+        // --- Loading Animation Functions ---
+        const oceanCreatures = ['🐠', '🐡', '🦈', '🐳', '🐟', '🐙', '🦑', '🐢', '🦀', '🐚', '🐬', '🦞'];
+
+        function generateFishFrames(rows, cols) {
+            const frames = []; let currentGrid = Array(rows).fill(null).map(() => Array(cols).fill(' '));
+            const maxDiagonalSum = rows + cols - 2;
+            for (let diagSum = 0; diagSum <= maxDiagonalSum; diagSum++) {
+                let frameGrid = currentGrid.map(arr => arr.slice());
+                for (let r = 0; r < rows; r++) { for (let c = 0; c < cols; c++) { if (r + c <= diagSum && frameGrid[r][c] === ' ') frameGrid[r][c] = oceanCreatures[c]; } }
+                frames.push(gridToString(frameGrid)); currentGrid = frameGrid;
+            }
+            const finalFullGrid = Array(rows).fill(null).map(() => Array(cols).fill(' '));
+            const lastFrameString = gridToString(finalFullGrid);
+            if (frames.length === 0 || frames[frames.length - 1] !== lastFrameString) frames.push(lastFrameString);
+            return [...new Set(frames)];
+        }
+        function gridToString(grid) { return grid.map(row => row.join('')).join('\n'); }
+        function startLoadingAnimation() {
+            if (!loadingAnimationElement || !loadingOverlay) return;
+            dynamicFishFrames = generateFishFrames(animationRows, animationCols);
+            if (dynamicFishFrames.length === 0) { loadingAnimationElement.textContent = "🐟"; return; }
+            loadingOverlay.classList.remove('hidden'); currentFrameIndex_anim = 0; animationStage_anim = 0;
+            loadingInterval = setInterval(() => {
+                if (!loadingAnimationElement) { clearInterval(loadingInterval); return; }
+                loadingAnimationElement.textContent = dynamicFishFrames[currentFrameIndex_anim];
+                if (animationStage_anim === 0) {
+                    currentFrameIndex_anim++;
+                    if (currentFrameIndex_anim >= dynamicFishFrames.length) { currentFrameIndex_anim = dynamicFishFrames.length - 1; animationStage_anim = 1; }
+                } else if (animationStage_anim === 1) { currentFrameIndex_anim = 0; animationStage_anim = 0; }
+            }, 300);
+        }
+        function stopLoadingAnimation() { clearInterval(loadingInterval); if (loadingOverlay) loadingOverlay.classList.add('hidden'); }
+
+        // --- Sidebar Toggle ---
+        function toggleSidebar() {
+            sidebarElement.classList.toggle('collapsed');
+            const toggleBtn = sidebarElement.querySelector('.sidebar-toggle');
+            if (toggleBtn) toggleBtn.textContent = sidebarElement.classList.contains('collapsed') ? '🎣' : '🐟';
+        }
+
+        // --- URL and Navigation ---
+        function updateURL(params = {}, replace = false) {
+            const currentParams = new URLSearchParams(); currentParams.set('page', activePageId);
+            if (activePageId === 'home') {
+                currentParams.set('sort', params.sort !== undefined ? params.sort : currentSortBy);
+                if ((params.tags !== undefined && params.tags.length > 0) || currentHashtags.length > 0) currentParams.set('tags', (params.tags || currentHashtags).map(t => encodeURIComponent(t)).join(','));
+                if ((params.keywords !== undefined && params.keywords.length > 0) || currentKeywordsArray.length > 0) currentParams.set('keywords', (params.keywords || currentKeywordsArray).map(k => encodeURIComponent(k)).join('+'));
+                if ((params.p !== undefined && params.p > 1) || currentPage > 1) currentParams.set('p', params.p !== undefined ? params.p : currentPage);
+            } else if (activePageId === 'article-detail' && params.articleId !== undefined) currentParams.set('article', params.articleId);
+            const newSearch = currentParams.toString();
+            const newHash = activePageId === 'article-detail' && params.articleId ? `#article-${params.articleId}` : `#${activePageId}`;
+            const newURL = `${window.location.pathname}${newSearch ? '?' + newSearch : ''}${newHash}`;
+            const state = { page: activePageId, articleId: activePageId === 'article-detail' ? params.articleId : null };
+            if (replace) history.replaceState(state, '', newURL); else history.pushState(state, '', newURL);
+        }
+        function navigateToPage(pageId, articleToOpen = null, options = {}) {
+            activePageId = pageId;
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            const navLinkSelector = pageId === 'article-detail' ? `home` : pageId;
+            const activeNavLink = sidebarElement.querySelector(`.nav-link[data-page="${navLinkSelector}"]`);
+            if (activeNavLink) activeNavLink.classList.add('active');
+            document.querySelectorAll('.main-content > .page-section').forEach(page => page.style.display = 'none');
+            const articleDetailPageElement = document.getElementById('article-detail-page');
+            if (pageId === 'article-detail' && articleToOpen) {
+                if (articleDetailPageElement) articleDetailPageElement.style.display = 'block';
+            } else {
+                if (articleDetailPageElement) articleDetailPageElement.style.display = 'none';
+                const targetPageElement = document.getElementById(pageId + '-page');
+                if (targetPageElement) targetPageElement.style.display = 'block';
+                else { const homePageElement = document.getElementById('home-page'); if (homePageElement) homePageElement.style.display = 'block'; activePageId = 'home'; }
+            }
+            if (!options.fromURL) updateURL({ articleId: (pageId === 'article-detail' && articleToOpen) ? articleToOpen.id : undefined, p: (pageId === 'home' && options.preservePage) ? currentPage : undefined });
+            if (pageId === 'home') sortAndDisplayArticles(options);
+            else if (pageId === 'about') renderStaticPage('about');
+            else if (pageId === 'archive') renderArchivePage();
+        }
+        function loadStateFromURL() {
+            const params = new URLSearchParams(window.location.search); let hash = window.location.hash.substring(1);
+            let pageIdFromParam = params.get('page'); let articleIdFromParam = params.get('article');
+            if (pageIdFromParam === 'article-detail' && articleIdFromParam) activePageId = 'article-detail';
+            else if (pageIdFromParam) activePageId = pageIdFromParam;
+            else if (hash) {
+                if (hash.startsWith('article-') && articles.length > 0) {
+                    const articleIdFromHash = hash.substring('article-'.length);
+                    if (articles.find(art => art.id === articleIdFromHash)) { activePageId = 'article-detail'; articleIdFromParam = articleIdFromHash; } else activePageId = 'home';
+                } else if (document.getElementById(hash + '-page')) activePageId = hash; else activePageId = 'home';
+            } else activePageId = 'home';
+            currentSortBy = params.get('sort') || 'newest'; if (sortSelectElement) sortSelectElement.value = currentSortBy;
+            const tagsFromURL = params.get('tags'); currentHashtags = tagsFromURL ? tagsFromURL.split(',').map(t => decodeURIComponent(t)) : [];
+            const hashtagFiltersContainer = sidebarControlsElement.querySelector('#hashtagFilters');
+            if (hashtagFiltersContainer) { hashtagFiltersContainer.querySelectorAll('.hashtag-btn').forEach(btn => btn.classList.toggle('active', currentHashtags.includes(btn.dataset.hashtag))); }
+            const keywordsFromURL = params.get('keywords'); currentKeywordsArray = keywordsFromURL ? keywordsFromURL.split('+').map(k => decodeURIComponent(k).trim()).filter(k => k) : [];
+            if (keywordSearchInput) keywordSearchInput.value = currentKeywordsArray.join(' ');
+            currentPage = parseInt(params.get('p')) || 1;
+            if (activePageId === 'article-detail' && articleIdFromParam && articles.length > 0) {
+                const articleToOpen = articles.find(art => art.id === articleIdFromParam);
+                if (articleToOpen) openArticle(articleToOpen, null, true); else navigateToPage('home', null, { fromURL: true, preservePage: true });
+            } else navigateToPage(activePageId, null, { fromURL: true, preservePage: true });
+        }
+
+        // ✨ [已刪除] 舊的 markdownToHtml 函式已被移除
+
+        // --- Data Handling & Rendering ---
+        async function loadData() {
+            startLoadingAnimation();
+            try {
+                const gasUrl = 'https://script.google.com/macros/s/AKfycbxrM67dWveK91ty2SWHY_Fz55Vtyf76hVc1lywYMRrHKLY1lz-DdYdm8ivu6dRDb_jE/exec';
+                const response = await fetch(gasUrl); if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const fetchedData = await response.json(); if (fetchedData.error) throw new Error(`GAS Error: ${fetchedData.error} - ${fetchedData.message || ''}`);
+                allData = fetchedData;
+                articles = (allData.articles || []).map(row => ({ id: CSS.escape(`${row[0] || "Untitled"} ${(row[2] ? new Date(row[2]) : new Date()).toLocaleDateString('zh-TW')}`), title: row[0] || "無標題", content: row[1] || "", date: row[2] ? new Date(row[2]) : null, image: row[3] || null, hashtags: row[4] && typeof row[4] === 'string' ? row[4].split(',').map(tag => tag.trim()).filter(tag => tag) : [] })).filter(article => article.title !== "無標題" && article.date);
+                pagesContent = allData.pages || {};
+                generateHashtagFilters();
+                if (pagesContent.about) renderStaticPage('about');
+                renderArchivePage();
+                loadStateFromURL();
+            } catch (error) { console.error('Failed to load data:', error); if (articlesGridElement) articlesGridElement.innerHTML = `<div class="loading">資料載入失敗: ${error.message}</div>`; }
+            finally { stopLoadingAnimation(); }
+        }
+        function initializeCopyCodeButtons(parentElement = document) {
+            parentElement.querySelectorAll('.copy-code-button').forEach(button => { button.removeEventListener('click', handleCopyCodeClick); button.addEventListener('click', handleCopyCodeClick); });
+        }
+        function handleCopyCodeClick(event) {
+            const button = event.currentTarget;
+            const codeBlockContainer = button.closest('.code-block-container');
+            if (!codeBlockContainer) return;
+            const codeElement = codeBlockContainer.querySelector('code');
+            if (!codeElement) return;
+
+            const codeToCopy = codeElement.innerText; // Use innerText to get the rendered text
+            navigator.clipboard.writeText(codeToCopy).then(() => {
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ 已複製!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('無法複製: ', err);
+                const originalText = button.innerHTML;
+                button.innerHTML = '❌ 失敗';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+        
+        function renderStaticPage(pageName) {
+            const pageData = pagesContent[pageName];
+            const titleElement = document.getElementById(`${pageName}-title`);
+            const contentElement = document.getElementById(`${pageName}-content`);
+            if (!contentElement) return;
+
+            if (pageData && pageData.content) {
+                if (titleElement && pageData.title) titleElement.textContent = pageData.title;
+                // ✨ [修改] 使用新的渲染函式
+                renderMarkdown(pageData.content, contentElement);
+            } else {
+                if (titleElement) titleElement.textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+                contentElement.innerHTML = `<p>此頁面 (${pageName}) 內容尚未設定。</p>`;
+            }
+        }
+
+        function renderArchivePage() {
+            const contentElement = document.getElementById('archive-content'); if (!contentElement || articles.length === 0) { if(contentElement) contentElement.innerHTML = '<p>目前沒有文章可供歸檔。</p>'; return; }
+            const articlesByYearMonth = {}; articles.sort((a,b) => b.date.getTime() - a.date.getTime()).forEach(article => { const y = article.date.getFullYear(); const m = article.date.getMonth(); if(!articlesByYearMonth[y]) articlesByYearMonth[y]={}; if(!articlesByYearMonth[y][m]) articlesByYearMonth[y][m]=[]; articlesByYearMonth[y][m].push(article); });
+            let html = '<ul class="archive-list">'; const monthNames = ["一月","二月","三月","四月","五月","六月","七月","八月","九月","十月","十一月","十二月"];
+            Object.keys(articlesByYearMonth).sort((a,b)=>b-a).forEach(year => { html += `<li class="archive-year">${year}</li>`; Object.keys(articlesByYearMonth[year]).sort((a,b)=>b-a).forEach(monthIndex => { html += `<li class="archive-month">${monthNames[parseInt(monthIndex)]}</li>`; articlesByYearMonth[year][monthIndex].forEach(article => { const dateStr = article.date.toLocaleDateString('zh-TW',{month:'2-digit',day:'2-digit'}); html += `<li><span class="archive-date">${dateStr}</span> <a href="#" class="archive-link" data-article-id="${article.id}">${escapeHtml(article.title)}</a></li>`; }); }); });
+            html += '</ul>'; contentElement.innerHTML = html;
+            contentElement.querySelectorAll('.archive-link').forEach(link => { link.addEventListener('click', (e) => { e.preventDefault(); const articleId = e.target.dataset.articleId; const articleToOpen = articles.find(art => art.id === articleId); if(articleToOpen) openArticle(articleToOpen); }); });
+        }
+        function generateHashtagFilters() {
+            const allUniqueHashtags = new Set(articles.flatMap(article => article.hashtags || []));
+            const filtersContainer = sidebarControlsElement.querySelector('#hashtagFilters'); if (!filtersContainer) return; filtersContainer.innerHTML = '';
+            allUniqueHashtags.forEach(tag => { const btn = document.createElement('button'); btn.className = 'hashtag-btn'; btn.textContent = `#${tag}`; btn.dataset.hashtag = tag; btn.onclick = () => filterByHashtag(tag); filtersContainer.appendChild(btn); });
+        }
+        function filterByHashtag(hashtag) {
+            const index = currentHashtags.indexOf(hashtag); if (index > -1) currentHashtags.splice(index, 1); else currentHashtags.push(hashtag);
+            sidebarControlsElement.querySelectorAll('#hashtagFilters .hashtag-btn').forEach(btn => btn.classList.toggle('active', currentHashtags.includes(btn.dataset.hashtag)));
+            currentPage = 1; sortAndDisplayArticles({ preservePage: false }); updateURL({ tags: currentHashtags, p: currentPage });
+        }
+        function clearAllHashtagFilters() {
+            currentHashtags = []; sidebarControlsElement.querySelectorAll('#hashtagFilters .hashtag-btn').forEach(btn => btn.classList.remove('active'));
+            currentPage = 1; sortAndDisplayArticles({ preservePage: false }); updateURL({ tags: [], p: currentPage });
+        }
+        function performKeywordSearch() {
+            if (!keywordSearchInput) return; currentKeywordsArray = keywordSearchInput.value.trim().toLowerCase().split(/\s+/).filter(k => k);
+            currentPage = 1; if (activePageId === 'home') sortAndDisplayArticles({ preservePage: false }); updateURL({ keywords: currentKeywordsArray, p: currentPage });
+        }
+        function clearKeywordSearch() {
+            if (keywordSearchInput) keywordSearchInput.value = ''; currentKeywordsArray = []; currentPage = 1;
+            if (activePageId === 'home') sortAndDisplayArticles({ preservePage: false }); updateURL({ keywords: [], p: currentPage });
+        }
+        function applyFiltersAndSearch() {
+            let tempArticles = [...articles];
+            if (currentHashtags.length > 0) tempArticles = tempArticles.filter(article => currentHashtags.every(ht => (article.hashtags || []).includes(ht)));
+            if (currentKeywordsArray.length > 0) tempArticles = tempArticles.filter(article => currentKeywordsArray.every(keyword => article.title.toLowerCase().includes(keyword) || article.content.toLowerCase().includes(keyword)));
+            filteredArticles = tempArticles;
+        }
+        function sortAndDisplayArticles(options = {}) {
+            applyFiltersAndSearch();
+            filteredArticles.sort((a, b) => (currentSortBy === 'newest' ? b.date.getTime() - a.date.getTime() : a.date.getTime() - b.date.getTime()));
+            displayArticles();
+            if (options.scrollToId && activePageId === 'home') { /* scroll logic */ }
+        }
+
+        // --- MODIFIED: displayArticles to support new compact layout ---
+        function displayArticles() {
+            if (!articlesGridElement) return;
+            articlesGridElement.innerHTML = '';
+            const startIndex = (currentPage - 1) * articlesPerPage;
+            const paginatedArticles = filteredArticles.slice(startIndex, startIndex + articlesPerPage);
+            if (paginatedArticles.length === 0) {
+                articlesGridElement.innerHTML = `<div class="loading">${filteredArticles.length === 0 && (currentHashtags.length > 0 || currentKeywordsArray.length > 0) ? '沒有找到符合條件的文章。' : '此處沒有文章。'}</div>`;
+            } else {
+                paginatedArticles.forEach(article => {
+                    const plainTextContent = (article.content || "").replace(/[#*`>\-\[\]()!]/g, '').replace(/\n/g, ' ').trim();
+                    const preview = plainTextContent.substring(0, 40) + (plainTextContent.length > 40 ? '...' : '');
+                    const displayDate = article.date.toLocaleDateString('zh-TW');
+                    const imageHtml = article.image 
+                        ? `<img itemprop="image" src="${article.image}" alt="${escapeHtml(article.title)}" class="article-image">`
+                        : '';
+
+                    const articleCard = document.createElement('article');
+                    articleCard.className = 'article-card';
+                    articleCard.id = article.id;
+                    
+                    articleCard.innerHTML = `
+                        ${imageHtml}
+                        <div class="article-content">
+                            <h3 class="article-title" itemprop="headline">${escapeHtml(article.title)}</h3>
+                            <div class="article-date">
+                                <time itemprop="datePublished" datetime="${article.date.toISOString()}">${displayDate}</time>
+                            </div>
+                            <p class="article-preview" itemprop="description">${escapeHtml(preview)}</p>
+                            <div class="article-tags">
+                                ${(article.hashtags || []).map(tag => `<span class="tag" itemprop="keywords">#${escapeHtml(tag)}</span>`).join('')}
+                            </div>
+                        </div>`;
+                    
+                    articleCard.addEventListener('click', () => openArticle(article, articleCard));
+                    articlesGridElement.appendChild(articleCard);
+                });
+            }
+            renderPaginationControls();
+        }
+
+        function renderPaginationControls() {
+            if (!paginationContainerElement) return; paginationContainerElement.innerHTML = ''; const totalPages = Math.ceil(filteredArticles.length / articlesPerPage); if (totalPages <= 1) return;
+            const prevBtn = document.createElement('button'); prevBtn.textContent = '上一頁'; prevBtn.disabled = currentPage === 1; prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; displayArticles(); updateURL({ p: currentPage }); window.scrollTo(0,0); } });
+            const pageInfo = document.createElement('span'); pageInfo.textContent = ` 第 ${currentPage} / ${totalPages} 頁 `;
+            const nextBtn = document.createElement('button'); nextBtn.textContent = '下一頁'; nextBtn.disabled = currentPage === totalPages; nextBtn.addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; displayArticles(); updateURL({ p: currentPage }); window.scrollTo(0,0); } });
+            paginationContainerElement.append(prevBtn, pageInfo, nextBtn);
+        }
+        
+        // --- 新增：後處理渲染內容的輔助函數 ---
+        function processRenderedContent(parentElement) {
+            if (!parentElement) return;
+            setTimeout(() => {
+                try {
+                    if (typeof mermaid !== 'undefined') {
+                        mermaid.run({ nodes: parentElement.querySelectorAll('.mermaid') });
+                    }
+                } catch(e) { console.error("Mermaid 渲染失敗:", e); }
+                
+                if (typeof Prism !== 'undefined') {
+                    Prism.highlightAllUnder(parentElement);
+                }
+                
+                initializeCopyCodeButtons(parentElement);
+            }, 0);
+        }
+
+        // --- 新增：產生密碼輸入框的 HTML ---
+        function generatePasswordPromptHtml(articleId) {
+            const safeArticleId = CSS.escape(articleId);
+            return `
+                <div class="password-prompt-container">
+                    <h3>🔒 這篇文章已加密</h3>
+                    <p>請輸入密碼以閱讀文章內容。</p>
+                    <input type="password" id="password-input-${safeArticleId}" placeholder="請在此輸入密碼">
+                    <button id="decrypt-button-${safeArticleId}">解鎖文章</button>
+                    <p id="decrypt-message-${safeArticleId}" class="decrypt-message"></p>
+                </div>
+            `;
+        }
+        
+        // --- 新增：設定解密事件處理 (已修改) ---
+        function setupDecryptionHandler(articleId, mainContent, correctPassword) {
+            const safeArticleId = CSS.escape(articleId);
+            const decryptButton = document.getElementById(`decrypt-button-${safeArticleId}`);
+            const passwordInput = document.getElementById(`password-input-${safeArticleId}`);
+            const messageElement = document.getElementById(`decrypt-message-${safeArticleId}`);
+            const contentWrapper = document.getElementById(`article-detail-page`).querySelector('.markdown-content');
+
+            if (!decryptButton || !passwordInput || !messageElement || !contentWrapper) {
+                console.error("無法設定解密處理程序：缺少必要元素。");
+                return;
+            }
+
+            const handleDecryption = () => {
+                const userInput = passwordInput.value;
+                if (userInput === correctPassword) {
+                    messageElement.textContent = '';
+                    // ✨ [修改] 使用新的渲染函式
+                    renderMarkdown(mainContent, contentWrapper);
+                } else {
+                    messageElement.textContent = '密碼錯誤，請再試一次。';
+                    passwordInput.focus();
+                    passwordInput.select();
+                }
+            };
+
+            decryptButton.addEventListener('click', handleDecryption);
+            passwordInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleDecryption();
+                }
+            });
+        }
+
+        // --- 修改後的 openArticle 函數 ---
+        function openArticle(article, articleCardElement = null, fromURL = false) {
+            if (!article) {
+                navigateToPage('home', null, { fromURL: true });
+                return;
+            }
+            if (!fromURL) {
+                sessionStorage.setItem('previousPageURL', window.location.href);
+            }
+            navigateToPage('article-detail', article, { fromURL: fromURL });
+
+            const articlePageContainer = document.getElementById('article-detail-page');
+            if (!articlePageContainer) return;
+
+            const isEncrypted = article.hashtags && article.hashtags.includes('加密');
+            let mainContent = article.content || "";
+            let correctPassword = '';
+            let showPrompt = false;
+
+            if (isEncrypted) {
+                const lines = mainContent.trim().split('\n');
+                if (lines.length > 1) {
+                    correctPassword = lines.pop().trim();
+                    mainContent = lines.join('\n');
+                    showPrompt = true;
+                }
+            }
+            
+            const displayDate = article.date.toLocaleDateString('zh-TW');
+            
+            articlePageContainer.innerHTML = `
+                <header class="header">
+                    <button onclick="closeArticle()" style="float: right; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-text-primary); padding: 0.5rem 1rem; line-height: 1;">✕</button>
+                    <h1>${escapeHtml(article.title)}</h1>
+                    <p>發布於 ${displayDate}</p>
+                    <div style="text-align: left; margin-top: 1rem;">
+                        ${(article.hashtags || []).map(tag => `<span class="tag" style="margin: 0 0.2rem;">#${escapeHtml(tag)}</span>`).join('')}
+                    </div>
+                </header>
+                <div class="page-container">
+                    <div class="markdown-content">
+                        <!-- 內容或密碼提示框將被注入此處 -->
+                    </div>
+                </div>`;
+
+            const contentWrapper = articlePageContainer.querySelector('.markdown-content');
+
+            if (showPrompt && correctPassword) {
+                contentWrapper.innerHTML = generatePasswordPromptHtml(article.id);
+                setupDecryptionHandler(article.id, mainContent, correctPassword);
+            } else {
+                // ✨ [修改] 使用新的渲染函式
+                renderMarkdown(mainContent, contentWrapper);
+            }
+            
+            window.scrollTo(0, 0);
+        }
+
+        // --- 修改後的 closeArticle 函數 ---
+        function closeArticle() {
+            const articlePageContainer = document.getElementById('article-detail-page');
+            if(articlePageContainer) {
+                articlePageContainer.innerHTML = ''; // 清空內容以停止任何可能的背景活動
+            }
+            const previousPageURL = sessionStorage.getItem('previousPageURL');
+            sessionStorage.removeItem('previousPageURL');
+            if (previousPageURL) {
+                try {
+                    history.pushState(null, '', previousPageURL);
+                    loadStateFromURL();
+                } catch (e) {
+                    navigateToPage('home');
+                }
+            } else {
+                navigateToPage('home');
+            }
+        }
+
+        // --- DOMContentLoaded ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = sidebarElement.querySelector('.sidebar-toggle');
+            if (toggleBtn) toggleBtn.textContent = sidebarElement.classList.contains('collapsed') ? '🎣' : '🐟';
+            loadData();
+
+            if (sidebarElement && navMenuElement && sidebarControlsElement) {
+                const mobileMediaQuery = window.matchMedia("(max-width: 768px)");
+                function handleControlsPosition(mq) {
+                    if (!sidebarControlsElement || !sidebarControlsElement.parentNode) return;
+                    if (mq.matches) {
+                        if (sidebarControlsElement.parentNode === navMenuElement && !sidebarElement.classList.contains('collapsed')) {
+                            sidebarElement.appendChild(sidebarControlsElement);
+                        }
+                    } else {
+                        if (sidebarControlsElement.parentNode === sidebarElement) {
+                            navMenuElement.appendChild(sidebarControlsElement);
+                        }
+                    }
+                }
+                handleControlsPosition(mobileMediaQuery); 
+
+                const sidebarObserver = new MutationObserver((mutationsList) => {
+                    for(const mutation of mutationsList) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                           handleControlsPosition(mobileMediaQuery);
+                        }
+                    }
+                });
+                sidebarObserver.observe(sidebarElement, { attributes: true });
+
+                mobileMediaQuery.addEventListener('change', () => handleControlsPosition(mobileMediaQuery));
+            } else { console.error("Essential sidebar elements not found for controls repositioning logic."); }
+
+            if (navMenuElement) {
+                navMenuElement.querySelectorAll('.nav-item:not(.sidebar-controls) .nav-link').forEach(link => {
+                    link.addEventListener('click', function(e) { e.preventDefault(); const pageId = this.dataset.page; navigateToPage(pageId); });
+                });
+            }
+            if (sortSelectElement) sortSelectElement.addEventListener('change', () => { currentSortBy = sortSelectElement.value; currentPage = 1; sortAndDisplayArticles(); updateURL({ sort: currentSortBy, p: currentPage }); });
+            if (keywordSearchButton) keywordSearchButton.addEventListener('click', () => { currentPage = 1; performKeywordSearch(); });
+            if (keywordClearButton) keywordClearButton.addEventListener('click', () => { currentPage = 1; clearKeywordSearch(); });
+            if (keywordSearchInput) keywordSearchInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') { currentPage = 1; performKeywordSearch(); } });
+            if (clearFiltersButton) clearFiltersButton.onclick = () => { currentPage = 1; clearAllHashtagFilters(); };
+            window.addEventListener('popstate', loadStateFromURL);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📃</text></svg>">
+  <title>表單自動產生器</title> <!-- 您可以修改成您喜歡的網頁標題 -->
+  <style>
+    /* 基本設定，移除所有預設邊距，讓 iframe 能填滿全螢幕 */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden; /* 防止父頁面出現不必要的捲軸 */
+      background-color: #f4f5f7; /* 與您的應用程式背景色一致，看起來更無縫 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* iframe 的樣式 */
+    #app-frame {
+      width: 100%;
+      height: 100%;
+      border: none; /* 移除 iframe 預設的醜邊框 */
+      display: none; /* 預設隱藏，等待載入完成後再顯示 */
+    }
+
+    /* 載入動畫的容器 */
+    #loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: 100%;
+      gap: 20px;
+    }
+
+    /* CSS 載入動畫（轉圈圈） */
+    .spinner {
+      border: 6px solid #e0e0e0; /* 淺灰色底圈 */
+      border-top: 6px solid #0052cc; /* 您的應用程式主題色 */
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1.5s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 載入動畫區塊 -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <p>應用程式載入中，請稍候...</p>
+  </div>
+
+  <!-- iframe 容器，用來裝載您的 GAS 應用程式 -->
+  <!-- ▼▼▼▼▼ 請將 src 中的網址替換成您的 GAS 網頁應用程式 URL ▼▼▼▼▼ -->
+  <iframe 
+    id="app-frame" 
+    src="https://script.google.com/macros/s/AKfycbx7aJrEejNyUjBcGHmZoAQZ7HIo5mBnOhCLMDoyOzMuok_ydZNpRzpzJWzcED6Zf6e4/exec" 
+    onload="showContent()">
+  </iframe>
+  <!-- ▲▲▲▲▲ 請將 src 中的網址替換成您的 GAS 網頁應用程式 URL ▲▲▲▲▲ -->
+
+  <script>
+    // 當 iframe 內的內容載入完成後，會觸發這個函數
+    function showContent() {
+      // 隱藏載入動畫
+      document.getElementById('loader').style.display = 'none';
+      // 顯示 iframe
+      document.getElementById('app-frame').style.display = 'block';
+    }
+  </script>
+
+</body>
+</html>

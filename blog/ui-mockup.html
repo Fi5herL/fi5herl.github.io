@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BBQ Application UI Mockup</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --background-color: #f5f5f5;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --border-color: #dddddd;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --error-color: #e74c3c;
+            --sidebar-width: 250px;
+            --header-height: 60px;
+            --footer-height: 40px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .mockup-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: var(--card-background);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .mockup-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mockup-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .mockup-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .mockup-section {
+            margin-bottom: 40px;
+        }
+
+        .mockup-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mockup-section p {
+            margin-bottom: 15px;
+        }
+
+        .screen-mockup {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .screen-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .screen-header .logo {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .screen-header .nav {
+            display: flex;
+        }
+
+        .screen-header .nav-item {
+            margin-left: 20px;
+            cursor: pointer;
+        }
+
+        .screen-header .nav-item.active {
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--secondary-color);
+        }
+
+        .screen-content {
+            display: flex;
+            min-height: 500px;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #f8f9fa;
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+        }
+
+        .sidebar-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .sidebar-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .sidebar-item.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            background-color: white;
+        }
+
+        .screen-footer {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-row {
+            display: flex;
+            margin: 0 -10px;
+        }
+
+        .form-col {
+            flex: 1;
+            padding: 0 10px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-danger {
+            background-color: var(--error-color);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.9rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th, .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid var(--secondary-color);
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .tab-content {
+            padding: 20px 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .workflow-diagram {
+            width: 100%;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .workflow-step {
+            display: flex;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-arrow {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+            color: var(--secondary-color);
+            font-size: 1.5rem;
+        }
+
+        .decision-tree {
+            width: 100%;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tree-node {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: white;
+        }
+
+        .tree-node.highlighted {
+            border-color: var(--secondary-color);
+            background-color: #e3f2fd;
+        }
+
+        .tree-children {
+            margin-left: 30px;
+            position: relative;
+        }
+
+        .tree-children::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -15px;
+            height: 100%;
+            border-left: 1px dashed var(--border-color);
+        }
+
+        .xy-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .xy-table th, .xy-table td {
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            text-align: center;
+        }
+
+        .xy-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .xy-table td.highlighted {
+            background-color: #e3f2fd;
+            font-weight: bold;
+            border: 2px solid var(--secondary-color);
+        }
+
+        .mockup-notes {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .mockup-notes h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .circuit-viewer {
+            position: relative;
+            border: 1px solid #ddd;
+            height: 600px;
+            background: #fff;
+            margin: 20px 0;
+            padding: 20px;
+        }
+
+        .circuit-component {
+            position: absolute;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .insulation-box {
+            position: absolute;
+            border: 2px dashed;
+            border-radius: 4px;
+            padding: 5px;
+            font-size: 12px;
+            text-align: center;
+            opacity: 0.3;
+        }
+
+        .bi-box {
+            border: 2px solid #ffd700;
+            background-color: rgba(255, 215, 0, 0.1);
+        }
+
+        .ri-box {
+            border: 2px solid #ff0000;
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+
+        .fi-box {
+            border: 2px solid #00ff00;
+            background-color: rgba(0, 255, 0, 0.1);
+        }
+
+        .circuit-connection {
+            position: absolute;
+            background-color: #666;
+            height: 2px;
+        }
+
+        .circuit-connection.vertical {
+            width: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .screen-content {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .form-col {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mockup-container">
+        <div class="mockup-header">
+            <h1>BBQ Application UI Mockup</h1>
+            <p>Business Boost for Qualification - IEC 60730-1 Certification Platform</p>
+        </div>
+
+        <div class="mockup-section">
+            <h2>1. Dashboard</h2>
+            <p>The dashboard provides an overview of projects, recent activities, and quick access to common functions.</p>
+            
+            <div class="screen-mockup">
+                <div class="screen-header">
+                    <div class="logo">BBQ</div>
+                    <div class="nav">
+                        <div class="nav-item active">Dashboard</div>
+                        <div class="nav-item">Projects</div>
+                        <div class="nav-item">Analysis</div>
+                        <div class="nav-item">Reports</div>
+                        <div class="nav-item">Settings</div>
+                    </div>
+                </div>
+                <div class="screen-content">
+                    <div class="sidebar">
+                        <div class="sidebar-item active">Dashboard</div>
+                        <div class="sidebar-item">Recent Projects</div>
+                        <div class="sidebar-item">Notifications</div>
+                        <div class="sidebar-item">Statistics</div>
+                        <div class="sidebar-item">Help</div>
+                    </div>
+                    <div class="main-content">
+                        <h2>Welcome to BBQ</h2>
+                        <p>Your IEC 60730-1 certification assistant</p>
+                        
+                        <div class="card">
+                            <div class="card-title">Quick Actions</div>
+                            <div class="grid">
+                                <div class="btn">Create New Project</div>
+                                <div class="btn">Import EDA File</div>
+                                <div class="btn">Generate Report</div>
+                                <div class="btn">View Rule Tables</div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-title">Recent Projects</div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Project Name</th>
+                                        <th>Product</th>
+                                        <th>Last Modified</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Thermostat X200</td>
+                                        <td>Smart Thermostat</td>
+                                        <td>2025-06-09</td>
+                                        <td><span class="badge badge-success">Completed</span></td>
+                                        <td>
+                                            <button class="btn btn-sm">Open</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Coffee Maker C100</td>
+                                        <td>Coffee Machine</td>
+                                        <td>2025-06-08</td>
+                                        <td><span class="badge badge-warning">In Progress</span></td>
+                                        <td>
+                                            <button class="btn btn-sm">Open</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Refrigerator R500</td>
+                                        <td>Smart Refrigerator</td>
+                                        <td>2025-06-05</td>
+                                        <td><span class="badge badge-danger">Issues Found</span></td>
+                                        <td>
+                                            <button class="btn btn-sm">Open</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="screen-footer">
+                    Business Boost for Qualification (BBQ) &copy; 2025
+                </div>
+            </div>
+        </div>
+
+        <div class="mockup-section">
+            <h2>2. Product Declaration Module</h2>
+            <p>This module allows users to input all necessary product information according to IEC 60730-1 standards.</p>
+            
+            <div class="screen-mockup">
+                <div class="screen-header">
+                    <div class="logo">BBQ</div>
+                    <div class="nav">
+                        <div class="nav-item">Dashboard</div>
+                        <div class="nav-item active">Projects</div>
+                        <div class="nav-item">Analysis</div>
+                        <div class="nav-item">Reports</div>
+                        <div class="nav-item">Settings</div>
+                    </div>
+                </div>
+                <div class="screen-content">
+                    <div class="sidebar">
+                        <div class="sidebar-item">Project Overview</div>
+                        <div class="sidebar-item active">Product Declaration</div>
+                        <div class="sidebar-item">Components</div>
+                        <div class="sidebar-item">Circuit Analysis</div>
+                        <div class="sidebar-item">Test Results</div>
+                        <div class="sidebar-item">Reports</div>
+                    </div>
+                    <div class="main-content">
+                        <h2>Product Declaration</h2>
+                        <p>Coffee Maker C100</p>
+                        
+                        <div class="tabs">
+                            <div class="tab active">General Information</div>
+                            <div class="tab">Electrical Ratings</div>
+                            <div class="tab">IEC Classification</div>
+                            <div class="tab">Environmental Parameters</div>
+                        </div>
+                        
+                        <div class="tab-content">
+                            <div class="card">
+                                <div class="card-title">General Information</div>
+                                <div class="form-group">
+                                    <label for="product-name">Product Name</label>
+                                    <input type="text" id="product-name" class="form-control" value="Coffee Maker C100">
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <div class="form-group">
+                                            <label for="model-number">Model Number</label>
+                                            <input type="text" id="model-number" class="form-control" value="C100">
+                                        </div>
+                                    </div>
+                                    <div class="form-col">
+                                        <div class="form-group">
+                                            <label for="series-models">Series Models</label>
+                                            <input type="text" id="series-models" class="form-control" value="C100, C100S, C100X">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <div class="form-group">
+                                            <label for="manufacturer">Manufacturer</label>
+                                            <input type="text" id="manufacturer" class="form-control" value="Coffee Tech Inc.">
+                                        </div>
+                                    </div>
+                                    <div class="form-col">
+                                        <div class="form-group">
+                                            <label for="applicant">Applicant</label>
+                                            <input type="text" id="applicant" class="form-control" value="Coffee Tech Inc.">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="description">Product Description</label>
+                                    <textarea id="description" class="form-control" rows="3">Automatic drip coffee maker with programmable timer and temperature control.</textarea>
+                                </div>
+                                
+                                <div style="text-align: right;">
+                                    <button class="btn btn-primary">Save & Continue</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="screen-footer">
+                    Business Boost for Qualification (BBQ) &copy; 2025
+                </div>
+            </div>
+        </div>
+
+        <div class="mockup-section">
+            <h2>3. Expert Rules Engine & Decision Transparency</h2>
+            <p>This module demonstrates how the system applies IEC 60730-1 rules and provides transparency in the decision process.</p>
+            
+            <div class="screen-mockup">
+                <div class="screen-header">
+                    <div class="logo">BBQ</div>
+                    <div class="nav">
+                        <div class="nav-item">Dashboard</div>
+                        <div class="nav-item">Projects</div>
+                        <div class="nav-item active">Analysis</div>
+                        <div class="nav-item">Reports</div>
+                        <div class="nav-item">Settings</div>
+                    </div>
+                </div>
+                <div class="screen-content">
+                    <div class="sidebar">
+                        <div class="sidebar-item">Analysis Overview</div>
+                        <div class="sidebar-item">Insulation Analysis</div>
+                        <div class="sidebar-item active">Creepage Distances</div>
+                        <div class="sidebar-item">Clearance Distances</div>
+                        <div class="sidebar-item">Temperature Rise</div>
+                        <div class="sidebar-item">FMEA</div>
+                    </div>
+                    <div class="main-content">
+                        <h2>Creepage Distance Analysis</h2>
+                        <p>Coffee Maker C100 - Heating Element Control Circuit</p>
+                        
+                        <div class="card">
+                            <div class="card-title">Measurement Results</div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Location</th>
+                                        <th>Working Voltage</th>
+                                        <th>Pollution Degree</th>
+                                        <th>Material Group</th>
+                                        <th>Measured Value</th>
+                                        <th>Required Value</th>
+                                        <th>Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>PCB - L to N</td>
+                                        <td>240V</td>
+                                        <td>2</td>
+                                        <td>IIIa</td>
+                                        <td>3.5 mm</td>
+                                        <td>4.0 mm</td>
+                                        <td><span class="badge badge-danger">Fail</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>PCB - L to GND</td>
+                                        <td>240V</td>
+                                        <td>2</td>
+                                        <td>IIIa</td>
+                                        <td>4.2 mm</td>
+                                        <td>4.0 mm</td>
+                                        <td><span class="badge badge-success">Pass</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-title">Decision Process Transparency</div>
+                            <p>Explanation for PCB - L to N (Fail)</p>
+                            
+                            <div class="tabs">
+                                <div class="tab active">Table Lookup</div>
+                                <div class="tab">Decision Tree</div>
+                                <div class="tab">Standard Reference</div>
+                            </div>
+                            
+                            <div class="tab-content">
+                                <h4>Table 23 - Creepage distances (mm)</h4>
+                                <p>The system determined the required value by cross-referencing the working voltage with pollution degree and material group.</p>
+                                
+                                <table class="xy-table">
+                                    <thead>
+                                        <tr>
+                                            <th rowspan="2">Working Voltage (V)</th>
+                                            <th colspan="9">Pollution Degree / Material Group</th>
+                                        </tr>
+                                        <tr>
+                                            <th>1</th>
+                                            <th>2/I</th>
+                                            <th>2/II</th>
+                                            <th>2/IIIa</th>
+                                            <th>2/IIIb</th>
+                                            <th>3/I</th>
+                                            <th>3/II</th>
+                                            <th>3/IIIa</th>
+                                            <th>3/IIIb</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>50</td>
+                                            <td>0.2</td>
+                                            <td>0.6</td>
+                                            <td>0.9</td>
+                                            <td>1.2</td>
+                                            <td>1.5</td>
+                                            <td>1.7</td>
+                                            <td>1.9</td>
+                                            <td>2.0</td>
+                                            <td>2.5</td>
+                                        </tr>
+                                        <tr>
+                                            <td>100</td>
+                                            <td>0.3</td>
+                                            <td>0.8</td>
+                                            <td>1.1</td>
+                                            <td>1.5</td>
+                                            <td>1.8</td>
+                                            <td>2.2</td>
+                                            <td>2.4</td>
+                                            <td>2.5</td>
+                                            <td>3.2</td>
+                                        </tr>
+                                        <tr>
+                                            <td>150</td>
+                                            <td>0.4</td>
+                                            <td>1.0</td>
+                                            <td>1.4</td>
+                                            <td>1.8</td>
+                                            <td>2.2</td>
+                                            <td>2.8</td>
+                                            <td>3.0</td>
+                                            <td>3.2</td>
+                                            <td>4.0</td>
+                                        </tr>
+                                        <tr>
+                                            <td>200 < V ≤ 250</td>
+                                            <td>0.6</td>
+                                            <td>1.3</td>
+                                            <td>1.8</td>
+                                            <td class="highlighted">4.0</td>
+                                            <td>3.0</td>
+                                            <td>3.6</td>
+                                            <td>3.8</td>
+                                            <td>4.0</td>
+                                            <td>5.0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <div class="decision-tree">
+                                    <h4>Decision Process</h4>
+                                    <div class="workflow-step">
+                                        <div class="step-number">1</div>
+                                        <div class="step-content">
+                                            <strong>Input Parameters:</strong> Working Voltage = 240V, Pollution Degree = 2, Material Group = IIIa
+                                        </div>
+                                    </div>
+                                    <div class="step-arrow">↓</div>
+                                    <div class="workflow-step">
+                                        <div class="step-number">2</div>
+                                        <div class="step-content">
+                                            <strong>Table Lookup:</strong> For 200 < V ≤ 250, PD2/MGIIIa, the required value is 4.0 mm
+                                        </div>
+                                    </div>
+                                    <div class="step-arrow">↓</div>
+                                    <div class="workflow-step">
+                                        <div class="step-number">3</div>
+                                        <div class="step-content">
+                                            <strong>Comparison:</strong> Measured value (3.5 mm) < Required value (4.0 mm)
+                                        </div>
+                                    </div>
+                                    <div class="step-arrow">↓</div>
+                                    <div class="workflow-step">
+                                        <div class="step-number">4</div>
+                                        <div class="step-content">
+                                            <strong>Result:</strong> FAIL - The measured creepage distance does not meet the minimum requirement
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mockup-notes">
+                                    <h3>Recommendation</h3>
+                                    <p>Increase the creepage distance between Line and Neutral on the PCB to at least 4.0 mm by:</p>
+                                    <ul>
+                                        <li>Redesigning the PCB layout with increased spacing</li>
+                                        <li>Adding physical barriers or slots between conductors</li>
+                                        <li>Using higher CTI material (Material Group I or II)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="screen-footer">
+                    Business Boost for Qualification (BBQ) &copy; 2025
+                </div>
+            </div>
+        </div>
+
+        <div class="mockup-section">
+            <h2>4. EDA Integration & Smart Analysis</h2>
+            <p>This module showcases the system's ability to process and analyze electronic design files, PDFs, and images.</p>
+            
+            <div class="screen-mockup">
+                <div class="screen-header">
+                    <div class="logo">BBQ</div>
+                    <div class="nav">
+                        <div class="nav-item">Dashboard</div>
+                        <div class="nav-item">Projects</div>
+                        <div class="nav-item active">Analysis</div>
+                        <div class="nav-item">Reports</div>
+                        <div class="nav-item">Settings</div>
+                    </div>
+                </div>
+                <div class="screen-content">
+                    <div class="sidebar">
+                        <div class="sidebar-item">Analysis Overview</div>
+                        <div class="sidebar-item active">EDA Integration</div>
+                        <div class="sidebar-item">PDF Processing</div>
+                        <div class="sidebar-item">Image Analysis</div>
+                        <div class="sidebar-item">Circuit Viewer</div>
+                    </div>
+                    <div class="main-content">
+                        <h2>EDA Integration</h2>
+                        <p>Coffee Maker C100 - Main Control Board</p>
+                        
+                        <div class="tabs">
+                            <div class="tab">Upload</div>
+                            <div class="tab active">View</div>
+                            <div class="tab">Analysis</div>
+                        </div>
+                        
+                        <div class="tab-content">
+                            <div class="circuit-controls">
+                                <button class="btn">Zoom In</button>
+                                <button class="btn">Zoom Out</button>
+                                <button class="btn">Reset View</button>
+                                <button class="btn">Toggle Safety Issues</button>
+                                <span class="scale-display">Scale: 100%</span>
+                            </div>
+                            
+                            <div class="circuit-viewer">
+                                <!-- Power Input Section (高壓區域 - BI) -->
+                                <div class="circuit-component bi-box" style="top: 50px; left: 50px;">
+                                    AC Input<br>240V
+                                </div>
+                                
+                                <!-- EMI Filter (BI) -->
+                                <div class="circuit-component bi-box" style="top: 50px; left: 150px;">
+                                    EMI Filter
+                                </div>
+                                
+                                <!-- Bridge Rectifier (BI) -->
+                                <div class="circuit-component bi-box" style="top: 50px; left: 250px;">
+                                    Bridge<br>Rectifier
+                                </div>
+                                
+                                <!-- Isolation Transformer (RI) -->
+                                <div class="circuit-component ri-box" style="top: 100px; left: 200px;">
+                                    Isolation<br>Transformer
+                                </div>
+                                
+                                <!-- Optocouplers (RI) -->
+                                <div class="circuit-component ri-box" style="top: 200px; left: 450px;">
+                                    Optocouplers
+                                </div>
+
+                                <div class="circuit-component bi-box" style="top: 350px; left: 250px;">
+                                    BLDC<br>Motor
+                                </div>
+                                
+                                <!-- DC Bus Capacitors (FI) -->
+                                <div class="circuit-component bi-box" style="top: 50px; left: 350px;">
+                                    DC Bus<br>Capacitors
+                                </div>
+                                
+                                <!-- MCU (FI) -->
+                                <div class="circuit-component fi-box" style="top: 150px; left: 450px;">
+                                    MCU
+                                </div>
+                                
+                                <!-- BLDC Driver & MOSFETs (FI) -->
+                                <div class="circuit-component fi-box" style="top: 150px; left: 250px;">
+                                    BLDC<br>Driver IC
+                                </div>
+                                <div class="circuit-component bi-box" style="top: 250px; left: 150px;">MOSFET 1</div>
+                                <div class="circuit-component bi-box" style="top: 250px; left: 250px;">MOSFET 2</div>
+                                <div class="circuit-component bi-box" style="top: 250px; left: 350px;">MOSFET 3</div>
+                                
+                                <!-- Insulation Boxes -->
+                                <div class="insulation-box ri-box" style="top: 30px; left: 130px; width: 200px; height: 150px;">
+                                    HR: Primary-Secondary Isolation
+                                </div>
+                                
+                                <div class="insulation-box bi-box" style="top: 30px; left: 30px; width: 100px; height: 100px;">
+                                    MR: High Voltage Input
+                                </div>
+                                
+                                <div class="insulation-box fi-box" style="top: 130px; left: 330px; width: 250px; height: 300px;">
+                                    LR: Low Voltage Control Circuit
+                                </div>
+                            </div>
+
+                            <div class="legend" style="margin-top: 20px;">
+                                <h3>Insulation Types:</h3>
+                                <div style="margin: 10px 0;">
+                                    <span style="background: #ff0000; padding: 2px 10px; opacity: 0.3;">High Risk</span>
+                                    <span style="background: #ffd700; padding: 2px 10px; margin-left: 10px; opacity: 0.3;">Medium Risk</span>
+                                    <span style="background: #00ff00; padding: 2px 10px; margin-left: 10px; opacity: 0.3;">Low Risk</span>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-title">Safety Issues Detected</div>
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Component</th>
+                                            <th>Issue Type</th>
+                                            <th>Description</th>
+                                            <th>Severity</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>C1</td>
+                                            <td>Insulation</td>
+                                            <td>Capacitor C1 is too close to high voltage traces</td>
+                                            <td><span class="badge badge-danger">High</span></td>
+                                            <td>
+                                                <button class="btn btn-sm">Details</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>PCB - J3</td>
+                                            <td>Creepage</td>
+                                            <td>Insufficient creepage distance at connector J3</td>
+                                            <td><span class="badge badge-warning">Medium</span></td>
+                                            <td>
+                                                <button class="btn btn-sm">Details</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="screen-footer">
+                    Business Boost for Qualification (BBQ) &copy; 2025
+                </div>
+            </div>
+        </div>
+
+        <div class="mockup-section">
+            <h2>5. File Upload & Processing</h2>
+            <p>This module shows the interface for uploading and processing various file types.</p>
+            
+            <div class="screen-mockup">
+                <div class="screen-header">
+                    <div class="logo">BBQ</div>
+                    <div class="nav">
+                        <div class="nav-item">Dashboard</div>
+                        <div class="nav-item active">Projects</div>
+                        <div class="nav-item">Analysis</div>
+                        <div class="nav-item">Reports</div>
+                        <div class="nav-item">Settings</div>
+                    </div>
+                </div>
+                <div class="screen-content">
+                    <div class="sidebar">
+                        <div class="sidebar-item">Project Overview</div>
+                        <div class="sidebar-item">Product Declaration</div>
+                        <div class="sidebar-item active">File Upload</div>
+                        <div class="sidebar-item">Components</div>
+                        <div class="sidebar-item">Circuit Analysis</div>
+                        <div class="sidebar-item">Reports</div>
+                    </div>
+                    <div class="main-content">
+                        <h2>File Upload</h2>
+                        <p>Coffee Maker C100</p>
+                        
+                        <div class="tabs">
+                            <div class="tab active">Upload</div>
+                            <div class="tab">View</div>
+                        </div>
+                        
+                        <div class="tab-content">
+                            <div class="file-uploader">
+                                <div class="file-uploader-icon">📁</div>
+                                <h3>Drag & Drop Files Here</h3>
+                                <p>or</p>
+                                <button class="btn btn-primary">Select Files</button>
+                                <p class="mt-2">Supported formats: EDA files, PDFs, Images</p>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-title">Upload Queue</div>
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>File Name</th>
+                                            <th>Type</th>
+                                            <th>Size</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>main_board.json</td>
+                                            <td>EDA File</td>
+                                            <td>1.2 MB</td>
+                                            <td>
+                                                <div class="progress-container">
+                                                    <div class="progress-bar" style="width: 75%">75%</div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-danger">Cancel</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>schematic.pdf</td>
+                                            <td>PDF</td>
+                                            <td>3.5 MB</td>
+                                            <td><span class="badge badge-success">Complete</span></td>
+                                            <td>
+                                                <button class="btn btn-sm">View</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <div style="text-align: right; margin-top: 20px;">
+                                    <button class="btn btn-success">Process All Files</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="screen-footer">
+                    Business Boost for Qualification (BBQ) &copy; 2025
+                </div>
+            </div>
+        </div>
+
+        <div class="mockup-section">
+            <h2>6. Report Generation</h2>
+            <p>This module demonstrates the automatic generation of certification reports based on analysis results.</p>
+            
+            <div class="screen-mockup">
+                <div class="screen-header">
+                    <div class="logo">BBQ</div>
+                    <div class="nav">
+                        <div class="nav-item">Dashboard</div>
+                        <div class="nav-item">Projects</div>
+                        <div class="nav-item">Analysis</div>
+                        <div class="nav-item active">Reports</div>
+                        <div class="nav-item">Settings</div>
+                    </div>
+                </div>
+                <div class="screen-content">
+                    <div class="sidebar">
+                        <div class="sidebar-item">Report Templates</div>
+                        <div class="sidebar-item active">Generate Report</div>
+                        <div class="sidebar-item">Report History</div>
+                        <div class="sidebar-item">Export Options</div>
+                    </div>
+                    <div class="main-content">
+                        <h2>Generate Report</h2>
+                        <p>Coffee Maker C100</p>
+                        
+                        <div class="card">
+                            <div class="card-title">Report Configuration</div>
+                            <div class="form-group">
+                                <label for="report-type">Report Type</label>
+                                <select id="report-type" class="form-control">
+                                    <option>IEC 60730-1 Test Report Form (TRF)</option>
+                                    <option>Executive Summary</option>
+                                    <option>Technical Report</option>
+                                    <option>Compliance Certificate</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="report-sections">Include Sections</label>
+                                <div style="margin-top: 10px;">
+                                    <label style="display: inline-flex; align-items: center; margin-right: 20px;">
+                                        <input type="checkbox" checked style="margin-right: 5px;"> General Information
+                                    </label>
+                                    <label style="display: inline-flex; align-items: center; margin-right: 20px;">
+                                        <input type="checkbox" checked style="margin-right: 5px;"> Electrical Ratings
+                                    </label>
+                                    <label style="display: inline-flex; align-items: center; margin-right: 20px;">
+                                        <input type="checkbox" checked style="margin-right: 5px;"> Insulation Analysis
+                                    </label>
+                                    <label style="display: inline-flex; align-items: center; margin-right: 20px;">
+                                        <input type="checkbox" checked style="margin-right: 5px;"> Temperature Rise
+                                    </label>
+                                    <label style="display: inline-flex; align-items: center;">
+                                        <input type="checkbox" checked style="margin-right: 5px;"> FMEA
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="report-format">Output Format</label>
+                                <select id="report-format" class="form-control">
+                                    <option>Word Document (.docx)</option>
+                                    <option>PDF Document (.pdf)</option>
+                                    <option>HTML Report</option>
+                                </select>
+                            </div>
+                            
+                            <div style="text-align: right; margin-top: 20px;">
+                                <button class="btn btn-primary">Preview Report</button>
+                                <button class="btn btn-success">Generate Report</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-title">Report Preview</div>
+                            <div style="border: 1px solid var(--border-color); padding: 20px; background-color: #f8f9fa;">
+                                <h3 style="text-align: center; margin-bottom: 20px;">IEC 60730-1 Test Report Form</h3>
+                                
+                                <div class="report-section">
+                                    <div class="report-section-title">1. General Information</div>
+                                    <p><strong>Product Name:</strong> Coffee Maker C100</p>
+                                    <p><strong>Manufacturer:</strong> Coffee Tech Inc.</p>
+                                    <p><strong>Test Laboratory:</strong> BBQ Certification Lab</p>
+                                    <p><strong>Test Date:</strong> 2025-06-10</p>
+                                </div>
+                                
+                                <div class="report-section">
+                                    <div class="report-section-title">2. Electrical Ratings</div>
+                                    <p><strong>Rated Voltage:</strong> 220-240V~</p>
+                                    <p><strong>Rated Frequency:</strong> 50/60Hz</p>
+                                    <p><strong>Rated Power:</strong> 1500W</p>
+                                </div>
+                                
+                                <div class="report-section">
+                                    <div class="report-section-title">3. Insulation Analysis</div>
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Test Point</th>
+                                                <th>Required</th>
+                                                <th>Measured</th>
+                                                <th>Result</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Basic Insulation</td>
+                                                <td>4.0 mm</td>
+                                                <td>4.2 mm</td>
+                                                <td><span class="badge badge-success">Pass</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Reinforced Insulation</td>
+                                                <td>8.0 mm</td>
+                                                <td>8.5 mm</td>
+                                                <td><span class="badge badge-success">Pass</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="screen-footer">
+                    Business Boost for Qualification (BBQ) &copy; 2025
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

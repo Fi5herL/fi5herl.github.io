@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docs Reader</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+    <style>
+        /* 讓 iframe 填滿整個畫面 */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- iframe 的 src 會由下面的 JavaScript 動態設定 -->
+    <iframe 
+        id="gas-iframe" 
+        src="" 
+        title="Google Apps Script Content">
+    </iframe>
+
+    <script>
+        // 【核心邏輯】
+        (function() {
+            // 1. 這是你的 Google Apps Script 部署 URL (替換成你自己的)
+            const gasWebAppUrl = "https://script.google.com/macros/s/AKfycbwsmyhtnE0B-y4lhPhNwXM4QMNpIP1704VK5hDpmIM8IrXUnhsmQcXJOPeaahzgoMb27w/exec";
+
+            // 2. 獲取 iframe 元素
+            const iframe = document.getElementById('gas-iframe');
+
+            // 3. 解析當前 GitHub Pages 的網址參數
+            const urlParams = new URLSearchParams(window.location.search);
+            const docId = urlParams.get('docId');
+
+            // 4. 根據是否有 docId 參數，設定 iframe 的 src
+            if (docId) {
+                // 如果網址是 .../index.html?docId=xxx
+                // 就讓 iframe 載入帶有同樣參數的 GAS 網址
+                iframe.src = gasWebAppUrl + '?docId=' + docId;
+            } else {
+                // 如果網址只是 .../index.html
+                // 就讓 iframe 載入 GAS 的基礎網址 (顯示列表)
+                iframe.src = gasWebAppUrl;
+            }
+        })();
+    </script>
+</body>
+</html>

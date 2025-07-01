@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Editor</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖼️</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1800px;
+        }
+        .controls {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            width: 360px;
+            align-self: flex-start;
+            position: sticky;
+            top: 20px;
+            overflow: hidden;
+        }
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+        }
+        .tab {
+            padding: 12px 16px;
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+            color: #666;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            color: #007aff;
+            border-bottom-color: #007aff;
+            background: #fff;
+        }
+        .tab:hover:not(.active) {
+            background: #f0f0f0;
+        }
+        .tab-content {
+            display: none;
+            padding: 16px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .control-group {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        #canvasContainer {
+            border: 1px solid #e0e0e0;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: auto;
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            border-radius: 12px;
+        }
+        canvas {
+            display: block;
+            cursor: default;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin: 12px;
+            border-radius: 8px;
+        }
+
+        .controls h3 { margin-top: 0; margin-bottom: 8px; color: #333; }
+        .controls .input-row, .controls .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .controls label {
+            display: inline-block;
+            width: auto;
+            margin-bottom: 0;
+            margin-right: 8px;
+            padding: 0;
+            border: none;
+            background: none;
+            font-weight: 500;
+            vertical-align: middle;
+            min-width: 60px;
+        }
+        .controls input,
+        .controls select {
+            display: inline-block;
+            width: auto;
+            min-width: 80px;
+            margin-bottom: 0;
+            margin-right: 0;
+            vertical-align: middle;
+        }
+        .controls button, .button-like-label {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 18px;
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+        .controls button:hover, .button-like-label:hover { background-color: #0056b3; }
+        .controls .tool-button.active { background-color: #28a745; }
+        .controls .tool-button {
+            font-size: 18px;
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+        .keyboard-shortcut {
+            font-size: 16px;
+        }
+
+        .hidden-input { display: none; }
+        /* 統一顏色選擇器樣式 */
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .color-picker-wrapper input[type="color"] {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            background: none;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            cursor: pointer;
+            display: inline-block;
+        }
+        /* 讓label和顏色選擇器同一行 */
+        .controls .input-row, .controls .color-picker-wrapper {
+            flex-wrap: nowrap;
+        }
+
+        .guideline { position: absolute; background-color: rgba(255, 0, 0, 0.5); z-index: 9999; }
+        .guideline.horizontal { width: 100%; height: 1px; left: 0; }
+        .guideline.vertical { height: 100%; width: 1px; top: 0; }
+
+        .button-like-label {
+            display: inline-block;
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            margin-bottom: 8px;
+            width: calc(100% - 16px);
+            box-sizing: border-box;
+        }
+        hr { border: 0; height: 1px; background: #ddd; margin: 15px 0; }
+
+        input[type="file"] {
+            display: none !important;
+        }
+
+        /* 浮動提示樣式 */
+        .copied-toast {
+            position: fixed;
+            top: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #222;
+            color: #fff;
+            padding: 12px 32px;
+            border-radius: 24px;
+            font-size: 18px;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.3s;
+        }
+        .copied-toast.show {
+            opacity: 1;
+        }
+
+        /* 美化下拉選單、數字輸入框、文字輸入框 */
+        .controls select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: #f5f7fa url('data:image/svg+xml;utf8,<svg fill="%23666" height="20" viewBox="0 0 20 20" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7.293 7.293a1 1 0 011.414 0L10 8.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z"/></svg>') no-repeat right 0.75em center/1.2em 1.2em;
+            border: 1.5px solid #d1d5db;
+            border-radius: 6px;
+            padding: 7px 2.2em 7px 12px;
+            font-size: 16px;
+            color: #333;
+            transition: border 0.2s;
+        }
+        .controls select:focus {
+            outline: none;
+            border-color: #007aff;
+            background-color: #fff;
+        }
+        .controls input[type="number"],
+        .controls input[type="text"] {
+            border: 1.5px solid #d1d5db;
+            border-radius: 6px;
+            padding: 7px 12px;
+            font-size: 16px;
+            color: #333;
+            background: #f5f7fa;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .controls input[type="number"]:focus,
+        .controls input[type="text"]:focus {
+            outline: none;
+            border-color: #007aff;
+            background: #fff;
+            box-shadow: 0 0 0 2px #007aff22;
+        }
+        /* 隱藏數字輸入框的上下箭頭（可選） */
+        .controls input[type="number"]::-webkit-inner-spin-button, 
+        .controls input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .controls input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body>
+    <!-- <h1>圖片編輯與PDF輸出工具 (離線版)</h1> --> <!-- 移除標題欄 -->
+
+    <div class="container">
+        <div class="controls">
+            <div class="tab-container">
+                <div class="tab active" data-tab="tools">工具</div>
+                <div class="tab" data-tab="canvas">畫布</div>
+                <div class="tab" data-tab="export">匯出</div>
+            </div>
+            <div class="tab-content active" id="tools-content">
+                <div class="control-group">
+                    <h3>基本操作</h3>
+                    <button class="btn" id="imageUploadBtn">
+                        <span>上傳圖片</span>
+                    </button>
+                    <input type="file" id="imageUpload" accept="image/*" multiple class="hidden-input">
+                </div>
+                <div class="control-group">
+                    <h3>工具選擇</h3>
+                    <button id="selectTool" class="tool-button active">移動 <span class="keyboard-shortcut">V</span></button>
+                    <button id="drawTool" class="tool-button">畫筆 <span class="keyboard-shortcut">B</span></button>
+                    <button id="textTool" class="tool-button">文字 <span class="keyboard-shortcut">T</span></button>
+                </div>
+
+                <div id="drawingOptions" style="display:none;">
+                    <h4>畫筆選項</h4>
+                    <div class="input-row">
+                        <label for="strokeColor">顏色:</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="strokeColor" value="#FF0000">
+                        </div>
+                    </div>
+                    <label for="lineWidth">線寬:</label>
+                    <input type="range" id="lineWidth" min="1" max="10" value="1">
+                </div>
+
+                <div id="textOptions" style="display:none;">
+                    <h4>文字選項</h4>
+                    <div class="input-row">
+                        <label for="textColor">顏色:</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" id="textColor" value="#000000">
+                        </div>
+                    </div>
+                    <label for="fontSize">大小:</label>
+                    <input type="number" id="fontSize" value="16" min="8">
+                    <label for="fontFamily">字型:</label>
+                    <select id="fontFamily">
+                        <option value="Arial">Arial</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Microsoft JhengHei, sans-serif">微軟正黑體 (Sans-Serif)</option>
+                        <option value="MingLiU, serif">細明體 (Serif)</option>
+                        <option value="sans-serif">Sans-Serif (預設)</option>
+                    </select>
+                </div>
+
+                <hr>
+                <div id="selectedObjectControls" style="display:none;">
+                    <h3>選中物件</h3>
+                    <div class="input-row" id="objectNameRow">
+                        <label for="objectName">顯示名稱:</label>
+                        <input type="text" id="objectName" placeholder="輸入物件名稱">
+                    </div>
+                    <div id="textEditFields" style="display:none;">
+                        <div class="input-row">
+                            <label for="editTextContent">內容:</label>
+                            <input type="text" id="editTextContent" placeholder="輸入文字內容">
+                        </div>
+                        <div class="input-row">
+                            <label for="editTextColor">顏色:</label>
+                            <input type="color" id="editTextColor">
+                        </div>
+                        <div class="input-row">
+                            <label for="editFontSize">大小:</label>
+                            <input type="number" id="editFontSize" min="8">
+                        </div>
+                        <div class="input-row">
+                            <label for="editFontFamily">字型:</label>
+                            <select id="editFontFamily">
+                                <option value="Arial">Arial</option>
+                                <option value="Verdana">Verdana</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Courier New">Courier New</option>
+                                <option value="Microsoft JhengHei, sans-serif">微軟正黑體 (Sans-Serif)</option>
+                                <option value="MingLiU, serif">細明體 (Serif)</option>
+                                <option value="sans-serif">Sans-Serif (預設)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <button id="deleteSelected">刪除物件(Del)</button>
+                        <button id="bringToFront">最上</button>
+                        <button id="sendToBack">最下</button>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-content" id="canvas-content">
+                <div class="control-group">
+                    <h3>畫布設定</h3>
+                    <div class="input-row">
+                        <label for="pageSize">紙張大小:</label>
+                        <select id="pageSize">
+                            <option value="A4">A4 (210 x 297 mm)</option>
+                            <option value="A3">A3 (297 x 420 mm)</option>
+                            <option value="Letter">Letter (8.5 x 11 in)</option>
+                            <option value="Custom">自訂 (使用下方寬高)</option>
+                        </select>
+                    </div>
+                    <div class="input-row">
+                        <label for="pageOrientation">頁面方向:</label>
+                        <select id="pageOrientation">
+                            <option value="portrait">縱向</option>
+                            <option value="landscape">橫向</option>
+                        </select>
+                    </div>
+                    <div id="customSizeInputs" style="display:none;" class="input-row">
+                        <label for="customCanvasWidth">自訂寬度 (px):</label>
+                        <input type="number" id="customCanvasWidth" value="800">
+                        <label for="customCanvasHeight">自訂高度 (px):</label>
+                        <input type="number" id="customCanvasHeight" value="1000">
+                    </div>
+                    <div class="input-row">
+                        <label for="numPages">預計頁數:</label>
+                        <input type="number" id="numPages" value="1" min="1">
+                    </div>
+                    <div class="input-row">
+                        <button class="btn" id="updateCanvasLayout">更新畫布</button>
+                        <button class="btn btn-secondary" id="clearAnnotations">清空筆畫、文字</button>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-content" id="export-content">
+                <div class="control-group">
+                    <h3>專案</h3>
+                    <button class="btn" id="exportProject">匯出專案 (.json)</button>
+                    <button class="btn btn-secondary" id="importProjectBtn">匯入專案</button>
+                    <input type="file" id="importProjectInput" accept=".json" class="hidden-input">
+                </div>
+                <div class="control-group">
+                    <h3>輸出</h3>
+                    <button class="btn" id="exportPdf">輸出PDF</button>
+                    <button class="btn" id="copyHiRes">複製圖片</button>
+                    <p class="hint">PDF輸出預設無邊框。請參考畫布上的分頁指示線調整圖片位置</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="canvasContainer">
+            <canvas id="editorCanvas"></canvas>
+        </div>
+    </div>
+
+    <div id="copiedToast" class="copied-toast">已複製</div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        const canvas = document.getElementById('editorCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageUpload = document.getElementById('imageUpload');
+
+        const selectToolBtn = document.getElementById('selectTool');
+        const drawToolBtn = document.getElementById('drawTool');
+        const textToolBtn = document.getElementById('textTool');
+
+        const drawingOptionsDiv = document.getElementById('drawingOptions');
+        const strokeColorInput = document.getElementById('strokeColor');
+        const lineWidthInput = document.getElementById('lineWidth');
+
+        const textOptionsDiv = document.getElementById('textOptions');
+        const textColorInput = document.getElementById('textColor');
+        const fontSizeInput = document.getElementById('fontSize');
+        const fontFamilySelect = document.getElementById('fontFamily');
+
+        const selectedObjectControlsDiv = document.getElementById('selectedObjectControls');
+        const objectNameInput = document.getElementById('objectName');
+        const deleteSelectedBtn = document.getElementById('deleteSelected');
+        const bringToFrontBtn = document.getElementById('bringToFront');
+        const sendToBackBtn = document.getElementById('sendToBack');
+        // 新增
+        const textEditFields = document.getElementById('textEditFields');
+        const editTextContent = document.getElementById('editTextContent');
+        const editTextColor = document.getElementById('editTextColor');
+        const editFontSize = document.getElementById('editFontSize');
+        const editFontFamily = document.getElementById('editFontFamily');
+
+        const pageSizeSelect = document.getElementById('pageSize');
+        const pageOrientationSelect = document.getElementById('pageOrientation');
+        const customSizeInputsDiv = document.getElementById('customSizeInputs');
+        const customCanvasWidthInput = document.getElementById('customCanvasWidth');
+        const customCanvasHeightInput = document.getElementById('customCanvasHeight');
+        const numPagesInput = document.getElementById('numPages');
+        const updateCanvasLayoutBtn = document.getElementById('updateCanvasLayout');
+        const clearAnnotationsBtn = document.getElementById('clearAnnotations');
+
+        const exportProjectBtn = document.getElementById('exportProject');
+        const importProjectInput = document.getElementById('importProjectInput');
+        const exportPdfBtn = document.getElementById('exportPdf');
+        const copyHiResBtn = document.getElementById('copyHiRes');
+
+        let canvasObjects = [];
+        let selectedObject = null;
+        let currentTool = 'select';
+
+        let isDragging = false;
+        let isResizing = false;
+        let resizeHandle = null;
+        let dragOffsetX, dragOffsetY;
+
+        let isDrawing = false;
+        let currentPath = [];
+
+        const RESIZE_HANDLE_SIZE = 8;
+        const ALIGNMENT_THRESHOLD = 8;
+        const DPI = 96;
+        const MM_TO_INCH = 1 / 25.4;
+        let singlePagePixelHeight = 0;
+
+        const PAGE_DIMENSIONS = {
+            'A4': { width: 210, height: 297 },
+            'A3': { width: 297, height: 420 },
+            'Letter': { width: 215.9, height: 279.4 }
+        };
+
+        let lastCanvasMouseX = null;
+        let lastCanvasMouseY = null;
+
+        const ROTATE_BUTTON_SIZE = 20;
+        const ROTATE_BUTTON_OFFSET = 5;
+
+
+        // --- Initialization ---
+        function getPixelDimensions(size, orientation, pages) {
+            let W_mm, H_mm;
+            if (size === 'Custom') {
+                return {
+                    width: parseInt(customCanvasWidthInput.value) || 800,
+                    height: parseInt(customCanvasHeightInput.value) || 1000,
+                    isCustom: true
+                };
+            }
+
+            const dims = PAGE_DIMENSIONS[size];
+            if (!dims) return { width: 800, height: 1000, isCustom: true };
+
+            if (orientation === 'portrait') {
+                W_mm = dims.width; H_mm = dims.height;
+            } else {
+                W_mm = dims.height; H_mm = dims.width;
+            }
+            const W_px = Math.round(W_mm * MM_TO_INCH * DPI);
+            const H_px_single = Math.round(H_mm * MM_TO_INCH * DPI);
+
+            return { width: W_px, height: H_px_single * pages, singlePageH: H_px_single, isCustom: false };
+        }
+
+        function updateCanvasLayout() {
+            const selectedSize = pageSizeSelect.value;
+            const selectedOrientation = pageOrientationSelect.value;
+            const pages = (selectedSize === 'Custom') ? 1 : (parseInt(numPagesInput.value) || 1);
+
+            const dims = getPixelDimensions(selectedSize, selectedOrientation, pages);
+            canvas.width = dims.width;
+            canvas.height = dims.height;
+            singlePagePixelHeight = dims.isCustom ? 0 : dims.singlePageH;
+
+            lastCanvasMouseX = canvas.width / 2;
+            lastCanvasMouseY = canvas.height / 2;
+
+            redrawCanvas();
+        }
+
+        pageSizeSelect.addEventListener('change', () => {
+            const isCustom = pageSizeSelect.value === 'Custom';
+            customSizeInputsDiv.style.display = isCustom ? 'block' : 'none';
+            numPagesInput.disabled = isCustom;
+            if(!isCustom) updateCanvasLayout();
+        });
+        pageOrientationSelect.addEventListener('change', updateCanvasLayout);
+        numPagesInput.addEventListener('change', () => {
+            if (pageSizeSelect.value !== 'Custom') updateCanvasLayout();
+        });
+        customCanvasWidthInput.addEventListener('input', () => { if(pageSizeSelect.value === 'Custom') updateCanvasLayout(); });
+        customCanvasHeightInput.addEventListener('input', () => { if(pageSizeSelect.value === 'Custom') updateCanvasLayout(); });
+
+
+        updateCanvasLayoutBtn.addEventListener('click', updateCanvasLayout);
+
+        function initCanvas() {
+            updateCanvasLayout();
+            setTool('select');
+        }
+        initCanvas();
+
+        // --- Tool Selection ---
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-button').forEach(btn => btn.classList.remove('active'));
+            drawingOptionsDiv.style.display = 'none';
+            textOptionsDiv.style.display = 'none';
+
+            if (tool === 'select') {
+                selectToolBtn.classList.add('active');
+                canvas.style.cursor = 'default';
+            } else if (tool === 'draw') {
+                drawToolBtn.classList.add('active');
+                drawingOptionsDiv.style.display = 'block';
+                canvas.style.cursor = 'crosshair';
+            } else if (tool === 'text') {
+                textToolBtn.classList.add('active');
+                textOptionsDiv.style.display = 'block';
+                canvas.style.cursor = 'text';
+            }
+            deselectObject();
+        }
+
+        selectToolBtn.addEventListener('click', () => setTool('select'));
+        drawToolBtn.addEventListener('click', () => setTool('draw'));
+        textToolBtn.addEventListener('click', () => setTool('text'));
+
+        // --- Image Upload ---
+        imageUpload.addEventListener('change', (e) => {
+            handleImageFiles(e.target.files); // 恢復原本行為
+            imageUpload.value = '';
+        });
+
+        function handleImageFiles(files, pastePos = null) {
+             for (const file of files) {
+                if (!file.type.startsWith('image/')) continue;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const aspectRatio = img.naturalWidth / img.naturalHeight;
+                        let defaultWidth = Math.min(img.naturalWidth, canvas.width * 0.25);
+                        defaultWidth = Math.max(50, defaultWidth);
+                        const defaultHeight = defaultWidth / aspectRatio;
+
+                        let x, y;
+                        if (pastePos && pastePos.x !== null && pastePos.y !== null) {
+                            x = pastePos.x - defaultWidth / 2;
+                            y = pastePos.y - defaultHeight / 2;
+                        } else {
+                            x = (canvas.width - defaultWidth) / 2 + (canvasObjects.filter(obj => obj.type === 'image').length * 10);
+                            y = (canvas.height - defaultHeight) / 2 + (canvasObjects.filter(obj => obj.type === 'image').length * 10);
+                        }
+                        x = Math.max(0, Math.min(x, canvas.width - defaultWidth));
+                        y = Math.max(0, Math.min(y, canvas.height - defaultHeight));
+
+                        canvasObjects.push({
+                            type: 'image',
+                            id: Date.now() + Math.random(),
+                            image: img,
+                            src: img.src,
+                            x: x, y: y,
+                            width: defaultWidth, height: defaultHeight,
+                            name: file.name ? file.name.split('.')[0] : ('PastedImage-' + Date.now()),
+                            rotation: 0, // Initial rotation
+                        });
+                        redrawCanvas();
+                    }
+                    img.onerror = () => {
+                        console.error("Error loading image for paste/upload");
+                        alert("圖片載入失敗，請確認檔案格式或來源。");
+                    }
+                    img.src = event.target.result;
+                }
+                reader.onerror = () => {
+                    console.error("FileReader error for image.");
+                    alert("讀取圖片檔案時發生錯誤。");
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // --- Drawing Logic ---
+        function drawPath(targetCtx, points, color, width) {
+            targetCtx.save();
+            targetCtx.beginPath();
+            targetCtx.strokeStyle = color;
+            targetCtx.lineWidth = width;
+            targetCtx.lineCap = 'round';
+            targetCtx.lineJoin = 'round';
+            points.forEach((p, index) => {
+                if (index === 0) targetCtx.moveTo(p.x, p.y);
+                else targetCtx.lineTo(p.x, p.y);
+            });
+            targetCtx.stroke();
+            targetCtx.restore();
+        }
+
+        function redrawCanvas(targetCtx = ctx, targetCanvas = canvas) {
+            targetCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+            targetCtx.fillStyle = '#FFFFFF';
+            targetCtx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+            if (pageSizeSelect.value !== 'Custom' && singlePagePixelHeight > 0) {
+                const numActualPages = Math.ceil(targetCanvas.height / singlePagePixelHeight);
+                if (numActualPages > 1) {
+                    targetCtx.save();
+                    targetCtx.strokeStyle = '#CCCCCC';
+                    targetCtx.lineWidth = 1;
+                    targetCtx.setLineDash([5, 3]);
+                    for (let i = 1; i < numActualPages; i++) {
+                        const y = i * singlePagePixelHeight;
+                        if (y < targetCanvas.height) {
+                            targetCtx.beginPath(); targetCtx.moveTo(0, y); targetCtx.lineTo(targetCanvas.width, y); targetCtx.stroke();
+                        }
+                    }
+                    targetCtx.restore();
+                }
+            }
+
+            // PDF 預覽線條（可選，若不想要可移除）
+            if (exportPdfBtn && pageSizeSelect.value !== 'Custom' && targetCanvas.height > 0) {
+                try {
+                    const pdfOrientationPrev = pageOrientationSelect.value;
+                    const pdfPageTypePrev = pageSizeSelect.value.toLowerCase();
+                    const tempPdf = new jsPDF({ orientation: pdfOrientationPrev, unit: 'pt', format: pdfPageTypePrev });
+                    const MARGIN_PT_PREV = 0;
+                    const contentWidthPtPrev = tempPdf.internal.pageSize.getWidth() - 2 * MARGIN_PT_PREV;
+                    const contentHeightPtPrev = tempPdf.internal.pageSize.getHeight() - 2 * MARGIN_PT_PREV;
+                    if (targetCanvas.width > 0) {
+                        let scaleToFitPdfWidthPrev = contentWidthPtPrev / targetCanvas.width;
+                        const pdfPageHeightInCanvasPixels = contentHeightPtPrev / scaleToFitPdfWidthPrev;
+                        if (pdfPageHeightInCanvasPixels > 0 && pdfPageHeightInCanvasPixels < targetCanvas.height) {
+                            targetCtx.save();
+                            targetCtx.strokeStyle = 'rgba(0, 0, 255, 0.6)';
+                            targetCtx.lineWidth = 1.5;
+                            targetCtx.setLineDash([8, 4]);
+                            let numPdfLinesToDraw = Math.floor(targetCanvas.height / pdfPageHeightInCanvasPixels);
+                            for (let i = 1; i <= numPdfLinesToDraw; i++) {
+                                const y = i * pdfPageHeightInCanvasPixels;
+                                if (y < targetCanvas.height) {
+                                    targetCtx.beginPath(); targetCtx.moveTo(0, y); targetCtx.lineTo(targetCanvas.width, y); targetCtx.stroke();
+                                }
+                            }
+                            targetCtx.restore();
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Could not draw PDF preview lines:", e);
+                }
+            }
+
+            canvasObjects.forEach(obj => {
+                targetCtx.save();
+                if (obj.type === 'image') {
+                    if (obj.image && obj.image.complete && obj.image.naturalHeight !== 0) {
+                        targetCtx.save();
+                        targetCtx.translate(obj.x + obj.width / 2, obj.y + obj.height / 2);
+                        targetCtx.rotate(obj.rotation || 0);
+                        targetCtx.drawImage(obj.image, -obj.width / 2, -obj.height / 2, obj.width, obj.height);
+                        targetCtx.restore();
+                    } else if (!obj.image) {
+                        targetCtx.fillStyle = '#ccc'; targetCtx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                        targetCtx.fillStyle = 'black'; targetCtx.textAlign='center'; targetCtx.fillText("Image error", obj.x + obj.width/2, obj.y + obj.height/2);
+                    }
+                    if (obj.name) {
+                        // Ensure text is placed correctly based on explicit rotation angles
+                        targetCtx.save();
+                        targetCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                        targetCtx.font = `12px Arial`;
+                        targetCtx.textAlign = 'center';
+
+                        // Calculate the position based on the image's rotation angle
+                        const textX = obj.x + obj.width / 2;
+                        let textY;
+                        if (obj.rotation === 0 || obj.rotation === Math.PI) {
+                            // For 0 and 180 degrees
+                            textY = obj.y + obj.height + 10;
+                            // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
+                        } else if (obj.rotation === Math.PI / 2 || obj.rotation === 3 * Math.PI / 2) {
+                            // For 90 and 270 degrees
+                            textY = obj.y + (obj.width+obj.height)/2 + 10;
+                            // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
+                        }
+
+                        targetCtx.fillText(obj.name, textX, textY);
+                        targetCtx.restore();
+                    }
+                } else if (obj.type === 'drawing') {
+                    drawPath(targetCtx, obj.points, obj.color, obj.lineWidth);
+                } else if (obj.type === 'text') {
+                    targetCtx.fillStyle = obj.color; targetCtx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                    targetCtx.textAlign = 'left'; targetCtx.textBaseline = 'top';
+                    targetCtx.fillText(obj.text, obj.x, obj.y);
+                }
+                targetCtx.restore();
+            });
+
+            if (selectedObject && currentTool === 'select' && targetCtx === ctx) {
+                drawSelectionHandles(selectedObject);
+            }
+            if (isDrawing && currentPath.length > 0 && targetCtx === ctx) {
+                drawPath(targetCtx, currentPath, strokeColorInput.value, lineWidthInput.value);
+            }
+        }
+
+        function drawSelectionHandles(obj) {
+            let x = obj.x, y = obj.y, w = obj.width, h = obj.height;
+            ctx.save(); // ★ 儲存畫布初始狀態
+
+            if (obj.type === 'image') {
+                // === 第一部分：繪製需要旋轉的內容 ===
+                ctx.translate(x + w / 2, y + h / 2);
+                ctx.rotate(obj.rotation || 0);
+                ctx.translate(-(x + w / 2), -(y + h / 2));
+                
+                // 繪製旋轉後的虛線框
+                ctx.strokeStyle = '#007bff';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 2]);
+                ctx.strokeRect(x, y, w, h);
+                ctx.setLineDash([]);
+                
+                // 繪製旋轉後的縮放控點 (這部分也跟著轉)
+                ctx.fillStyle = '#007bff';
+                const handles = [{ x: x, y: y }, { x: x + w, y: y }, { x: x, y: y + h }, { x: x + w, y: y + h }];
+                handles.forEach(pos => {
+                    ctx.fillRect(pos.x - RESIZE_HANDLE_SIZE / 2, pos.y - RESIZE_HANDLE_SIZE / 2, RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE);
+                });
+                
+                // ★ 關鍵改變：在這裡就恢復畫布狀態，不再旋轉！
+                ctx.restore(); 
+
+                // === 第二部分：計算視覺邊界，並繪製不旋轉的按鈕 ===
+                
+                // 計算圖片旋轉後的四個頂點的實際螢幕座標
+                const cx = x + w / 2;
+                const cy = y + h / 2;
+                const angle = obj.rotation || 0;
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+                
+                const corners = [
+                    {x: x, y: y}, {x: x + w, y: y},
+                    {x: x + w, y: y + h}, {x: x, y: y + h}
+                ].map(p => ({
+                    x: cx + (p.x - cx) * cos - (p.y - cy) * sin,
+                    y: cy + (p.x - cx) * sin + (p.y - cy) * cos
+                }));
+
+                // 找到視覺上的最大和最小 x, y 值
+                const minX = Math.min(...corners.map(p => p.x));
+                const maxX = Math.max(...corners.map(p => p.x));
+                const minY = Math.min(...corners.map(p => p.y));
+                const maxY = Math.max(...corners.map(p => p.y));
+
+                // ★ 使用視覺邊界的右下角來定位按鈕
+                const buttonAttachX = maxX + ROTATE_BUTTON_OFFSET;
+                const buttonAttachY = maxY + ROTATE_BUTTON_OFFSET;
+
+                // 在一個「沒有被旋轉」的畫布上繪製按鈕
+                // ctx.fillStyle = '#28a745';
+                ctx.beginPath();
+                // ctx.arc(buttonAttachX + ROTATE_BUTTON_SIZE / 2, buttonAttachY + ROTATE_BUTTON_SIZE / 2, ROTATE_BUTTON_SIZE / 2, 0, Math.PI * 2);
+                // ctx.fill();
+                ctx.font = `${ROTATE_BUTTON_SIZE - 2}px system-ui,Segoe UI Emoji,Apple Color Emoji,sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'white';
+                ctx.fillText('🔄️', buttonAttachX + ROTATE_BUTTON_SIZE / 2, buttonAttachY + ROTATE_BUTTON_SIZE / 2 + 1);
+                
+            } else if (obj.type === 'text' || obj.type === 'drawing') {
+                // 其他物件的處理邏輯不變...
+                // ... (省略原本的 text 和 drawing 邏輯)
+                if (obj.type === 'text') {
+                    ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                    const metrics = ctx.measureText(obj.text);
+                    w = metrics.width; h = obj.fontSize * 1.2;
+                    const padding = 5; x -= padding; y -= padding; w += padding * 2; h += padding * 2;
+                    ctx.strokeStyle = '#007bff'; ctx.lineWidth = 1; ctx.setLineDash([4, 2]);
+                    ctx.strokeRect(x, y, w, h);
+                    ctx.setLineDash([]);
+                } else if (obj.type === 'drawing') {
+                    if (obj.points && obj.points.length > 0) {
+                        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                        obj.points.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
+                        x = minX - obj.lineWidth / 2; y = minY - obj.lineWidth / 2;
+                        w = maxX - minX + obj.lineWidth; h = maxY - minY + obj.lineWidth;
+                        ctx.strokeStyle = '#007bff'; ctx.lineWidth = 1; ctx.setLineDash([4, 2]);
+                        ctx.strokeRect(x, y, w, h);
+                        ctx.setLineDash([]);
+                    }
+                }
+                ctx.restore(); // 確保其他物件的 save() 有對應的 restore()
+            }
+        }
+
+        // 將文字物件貼齊選取圖片的實際底部中心，offset 沿著圖片法線方向
+        function placeTextAtImageBottom(textObj, imageObj, offset = 10) {
+            const cx = imageObj.x + imageObj.width / 2;
+            const cy = imageObj.y + imageObj.height / 2;
+            const theta = imageObj.rotation || 0;
+            // offset 沿著圖片旋轉後的法線方向
+            textObj.x = cx + (imageObj.height / 2) * Math.sin(theta) + offset * Math.sin(theta);
+            textObj.y = cy + (imageObj.height / 2) * Math.cos(theta) + offset * Math.cos(theta);
+        }
+
+        function getMousePos(event) {
+            const rect = canvas.getBoundingClientRect();
+            return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        }
+        function isPointInRect(px, py, rx, ry, rw, rh) {
+            return px >= rx && px <= rx + rw && py >= ry && py <= ry + rh;
+        }
+
+        function getObjectAtPosition(x, y) { // This will select based on un-rotated bounding box
+            for (let i = canvasObjects.length - 1; i >= 0; i--) {
+                const obj = canvasObjects[i];
+                let ox, oy, ow, oh;
+                if (obj.type === 'image') {
+                    // For selection, use the axis-aligned bounding box of the unrotated image for simplicity
+                    ox = obj.x; oy = obj.y; ow = obj.width; oh = obj.height;
+                } else if (obj.type === 'text') {
+                    ctx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                    const metrics = ctx.measureText(obj.text);
+                    const padding = 5; ox = obj.x - padding; oy = obj.y - padding;
+                    ow = metrics.width + padding * 2; oh = obj.fontSize * 1.2 + padding * 2;
+                } else if (obj.type === 'drawing' && obj.points && obj.points.length > 0) {
+                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                    obj.points.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
+                    const pathBuffer = obj.lineWidth / 2 + 5;
+                    ox = minX - pathBuffer; oy = minY - pathBuffer;
+                    ow = (maxX - minX) + pathBuffer * 2; oh = (maxY - minY) + pathBuffer * 2;
+                } else { continue; }
+
+                // If image is rotated, point-in-rect test needs to account for rotation
+                if (obj.type === 'image' && obj.rotation) {
+                    const cx = ox + ow / 2;
+                    const cy = oy + oh / 2;
+                    const angle = -(obj.rotation || 0); // Inverse rotation for mouse point
+
+                    const localMouseX = cx + (x - cx) * Math.cos(angle) - (y - cy) * Math.sin(angle);
+                    const localMouseY = cy + (x - cx) * Math.sin(angle) + (y - cy) * Math.cos(angle);
+                    if (isPointInRect(localMouseX, localMouseY, ox, oy, ow, oh)) return obj;
+
+                } else {
+                     if (isPointInRect(x, y, ox, oy, ow, oh)) { return obj; }
+                }
+            }
+            return null;
+        }
+
+        function getResizeHandles(obj) { // Returns handles for the un-rotated bounding box
+             if (obj.type !== 'image') return {};
+            return {
+                topLeft: { x: obj.x, y: obj.y }, topRight: { x: obj.x + obj.width, y: obj.y },
+                bottomLeft: { x: obj.x, y: obj.y + obj.height }, bottomRight: { x: obj.x + obj.width, y: obj.y + obj.height },
+            };
+        }
+
+        function getResizeHandleAtPosition(obj, mouseX, mouseY) { // Mouse coords are canvas coords
+            if (obj.type !== 'image') return null;
+            // Resize handles are on the un-rotated bounding box.
+            // Transform mouse point to be relative to un-rotated box if image is rotated.
+            let mX = mouseX;
+            let mY = mouseY;
+
+            if (obj.rotation) {
+                const cx = obj.x + obj.width / 2;
+                const cy = obj.y + obj.height / 2;
+                const angle = -(obj.rotation); // inverse rotation
+
+                mX = cx + (mouseX - cx) * Math.cos(angle) - (mouseY - cy) * Math.sin(angle);
+                mY = cy + (mouseX - cx) * Math.sin(angle) + (mouseY - cy) * Math.cos(angle);
+            }
+
+            const handles = getResizeHandles(obj);
+            for (const name in handles) {
+                const pos = handles[name];
+                // Check against transformed mouse point mX, mY
+                if (isPointInRect(mX, mY, pos.x - RESIZE_HANDLE_SIZE, pos.y - RESIZE_HANDLE_SIZE, RESIZE_HANDLE_SIZE * 2, RESIZE_HANDLE_SIZE * 2)) {
+                    return name;
+                }
+            }
+            return null;
+        }
+
+        function getRotateButtonAtPosition(obj, mouseX, mouseY) {
+            if (!obj || obj.type !== 'image') return null;
+
+            // ★ 再次計算出視覺邊界，和繪製時的邏輯完全一樣
+            const cx = obj.x + obj.width / 2;
+            const cy = obj.y + obj.height / 2;
+            const angle = obj.rotation || 0;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            
+            const corners = [
+                {x: obj.x, y: obj.y}, {x: obj.x + obj.width, y: obj.y},
+                {x: obj.x + obj.width, y: obj.y + obj.height}, {x: obj.x, y: obj.y + obj.height}
+            ].map(p => ({
+                x: cx + (p.x - cx) * cos - (p.y - cy) * sin,
+                y: cy + (p.x - cx) * sin + (p.y - cy) * cos
+            }));
+
+            const maxX = Math.max(...corners.map(p => p.x));
+            const maxY = Math.max(...corners.map(p => p.y));
+
+            // ★ 計算按鈕在螢幕上的實際矩形區域
+            const buttonRectX = maxX + ROTATE_BUTTON_OFFSET;
+            const buttonRectY = maxY + ROTATE_BUTTON_OFFSET;
+
+            // ★ 直接用滑鼠座標進行簡單的矩形碰撞偵測，不再需要旋轉
+            if (isPointInRect(mouseX, mouseY, buttonRectX, buttonRectY, ROTATE_BUTTON_SIZE, ROTATE_BUTTON_SIZE)) {
+                return 'rotate';
+            }
+            return null;
+        }
+
+        function deselectObject() { selectedObject = null; selectedObjectControlsDiv.style.display = 'none'; redrawCanvas(); }
+        function selectObject(obj) {
+            selectedObject = obj;
+            selectedObjectControlsDiv.style.display = 'block';
+            objectNameInput.value = obj.name || '';
+            // 根據物件型態顯示/隱藏文字編輯欄位
+            if (obj.type === 'text') {
+                textEditFields.style.display = '';
+                document.getElementById('objectNameRow').style.display = 'none';
+                editTextContent.value = obj.text || '';
+                editTextColor.value = obj.color || '#000000';
+                editFontSize.value = obj.fontSize || 20;
+                editFontFamily.value = obj.fontFamily || 'Arial';
+            } else {
+                textEditFields.style.display = 'none';
+                document.getElementById('objectNameRow').style.display = '';
+            }
+            redrawCanvas(); 
+        }
+
+        // 綁定文字屬性編輯事件
+        editTextContent.addEventListener('input', function() {
+            if (selectedObject && selectedObject.type === 'text') {
+                selectedObject.text = this.value;
+                redrawCanvas();
+            }
+        });
+        editTextColor.addEventListener('input', function() {
+            if (selectedObject && selectedObject.type === 'text') {
+                selectedObject.color = this.value;
+                redrawCanvas();
+            }
+        });
+        editFontSize.addEventListener('input', function() {
+            if (selectedObject && selectedObject.type === 'text') {
+                selectedObject.fontSize = parseInt(this.value) || 20;
+                redrawCanvas();
+            }
+        });
+        editFontFamily.addEventListener('change', function() {
+            if (selectedObject && selectedObject.type === 'text') {
+                selectedObject.fontFamily = this.value;
+                redrawCanvas();
+            }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            const mousePos = getMousePos(e);
+            if (currentTool === 'select') {
+                isResizing = false; resizeHandle = null;
+
+                if (selectedObject && selectedObject.type === 'image') {
+                    const clickedRotateButton = getRotateButtonAtPosition(selectedObject, mousePos.x, mousePos.y);
+                    if (clickedRotateButton === 'rotate') {
+                        selectedObject.rotation = (selectedObject.rotation || 0) + Math.PI / 2;
+                        if (selectedObject.rotation >= Math.PI * 2) {
+                            selectedObject.rotation -= Math.PI * 2;
+                        }
+                        redrawCanvas();
+                        return;
+                    }
+                }
+
+                if (selectedObject && selectedObject.type === 'image') {
+                    resizeHandle = getResizeHandleAtPosition(selectedObject, mousePos.x, mousePos.y);
+                    if (resizeHandle) { isResizing = true; canvas.style.cursor = getResizeCursor(resizeHandle); return; }
+                }
+
+                const clickedObject = getObjectAtPosition(mousePos.x, mousePos.y);
+                if (clickedObject) {
+                    if (selectedObject !== clickedObject) { // Only re-select if different object
+                        selectObject(clickedObject);
+                    }
+                    isDragging = true; // Always allow dragging if an object is clicked
+                    dragOffsetX = mousePos.x - clickedObject.x; // Use clickedObject here
+                    dragOffsetY = mousePos.y - clickedObject.y;
+                    canvas.style.cursor = 'grabbing';
+                } else {
+                    deselectObject();
+                }
+            } else if (currentTool === 'draw') { isDrawing = true; currentPath = [{ x: mousePos.x, y: mousePos.y }]; }
+            else if (currentTool === 'text') {
+                const text = prompt("請輸入文字:", "在此輸入");
+                if (text) {
+                    let textObj = { type: 'text', id: Date.now() + Math.random(), text: text, x: mousePos.x, y: mousePos.y, color: textColorInput.value, fontSize: parseInt(fontSizeInput.value), fontFamily: fontFamilySelect.value, name: 'Text-' + (canvasObjects.filter(o=>o.type==='text').length + 1) };
+                    // 如果有選取圖片，預設貼齊底部
+                    if (selectedObject && selectedObject.type === 'image') {
+                        placeTextAtImageBottom(textObj, selectedObject, 10);
+                    }
+                    canvasObjects.push(textObj);
+                    redrawCanvas(); setTool('select');
+                }
+            }
+        });
+
+        let lastMouseMoveTime = 0; const mouseMoveThrottle = 16;
+
+        canvas.addEventListener('mousemove', (e) => {
+            const currentTime = performance.now();
+            if (currentTime - lastMouseMoveTime < mouseMoveThrottle && (isDragging || isResizing || isDrawing)) { /* Throttling */ }
+            lastMouseMoveTime = currentTime;
+            const mousePos = getMousePos(e);
+            lastCanvasMouseX = mousePos.x;
+            lastCanvasMouseY = mousePos.y;
+
+            if (currentTool === 'select') {
+                if (isResizing && selectedObject && selectedObject.type === 'image') {
+                    const obj = selectedObject;
+                    // Store original center
+                    const origCenterX = obj.x + obj.width / 2;
+                    const origCenterY = obj.y + obj.height / 2;
+
+                    let newX = obj.x, newY = obj.y, newWidth = obj.width, newHeight = obj.height;
+                    const prevWidth = obj.width; const prevHeight = obj.height;
+
+                    // Transform mouse to unrotated image space for consistent resize logic
+                    let mX = mousePos.x;
+                    let mY = mousePos.y;
+                    if (obj.rotation) {
+                        const angle = -(obj.rotation);
+                        mX = origCenterX + (mousePos.x - origCenterX) * Math.cos(angle) - (mousePos.y - origCenterY) * Math.sin(angle);
+                        mY = origCenterY + (mousePos.x - origCenterX) * Math.sin(angle) + (mousePos.y - origCenterY) * Math.cos(angle);
+                    }
+
+
+                    const aspectRatio = (obj.image && obj.image.naturalWidth > 0 && obj.image.naturalHeight > 0)
+                                        ? (obj.image.naturalWidth / obj.image.naturalHeight)
+                                        : (prevWidth / prevHeight);
+
+                    // Resize logic based on mX, mY in unrotated space
+                    switch (resizeHandle) { // resizeHandle refers to corners of the unrotated box
+                        case 'topLeft':
+                            newWidth = (obj.x + prevWidth) - mX;
+                            newHeight = newWidth / aspectRatio;
+                            newX = (obj.x + prevWidth) - newWidth;
+                            newY = (obj.y + prevHeight) - newHeight;
+                            break;
+                        case 'topRight':
+                            newWidth = mX - obj.x;
+                            newHeight = newWidth / aspectRatio;
+                            // newX remains obj.x
+                            newY = (obj.y + prevHeight) - newHeight;
+                            break;
+                        case 'bottomLeft':
+                            newWidth = (obj.x + prevWidth) - mX;
+                            newHeight = newWidth / aspectRatio;
+                            newX = (obj.x + prevWidth) - newWidth;
+                            // newY remains obj.y
+                            break;
+                        case 'bottomRight':
+                            newWidth = mX - obj.x;
+                            newHeight = newWidth / aspectRatio;
+                            // newX, newY remain obj.x, obj.y
+                            break;
+                    }
+
+                    const minSize = 20;
+                    if (newWidth >= minSize && newHeight >= minSize) {
+                        // Calculate new center based on unrotated newX, newY, newWidth, newHeight
+                        const newUnrotatedCenterX = newX + newWidth / 2;
+                        const newUnrotatedCenterY = newY + newHeight / 2;
+
+                        // Apply rotation to the difference from original center to find new top-left for drawing
+                        if (obj.rotation) {
+                            const dx = newUnrotatedCenterX - origCenterX;
+                            const dy = newUnrotatedCenterY - origCenterY;
+                            const angle = obj.rotation;
+
+                            const rotatedDx = dx * Math.cos(angle) - dy * Math.sin(angle);
+                            const rotatedDy = dx * Math.sin(angle) + dy * Math.cos(angle);
+
+                            obj.x = origCenterX + rotatedDx - newWidth / 2;
+                            obj.y = origCenterY + rotatedDy - newHeight / 2;
+                        } else {
+                             obj.x = newX;
+                             obj.y = newY;
+                        }
+                        obj.width = newWidth;
+                        obj.height = newHeight;
+                    }
+                    redrawCanvas();
+                } else if (isDragging && selectedObject) {
+                    selectedObject.x = mousePos.x - dragOffsetX;
+                    selectedObject.y = mousePos.y - dragOffsetY;
+                    clearAlignmentGuides();
+                    // Alignment guides for rotated objects are complex, disable for now or simplify
+                    // if (selectedObject.type === 'image' || selectedObject.type === 'text') {
+                    //     if (performance.now() % 3 === 0) { showAlignmentGuides(selectedObject); }
+                    // }
+                    redrawCanvas();
+                } else {
+                    let onHandle = false;
+                    let onRotateButton = false;
+                    if (selectedObject && selectedObject.type === 'image') {
+                        const rotateButton = getRotateButtonAtPosition(selectedObject, mousePos.x, mousePos.y);
+                        if (rotateButton) {
+                            canvas.style.cursor = 'pointer';
+                            onRotateButton = true;
+                        } else {
+                            const handle = getResizeHandleAtPosition(selectedObject, mousePos.x, mousePos.y);
+                            if (handle) { canvas.style.cursor = getResizeCursor(handle); onHandle = true; }
+                        }
+                    }
+                    if (!onHandle && !onRotateButton) {
+                        const hoverObject = getObjectAtPosition(mousePos.x, mousePos.y);
+                        canvas.style.cursor = hoverObject ? 'grab' : (currentTool === 'draw' ? 'crosshair' : (currentTool === 'text' ? 'text' : 'default'));
+                    }
+                }
+            } else if (currentTool === 'draw' && isDrawing) { currentPath.push({ x: mousePos.x, y: mousePos.y }); redrawCanvas(); }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (currentTool === 'select') {
+                if (isDragging && selectedObject) {
+                    // snapToAlignmentGuides(selectedObject); // Complex for rotated objects
+                    clearAlignmentGuides();
+                 }
+                isDragging = false; isResizing = false; resizeHandle = null;
+                // Set cursor based on whether an object (and potentially a handle/button) is under mouse
+                const mousePos = getMousePos(e);
+                if (selectedObject && selectedObject.type === 'image') {
+                    if (getRotateButtonAtPosition(selectedObject, mousePos.x, mousePos.y)) {
+                        canvas.style.cursor = 'pointer';
+                    } else if (getResizeHandleAtPosition(selectedObject, mousePos.x, mousePos.y)) {
+                        // Cursor already set by mousemove
+                    } else if (getObjectAtPosition(mousePos.x, mousePos.y) === selectedObject) {
+                        canvas.style.cursor = 'grab';
+                    } else {
+                        canvas.style.cursor = 'default';
+                    }
+                } else if (selectedObject && getObjectAtPosition(mousePos.x, mousePos.y) === selectedObject) {
+                    canvas.style.cursor = 'grab';
+                }
+                 else {
+                    canvas.style.cursor = 'default';
+                }
+
+            } else if (currentTool === 'draw' && isDrawing) {
+                isDrawing = false;
+                if (currentPath.length > 1) { canvasObjects.push({ type: 'drawing', id: Date.now()+Math.random(), points: [...currentPath], color: strokeColorInput.value, lineWidth: parseInt(lineWidthInput.value), name: 'Drawing-' + Date.now() }); }
+                currentPath = [];
+            }
+            redrawCanvas();
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            if (isDragging || isResizing) { isDragging = false; isResizing = false; clearAlignmentGuides(); redrawCanvas(); }
+            if (isDrawing) { isDrawing = false; if(currentPath.length > 1) canvasObjects.push({ type: 'drawing', id: Date.now()+Math.random(), points: [...currentPath], color: strokeColorInput.value, lineWidth: parseInt(lineWidthInput.value), name: 'Drawing-' + Date.now() }); currentPath = []; redrawCanvas(); }
+        });
+
+        canvas.addEventListener('mouseenter', (e) => {
+             const mousePos = getMousePos(e);
+             lastCanvasMouseX = mousePos.x;
+             lastCanvasMouseY = mousePos.y;
+        });
+
+
+        function getResizeCursor(handleName) {
+            switch (handleName) {
+                case 'topLeft': case 'bottomRight': return 'nwse-resize';
+                case 'topRight': case 'bottomLeft': return 'nesw-resize';
+                default: return 'default';
+            }
+        }
+
+        objectNameInput.addEventListener('input', (e) => { if (selectedObject) { selectedObject.name = e.target.value; redrawCanvas(); } });
+        deleteSelectedBtn.addEventListener('click', () => { if (selectedObject) { canvasObjects = canvasObjects.filter(obj => obj.id !== selectedObject.id); deselectObject(); } });
+        bringToFrontBtn.addEventListener('click', () => { if (selectedObject) { const index = canvasObjects.findIndex(obj => obj.id === selectedObject.id); if (index > -1 && index < canvasObjects.length - 1) { const item = canvasObjects.splice(index, 1)[0]; canvasObjects.push(item); redrawCanvas(); } } });
+        sendToBackBtn.addEventListener('click', () => { if (selectedObject) { const index = canvasObjects.findIndex(obj => obj.id === selectedObject.id); if (index > 0) { const item = canvasObjects.splice(index, 1)[0]; canvasObjects.unshift(item); redrawCanvas(); } } });
+        clearAnnotationsBtn.addEventListener('click', () => { if (confirm('確定要清除所有標註 (繪畫和文字) 嗎？圖片將保留。')) { canvasObjects = canvasObjects.filter(obj => obj.type === 'image'); deselectObject(); redrawCanvas(); } });
+
+        const canvasContainerElement = document.getElementById('canvasContainer');
+        function clearAlignmentGuides() { const existingGuides = canvasContainerElement.querySelectorAll('.guideline'); existingGuides.forEach(guide => guide.remove()); }
+        function getObjectBounds(obj) { // This returns un-rotated bounds
+            let x = obj.x, y = obj.y, width = obj.width, height = obj.height;
+            if (obj.type === 'text') { ctx.font = `${obj.fontSize}px ${obj.fontFamily}`; const metrics = ctx.measureText(obj.text); width = metrics.width; height = obj.fontSize * 1.2; }
+            else if (obj.type === 'drawing') { if (!obj.points || obj.points.length === 0) return { left:0, right:0, top:0, bottom:0, centerX:0, centerY:0, width:0, height:0}; let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity; obj.points.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); }); x = minX; y = minY; width = maxX - minX; height = maxY - minY; }
+            return { left: x, right: x + width, top: y, bottom: y + height, centerX: x + width / 2, centerY: y + height / 2, width: width, height: height };
+        }
+        function checkAndDrawGuide(pos1, pos2, orientation, container) {
+            if (Math.abs(pos1 - pos2) < ALIGNMENT_THRESHOLD) { const guide = document.createElement('div'); guide.classList.add('guideline', orientation); if (orientation === 'horizontal') { guide.style.top = `${pos2}px`; } else { guide.style.left = `${pos2}px`; } container.appendChild(guide); return true; } return false;
+        }
+        function showAlignmentGuides(movingObj) { // Note: Guides are for un-rotated bounding boxes
+            clearAlignmentGuides(); if (!movingObj || movingObj.rotation) return; // Disable for rotated for now
+            const objBounds = getObjectBounds(movingObj);
+            canvasObjects.forEach(staticObj => { if (staticObj.id === movingObj.id || staticObj.rotation) return; // Don't align with other rotated objects
+                const staticBounds = getObjectBounds(staticObj);
+                checkAndDrawGuide(objBounds.centerY, staticBounds.centerY, 'horizontal', canvasContainerElement); checkAndDrawGuide(objBounds.top, staticBounds.top, 'horizontal', canvasContainerElement); checkAndDrawGuide(objBounds.bottom, staticBounds.bottom, 'horizontal', canvasContainerElement);
+                checkAndDrawGuide(objBounds.centerX, staticBounds.centerX, 'vertical', canvasContainerElement); checkAndDrawGuide(objBounds.left, staticBounds.left, 'vertical', canvasContainerElement); checkAndDrawGuide(objBounds.right, staticBounds.right, 'vertical', canvasContainerElement);
+            });
+        }
+        function snapToAlignmentGuides(movingObj) { // Note: Snapping is for un-rotated bounding boxes
+            if (!movingObj || movingObj.rotation) return; // Disable for rotated
+            let snappedX = false, snappedY = false; const objBounds = getObjectBounds(movingObj);
+            canvasObjects.forEach(staticObj => { if (staticObj.id === movingObj.id || staticObj.rotation) return; const staticBounds = getObjectBounds(staticObj);
+                if (Math.abs(objBounds.left - staticBounds.left) < ALIGNMENT_THRESHOLD) { movingObj.x = staticBounds.left; snappedX = true; } else if (Math.abs(objBounds.right - staticBounds.right) < ALIGNMENT_THRESHOLD) { movingObj.x = staticBounds.right - objBounds.width; snappedX = true; } else if (Math.abs(objBounds.centerX - staticBounds.centerX) < ALIGNMENT_THRESHOLD) { movingObj.x = staticBounds.centerX - objBounds.width / 2; snappedX = true; }
+                if (Math.abs(objBounds.top - staticBounds.top) < ALIGNMENT_THRESHOLD) { movingObj.y = staticBounds.top; snappedY = true; } else if (Math.abs(objBounds.bottom - staticBounds.bottom) < ALIGNMENT_THRESHOLD) { movingObj.y = staticBounds.bottom - objBounds.height; snappedY = true; } else if (Math.abs(objBounds.centerY - staticBounds.centerY) < ALIGNMENT_THRESHOLD) { movingObj.y = staticBounds.centerY - objBounds.height / 2; snappedY = true; }
+            });
+            if (snappedX || snappedY) redrawCanvas();
+        }
+
+        function getPastePosition(){
+            return {
+                x: lastCanvasMouseX !== null ? lastCanvasMouseX : canvas.width / 2,
+                y: lastCanvasMouseY !== null ? lastCanvasMouseY : canvas.height / 2
+            };
+        }
+
+        // 支援 Ctrl+V/右鍵貼上圖片（Clipboard API）
+        document.addEventListener('paste', async (event) => {
+            const activeElement = document.activeElement;
+            if (
+                activeElement &&
+                (activeElement.tagName === 'INPUT' ||
+                    activeElement.tagName === 'TEXTAREA' ||
+                    activeElement.isContentEditable)
+            ) {
+                return;
+            }
+            let inControlPanelInput = false;
+            if (activeElement && activeElement.closest && activeElement.closest('.controls')) {
+                if (['INPUT', 'SELECT', 'TEXTAREA'].includes(activeElement.tagName)) {
+                    inControlPanelInput = true;
+                }
+            }
+            if (inControlPanelInput) return;
+
+            // 先處理 clipboardData（舊瀏覽器或瀏覽器自帶的貼圖）
+            const items = (event.clipboardData || event.originalEvent?.clipboardData)?.items;
+            if (items) {
+                let filesToHandle = [];
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        filesToHandle.push(item.getAsFile());
+                    }
+                }
+                if (filesToHandle.length > 0) {
+                    event.preventDefault();
+                    handleImageFiles(filesToHandle, getPastePosition());
+                    return;
+                }
+            }
+
+            // 若支援 Clipboard API，嘗試讀取圖片
+            if (navigator.clipboard && navigator.clipboard.read) {
+                try {
+                    const clipboardItems = await navigator.clipboard.read();
+                    for (const clipboardItem of clipboardItems) {
+                        for (const type of clipboardItem.types) {
+                            if (type.startsWith('image/')) {
+                                const blob = await clipboardItem.getType(type);
+                                const file = new File([blob], 'ClipboardImage.png', { type: blob.type });
+                                handleImageFiles([file], getPastePosition());
+                                event.preventDefault();
+                                return;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    // Clipboard API 可能被拒絕權限，忽略即可
+                }
+            }
+        });
+
+        // --- Toast 共用函式 ---
+        function showToast(message) {
+            const toast = document.getElementById('copiedToast');
+            if (toast) {
+                toast.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 1200);
+            }
+        }
+
+        exportProjectBtn.addEventListener('click', () => {
+            const projectData = {
+                canvasSettings: {
+                    pageSize: pageSizeSelect.value,
+                    orientation: pageOrientationSelect.value,
+                    numPages: parseInt(numPagesInput.value),
+                    customWidth: customCanvasWidthInput.value,
+                    customHeight: customCanvasHeightInput.value,
+                },
+                objects: canvasObjects.map(obj => {
+                    if (obj.type === 'image') {
+                        // Make sure to include rotation
+                        return { ...obj, imageSrc: obj.src, rotation: obj.rotation || 0 };
+                    }
+                    return obj;
+                })
+            };
+            projectData.objects.forEach(obj => { if(obj.type === 'image') delete obj.image; }); // Remove actual image object for JSON
+            const jsonString = JSON.stringify(projectData, null, 2); const blob = new Blob([jsonString], { type: 'application/json' }); const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'canvas_project.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            showToast('專案已匯出!');
+        });
+
+        importProjectInput.addEventListener('change', (event) => {
+            const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = (e_reader) => {
+                try {
+                    const projectData = JSON.parse(e_reader.target.result);
+                    pageSizeSelect.value = projectData.canvasSettings.pageSize || 'A4'; pageOrientationSelect.value = projectData.canvasSettings.orientation || 'portrait'; numPagesInput.value = projectData.canvasSettings.numPages || 1; customCanvasWidthInput.value = projectData.canvasSettings.customWidth || 800; customCanvasHeightInput.value = projectData.canvasSettings.customHeight || 1000;
+                    customSizeInputsDiv.style.display = pageSizeSelect.value === 'Custom' ? 'block' : 'none'; numPagesInput.disabled = pageSizeSelect.value === 'Custom';
+                    updateCanvasLayout();
+
+                    const loadedObjects = []; const imageLoadPromises = [];
+                    (projectData.objects || []).forEach(objData => {
+                        if (objData.type === 'image' && objData.imageSrc) {
+                            const img = new Image();
+                            const promise = new Promise((resolve, reject) => {
+                                img.onload = () => {
+                                    loadedObjects.push({
+                                        ...objData,
+                                        image: img,
+                                        src: img.src,
+                                        rotation: objData.rotation || 0 // Ensure rotation is loaded
+                                    });
+                                    resolve();
+                                };
+                                img.onerror = () => { console.warn(`Failed to load image: ${objData.name || 'Unknown'}. Skipping.`); resolve(); };
+                                img.src = objData.imageSrc;
+                            });
+                            imageLoadPromises.push(promise);
+                        } else { loadedObjects.push(objData); }
+                    });
+
+                    Promise.all(imageLoadPromises).then(() => { canvasObjects = loadedObjects; deselectObject(); redrawCanvas(); alert('專案已成功匯入!'); }).catch(err => { console.error("Error loading images:", err); alert('匯入專案時部分圖片載入失敗。'); canvasObjects = loadedObjects.filter(obj => (obj.type === 'image' && obj.image && obj.image.complete && obj.image.naturalHeight !== 0) || obj.type !== 'image'); deselectObject(); redrawCanvas(); });
+                } catch (error) { console.error("Import error:", error); alert('匯入專案失敗: 檔案格式錯誤或內容損毀。');}
+                finally { importProjectInput.value = ''; }
+            };
+            reader.readAsText(file);
+        });
+
+        exportPdfBtn.addEventListener('click', () => {
+            const currentCanvasWidth = canvas.width; const currentCanvasHeight = canvas.height; const tempSelected = selectedObject; deselectObject();
+            redrawCanvas();
+            const resolutionScaleFactor = 2;
+            const pdfOrientation = pageOrientationSelect.value;
+            const pdfPageType = (pageSizeSelect.value === 'Custom' ? 'a4' : pageSizeSelect.value.toLowerCase());
+            const pdf = new jsPDF({ orientation: pdfOrientation, unit: 'pt', format: pdfPageType });
+            const MARGIN_PT = 0;
+            const contentWidthPt = pdf.internal.pageSize.getWidth() - 2 * MARGIN_PT;
+            const contentHeightPt = pdf.internal.pageSize.getHeight() - 2 * MARGIN_PT;
+            let scaleToFitPdfWidth = contentWidthPt / currentCanvasWidth;
+            const tempRenderCanvas = document.createElement('canvas');
+            tempRenderCanvas.width = currentCanvasWidth * resolutionScaleFactor;
+            tempRenderCanvas.height = currentCanvasHeight * resolutionScaleFactor;
+            const tempRenderCtx = tempRenderCanvas.getContext('2d');
+            tempRenderCtx.scale(resolutionScaleFactor, resolutionScaleFactor);
+            tempRenderCtx.fillStyle = '#FFFFFF';
+            tempRenderCtx.fillRect(0, 0, currentCanvasWidth, currentCanvasHeight);
+
+            canvasObjects.forEach(obj => {
+                tempRenderCtx.save();
+                if (obj.type === 'image') {
+                    if (obj.image && obj.image.complete && obj.image.naturalHeight !==0) {
+                        tempRenderCtx.save();
+                        tempRenderCtx.translate(obj.x + obj.width / 2, obj.y + obj.height / 2);
+                        tempRenderCtx.rotate(obj.rotation || 0);
+                        tempRenderCtx.drawImage(obj.image, -obj.width / 2, -obj.height / 2, obj.width, obj.height);
+                        tempRenderCtx.restore();
+                    }
+                    if (obj.name) {
+                        // 只計算旋轉後圖片的下方中心點，文字不旋轉
+                        tempRenderCtx.save();
+                        tempRenderCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                        tempRenderCtx.font = `12px Arial`;
+                        tempRenderCtx.textAlign = 'center';
+                        // Calculate the position based on the image's rotation angle
+                        const textX = obj.x + obj.width / 2;
+                        let textY;
+                        if (obj.rotation === 0 || obj.rotation === Math.PI) {
+                            // For 0 and 180 degrees
+                            textY = obj.y + obj.height + 10;
+                            // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
+                        } else if (obj.rotation === Math.PI / 2 || obj.rotation === 3 * Math.PI / 2) {
+                            // For 90 and 270 degrees
+                            textY = obj.y + (obj.width+obj.height)/2 + 10;
+                            // console.log("OBJX="+obj.x+" OBJY="+obj.y+" OBJW="+obj.width+" OBJH="+obj.height);
+                        }
+                        tempRenderCtx.fillText(obj.name, textX, textY);
+                        tempRenderCtx.restore();
+                    }
+                } else if (obj.type === 'drawing') {
+                    drawPath(tempRenderCtx, obj.points, obj.color, obj.lineWidth);
+                } else if (obj.type === 'text') {
+                    tempRenderCtx.fillStyle = obj.color;
+                    tempRenderCtx.font = `${obj.fontSize}px ${obj.fontFamily}`;
+                    tempRenderCtx.textAlign = 'center';
+                    tempRenderCtx.textBaseline = 'top';
+                    tempRenderCtx.fillText(obj.text, obj.x, obj.y);
+                }
+                tempRenderCtx.restore();
+            });
+
+            const imgData = tempRenderCanvas.toDataURL('image/png');
+            const scaledCanvasWidthOnPdf = currentCanvasWidth * scaleToFitPdfWidth;
+            const scaledCanvasHeightOnPdf = currentCanvasHeight * scaleToFitPdfWidth;
+            const numPagesInputValue = parseInt(numPagesInput.value) || 1; // 預計頁數
+            const numPdfPages = Math.min(Math.ceil(scaledCanvasHeightOnPdf / contentHeightPt), numPagesInputValue); // 限制頁數
+
+            for (let i = 0; i < numPdfPages; i++) {
+                if (i > 0) { pdf.addPage(pdfPageType, pdfOrientation); }
+                pdf.addImage(imgData, 'PNG', MARGIN_PT, MARGIN_PT - (i * contentHeightPt), scaledCanvasWidthOnPdf, scaledCanvasHeightOnPdf);
+            }
+            pdf.save('canvas_export_hires_no_margin.pdf');
+            if (tempSelected) selectObject(tempSelected);
+            redrawCanvas();
+            showToast('已下載！');
+        });
+
+        if (copyHiResBtn) {
+            copyHiResBtn.addEventListener('click', async () => {
+                const scale = 2;
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width * scale;
+                tempCanvas.height = canvas.height * scale;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.scale(scale, scale);
+                // 取消選取物件再重繪，避免選框出現
+                const tempSelected = selectedObject;
+                deselectObject();
+                if (typeof redrawCanvas === 'function') {
+                    redrawCanvas(tempCtx, tempCanvas);
+                }
+                if (tempSelected) selectedObject = tempSelected;
+                tempCanvas.toBlob(async (blob) => {
+                    if (!blob) { alert('截圖失敗'); return; }
+                    try {
+                        await navigator.clipboard.write([
+                            new window.ClipboardItem({ 'image/png': blob })
+                        ]);
+                        // 顯示浮動提示
+                        const toast = document.getElementById('copiedToast');
+                        if (toast) {
+                            toast.classList.add('show');
+                            setTimeout(() => toast.classList.remove('show'), 1200);
+                        }
+                    } catch (e) {
+                        alert('無法寫入剪貼簿，請確認瀏覽器支援且有權限。');
+                    }
+                }, 'image/png');
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const activeEl = document.activeElement;
+            if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.isContentEditable)) { if (e.key === 'Escape') activeEl.blur(); return; }
+            let consumed = false;
+            switch(e.key.toUpperCase()) {
+                case 'V': setTool('select'); consumed=true; break;
+                case 'B': setTool('draw'); consumed=true; break;
+                case 'T': setTool('text'); consumed=true; break;
+                case 'DELETE': case 'BACKSPACE': if (selectedObject) { deleteSelectedBtn.click(); consumed=true; } break;
+            }
+            if (consumed) e.preventDefault();
+        });
+
+        // 分頁切換邏輯（只註冊一次，並確保初始狀態正確）
+(function() {
+    function showTab(tabName) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+        document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+        document.getElementById(`${tabName}-content`).classList.add('active');
+    }
+    // 預設顯示 tools 分頁
+    showTab('tools');
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            showTab(tab.dataset.tab);
+        });
+    });
+})();
+
+        const importProjectBtn = document.getElementById('importProjectBtn');
+        importProjectBtn.addEventListener('click', function() {
+            importProjectInput.click();
+        });
+
+        const imageUploadBtn = document.getElementById('imageUploadBtn');
+        imageUploadBtn.addEventListener('click', function() {
+            imageUpload.click();
+        });
+    </script>
+</body>
+</html>
