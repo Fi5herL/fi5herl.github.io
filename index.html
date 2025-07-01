@@ -471,7 +471,13 @@
                 
                 if (fileInfo.content) {
                     // GitHub API 返回的內容是 base64 編碼的
-                    const content = atob(fileInfo.content);
+                    // 正確處理 UTF-8 編碼
+                    const binaryString = atob(fileInfo.content);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    const content = new TextDecoder('utf-8').decode(bytes);
                     return content;
                 } else {
                     throw new Error('無法取得檔案內容');
@@ -613,10 +619,14 @@
         function renderArticle(markdownContent) {
             const contentElement = document.getElementById('article-content');
             
+            // 預處理：修正常見的 HTML 轉義問題
+            markdownContent = preprocessMarkdown(markdownContent);
+            
             // 使用 marked.js 轉換 Markdown
             let html = marked.parse(markdownContent, {
                 breaks: true,
-                gfm: true
+                gfm: true,
+                sanitize: false // 允許 HTML
             });
 
             // 處理 Mermaid 圖表
@@ -641,10 +651,38 @@
 
                 // 添加複製按鈕
                 addCopyButtons(contentElement);
+                
+                // 處理 iframe 的響應式
+                makeIframesResponsive(contentElement);
             }, 100);
         }
 
         // === Markdown 處理函數 ===
+        function preprocessMarkdown(content) {
+            // 修正常見的 HTML 轉義問題
+            content = content.replace(/&quot;/g, '"'); // 修正 HTML 實體
+            content = content.replace(/""/g, '"'); // 修正雙引號問題
+            content = content.replace(/&#x2F;/g, '/'); // 修正斜線轉義
+            content = content.replace(/&amp;/g, '&'); // 修正 & 符號
+            content = content.replace(/&lt;/g, '<'); // 修正 < 符號
+            content = content.replace(/&gt;/g, '>'); // 修正 > 符號
+            
+            // 檢查是否有編碼問題，嘗試修正
+            if (content.includes('â') || content.includes('Ã') || content.includes('ç')) {
+                try {
+                    // 嘗試重新解碼 UTF-8
+                    const encoder = new TextEncoder();
+                    const decoder = new TextDecoder('utf-8', { fatal: false });
+                    const bytes = encoder.encode(content);
+                    content = decoder.decode(bytes);
+                } catch (e) {
+                    console.warn('無法修正編碼問題:', e);
+                }
+            }
+            
+            return content;
+        }
+        
         function processMermaidDiagrams(html) {
             // 處理 Mermaid 圖表
             const mermaidRegex = /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g;
@@ -665,6 +703,38 @@
                     return match; // 不處理 Mermaid 圖表
                 }
                 return `<div class="code-container" style="position: relative;">${fullBlock}</div>`;
+            });
+        }
+
+        function makeIframesResponsive(container) {
+            // 讓 iframe 具有響應式效果
+            container.querySelectorAll('iframe').forEach(iframe => {
+                if (!iframe.parentElement.classList.contains('responsive-iframe')) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'responsive-iframe';
+                    wrapper.style.cssText = `
+                        position: relative;
+                        width: 100%;
+                        height: 0;
+                        padding-bottom: 56.25%; /* 16:9 比例 */
+                        overflow: hidden;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        margin: 1rem 0;
+                    `;
+                    
+                    iframe.parentElement.insertBefore(wrapper, iframe);
+                    wrapper.appendChild(iframe);
+                    
+                    iframe.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        border: none;
+                    `;
+                }
             });
         }
 
