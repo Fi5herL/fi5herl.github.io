@@ -775,21 +775,26 @@
                 if (!iframe.closest('.iframe-wrapper')) {
                     const wrapper = document.createElement('div');
                     wrapper.className = 'iframe-wrapper';
-                    wrapper.style.cssText = `
-                        position: relative;
-                        width: 100%;
-                        height: 0;
-                        padding-bottom: 56.25%; /* 16:9 比例 */
-                        overflow: hidden;
-                        border-radius: 8px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                        margin: 1.5rem 0;
-                        background: #f8f9fa;
-                    `;
+                    
+                    // 插入容器
+                    iframe.parentElement.insertBefore(wrapper, iframe);
+                    wrapper.appendChild(iframe);
+                    
+                    // 簡化的 iframe 屬性設定
+                    iframe.setAttribute('allowfullscreen', '');
+                    iframe.setAttribute('allow', 'fullscreen');
+                    iframe.setAttribute('loading', 'lazy');
+                    
+                    // 如果是 Canva，確保有 embed 參數
+                    if (iframe.src.includes('canva.com') && !iframe.src.includes('embed')) {
+                        const url = new URL(iframe.src);
+                        url.searchParams.set('embed', '');
+                        iframe.src = url.toString();
+                        console.log('Canva iframe 已添加 embed 參數:', iframe.src);
+                    }
                     
                     // 添加載入指示器
                     const loadingDiv = document.createElement('div');
-                    loadingDiv.className = 'iframe-loading';
                     loadingDiv.style.cssText = `
                         position: absolute;
                         top: 50%;
@@ -798,105 +803,51 @@
                         color: #666;
                         font-size: 14px;
                         z-index: 1;
+                        background: rgba(255,255,255,0.9);
+                        padding: 1rem;
+                        border-radius: 4px;
                     `;
-                    loadingDiv.textContent = '載入中...';
+                    loadingDiv.textContent = '載入簡報中...';
                     wrapper.appendChild(loadingDiv);
                     
-                    // 插入容器
-                    iframe.parentElement.insertBefore(wrapper, iframe);
-                    wrapper.appendChild(iframe);
-                    
-                    // 設定 iframe 樣式
-                    iframe.style.cssText = `
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        border: none;
-                        z-index: 2;
-                    `;
-                    
-                    // 設定 iframe 屬性以解決載入問題
-                    iframe.setAttribute('allowfullscreen', 'true');
-                    iframe.setAttribute('webkitallowfullscreen', 'true');
-                    iframe.setAttribute('mozallowfullscreen', 'true');
-                    iframe.setAttribute('allow', 'fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
-                    iframe.setAttribute('loading', 'lazy');
-                    iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-                    
-                    // 如果是 Canva，添加特殊處理
-                    if (iframe.src.includes('canva.com')) {
-                        // 確保 Canva iframe 有正確的參數
-                        const url = new URL(iframe.src);
-                        if (!url.searchParams.has('embed')) {
-                            url.searchParams.set('embed', 'true');
-                            iframe.src = url.toString();
-                        }
-                        console.log('Canva iframe 處理完成:', iframe.src);
-                    }
-                    
-                    // 處理載入事件
-                    iframe.addEventListener('load', function() {
+                    // 載入成功事件
+                    iframe.onload = function() {
                         console.log('iframe 載入成功:', iframe.src);
-                        setTimeout(() => {
-                            if (loadingDiv && loadingDiv.parentElement) {
-                                loadingDiv.style.opacity = '0';
-                                setTimeout(() => {
-                                    if (loadingDiv.parentElement) {
-                                        loadingDiv.remove();
-                                    }
-                                }, 300);
-                            }
-                        }, 1000); // 增加延遲確保內容載入
-                    });
-                    
-                    iframe.addEventListener('error', function() {
-                        console.error('iframe 載入失敗:', iframe.src);
-                        loadingDiv.textContent = '載入失敗';
-                        loadingDiv.style.color = '#dc3545';
-                        
-                        // 添加重試按鈕
-                        const retryBtn = document.createElement('button');
-                        retryBtn.textContent = '重試';
-                        retryBtn.style.cssText = `
-                            background: #007bff;
-                            color: white;
-                            border: none;
-                            padding: 0.5rem 1rem;
-                            border-radius: 4px;
-                            margin-top: 0.5rem;
-                            cursor: pointer;
-                        `;
-                        retryBtn.onclick = function() {
-                            const originalSrc = iframe.src;
-                            iframe.src = '';
+                        if (loadingDiv && loadingDiv.parentElement) {
+                            loadingDiv.style.opacity = '0';
                             setTimeout(() => {
-                                iframe.src = originalSrc;
-                                loadingDiv.textContent = '重新載入中...';
-                                loadingDiv.style.color = '#666';
-                                retryBtn.remove();
-                            }, 100);
-                        };
-                        loadingDiv.appendChild(document.createElement('br'));
-                        loadingDiv.appendChild(retryBtn);
-                    });
+                                if (loadingDiv.parentElement) {
+                                    loadingDiv.remove();
+                                }
+                            }, 500);
+                        }
+                    };
                     
-                    // 視覺化檢查 - 添加邊框來確認 iframe 位置
+                    // 載入失敗事件
+                    iframe.onerror = function() {
+                        console.error('iframe 載入失敗:', iframe.src);
+                        if (loadingDiv) {
+                            loadingDiv.innerHTML = `
+                                載入失敗<br>
+                                <a href="${iframe.src}" target="_blank" style="color: #007bff; text-decoration: underline;">
+                                    在新視窗開啟
+                                </a>
+                            `;
+                        }
+                    };
+                    
+                    // 10秒超時檢查
                     setTimeout(() => {
-                        if (loadingDiv && loadingDiv.parentElement && loadingDiv.textContent === '載入中...') {
+                        if (loadingDiv && loadingDiv.parentElement && loadingDiv.textContent === '載入簡報中...') {
                             loadingDiv.innerHTML = `
                                 載入時間較長...<br>
-                                <small style="color: #999;">如果持續無法顯示，可能是網站政策限制</small>
+                                <a href="${iframe.src}" target="_blank" style="color: #007bff; text-decoration: underline;">
+                                    在新視窗開啟
+                                </a>
                             `;
-                            
-                            // 添加除錯資訊
-                            wrapper.style.border = '2px dashed #ccc';
-                            wrapper.title = `iframe: ${iframe.src}`;
-                            
                             console.warn('iframe 載入超時:', iframe.src);
                         }
-                    }, 10000); // 10秒超時
+                    }, 10000);
                 }
             });
         }
