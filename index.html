@@ -245,10 +245,45 @@
             background: #28a745;
         }
 
-        /* Mermaid diagrams */
-        .mermaid {
-            text-align: center;
-            margin: 1rem 0;
+        /* iframe 樣式 */
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin: 1.5rem 0;
+            background: #f8f9fa;
+        }
+
+        .iframe-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .iframe-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-size: 14px;
+            z-index: 1;
+        }
+
+        /* Google Slides 特殊處理 */
+        .iframe-wrapper iframe[src*="docs.google.com"] {
+            min-height: 400px;
+        }
+
+        .iframe-wrapper iframe[src*="canva.com"] {
+            min-height: 300px;
         }
 
         /* Navigation buttons */
@@ -622,11 +657,12 @@
             // 預處理：修正常見的 HTML 轉義問題
             markdownContent = preprocessMarkdown(markdownContent);
             
-            // 使用 marked.js 轉換 Markdown
+            // 使用 marked.js 轉換 Markdown，並保留 HTML
             let html = marked.parse(markdownContent, {
                 breaks: true,
                 gfm: true,
-                sanitize: false // 允許 HTML
+                sanitize: false, // 允許 HTML
+                renderer: createCustomRenderer()
             });
 
             // 處理 Mermaid 圖表
@@ -634,6 +670,9 @@
             
             // 處理程式碼區塊
             html = processCodeBlocks(html);
+            
+            // 處理 iframe 嵌入
+            html = processIframes(html);
 
             contentElement.innerHTML = html;
 
@@ -652,12 +691,23 @@
                 // 添加複製按鈕
                 addCopyButtons(contentElement);
                 
-                // 處理 iframe 的響應式
-                makeIframesResponsive(contentElement);
+                // 處理 iframe 的響應式和載入
+                setupIframes(contentElement);
             }, 100);
         }
 
         // === Markdown 處理函數 ===
+        function createCustomRenderer() {
+            const renderer = new marked.Renderer();
+            
+            // 自定義 HTML 渲染，確保 iframe 不被轉義
+            renderer.html = function(html) {
+                return html;
+            };
+            
+            return renderer;
+        }
+        
         function preprocessMarkdown(content) {
             // 修正常見的 HTML 轉義問題
             content = content.replace(/&quot;/g, '"'); // 修正 HTML 實體
@@ -705,13 +755,30 @@
                 return `<div class="code-container" style="position: relative;">${fullBlock}</div>`;
             });
         }
+        
+        function processIframes(html) {
+            // 確保 iframe 有正確的屬性
+            html = html.replace(/<iframe([^>]*?)>/g, (match, attributes) => {
+                // 確保有必要的安全屬性
+                if (!attributes.includes('sandbox')) {
+                    attributes += ' sandbox="allow-scripts allow-same-origin allow-presentation"';
+                }
+                if (!attributes.includes('loading')) {
+                    attributes += ' loading="lazy"';
+                }
+                return `<iframe${attributes}>`;
+            });
+            
+            return html;
+        }
 
-        function makeIframesResponsive(container) {
-            // 讓 iframe 具有響應式效果
-            container.querySelectorAll('iframe').forEach(iframe => {
-                if (!iframe.parentElement.classList.contains('responsive-iframe')) {
+        function setupIframes(container) {
+            // 處理所有 iframe
+            container.querySelectorAll('iframe').forEach((iframe, index) => {
+                // 為每個 iframe 創建響應式容器
+                if (!iframe.closest('.iframe-wrapper')) {
                     const wrapper = document.createElement('div');
-                    wrapper.className = 'responsive-iframe';
+                    wrapper.className = 'iframe-wrapper';
                     wrapper.style.cssText = `
                         position: relative;
                         width: 100%;
@@ -720,12 +787,30 @@
                         overflow: hidden;
                         border-radius: 8px;
                         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                        margin: 1rem 0;
+                        margin: 1.5rem 0;
+                        background: #f8f9fa;
                     `;
                     
+                    // 添加載入指示器
+                    const loadingDiv = document.createElement('div');
+                    loadingDiv.className = 'iframe-loading';
+                    loadingDiv.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: #666;
+                        font-size: 14px;
+                        z-index: 1;
+                    `;
+                    loadingDiv.textContent = '載入中...';
+                    wrapper.appendChild(loadingDiv);
+                    
+                    // 插入容器
                     iframe.parentElement.insertBefore(wrapper, iframe);
                     wrapper.appendChild(iframe);
                     
+                    // 設定 iframe 樣式
                     iframe.style.cssText = `
                         position: absolute;
                         top: 0;
@@ -733,9 +818,67 @@
                         width: 100%;
                         height: 100%;
                         border: none;
+                        z-index: 2;
                     `;
+                    
+                    // 處理載入事件
+                    iframe.addEventListener('load', function() {
+                        setTimeout(() => {
+                            if (loadingDiv && loadingDiv.parentElement) {
+                                loadingDiv.remove();
+                            }
+                        }, 500);
+                    });
+                    
+                    iframe.addEventListener('error', function() {
+                        loadingDiv.textContent = '載入失敗，請檢查網路連線';
+                        loadingDiv.style.color = '#dc3545';
+                    });
+                    
+                    // 添加重試按鈕
+                    const retryBtn = document.createElement('button');
+                    retryBtn.textContent = '重新載入';
+                    retryBtn.style.cssText = `
+                        position: absolute;
+                        top: 60%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        padding: 0.5rem 1rem;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        z-index: 3;
+                        display: none;
+                    `;
+                    wrapper.appendChild(retryBtn);
+                    
+                    retryBtn.addEventListener('click', function() {
+                        const src = iframe.src;
+                        iframe.src = '';
+                        setTimeout(() => {
+                            iframe.src = src;
+                            loadingDiv.textContent = '載入中...';
+                            loadingDiv.style.color = '#666';
+                            retryBtn.style.display = 'none';
+                        }, 100);
+                    });
+                    
+                    // 如果載入失敗，顯示重試按鈕
+                    setTimeout(() => {
+                        if (loadingDiv && loadingDiv.parentElement && loadingDiv.textContent === '載入中...') {
+                            loadingDiv.textContent = '載入時間較長';
+                            retryBtn.style.display = 'block';
+                        }
+                    }, 10000); // 10秒後顯示重試選項
                 }
             });
+        }
+
+        // 舊函數保持向後兼容
+        function makeIframesResponsive(container) {
+            setupIframes(container);
         }
 
         function addCopyButtons(container) {
