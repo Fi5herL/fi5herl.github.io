@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的部落格</title>
+    
+    <!-- 外部資源 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.0/dist/mermaid.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Header */
+        header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: var(--secondary-color);
+        }
+
+        /* Main Content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 120px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Article List */
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .article-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .article-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .article-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .article-meta {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .article-preview {
+            padding: 1rem 1.5rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Article Content */
+        .article-content {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .article-content h1 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--secondary-color);
+        }
+
+        .article-content h2 {
+            color: var(--primary-color);
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .article-content h3 {
+            color: var(--primary-color);
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        .article-content p {
+            margin-bottom: 1rem;
+        }
+
+        .article-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .article-content blockquote {
+            border-left: 4px solid var(--secondary-color);
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .article-content code {
+            background: #f8f9fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .article-content pre {
+            position: relative;
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .article-content pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* Copy Button */
+        .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .copy-button:hover {
+            opacity: 1;
+        }
+
+        .copy-button.copied {
+            background: #28a745;
+        }
+
+        /* Mermaid diagrams */
+        .mermaid {
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        /* Navigation buttons */
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            background: var(--secondary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn.secondary {
+            background: var(--text-muted);
+        }
+
+        .btn.secondary:hover {
+            background: #5a6268;
+        }
+
+        /* Error message */
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .articles-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .article-content {
+                padding: 1rem;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">🐟 我的部落格</div>
+                <nav class="nav-menu">
+                    <a href="#" class="nav-link active" data-page="home">首頁</a>
+                    <a href="#" class="nav-link" data-page="about">關於</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <!-- 首頁：文章列表 -->
+            <section id="home-page" class="page-section">
+                <div class="nav-buttons">
+                    <button class="btn" onclick="loadArticleList()">重新整理</button>
+                </div>
+                <div id="articles-container">
+                    <div class="loading">載入文章中</div>
+                </div>
+            </section>
+
+            <!-- 文章內容頁 -->
+            <section id="article-page" class="page-section hidden">
+                <div class="nav-buttons">
+                    <button class="btn secondary" onclick="showHomePage()">← 返回首頁</button>
+                </div>
+                <article id="article-content" class="article-content">
+                    <!-- 文章內容將在這裡渲染 -->
+                </article>
+            </section>
+
+            <!-- 關於頁面 -->
+            <section id="about-page" class="page-section hidden">
+                <div class="nav-buttons">
+                    <button class="btn secondary" onclick="showHomePage()">← 返回首頁</button>
+                </div>
+                <article class="article-content">
+                    <h1>關於這個部落格</h1>
+                    <p>這是一個基於 Markdown 的簡單部落格系統。</p>
+                    <p>文章存放在 GitHub 上，透過 JavaScript 動態載入並渲染。</p>
+                </article>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // === 設定區域 ===
+        const CONFIG = {
+            // GitHub 設定 - 請修改為您的倉庫資訊
+            github: {
+                username: 'Fi5herL',
+                repository: 'fi5herl.github.io',
+                branch: 'main',
+                articlesPath: 'articles' // 文章資料夾路徑
+            },
+            
+            // 部落格設定
+            blog: {
+                title: '我的部落格',
+                postsPerPage: 10
+            }
+        };
+
+        // === 全域變數 ===
+        let articlesList = [];
+        let currentArticle = null;
+
+        // === 初始化 ===
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMermaid();
+            setupNavigation();
+            loadArticleList();
+        });
+
+        // === Mermaid 初始化 ===
+        function initializeMermaid() {
+            if (typeof mermaid !== 'undefined') {
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: 'neutral',
+                    themeVariables: {
+                        primaryColor: '#ffffff',
+                        primaryTextColor: '#2c3e50',
+                        primaryBorderColor: '#dee2e6',
+                        lineColor: '#3498db'
+                    }
+                });
+            }
+        }
+
+        // === 導航設定 ===
+        function setupNavigation() {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = this.dataset.page;
+                    showPage(page);
+                    
+                    // 更新 active 狀態
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        // === 頁面顯示控制 ===
+        function showPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            const targetPage = document.getElementById(pageId + '-page');
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            }
+        }
+
+        function showHomePage() {
+            showPage('home');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.querySelector('.nav-link[data-page="home"]').classList.add('active');
+        }
+
+        // === GitHub API 相關函數 ===
+        async function fetchGitHubContent(path) {
+            const url = `https://api.github.com/repos/${CONFIG.github.username}/${CONFIG.github.repository}/contents/${path}?ref=${CONFIG.github.branch}`;
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('GitHub API 請求失敗:', error);
+                throw error;
+            }
+        }
+
+        async function fetchMarkdownContent(path) {
+            try {
+                const fileInfo = await fetchGitHubContent(path);
+                
+                if (fileInfo.content) {
+                    // GitHub API 返回的內容是 base64 編碼的
+                    const content = atob(fileInfo.content);
+                    return content;
+                } else {
+                    throw new Error('無法取得檔案內容');
+                }
+            } catch (error) {
+                console.error('載入 Markdown 檔案失敗:', error);
+                throw error;
+            }
+        }
+
+        // === 文章載入相關函數 ===
+        async function loadArticleList() {
+            const container = document.getElementById('articles-container');
+            container.innerHTML = '<div class="loading">載入文章列表中</div>';
+
+            try {
+                const files = await fetchGitHubContent(CONFIG.github.articlesPath);
+                
+                // 過濾出 .md 檔案
+                const markdownFiles = files.filter(file => 
+                    file.type === 'file' && file.name.endsWith('.md')
+                );
+
+                if (markdownFiles.length === 0) {
+                    container.innerHTML = '<div class="error">沒有找到任何 Markdown 文章檔案。</div>';
+                    return;
+                }
+
+                // 載入每個文章的 metadata
+                articlesList = [];
+                for (const file of markdownFiles) {
+                    try {
+                        const content = await fetchMarkdownContent(file.path);
+                        const article = parseArticleMetadata(content, file);
+                        articlesList.push(article);
+                    } catch (error) {
+                        console.error(`載入文章 ${file.name} 失敗:`, error);
+                    }
+                }
+
+                // 按日期排序（最新的在前）
+                articlesList.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                renderArticleList();
+
+            } catch (error) {
+                console.error('載入文章列表失敗:', error);
+                container.innerHTML = '<div class="error">載入文章列表失敗，請檢查網路連線或稍後再試。</div>';
+            }
+        }
+
+        function parseArticleMetadata(content, fileInfo) {
+            const lines = content.split('\n');
+            let title = fileInfo.name.replace('.md', '');
+            let date = new Date(fileInfo.name.match(/\d{4}-\d{2}-\d{2}/) || Date.now());
+            let preview = '';
+
+            // 解析 front matter（如果存在）
+            if (lines[0] === '---') {
+                let frontMatterEnd = -1;
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i] === '---') {
+                        frontMatterEnd = i;
+                        break;
+                    }
+                }
+
+                if (frontMatterEnd > 0) {
+                    for (let i = 1; i < frontMatterEnd; i++) {
+                        const line = lines[i];
+                        if (line.startsWith('title:')) {
+                            title = line.substring(6).trim().replace(/['"]/g, '');
+                        } else if (line.startsWith('date:')) {
+                            date = new Date(line.substring(5).trim());
+                        }
+                    }
+                    
+                    // 取得內容預覽（排除 front matter）
+                    const contentLines = lines.slice(frontMatterEnd + 1);
+                    preview = contentLines.slice(0, 3).join(' ').substring(0, 150) + '...';
+                } else {
+                    preview = lines.slice(0, 3).join(' ').substring(0, 150) + '...';
+                }
+            } else {
+                // 如果沒有 front matter，嘗試從第一行取得標題
+                if (lines[0].startsWith('# ')) {
+                    title = lines[0].substring(2).trim();
+                    preview = lines.slice(1, 4).join(' ').substring(0, 150) + '...';
+                } else {
+                    preview = lines.slice(0, 3).join(' ').substring(0, 150) + '...';
+                }
+            }
+
+            return {
+                title,
+                date,
+                preview: preview.replace(/[#*`>\-\[\]()!]/g, '').trim(),
+                filename: fileInfo.name,
+                path: fileInfo.path,
+                content // 暫存完整內容
+            };
+        }
+
+        function renderArticleList() {
+            const container = document.getElementById('articles-container');
+            
+            if (articlesList.length === 0) {
+                container.innerHTML = '<div class="error">沒有找到任何文章。</div>';
+                return;
+            }
+
+            const articlesHTML = articlesList.map(article => `
+                <div class="article-card" onclick="loadArticle('${article.path}')">
+                    <div class="article-header">
+                        <h3 class="article-title">${escapeHtml(article.title)}</h3>
+                        <div class="article-meta">${formatDate(article.date)}</div>
+                    </div>
+                    <div class="article-preview">${escapeHtml(article.preview)}</div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `<div class="articles-grid">${articlesHTML}</div>`;
+        }
+
+        async function loadArticle(path) {
+            showPage('article');
+            const contentElement = document.getElementById('article-content');
+            contentElement.innerHTML = '<div class="loading">載入文章中</div>';
+
+            try {
+                const content = await fetchMarkdownContent(path);
+                renderArticle(content);
+            } catch (error) {
+                console.error('載入文章失敗:', error);
+                contentElement.innerHTML = '<div class="error">載入文章失敗，請稍後再試。</div>';
+            }
+        }
+
+        function renderArticle(markdownContent) {
+            const contentElement = document.getElementById('article-content');
+            
+            // 使用 marked.js 轉換 Markdown
+            let html = marked.parse(markdownContent, {
+                breaks: true,
+                gfm: true
+            });
+
+            // 處理 Mermaid 圖表
+            html = processMermaidDiagrams(html);
+            
+            // 處理程式碼區塊
+            html = processCodeBlocks(html);
+
+            contentElement.innerHTML = html;
+
+            // 後處理
+            setTimeout(() => {
+                // 執行 Mermaid 渲染
+                if (typeof mermaid !== 'undefined') {
+                    mermaid.run({ nodes: contentElement.querySelectorAll('.mermaid') });
+                }
+
+                // 執行 Prism 語法高亮
+                if (typeof Prism !== 'undefined') {
+                    Prism.highlightAllUnder(contentElement);
+                }
+
+                // 添加複製按鈕
+                addCopyButtons(contentElement);
+            }, 100);
+        }
+
+        // === Markdown 處理函數 ===
+        function processMermaidDiagrams(html) {
+            // 處理 Mermaid 圖表
+            const mermaidRegex = /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g;
+            return html.replace(mermaidRegex, (match, mermaidContent) => {
+                // 解碼 HTML 實體
+                const temp = document.createElement('textarea');
+                temp.innerHTML = mermaidContent;
+                const decodedContent = temp.value;
+                return `<div class="mermaid">${decodedContent}</div>`;
+            });
+        }
+
+        function processCodeBlocks(html) {
+            // 為程式碼區塊添加容器
+            const codeBlockRegex = /(<pre><code(?:\s+class="[^"]*")?>([\s\S]*?)<\/code><\/pre>)/g;
+            return html.replace(codeBlockRegex, (match, fullBlock, codeContent) => {
+                if (match.includes('language-mermaid')) {
+                    return match; // 不處理 Mermaid 圖表
+                }
+                return `<div class="code-container" style="position: relative;">${fullBlock}</div>`;
+            });
+        }
+
+        function addCopyButtons(container) {
+            container.querySelectorAll('pre code').forEach(codeBlock => {
+                const pre = codeBlock.parentElement;
+                const wrapper = pre.parentElement;
+                
+                if (wrapper && wrapper.classList.contains('code-container')) {
+                    // 創建複製按鈕
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'copy-button';
+                    copyButton.textContent = '複製';
+                    copyButton.onclick = () => copyCode(codeBlock, copyButton);
+                    
+                    wrapper.appendChild(copyButton);
+                }
+            });
+        }
+
+        function copyCode(codeElement, button) {
+            const code = codeElement.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '已複製!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('複製失敗:', err);
+                button.textContent = '複製失敗';
+                setTimeout(() => {
+                    button.textContent = '複製';
+                }, 2000);
+            });
+        }
+
+        // === 工具函數 ===
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(date) {
+            return new Intl.DateTimeFormat('zh-TW', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }).format(date);
+        }
+    </script>
+</body>
+</html>
