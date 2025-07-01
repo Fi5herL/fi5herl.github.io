@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中文編碼測試</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .result {
+            background: #f0f0f0;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>中文編碼問題診斷工具</h1>
+    
+    <div class="test-section">
+        <h2>1. 基本中文顯示測試</h2>
+        <p>這是正常的中文字：你好世界！PPT Party 六月場次</p>
+        <p>表情符號測試：🎉📅💡📍🍱</p>
+    </div>
+
+    <div class="test-section">
+        <h2>2. 錯誤編碼修正測試</h2>
+        <p>原始錯誤文字：</p>
+        <div class="result" id="original-text">
+            ð©🎉 PPT Party<br>
+            ð📅 å…­æœˆå ´æ¬¡æ™‚é–"ï¼š6/1ã€6/8ã€6/29ï¼ˆé€±æ—¥ï¼‰ä¸­åˆ 12:30â€"13:30<br>
+            ð💡 ç²¾å½©ç°¡å ±è¼ªç•ªç™»å ´<br>
+            ð📍 ä¸»é¡Œèˆ‡å ´æ¬¡ä¸€è¦½ï¼šhttps://reurl.cc/qGbLM3<br>
+            èª æ½"邀請弟兄姊妹與ç¦éŸ³æœ‹å‹ä¸€èµ·åˆ†äº«ç"Ÿæ´»ï¼<br>
+            ð🍱 ä¸­åˆ12:00æ­¡è¿Žä¸€èµ·å…ˆä¾†åˆé¤ï¼
+        </div>
+        
+        <button onclick="fixEncoding()">修正編碼</button>
+        
+        <p>修正後文字：</p>
+        <div class="result" id="fixed-text"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. GitHub 檔案編碼測試</h2>
+        <button onclick="testGitHubFetch()">測試 GitHub 檔案讀取</button>
+        <div class="result" id="github-result"></div>
+    </div>
+
+    <script>
+        function fixEncoding() {
+            const original = document.getElementById('original-text').textContent;
+            let fixed = original;
+            
+            // 常見中文編碼錯誤的修正對應表
+            const fixMap = {
+                'ð©': '🎉',
+                'ð📅': '📅',
+                'ð💡': '💡', 
+                'ð📍': '📍',
+                'ð🍱': '🍱',
+                'å…­æœˆ': '六月',
+                'å ´æ¬¡': '場次',
+                'æ™‚é–"': '時間',
+                'ï¼š': '：',
+                'ã€': '、',
+                'ï¼ˆ': '（',
+                'é€±æ—¥': '週日',
+                'ï¼‰': '）',
+                'ä¸­åˆ': '中午',
+                'â€"': '–',
+                'ç²¾å½©': '精彩',
+                'ç°¡å ±': '簡報',
+                'è¼ª': '輪',
+                'ç•ª': '番',
+                'ç™»': '登',
+                'å ´': '場',
+                'ä¸»é¡Œ': '主題',
+                'èˆ‡': '與',
+                'ä¸€è¦½': '一覽',
+                'èª æ½"': '誠摯',
+                'é‚€è«‹': '邀請',
+                'å¼Ÿå…„': '弟兄',
+                'å§Šå¦¹': '姊妹',
+                'ç¦éŸ³': '福音',
+                'æœ‹å‹': '朋友',
+                'ä¸€èµ·': '一起',
+                'åˆ†äº«': '分享',
+                'ç"Ÿæ´»': '生活',
+                'ï¼': '！',
+                'æ­¡è¿Ž': '歡迎',
+                'å…ˆä¾†': '先來',
+                'åˆé¤': '午餐'
+            };
+            
+            Object.keys(fixMap).forEach(key => {
+                fixed = fixed.replace(new RegExp(key, 'g'), fixMap[key]);
+            });
+            
+            document.getElementById('fixed-text').textContent = fixed;
+        }
+
+        async function testGitHubFetch() {
+            const resultDiv = document.getElementById('github-result');
+            resultDiv.innerHTML = '測試中...';
+            
+            try {
+                // 測試讀取您的 GitHub 檔案
+                const response = await fetch('https://api.github.com/repos/Fi5herL/fi5herl.github.io/contents/README.md');
+                const data = await response.json();
+                
+                if (data.content) {
+                    // 正確的 UTF-8 解碼方式
+                    const binaryString = atob(data.content);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    const content = new TextDecoder('utf-8').decode(bytes);
+                    
+                    resultDiv.innerHTML = `
+                        <h4>成功讀取檔案</h4>
+                        <p><strong>檔案大小：</strong>${data.size} bytes</p>
+                        <p><strong>編碼：</strong>${data.encoding}</p>
+                        <p><strong>內容預覽：</strong></p>
+                        <pre style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 1rem; border-radius: 4px;">${content.substring(0, 500)}...</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = '<p style="color: red;">無法取得檔案內容</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">錯誤：${error.message}</p>`;
+            }
+        }
+
+        // 頁面載入時自動執行修正測試
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('頁面載入完成，字符編碼測試可用');
+        });
+    </script>
+</body>
+</html>
