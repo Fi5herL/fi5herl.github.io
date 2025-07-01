@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPT Party 開跑啦！</title>
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/616/616656.png" type="image/x-icon">
+    <!-- 其他 favicon links -->
+
+    <style>
+        /* 確保HTML和BODY元素都沒有背景色，並且佔滿視窗 */
+        html {
+            background-color: transparent; /* 確保根元素背景透明 */
+            height: 100%; /* 讓html元素也佔滿高度 */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh; /* 確保 body 至少是視窗高度 */
+            box-sizing: border-box;
+            background-color: transparent; /* 使 body 背景透明，這樣就不會有灰色底 */
+            display: flex;
+            justify-content: center;
+            align-items: center; /* 垂直和水平居中 iframe (卡片) */
+        }
+
+        iframe {
+            border: none; /* 移除 iframe 的預設邊框 */
+            display: block; /* 確保 aspect-ratio 和 max-width 正常工作 */
+            
+            width: 95%; 
+            max-width: 720px;
+
+            /* 
+             * 調整 aspect-ratio 以確保 iframe 有足夠的高度來容納所有內容，從而移除內部捲軸。
+             * 原始比例可能是 2 / 3 (高度約為寬度的 1.5 倍)。
+             * 如果內容較長，需要增加高度的比例，即減小 aspect-ratio 的值 (寬/高)。
+             * 例如：
+             *   嘗試 2 / 3.2 (高度約為寬度的 1.6 倍)
+             *   嘗試 2 / 3.4 (高度約為寬度的 1.7 倍)
+             *   嘗試 2 / 3.5 (高度約為寬度的 1.75 倍)
+             *   嘗試 2 / 3.6 (高度約為寬度的 1.8 倍)
+             * 
+             * 請根據實際內容高度，微調下面 '3.5' 這個數字 (可以改為 3.2, 3.3, 3.4, 3.6, 3.7 等)，
+             * 直到 iframe 內部的垂直捲軸消失。
+             */
+            aspect-ratio: 2 / 3.5; /* <<--- 主要調整這裡的分母，例如 '3.5' */
+            
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* 保留卡片陰影 */
+            border-radius: 15px; /* 保留卡片圓角 */
+        }
+
+        /* 針對非常窄的螢幕 */
+        @media (max-width: 400px) {
+            iframe {
+                width: 98%; /* 在極窄螢幕上更寬一點 */
+                /* 如果需要在小螢幕上進一步調整高度比例，也可以在這裡覆蓋 aspect-ratio */
+                /* aspect-ratio: 2 / 3.5; */
+            }
+        }
+    </style>
+</head>
+<body>
+    <iframe id="eventCardFrame" 
+            src="https://script.google.com/macros/s/AKfycbxNFuVfJU5lP0dGBQBUMkPy3MDGfreuVAdiXXoQjD4CLnvwEK55uyBKGiuSm0nDKt9i/exec"
+            title="PPT Party 開跑啦！🚀">
+        歡迎邀約親朋好友報名喔~~
+    </iframe>
+</body>
+</html>
