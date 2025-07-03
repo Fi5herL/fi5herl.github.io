@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <title>Docxpeed</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
+    <script>
+        window.pdfjsLib = window.pdfjsLib || window['pdfjs-dist/build/pdf'] || (window.pdfjsLib && window.pdfjsLib.default);
+        if (window.pdfjsLib && window.pdfjsLib.getDocument) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.worker.min.js";
+        }
+    </script>
+    <style>
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #2d2d30;
+            --bg-tertiary: #252526;
+            --text-primary: #cccccc;
+            --text-secondary: #9d9d9d;
+            --text-accent: #569cd6;
+            --border-color: #3e3e42;
+            --hover-color: #094771;
+            --selection-color: #264f78;
+            --highlight-bg: rgba(255, 255, 0, 0.3);
+            --code-bg: #1e1e1e;
+            --font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            --font-family-code: 'Consolas', 'Courier New', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-tertiary); }
+        ::-webkit-scrollbar-thumb { background-color: #555; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background-color: #777; }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar { width: 300px; background-color: var(--bg-tertiary); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 10px; transition: transform 0.3s ease; }
+        .sidebar h2 { font-size: 16px; padding: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 10px; color: var(--text-accent); }
+        #drop-zone { border: 2px dashed var(--border-color); border-radius: 8px; padding: 30px; text-align: center; color: var(--text-secondary); margin-bottom: 15px; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+        #drop-zone.drag-over { background: var(--bg-secondary); border-color: var(--text-accent); }
+        #file-input { display: none; }
+        #file-list { list-style: none; overflow-y: auto; flex-grow: 1; }
+        .file-item { padding: 8px 12px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; transition: background 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .file-item:hover { background: var(--hover-color); }
+        .file-item.active { background: var(--selection-color); color: white; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .toolbar { display: flex; gap: 10px; padding: 8px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); align-items: center; }
+        .toolbar button, .search-container button { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 4px; cursor: pointer; transition: background 0.2s, opacity 0.2s; }
+        .toolbar button:hover, .search-container button:hover { background: var(--hover-color); }
+        .toolbar button.disabled { background: var(--bg-tertiary); color: var(--text-secondary); cursor: not-allowed; opacity: 0.5; }
+        .toolbar button.disabled:hover { background: var(--bg-tertiary); }
+        #search-container { display: none; gap: 5px; align-items: center; padding-right: 10px; }
+        #search-box { background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 5px 8px; border-radius: 4px; width: 200px; }
+        #tab-bar { display: flex; background: var(--bg-primary); border-bottom: 1px solid var(--border-color); overflow-x: auto; }
+        .editor-tab { padding: 8px 16px; background: none; border: none; color: var(--text-secondary); border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 8px; cursor: pointer; white-space: nowrap; }
+        .editor-tab.active { color: var(--text-primary); background: var(--bg-tertiary); border-bottom-color: var(--text-accent); }
+        .tab-close { opacity: 0.6; transition: opacity 0.2s, background 0.2s; padding: 2px; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
+        .tab-close:hover { opacity: 1; background: var(--hover-color); }
+        .modified-indicator { font-weight: bold; color: var(--text-accent); }
+        
+        #editor-wrapper { flex: 1; overflow-y: auto; position: relative; }
+        #editor-content { padding: 30px 40px; outline: none; line-height: 1.7; font-size: 16px; max-width: 900px; margin: 0 auto; }
+        #editor-content[contenteditable="true"] { caret-color: var(--text-accent); }
+        
+        #editor-content p { margin-bottom: 1em; }
+        #editor-content h1, #editor-content h2, #editor-content h3, #editor-content h4, #editor-content h5, #editor-content h6 { color: var(--text-primary); font-weight: 600; margin-top: 1.5em; margin-bottom: 0.8em; line-height: 1.3; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+        #editor-content h1 { font-size: 2.2em; }
+        #editor-content h2 { font-size: 1.8em; }
+        #editor-content h3 { font-size: 1.5em; }
+        #editor-content h4 { font-size: 1.2em; }
+        #editor-content a { color: var(--text-accent); text-decoration: none; }
+        #editor-content a:hover { text-decoration: underline; }
+        #editor-content blockquote { margin: 1.5em 0; padding: 0.5em 1em; border-left: 4px solid var(--text-accent); background: var(--bg-tertiary); color: var(--text-secondary); }
+        #editor-content ul, #editor-content ol { padding-left: 2em; margin-bottom: 1em; }
+        #editor-content li { margin-bottom: 0.5em; }
+        #editor-content code { background: var(--code-bg); color: #d69d85; font-family: var(--font-family-code); padding: 0.2em 0.4em; border-radius: 4px; font-size: 90%; }
+        #editor-content pre { background: var(--code-bg); padding: 1em; border-radius: 6px; overflow-x: auto; margin: 1.5em 0; border: 1px solid var(--border-color); }
+        #editor-content pre code { padding: 0; background: none; }
+        #editor-content img { max-width: 100%; height: auto; display: block; margin: 16px auto; }
+        
+        #editor-content table { width: 100%; border-collapse: collapse; margin: 2em 0; background: var(--bg-secondary); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+        #editor-content th, #editor-content td { padding: 12px 15px; border: 1px solid var(--border-color); text-align: left; }
+        #editor-content th { background: var(--bg-tertiary); color: var(--text-accent); font-weight: 600; }
+        #editor-content tr:nth-child(even) { background-color: rgba(0,0,0,0.1); }
+        #editor-content tr:hover { background-color: rgba(86, 156, 214, 0.15); }
+        
+        .table-title {
+            color: var(--text-accent); font-size: 18px; margin-top: 2em; margin-bottom: 1em; font-weight: 600;
+            border-bottom: none !important; padding-bottom: 0 !important;
+        }
+
+        #loader { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(30, 30, 30, 0.8); color: var(--text-primary); display: flex; align-items: center; justify-content: center; font-size: 1.5em; z-index: 10; display: none; }
+        .welcome-screen { text-align: center; padding-top: 20vh; color: var(--text-secondary); }
+        .welcome-screen h1 { color: var(--text-primary); border-bottom: none; }
+        .welcome-screen p { margin-top: 10px; }
+
+        .right-panel { width: 300px; background-color: var(--bg-tertiary); border-left: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        .panel-selector { display: flex; border-bottom: 1px solid var(--border-color); }
+        .panel-selector button { flex: 1; padding: 10px; background: none; border: none; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.2s, border-color 0.2s; }
+        .panel-selector button.active { color: var(--text-accent); border-bottom-color: var(--text-accent); }
+        .panel-content { padding: 15px; overflow-y: auto; flex-grow: 1; }
+        .panel-content-item { display: none; }
+        .panel-content-item.active { display: block; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-item { background: var(--bg-secondary); padding: 15px; border-radius: 6px; }
+        .stat-item .label { color: var(--text-secondary); font-size: 14px; }
+        .stat-item .value { color: var(--text-primary); font-size: 24px; font-weight: bold; }
+        #panel-content-outline ul { list-style: none; padding: 0; }
+        #panel-content-outline li { margin-bottom: 8px; }
+        #panel-content-outline a { color: var(--text-secondary); text-decoration: none; transition: color 0.2s, background 0.2s; display: block; padding: 4px 8px; border-radius: 4px; }
+        #panel-content-outline a:hover { color: var(--text-accent); background: var(--hover-color); }
+        .settings-item { margin-bottom: 20px; }
+        .settings-item label { display: block; margin-bottom: 8px; color: var(--text-secondary); }
+        .settings-item select, .settings-item input[type="range"] { width: 100%; padding: 8px; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; }
+        .settings-item input[type="checkbox"] { width: auto; vertical-align: middle; margin-right: 5px;}
+
+        .status-bar { height: 24px; background-color: var(--bg-tertiary); border-top: 1px solid var(--border-color); padding: 0 15px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+        #edit-mode-status { color: #4ec9b0; }
+
+        .highlight { background-color: var(--highlight-bg); border-bottom: 1px solid orange; border-radius: 2px; }
+        .current-highlight { background-color: #ff9800; color: black; box-shadow: 0 0 10px #ff9800; }
+        #notification-container { position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+        .notification { background: var(--bg-secondary); color: var(--text-primary); padding: 15px 20px; border-radius: 6px; border-left: 4px solid var(--text-accent); box-shadow: 0 4px 12px rgba(0,0,0,0.3); transform: translateX(120%); transition: transform 0.3s ease; }
+        .notification.error { border-left-color: #f44747; }
+        .notification.success { border-left-color: #4ec9b0; }
+        .notification.show { transform: translateX(0); }
+        .mobile-toggle { display: none; position: fixed; top: 10px; left: 10px; z-index: 101; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); width: 40px; height: 40px; border-radius: 50%; font-size: 20px; }
+
+        @media (max-width: 1024px) { .right-panel { display: none; } }
+        body.focus-mode .sidebar,
+        body.focus-mode .right-panel,
+        body.focus-mode .toolbar,
+        body.focus-mode .status-bar {
+            display: none;
+        }
+
+        body.focus-mode .main-content {
+            width: 100%;
+            height: 100vh;
+        }
+
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; }
+            .sidebar { position: absolute; height: 100%; z-index: 100; transform: translateX(-100%); width: 80%; max-width: 300px; }
+            .sidebar.open { transform: translateX(0); box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
+            .mobile-toggle { display: block; }
+            .main-content { width: 100%; }
+            #editor-content { padding: 20px 15px; }
+        }
+
+        #panel-content-comments { max-height: 400px; overflow-y: auto; }
+        .comment-item { background: var(--bg-secondary); border-left: 4px solid var(--text-accent); margin-bottom: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        .comment-item:hover { background: var(--hover-color); }
+        .comment-item .comment-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+        .comment-item.active { background: #ff9800; color: #222; }
+        .comment-actions { margin-top: 8px; text-align: right; }
+        .comment-actions button { background: #569cd6; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 5px; font-size: 12px; }
+        .comment-actions button:hover { opacity: 0.8; }
+        .comment-actions button.delete-comment-btn { background: #f44747; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar" id="sidebar">
+            <h2>文件管理器</h2>
+            <div id="drop-zone"><p>拖拽 .docx 文件到此處</p><p>或點擊選擇</p></div>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button id="new-file-btn" style="flex: 1;">新建文件</button>
+                <button id="clear-all-btn" style="flex: 1;">全部清除</button>
+            </div>
+            <ul id="file-list"></ul>
+        </div>
+        <input type="file" id="file-input" accept=".docx,.pdf,.html" multiple>
+
+        <div class="main-content">
+            <div class="toolbar">
+                <button id="mobile-toggle" class="mobile-toggle">☰</button>
+                <button id="toggle-edit-mode-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 切換編輯模式 (Ctrl+E)</button>
+                
+                <button id="search-toggle-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 搜尋 (Ctrl+F)</button>
+                <button id="add-comment-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><circle cx="18" cy="6" r="3"/></svg> 插入註解</button>
+                <div id="search-container">
+                    <input type="text" id="search-box" placeholder="輸入關鍵字...">
+                    <button id="search-prev-btn">&lt;</button>
+                    <button id="search-next-btn">&gt;</button>
+                    <span id="search-count">0/0</span>
+                    <button id="search-close-btn">×</button>
+                </div>
+            </div>
+            <div id="tab-bar"></div>
+            <div id="editor-wrapper">
+                <div id="loader">正在加載...</div>
+                <div id="editor-content" contenteditable="false">
+                    <div class="welcome-screen">
+                        <h1>歡迎使用 Docxpeed</h1>
+                        <p>這是一個文件快速瀏覽器，讓您在瀏覽器中輕鬆瀏覽與編輯 .docx、PDF、HTML 文件。</p>
+                        <div style="text-align: left; max-width: 600px; margin: 20px auto; padding: 20px; background: var(--bg-secondary); border-radius: 8px;">
+                            <h3 style="color: var(--text-accent); margin-bottom: 15px;">快速入門指南</h3>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="margin-bottom: 10px;">📂 <b>開啟文件:</b> 從左側文件管理器拖放您的 .docx 文件，或點擊該區域來選擇文件。</li>
+                                <li style="margin-bottom: 10px;">✏️ <b>編輯內容:</b> 點擊上方的 "切換編輯模式" (或按 Ctrl+E) 按鈕，即可開始編輯您的文件。</li>
+                                <li style="margin-bottom: 10px;">💾 <b>保存進度:</b> 您的編輯會在本機自動保存。您也可以點擊 "下載為 HTML" (或按 Ctrl+S) 來保存您的工作。</li>
+                                <li style="margin-bottom: 10px;">🎨 <b>個性化:</b> 在右側的 "設定" 面板中，您可以更換主題、調整字體大小，以及啟用/禁用自動保存功能。</li>
+                                <li style="margin-bottom: 10px;">✨ <b>整理表格:</b> 使用 "整理表格" 功能，可以自動為文件中的表格添加標題。</li>
+                            </ul>
+                        </div>
+                        <p style="margin-top: 20px;">祝您使用愉快！</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="panel-selector">
+                <button data-panel="stats" class="active">統計</button>
+                <button data-panel="outline">大綱</button>
+                <button data-panel="comments">註解</button>
+                <button data-panel="settings">設定</button>
+                <button data-panel="about">關於</button>
+            </div>
+            <div class="panel-content">
+                <div id="stats-panel" class="panel-content-item active">
+                    <h3>文件統計</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item"><div class="label">字數</div><div id="word-count" class="value">0</div></div>
+                        <div class="stat-item"><div class="label">字符數</div><div id="char-count" class="value">0</div></div>
+                        <div class="stat-item"><div class="label">段落數</div><div id="para-count" class="value">0</div></div>
+                        <div class="stat-item"><div class="label">表格數</div><div id="table-count" class="value">0</div></div>
+                    </div>
+                </div>
+                <div id="outline-panel" class="panel-content-item">
+                    <h3>文件大綱</h3>
+                    <div id="panel-content-outline"><p>沒有可顯示的大綱。</p></div>
+                </div>
+                <div id="comments-panel" class="panel-content-item">
+                    <h3>註解</h3>
+                    <div id="panel-content-comments"><p>尚無註解。</p></div>
+                </div>
+                <div id="settings-panel" class="panel-content-item">
+                    <h3>編輯器設定</h3>
+                    <div class="settings-item"><label for="theme-select">主題</label><select id="theme-select"><option value="dark">Obsidian Dark</option><option value="light">Classic Light</option><option value="solarized-light">Solarized Light</option><option value="nord">Nord</option></select></div>
+                    <div class="settings-item"><label for="font-size-slider">字體大小: <span id="font-size-value">16</span>px</label><input type="range" id="font-size-slider" min="12" max="24" value="16"></div>
+                    <div class="settings-item"><label><input type="checkbox" id="auto-save-check"> 自動保存</label></div>
+                </div>
+                <div id="about-panel" class="panel-content-item">
+                    <h3>關於本編輯器</h3>
+                    <div style="padding: 10px; line-height: 1.6;">
+                        <p><b>Obsidian 風格 DOCX 編輯器</b></p>
+                        <p>版本: 1.0.0</p>
+                        <p>這是一個開源項目，旨在提供一個簡潔、高效且美觀的 .docx 文件在線編輯環境。靈感來自於 Obsidian 的極簡設計和強大功能。</p>
+                        <p style="margin-top: 15px;"><b>主要特色：</b></p>
+                        <ul style="padding-left: 20px;">
+                            <li>即時 .docx 轉 HTML 預覽</li>
+                            <li>所見即所得的編輯模式</li>
+                            <li>文件統計與大綱視圖</li>
+                            <li>多主題與字體大小客製化</li>
+                            <li>鍵盤快捷鍵支援</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div>
+            <span id="status-message">準備就緒</span>
+            <span id="last-saved-status" style="margin-left: 15px;"></span>
+        </div>
+        <div>
+            <span id="live-word-count" style="margin-right: 15px;"></span>
+            <span id="edit-mode-status"></span>
+        </div>
+    </div>
+
+    <div id="notification-container"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let loadedFiles = [], openTabs = [], activeTabIndex = -1, isEditMode = false, searchResults = [], currentSearchIndex = -1, autoSaveInterval;
+
+    const loader = document.getElementById('loader');
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileList = document.getElementById('file-list');
+    const editorContent = document.getElementById('editor-content');
+    const tabBar = document.getElementById('tab-bar');
+    const statusMessage = document.getElementById('status-message');
+    const editModeStatus = document.getElementById('edit-mode-status');
+    const wordCount = document.getElementById('word-count'), charCount = document.getElementById('char-count'), paraCount = document.getElementById('para-count'), tableCount = document.getElementById('table-count');
+    const panelContentOutline = document.getElementById('panel-content-outline');
+    const toggleEditModeBtn = document.getElementById('toggle-edit-mode-btn'), searchToggleBtn = document.getElementById('search-toggle-btn');
+    const searchCloseBtn = document.getElementById('search-close-btn'), searchPrevBtn = document.getElementById('search-prev-btn'), searchNextBtn = document.getElementById('search-next-btn');
+    const searchContainer = document.getElementById('search-container'), searchBox = document.getElementById('search-box'), searchCount = document.getElementById('search-count');
+    const themeSelect = document.getElementById('theme-select'), fontSizeSlider = document.getElementById('font-size-slider'), fontSizeValue = document.getElementById('font-size-value'), autoSaveCheck = document.getElementById('auto-save-check');
+    const mobileToggleBtn = document.getElementById('mobile-toggle'), sidebar = document.getElementById('sidebar');
+
+    const newFileBtn = document.getElementById('new-file-btn');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    const addCommentBtn = document.getElementById('add-comment-btn');
+    const commentsPanel = document.getElementById('comments-panel');
+    const panelContentComments = document.getElementById('panel-content-comments');
+
+    function uuidv4() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    function init() {
+        if (typeof mammoth === 'undefined') {
+            showNotification('核心庫 mammoth.js 加載失敗，請檢查網絡連接。', 'error');
+            updateStatus('初始化失敗');
+            return;
+        }
+        setupEventListeners();
+        setupDragAndDrop();
+        loadSettings();
+        updateButtonStates();
+        updateStatus('編輯器已就緒');
+        showNotification('歡迎使用！請上傳 DOCX 文件開始。', 'info');
+    }
+
+    function setupEventListeners() {
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+        newFileBtn.addEventListener('click', createNewFile);
+        clearAllBtn.addEventListener('click', clearAllFiles);
+        toggleEditModeBtn.addEventListener('click', () => toggleEditMode());
+        editorContent.addEventListener('input', handleContentChange);
+        searchToggleBtn.addEventListener('click', () => { if (!searchToggleBtn.classList.contains('disabled')) toggleSearch(); });
+        searchCloseBtn.addEventListener('click', toggleSearch);
+        searchBox.addEventListener('input', handleSearch);
+        searchBox.addEventListener('keydown', e => { if (e.key === 'Enter') navigateSearch(1); });
+        searchPrevBtn.addEventListener('click', () => navigateSearch(-1));
+        searchNextBtn.addEventListener('click', () => navigateSearch(1));
+        document.querySelector('.panel-selector').addEventListener('click', e => {
+            if (e.target.tagName === 'BUTTON') {
+                const panelId = e.target.dataset.panel;
+                document.querySelectorAll('.panel-selector button').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                document.querySelectorAll('.panel-content-item').forEach(p => p.classList.remove('active'));
+                document.getElementById(panelId + '-panel').classList.add('active');
+            }
+        });
+        themeSelect.addEventListener('change', e => changeTheme(e.target.value));
+        fontSizeSlider.addEventListener('input', e => {
+            const size = e.target.value;
+            fontSizeValue.textContent = size;
+            editorContent.style.fontSize = `${size}px`;
+            saveSettings();
+        });
+        autoSaveCheck.addEventListener('change', () => {
+            setupAutoSave();
+            saveSettings();
+        });
+        window.addEventListener('keydown', handleKeyboardShortcuts);
+        mobileToggleBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+        document.addEventListener('click', e => {
+            if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== mobileToggleBtn) {
+                sidebar.classList.remove('open');
+            }
+        });
+        addCommentBtn.addEventListener('click', handleAddComment);
+    }
+
+    function setupDragAndDrop() {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, p => { p.preventDefault(); p.stopPropagation(); }, false));
+        ['dragenter', 'dragover'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.add('drag-over'), false));
+        ['dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.remove('drag-over'), false));
+        dropZone.addEventListener('drop', e => handleFiles(e.dataTransfer.files), false);
+    }
+
+    function handleFileSelect(e) { handleFiles(e.target.files); }
+    function handleFiles(files) { [...files].forEach(file => {
+        if (file.name.endsWith('.docx')) return loadFile(file);
+        if (file.name.endsWith('.pdf')) return loadPDFFile(file);
+        if (file.name.endsWith('.html') || file.name.endsWith('.htm')) return loadHTMLFile(file);
+    }); }
+
+    async function loadFile(file) {
+        const fileId = Date.now() + Math.random();
+        updateStatus(`正在讀取: ${file.name}...`);
+        loader.style.display = 'flex';
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.convertToHtml({ arrayBuffer });
+            const fileObj = { id: fileId, file, name: file.name, size: file.size, lastModified: file.lastModified, content: result.value, isLoaded: true, originalContent: result.value, comments: [] };
+            const savedData = localStorage.getItem(`auto-save-${fileId}`);
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                if (confirm(`找到 ${file.name} 的自動保存記錄。是否恢復？`)) {
+                    fileObj.content = parsed.content;
+                    fileObj.comments = parsed.comments || [];
+                }
+            }
+            loadedFiles.push(fileObj);
+            renderFileList();
+            openFile(fileId);
+            updateStatus(`${file.name} 已載入`);
+            showNotification(`${file.name} 已成功載入！`, 'success');
+        } catch (error) {
+            console.error('DOCX轉換錯誤:', error);
+            updateStatus(`讀取 ${file.name} 失敗`);
+            showNotification(`讀取 ${file.name} 失敗: ${error.message}`, 'error');
+        } finally {
+            loader.style.display = 'none';
+        }
+    }
+
+    async function loadPDFFile(file) {
+        if (!window.pdfjsLib || typeof window.pdfjsLib.getDocument !== 'function') {
+            showNotification('PDF.js 載入失敗，請檢查網路或重新整理', 'error');
+            updateStatus('PDF.js 載入失敗');
+            return;
+        }
+        const fileId = Date.now() + Math.random();
+        updateStatus(`正在讀取: ${file.name}...`);
+        loader.style.display = 'flex';
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let textArr = [];
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join('');
+                textArr.push(pageText);
+            }
+            const html = `<pre style="white-space: pre-wrap; word-break: break-all;">${textArr.join('\n\n--- 第分頁 ---\n\n')}</pre>`;
+            const fileObj = { id: fileId, file, name: file.name, size: file.size, lastModified: file.lastModified, content: html, isLoaded: true, originalContent: html, comments: [] };
+            loadedFiles.push(fileObj);
+            renderFileList();
+            openFile(fileId);
+            updateStatus(`${file.name} 已載入`);
+            showNotification(`${file.name} 已成功載入！`, 'success');
+        } catch (error) {
+            console.error('PDF 解析錯誤:', error);
+            updateStatus(`讀取 ${file.name} 失敗`);
+            showNotification(`讀取 ${file.name} 失敗: ${error.message}`, 'error');
+        } finally {
+            loader.style.display = 'none';
+        }
+    }
+
+    async function loadHTMLFile(file) {
+        const fileId = Date.now() + Math.random();
+        updateStatus(`正在讀取: ${file.name}...`);
+        loader.style.display = 'flex';
+        try {
+            const text = await file.text();
+            // 只取 <body> 內容
+            let html = text;
+            const bodyMatch = text.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+            if (bodyMatch) html = bodyMatch[1];
+            // 解析註解 JSON
+            let comments = [];
+            const commentsMatch = text.match(/<script[^>]*id=["']docxpeed-comments["'][^>]*>([\s\S]*?)<\/script>/i);
+            if (commentsMatch) {
+                try { comments = JSON.parse(commentsMatch[1]); } catch(e) { comments = []; }
+            }
+            const fileObj = { id: fileId, file, name: file.name, size: file.size, lastModified: file.lastModified, content: html, isLoaded: true, originalContent: html, comments };
+            loadedFiles.push(fileObj);
+            renderFileList();
+            openFile(fileId);
+            updateStatus(`${file.name} 已載入`);
+            showNotification(`${file.name} 已成功載入！`, 'success');
+        } catch (error) {
+            console.error('HTML 解析錯誤:', error);
+            updateStatus(`讀取 ${file.name} 失敗`);
+            showNotification(`讀取 ${file.name} 失敗: ${error.message}`, 'error');
+        } finally {
+            loader.style.display = 'none';
+        }
+    }
+
+    function renderFileList() {
+        fileList.innerHTML = '';
+        loadedFiles.forEach(file => {
+            const li = document.createElement('li');
+            li.className = 'file-item';
+            li.textContent = file.name;
+            li.dataset.fileId = file.id;
+            const activeTab = openTabs[activeTabIndex];
+            if (activeTab && activeTab.fileId == file.id) li.classList.add('active');
+            li.addEventListener('click', () => openFile(file.id));
+            fileList.appendChild(li);
+        });
+    }
+
+    function openFile(fileId) {
+        const existingTabIndex = openTabs.findIndex(tab => tab.fileId === fileId);
+        if (existingTabIndex !== -1) {
+            switchToTab(existingTabIndex);
+        } else {
+            const file = loadedFiles.find(f => f.id === fileId);
+            if (file) {
+                const newTab = { fileId: file.id, fileName: file.name, content: file.content, originalContent: file.originalContent, isModified: file.content !== file.originalContent, comments: [] };
+                openTabs.push(newTab);
+                switchToTab(openTabs.length - 1);
+            }
+        }
+        if (sidebar.classList.contains('open')) sidebar.classList.remove('open');
+    }
+    
+    function switchToTab(index) {
+        if (index < 0 || index >= openTabs.length) {
+            activeTabIndex = -1;
+            editorContent.innerHTML = `<div class="welcome-screen"><h1>沒有打開的文件</h1><p>從左側選擇一個文件來查看。</p></div>`;
+            updateTabs();
+            updateUIForNoActiveTab();
+            return;
+        }
+        activeTabIndex = index;
+        const tab = openTabs[index];
+        clearSearch();
+        editorContent.innerHTML = tab.content;
+        ensureTabComments(tab);
+        renderCommentsPanel();
+        updateTabs();
+        updateFileListActiveState();
+        updateStatistics();
+        generateOutline();
+        updateButtonStates();
+        updateStatus(`正在查看: ${tab.fileName}`);
+        toggleEditMode(isEditMode, true);
+    }
+    
+    function closeTab(index, e) {
+        e?.stopPropagation();
+        const tab = openTabs[index];
+        if (tab.isModified && !confirm(`文件 "${tab.fileName}" 有未保存的修改。確定要關閉嗎？`)) return;
+        localStorage.removeItem(`auto-save-${tab.fileId}`);
+        openTabs.splice(index, 1);
+        if (activeTabIndex === index) switchToTab(Math.max(0, index - 1));
+        else if (activeTabIndex > index) activeTabIndex--;
+        updateTabs();
+        if (openTabs.length === 0) switchToTab(-1);
+    }
+
+    function updateTabs() {
+        tabBar.innerHTML = '';
+        openTabs.forEach((tab, index) => {
+            const tabEl = document.createElement('button');
+            tabEl.className = 'editor-tab';
+            tabEl.dataset.index = index;
+            if (index === activeTabIndex) tabEl.classList.add('active');
+            tabEl.innerHTML = `${tab.fileName}${tab.isModified ? ' <span class="modified-indicator">•</span>' : ''}`;
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'tab-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.addEventListener('click', e => closeTab(index, e));
+            tabEl.appendChild(closeBtn);
+            tabEl.addEventListener('click', () => switchToTab(index));
+            tabBar.appendChild(tabEl);
+        });
+    }
+
+    function updateFileListActiveState() {
+        document.querySelectorAll('.file-item').forEach(item => {
+            const tab = openTabs[activeTabIndex];
+            item.classList.toggle('active', tab && item.dataset.fileId == tab.fileId);
+        });
+    }
+
+    function updateUIForNoActiveTab() {
+        isEditMode = false;
+        toggleEditMode(false, true);
+        updateFileListActiveState();
+        updateStatistics();
+        generateOutline();
+        updateButtonStates();
+        updateStatus('無活動文件');
+    }
+
+    function updateButtonStates() {
+        const hasActiveTab = activeTabIndex >= 0;
+        [toggleEditModeBtn, searchToggleBtn].forEach(btn => btn.classList.toggle('disabled', !hasActiveTab));
+        if (!hasActiveTab && searchContainer.style.display === 'flex') toggleSearch();
+    }
+
+    function toggleEditMode(forceState, isSwitchingTab = false) {
+        if (toggleEditModeBtn.classList.contains('disabled') && !isSwitchingTab) return;
+        isEditMode = typeof forceState === 'boolean' ? forceState : !isEditMode;
+        if (activeTabIndex < 0) isEditMode = false;
+        editorContent.contentEditable = isEditMode;
+        if (isEditMode && !isSwitchingTab) editorContent.focus();
+        toggleEditModeBtn.style.background = isEditMode ? '#4ec9b0' : '';
+        toggleEditModeBtn.style.color = isEditMode ? 'black' : '';
+        editModeStatus.textContent = isEditMode ? '編輯模式' : '';
+    }
+
+    function handleContentChange() {
+        if (activeTabIndex >= 0) {
+            const tab = openTabs[activeTabIndex];
+            tab.content = editorContent.innerHTML;
+            const modified = tab.content !== tab.originalContent;
+            if (modified !== tab.isModified) {
+                tab.isModified = modified;
+                updateTabs();
+            }
+            if (tab.comments) {
+                tab.comments.forEach(c => {
+                    const anchor = editorContent.querySelector(`.comment-anchor[data-comment-id="${c.id}"]`);
+                    c.preview = anchor ? anchor.textContent : '';
+                });
+            }
+            updateStatistics();
+            renderCommentsPanel();
+        }
+    }
+
+    function toggleSearch() {
+        const isVisible = searchContainer.style.display === 'flex';
+        searchContainer.style.display = isVisible ? 'none' : 'flex';
+        searchToggleBtn.style.display = isVisible ? 'inline-block' : 'none';
+        if (!isVisible) { searchBox.focus(); searchBox.select(); } else { clearSearch(); }
+    }
+
+    function handleSearch() {
+        clearSearch();
+        const searchTerm = searchBox.value.trim();
+        if (searchTerm.length < 1) { searchCount.textContent = '0/0'; return; }
+        const regex = new RegExp(searchTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+        const walker = document.createTreeWalker(editorContent, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        let nodesToProcess = [];
+        while (node = walker.nextNode()) nodesToProcess.push(node);
+        nodesToProcess.forEach(node => {
+            if (node.parentElement.closest('script, style')) return;
+            const text = node.textContent;
+            let match;
+            let lastIndex = 0;
+            const fragment = document.createDocumentFragment();
+            while (match = regex.exec(text)) {
+                if (match.index > lastIndex) fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+                const highlight = document.createElement('span');
+                highlight.className = 'highlight';
+                highlight.textContent = match[0];
+                fragment.appendChild(highlight);
+                lastIndex = regex.lastIndex;
+            }
+            if (lastIndex < text.length) fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+            if (fragment.childNodes.length > 1) node.parentNode.replaceChild(fragment, node);
+        });
+        searchResults = editorContent.querySelectorAll('.highlight');
+        currentSearchIndex = -1;
+        searchCount.textContent = `0/${searchResults.length}`;
+        if (searchResults.length > 0) navigateSearch(1);
+    }
+    
+    function clearSearch() {
+        editorContent.querySelectorAll('span.highlight, span.current-highlight').forEach(span => {
+            const parent = span.parentNode;
+            parent.replaceChild(document.createTextNode(span.textContent), span);
+            parent.normalize();
+        });
+        searchResults = []; currentSearchIndex = -1;
+    }
+
+    function navigateSearch(direction) {
+        if (searchResults.length === 0) return;
+        if (currentSearchIndex !== -1) searchResults[currentSearchIndex].classList.remove('current-highlight');
+        currentSearchIndex = (currentSearchIndex + direction + searchResults.length) % searchResults.length;
+        const currentHighlight = searchResults[currentSearchIndex];
+        currentHighlight.classList.add('current-highlight');
+        currentHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        searchCount.textContent = `${currentSearchIndex + 1}/${searchResults.length}`;
+    }
+
+    function updateStatistics() {
+        const liveWordCount = document.getElementById('live-word-count');
+        if (activeTabIndex < 0 || editorContent.querySelector('.welcome-screen')) {
+            wordCount.textContent = '0'; charCount.textContent = '0'; paraCount.textContent = '0'; tableCount.textContent = '0';
+            liveWordCount.textContent = '';
+            return;
+        }
+        const text = editorContent.textContent || '';
+        const words = (text.match(/\S+/g) || []).length;
+        wordCount.textContent = words;
+        charCount.textContent = text.length;
+        paraCount.textContent = editorContent.querySelectorAll('p, h1, h2, h3, h4, h5, h6').length;
+        tableCount.textContent = editorContent.querySelectorAll('table').length;
+        liveWordCount.textContent = `字數: ${words}`;
+    }
+
+    function generateOutline() {
+        const headings = editorContent.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        if (headings.length === 0) { panelContentOutline.innerHTML = '<p>沒有找到標題</p>'; return; }
+        let outlineHTML = '<ul>';
+        headings.forEach((heading, index) => {
+            const text = heading.textContent.trim();
+            if (!text) return;
+            const level = parseInt(heading.tagName.substring(1));
+            heading.id = `heading-${index}`;
+            outlineHTML += `<li style="padding-left: ${(level - 1) * 15}px;"><a href="#" data-scroll-to="${index}">${text}</a></li>`;
+        });
+        panelContentOutline.innerHTML = outlineHTML + '</ul>';
+    }
+
+    panelContentOutline.addEventListener('click', e => {
+        if (e.target.tagName === 'A') {
+            e.preventDefault();
+            const heading = document.getElementById(`heading-${e.target.dataset.scrollTo}`);
+            if (heading) {
+                heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                heading.style.transition = 'background 0.3s';
+                heading.style.background = 'rgba(86, 156, 214, 0.2)';
+                setTimeout(() => { heading.style.background = ''; }, 2000);
+            }
+        }
+    });
+
+    function changeTheme(theme) {
+        const root = document.documentElement.style;
+        const themes = {
+            'light': { '--bg-primary': '#ffffff', '--bg-secondary': '#f8f9fa', '--bg-tertiary': '#e9ecef', '--text-primary': '#212529', '--text-secondary': '#6c757d', '--border-color': '#dee2e6', '--hover-color': '#e9ecef', '--selection-color': '#0d6efd', '--code-bg': '#f8f9fa', '--text-accent': '#0d6efd' },
+            'dark': { '--bg-primary': '#1e1e1e', '--bg-secondary': '#2d2d30', '--bg-tertiary': '#252526', '--text-primary': '#cccccc', '--text-secondary': '#9d9d9d', '--border-color': '#3e3e42', '--hover-color': '#094771', '--selection-color': '#264f78', '--code-bg': '#1e1e1e', '--text-accent': '#569cd6' },
+            'solarized-light': { '--bg-primary': '#fdf6e3', '--bg-secondary': '#eee8d5', '--bg-tertiary': '#eee8d5', '--text-primary': '#657b83', '--text-secondary': '#93a1a1', '--border-color': '#eee8d5', '--hover-color': '#eee8d5', '--selection-color': '#268bd2', '--code-bg': '#eee8d5', '--text-accent': '#268bd2' },
+            'nord': { '--bg-primary': '#2e3440', '--bg-secondary': '#3b4252', '--bg-tertiary': '#434c5e', '--text-primary': '#d8dee9', '--text-secondary': '#e5e9f0', '--border-color': '#4c566a', '--hover-color': '#4c566a', '--selection-color': '#81a1c1', '--code-bg': '#3b4252', '--text-accent': '#88c0d0' }
+        };
+        for (const [key, value] of Object.entries(themes[theme])) root.setProperty(key, value);
+        saveSettings();
+    }
+    
+    function saveSettings() {
+        const settings = { theme: themeSelect.value, fontSize: fontSizeSlider.value, autoSave: autoSaveCheck.checked };
+        localStorage.setItem('obsidian-docx-settings', JSON.stringify(settings));
+    }
+    
+    function loadSettings() {
+        const settings = JSON.parse(localStorage.getItem('obsidian-docx-settings') || '{}');
+        if (settings.theme) { themeSelect.value = settings.theme; changeTheme(settings.theme); }
+        if (settings.fontSize) { fontSizeSlider.value = settings.fontSize; fontSizeValue.textContent = settings.fontSize; editorContent.style.fontSize = `${settings.fontSize}px`; }
+        if (settings.autoSave) { autoSaveCheck.checked = settings.autoSave; setupAutoSave(); }
+    }
+    
+    function handleKeyboardShortcuts(e) {
+        const ctrlOrCmd = e.ctrlKey || e.metaKey;
+        if (ctrlOrCmd && e.key === 'e') { e.preventDefault(); toggleEditModeBtn.click(); }
+        if (ctrlOrCmd && e.key === 'f') { e.preventDefault(); searchToggleBtn.click(); }
+        if (e.key === 'Escape') { if (searchContainer.style.display === 'flex') toggleSearch(); else if (sidebar.classList.contains('open')) sidebar.classList.remove('open'); }
+        if (e.ctrlKey && e.key === 'Tab') { e.preventDefault(); if (openTabs.length > 1) switchToTab((activeTabIndex + 1) % openTabs.length); }
+        if (ctrlOrCmd && e.key === 'w' && activeTabIndex >= 0) { e.preventDefault(); closeTab(activeTabIndex); }
+    }
+    
+    function setupAutoSave() {
+        if (autoSaveCheck.checked) {
+            if (!autoSaveInterval) {
+                autoSaveInterval = setInterval(autoSave, 30000);
+                showNotification('自動保存已啟用', 'info');
+            }
+        } else if (autoSaveInterval) {
+            clearInterval(autoSaveInterval);
+            autoSaveInterval = null;
+            showNotification('自動保存已禁用', 'info');
+        }
+    }
+
+    function autoSave() {
+        if (activeTabIndex >= 0 && isEditMode) {
+            const tab = openTabs[activeTabIndex];
+            if (tab.isModified) {
+                try {
+                    localStorage.setItem(`auto-save-${tab.fileId}`, JSON.stringify({ fileId: tab.fileId, content: tab.content, comments: tab.comments, timestamp: Date.now() }));
+                    const lastSavedTime = new Date().toLocaleTimeString();
+                    document.getElementById('last-saved-status').textContent = `上次保存於 ${lastSavedTime}`;
+                    updateStatus(`已於 ${lastSavedTime} 自動保存`);
+                } catch (error) {
+                    console.warn('自動保存失敗:', error);
+                    updateStatus('自動保存失敗');
+                    if (error.name === 'QuotaExceededError') {
+                        showNotification('自動保存失敗：存儲空間已滿。', 'error');
+                        autoSaveCheck.checked = false;
+                        setupAutoSave();
+                    }
+                }
+            }
+        }
+    }
+    
+    function showNotification(message, type = 'info') {
+        const container = document.getElementById('notification-container');
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        container.appendChild(notification);
+        setTimeout(() => notification.classList.add('show'), 10);
+        setTimeout(() => {
+            notification.classList.remove('show');
+            notification.addEventListener('transitionend', () => notification.remove());
+        }, 3000);
+    }
+    
+    function createNewFile() {
+        const fileName = prompt("請輸入新文件名", "Untitled.docx");
+        if (!fileName) return;
+
+        const fileId = Date.now() + Math.random();
+        const fileObj = {
+            id: fileId,
+            file: null,
+            name: fileName,
+            size: 0,
+            lastModified: Date.now(),
+            content: `<h1>${fileName.replace('.docx', '')}</h1><p>這是一個新的文件。</p>`,
+            isLoaded: true,
+            originalContent: '',
+        };
+
+        loadedFiles.push(fileObj);
+        renderFileList();
+        openFile(fileId);
+        showNotification(`新文件 "${fileName}" 已創建`, 'success');
+    }
+
+    function clearAllFiles() {
+        if (confirm("確定要清除所有文件和標籤頁嗎？此操作無法復原。")) {
+            loadedFiles = [];
+            openTabs = [];
+            activeTabIndex = -1;
+            renderFileList();
+            switchToTab(-1);
+            localStorage.clear();
+            showNotification('所有文件已清除', 'success');
+        }
+    }
+
+    function printDocument() {
+        const tab = openTabs[activeTabIndex];
+        if (!tab) return;
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>${tab.fileName}</title>
+                    <style>
+                        body { font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif; max-width: 900px; margin: auto; padding: 40px 20px; line-height: 1.6; color: #333; }
+                        h1, h2, h3, h4, h5, h6 { color: #2c3e50; margin-top: 2em; margin-bottom: .5em; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+                        th, td { padding: 12px; text-align: left; border: 1px solid #ddd; }
+                        th { background: #f8f9fa; font-weight: 600; }
+                        .table-title { color: #3498db; font-size: 18px; margin-top: 30px; margin-bottom: 10px; font-weight: 700; }
+                    </style>
+                </head>
+                <body>
+                    ${editorContent.innerHTML}
+                </body>
+            </html>
+        `);
+
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    }
+
+    function toggleFocusMode() {
+        document.body.classList.toggle('focus-mode');
+    }
+
+    function updateStatus(message) { statusMessage.textContent = message; }
+
+    function ensureTabComments(tab) {
+        if (!tab.comments) tab.comments = [];
+    }
+
+    function handleAddComment() {
+        if (!isEditMode || activeTabIndex < 0) {
+            showNotification('請先開啟編輯模式並選擇插入位置', 'error');
+            return;
+        }
+        const sel = window.getSelection();
+        if (!sel.rangeCount) {
+            showNotification('請選擇要插入註解的位置', 'error');
+            return;
+        }
+        const range = sel.getRangeAt(0);
+        const commentText = prompt('請輸入註解內容');
+        if (!commentText) return;
+        const commentId = uuidv4();
+        const anchor = document.createElement('span');
+        anchor.className = 'comment-anchor';
+        anchor.setAttribute('data-comment-id', commentId);
+        anchor.style.background = 'rgba(255,255,0,0.3)';
+        anchor.style.borderBottom = '2px dotted orange';
+        anchor.style.cursor = 'pointer';
+        anchor.title = commentText;
+        anchor.innerHTML = sel.toString() || '📝';
+        if (!sel.isCollapsed) {
+            range.deleteContents();
+            range.insertNode(anchor);
+        } else {
+            range.insertNode(anchor);
+        }
+        const tab = openTabs[activeTabIndex];
+        ensureTabComments(tab);
+        tab.comments.push({ id: commentId, text: commentText, timestamp: Date.now(), preview: anchor.textContent });
+        handleContentChange();
+        renderCommentsPanel();
+        showNotification('註解已插入', 'success');
+    }
+
+    function renderCommentsPanel() {
+        if (activeTabIndex < 0) {
+            panelContentComments.innerHTML = '<p>尚無註解。</p>';
+            return;
+        }
+        const tab = openTabs[activeTabIndex];
+        ensureTabComments(tab);
+        if (!tab.comments.length) {
+            panelContentComments.innerHTML = '<p>尚無註解。</p>';
+            return;
+        }
+        panelContentComments.innerHTML = tab.comments.map((c, idx) =>
+            `<div class="comment-item" data-comment-id="${c.id}">
+                <div class="comment-meta">#${idx+1} ${new Date(c.timestamp).toLocaleString()}<br>段落: <span>${c.preview || ''}</span></div>
+                <div class="comment-text">${c.text}</div>
+                <div class="comment-actions">
+                    <button class="edit-comment-btn" data-comment-id="${c.id}">編輯</button>
+                    <button class="delete-comment-btn" data-comment-id="${c.id}">刪除</button>
+                </div>
+            </div>`
+        ).join('');
+    }
+
+    panelContentComments?.addEventListener('click', function(e) {
+        const item = e.target.closest('.comment-item');
+        if (!item) return;
+        const commentId = item.getAttribute('data-comment-id');
+
+        if (e.target.classList.contains('edit-comment-btn')) {
+            editComment(commentId);
+        } else if (e.target.classList.contains('delete-comment-btn')) {
+            deleteComment(commentId);
+        } else {
+            const anchor = editorContent.querySelector(`.comment-anchor[data-comment-id="${commentId}"]`);
+            if (anchor) {
+                anchor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                anchor.style.transition = 'background 0.3s, box-shadow 0.3s';
+                anchor.style.background = '#ff9800';
+                anchor.style.boxShadow = '0 0 10px #ff9800';
+                setTimeout(() => {
+                    anchor.style.background = 'rgba(255,255,0,0.3)';
+                    anchor.style.boxShadow = '';
+                }, 2000);
+            }
+            panelContentComments.querySelectorAll('.comment-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            setTimeout(() => item.classList.remove('active'), 2000);
+        }
+    });
+
+    function editComment(commentId) {
+        const tab = openTabs[activeTabIndex];
+        const commentIndex = tab.comments.findIndex(c => c.id === commentId);
+        if (commentIndex === -1) return;
+
+        const oldCommentText = tab.comments[commentIndex].text;
+        const newCommentText = prompt('編輯註解內容:', oldCommentText);
+        if (newCommentText !== null && newCommentText.trim() !== '') {
+            tab.comments[commentIndex].text = newCommentText;
+            tab.comments[commentIndex].timestamp = Date.now();
+            renderCommentsPanel();
+            showNotification('註解已更新', 'success');
+        }
+    }
+
+    function deleteComment(commentId) {
+        if (!confirm('確定要刪除此註解嗎？')) return;
+
+        const tab = openTabs[activeTabIndex];
+        const commentIndex = tab.comments.findIndex(c => c.id === commentId);
+        if (commentIndex === -1) return;
+
+        // Remove the comment anchor from the editor content
+        const anchor = editorContent.querySelector(`.comment-anchor[data-comment-id="${commentId}"]`);
+        if (anchor) {
+            const parent = anchor.parentNode;
+            // Replace the anchor with its content, or remove it if it's just a placeholder
+            if (anchor.textContent === '📝') {
+                parent.removeChild(anchor);
+            } else {
+                parent.replaceChild(document.createTextNode(anchor.textContent), anchor);
+            }
+            parent.normalize(); // Clean up any empty text nodes
+        }
+
+        tab.comments.splice(commentIndex, 1);
+        handleContentChange(); // Update content and re-render comments panel
+        renderCommentsPanel();
+        showNotification('註解已刪除', 'success');
+    }
+
+    init();
+});
+</script>
+</body>
+</html>
