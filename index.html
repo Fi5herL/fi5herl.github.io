@@ -372,12 +372,6 @@
     const ARTICLES_PATH = "articles";
     const ABOUT_PAGE_FILENAME = "about.md";
 
-    // 【智慧化】建立網站的基礎 URL，自動判斷是否為 User/Org Page
-    const isUserPage = GITHUB_REPO.toLowerCase() === `${GITHUB_USERNAME}.github.io`.toLowerCase();
-    const BASE_URL = isUserPage 
-        ? `https://${GITHUB_USERNAME}.github.io`
-        : `https://${GITHUB_USERNAME}.github.io/${GITHUB_REPO}`;
-
     // --- Global State ---
     let allArticles = [];
     let filteredArticles = [];
@@ -398,10 +392,11 @@
         setupEventListeners();
     });
 
-    // --- Data Loading and Parsing ---
+    // --- 【最終版】資料讀取方法 ---
     async function loadData() {
         loadingOverlay.classList.remove('hidden');
         try {
+            // 1. 使用 API 獲取資料夾內容
             const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${ARTICLES_PATH}`;
             const apiResponse = await fetch(apiUrl);
             if (!apiResponse.ok) {
@@ -412,21 +407,24 @@
                 throw new Error('GitHub API 回應格式錯誤，無法找到檔案列表。');
             }
 
-            const mdFiles = contents.filter(item => item.type === 'file' && item.name.endsWith('.md'));
-            const filenames = mdFiles.map(file => file.name);
+            // 2. 篩選出 .md 檔案，並取得它們的檔名和官方下載 URL
+            const mdFiles = contents
+                .filter(item => item.type === 'file' && item.name.endsWith('.md'))
+                .map(file => ({ name: file.name, url: file.download_url }));
 
-            // 【最終修正】加上 Cache Busting (`?v=${Date.now()}`) 來強制讀取最新檔案
-            const fetchPromises = filenames.map(filename => 
-                fetch(`${BASE_URL}/${ARTICLES_PATH}/${filename}?v=${Date.now()}`)
+            // 3. 使用官方 download_url 併行下載所有文章內容
+            const fetchPromises = mdFiles.map(file => 
+                fetch(file.url) // 直接使用 API 提供的 URL
                     .then(res => {
-                        if (!res.ok) throw new Error(`無法載入文章: ${filename}`);
+                        if (!res.ok) throw new Error(`無法載入文章: ${file.name}`);
                         return res.text();
                     })
-                    .then(text => ({ filename, content: text }))
+                    .then(text => ({ filename: file.name, content: text }))
             );
 
             const fileContents = await Promise.all(fetchPromises);
             
+            // 4. 解析文章內容 (此部分不變)
             allArticles = [];
             const allTags = new Set();
             fileContents.forEach(({ filename, content }) => {
@@ -451,6 +449,7 @@
                 allArticles.push(article);
                 (article.tags || []).forEach(tag => allTags.add(tag));
             });
+
             generateHashtagFilters(allTags);
             loadStateFromURL();
         } catch (error) {
