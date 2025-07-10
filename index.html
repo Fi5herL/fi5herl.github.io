@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="一個極簡、專注於內容的部落格。">
+    <meta name="description" content="一個分享生活、專注於內容的部落格。">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎣</text></svg>">
-    <title>Fi5herL Blog</title>
+    <title>Fi5her Blog</title>
     <style>
         /* --- Minimalist White Theme --- */
         :root {
@@ -303,18 +303,18 @@
 
     <main>
         <header class="site-header">
-            <a href="#home" class="site-title" data-page="home">My Blog</a>
+            <a href="#" data-page="home" class="site-title">My Blog</a>
             <nav>
                 <ul class="site-nav">
-                    <li><a href="#home" class="nav-link" data-page="home">
+                    <li><a href="#" class="nav-link" data-page="home">
                         <svg class="nav-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3L2 12h3v8h5z"/></svg>
                         <span class="nav-text">首頁</span>
                     </a></li>
-                    <li><a href="#archive" class="nav-link" data-page="archive">
+                    <li><a href="#" class="nav-link" data-page="archive">
                         <svg class="nav-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h18v18H3V3m2 2v14h14V5H5m2 2h10v2H7V7m0 4h10v2H7v-2m0 4h7v2H7v-2z"/></svg>
                         <span class="nav-text">歸檔</span>
                     </a></li>
-                    <li><a href="#about" class="nav-link" data-page="about">
+                    <li><a href="#" class="nav-link" data-page="about">
                         <svg class="nav-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22c.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08c-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
                         <span class="nav-text">關於</span>
                     </a></li>
@@ -359,18 +359,24 @@
         </div>
         
         <footer class="site-footer">
-            <p>&copy; <span id="copyright-year"></span> Fi5herL. All rights reserved.</p>
+            <p>© <span id="copyright-year"></span> Fi5herL. All rights reserved.</p>
         </footer>
     </main>
 
     <script>
     // --- 【重要】請在此設定您的 GitHub 資訊 ---
-    const GITHUB_USERNAME = "fi5herl"; // 您的 GitHub 用戶名
-    const GITHUB_REPO = "fi5herl.github.io";       // 您的 GitHub 倉庫名
+    const GITHUB_USERNAME = "Fi5herL";
+    const GITHUB_REPO = "fi5herl.github.io";
     // -----------------------------------------
 
     const ARTICLES_PATH = "articles"; // 文章資料夾路徑
     const ABOUT_PAGE_FILENAME = "about.md"; // "關於我" 頁面的檔名
+
+    // 【新】智慧化建立網站的基礎 URL
+    const isUserPage = GITHUB_REPO.toLowerCase() === `${GITHUB_USERNAME}.github.io`.toLowerCase();
+    const BASE_URL = isUserPage 
+        ? `https://${GITHUB_USERNAME}.github.io`
+        : `https://${GITHUB_USERNAME}.github.io/${GITHUB_REPO}`;
 
     // --- Global State ---
     let allArticles = [];
@@ -385,11 +391,9 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('copyright-year').textContent = new Date().getFullYear();
-        
         if (typeof mermaid !== 'undefined') {
             mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
         }
-
         loadData();
         setupEventListeners();
     });
@@ -398,24 +402,22 @@
     async function loadData() {
         loadingOverlay.classList.remove('hidden');
         try {
-            // 1. 使用 GitHub API 獲取 articles 資料夾的內容
             const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${ARTICLES_PATH}`;
             const response = await fetch(apiUrl);
             if (!response.ok) {
-                throw new Error(`無法從 GitHub API 讀取文章列表。請檢查您的 GITHUB_USERNAME 和 GITHUB_REPO 設定是否正確，以及 'articles' 資料夾是否存在。`);
+                throw new Error(`無法從 GitHub API 讀取文章列表。請檢查您的 GITHUB_USERNAME ('${GITHUB_USERNAME}') 和 GITHUB_REPO ('${GITHUB_REPO}') 設定是否正確，以及 '${ARTICLES_PATH}' 資料夾是否存在。`);
             }
             const contents = await response.json();
             if (!Array.isArray(contents)) {
                 throw new Error('GitHub API 回應格式錯誤，無法找到檔案列表。');
             }
 
-            // 2. 篩選出 .md 檔案
             const mdFiles = contents.filter(item => item.type === 'file' && item.name.endsWith('.md'));
             const filenames = mdFiles.map(file => file.name);
 
-            // 3. 併行獲取所有文章內容
+            // 【修改】使用完整的 BASE_URL 來讀取檔案
             const fetchPromises = filenames.map(filename => 
-                fetch(`${ARTICLES_PATH}/${filename}`)
+                fetch(`${BASE_URL}/${ARTICLES_PATH}/${filename}`)
                     .then(res => {
                         if (!res.ok) throw new Error(`無法載入文章: ${filename}`);
                         return res.text();
@@ -425,10 +427,8 @@
 
             const fileContents = await Promise.all(fetchPromises);
             
-            // 4. 解析檔案內容
             allArticles = [];
             const allTags = new Set();
-
             fileContents.forEach(({ filename, content }) => {
                 if (!content) return;
                 
@@ -436,15 +436,13 @@
                     aboutContent = content;
                     return;
                 }
-
                 const { frontMatter, body } = parseFrontMatter(content);
                 if (!frontMatter.title || !frontMatter.date) {
                     console.warn(`文章 ${filename} 缺少 title 或 date，已略過。`);
                     return;
                 }
-
                 const article = {
-                    id: filename.replace(/\.md$/, ''), // 使用檔名 (不含.md) 作為 ID
+                    id: filename.replace(/\.md$/, ''),
                     ...frontMatter,
                     content: body,
                     date: new Date(frontMatter.date),
@@ -453,13 +451,12 @@
                 allArticles.push(article);
                 (article.tags || []).forEach(tag => allTags.add(tag));
             });
-
             generateHashtagFilters(allTags);
             loadStateFromURL();
-
         } catch (error) {
             console.error('資料載入失敗:', error);
-            document.getElementById('articlesList').innerHTML = `<p><b>錯誤:</b> ${error.message}</p>`;
+            const listEl = document.getElementById('articlesList') || document.body;
+            listEl.innerHTML = `<p style="color: red; font-weight: bold;"><b>錯誤:</b> ${error.message}</p>`;
         } finally {
             loadingOverlay.classList.add('hidden');
         }
@@ -468,13 +465,10 @@
     function parseFrontMatter(content) {
         const frontMatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
         const match = content.match(frontMatterRegex);
-        
         if (!match) return { frontMatter: {}, body: content };
-
         const frontMatterText = match[1];
         const body = content.substring(match[0].length);
         const frontMatter = {};
-
         frontMatterText.split('\n').forEach(line => {
             const parts = line.match(/^([^:]+):\s*(.*)$/);
             if (parts) {
@@ -486,74 +480,40 @@
                 frontMatter[key] = value;
             }
         });
-
         return { frontMatter, body };
     }
 
     // --- Routing and Navigation ---
     function navigateToPage(pageId, articleId = null, options = {}) {
         activePageId = pageId;
-        
         document.querySelectorAll('.page-section').forEach(p => p.style.display = 'none');
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        
         const targetPage = document.getElementById(`${pageId}-page`);
         const activeLinkSelector = (pageId === 'article-detail') ? 'home' : pageId;
         const activeLink = document.querySelector(`.nav-link[data-page="${activeLinkSelector}"]`);
-
         if (targetPage) targetPage.style.display = 'block';
         if (activeLink) activeLink.classList.add('active');
-
-        if (pageId === 'home') {
-            applyFiltersAndSort();
-            displayArticles();
-        } else if (pageId === 'article-detail' && articleId) {
-            displayArticleDetail(articleId);
-        } else if (pageId === 'archive') {
-            renderArchivePage();
-        } else if (pageId === 'about') {
-            renderAboutPage();
-        }
-        
-        if (!options.fromURL) {
-            updateURL(pageId, articleId);
-        }
+        if (pageId === 'home') { applyFiltersAndSort(); displayArticles(); }
+        else if (pageId === 'article-detail' && articleId) { displayArticleDetail(articleId); }
+        else if (pageId === 'archive') { renderArchivePage(); }
+        else if (pageId === 'about') { renderAboutPage(); }
+        if (!options.fromURL) { updateURL(pageId, articleId); }
         window.scrollTo(0, 0);
     }
-
     function loadStateFromURL() {
         const params = new URLSearchParams(window.location.search);
-        let hash = window.location.hash.substring(1);
-        
         let page = params.get('page') || 'home';
         let articleId = params.get('id') || null;
-
-        // 向下相容舊的 hash 路由
-        if (!params.has('page') && hash) {
-            if (hash.startsWith('article-')) {
-                page = 'article-detail';
-                articleId = hash.substring('article-'.length);
-            } else if (['home', 'archive', 'about'].includes(hash)) {
-                page = hash;
-            }
-        }
-        
         document.getElementById('sortSelect').value = params.get('sort') || 'newest';
         document.getElementById('keywordSearchInput').value = params.get('q') || '';
-        
         const tags = params.get('tags') ? params.get('tags').split(',') : [];
-        document.querySelectorAll('.hashtag-btn').forEach(btn => {
-            btn.classList.toggle('active', tags.includes(btn.dataset.hashtag));
-        });
-
+        document.querySelectorAll('.hashtag-btn').forEach(btn => { btn.classList.toggle('active', tags.includes(btn.dataset.hashtag)); });
         currentPage = parseInt(params.get('p')) || 1;
         navigateToPage(page, articleId, { fromURL: true });
     }
-
     function updateURL(pageId, articleId) {
         const params = new URLSearchParams();
         if (pageId) params.set('page', pageId);
-        
         if (pageId === 'home') {
             params.set('sort', document.getElementById('sortSelect').value);
             const query = document.getElementById('keywordSearchInput').value;
@@ -564,7 +524,6 @@
         } else if (pageId === 'article-detail' && articleId) {
             params.set('id', articleId);
         }
-        
         const newUrl = `${window.location.pathname}?${params.toString()}`;
         history.pushState({ pageId, articleId }, '', newUrl);
     }
@@ -575,47 +534,33 @@
         const paginationEl = document.getElementById('paginationControls');
         listEl.innerHTML = '';
         paginationEl.innerHTML = '';
-
         if (filteredArticles.length === 0) {
             listEl.innerHTML = '<p>沒有找到符合條件的文章。</p>';
             return;
         }
-
         const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
         const startIndex = (currentPage - 1) * articlesPerPage;
         const paginatedArticles = filteredArticles.slice(startIndex, startIndex + articlesPerPage);
-
         paginatedArticles.forEach(article => {
             const articleEl = document.createElement('div');
             articleEl.className = 'article-card';
             const preview = (article.content || "").replace(/[#*`>\-\[\]()!]/g, '').replace(/\n/g, ' ').substring(0, 150) + '...';
-            
             articleEl.innerHTML = `
                 <h2 class="article-title"><a href="#" data-page="article-detail" data-id="${article.id}">${escapeHtml(article.title)}</a></h2>
                 <div class="article-meta">${article.date.toLocaleDateString('zh-TW')}</div>
                 <p class="article-preview">${escapeHtml(preview)}</p>
-                <div class="article-tags">
-                    ${(article.tags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
-                </div>
-            `;
+                <div class="article-tags">${(article.tags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}</div>`;
             listEl.appendChild(articleEl);
         });
-
         if (totalPages > 1) {
-            const prevBtn = document.createElement('button');
-            prevBtn.textContent = '上一頁';
-            prevBtn.disabled = currentPage === 1;
+            const prevBtn = document.createElement('button'); prevBtn.textContent = '上一頁'; prevBtn.disabled = currentPage === 1;
             prevBtn.onclick = () => { currentPage--; navigateToPage('home'); };
-            const pageInfo = document.createElement('span');
-            pageInfo.textContent = `第 ${currentPage} / ${totalPages} 頁`;
-            const nextBtn = document.createElement('button');
-            nextBtn.textContent = '下一頁';
-            nextBtn.disabled = currentPage === totalPages;
+            const pageInfo = document.createElement('span'); pageInfo.textContent = `第 ${currentPage} / ${totalPages} 頁`;
+            const nextBtn = document.createElement('button'); nextBtn.textContent = '下一頁'; nextBtn.disabled = currentPage === totalPages;
             nextBtn.onclick = () => { currentPage++; navigateToPage('home'); };
             paginationEl.append(prevBtn, pageInfo, nextBtn);
         }
     }
-    
     function displayArticleDetail(articleId) {
         const article = allArticles.find(a => a.id === articleId);
         const container = document.getElementById('article-detail-page');
@@ -623,47 +568,28 @@
             container.innerHTML = '<h2>文章不存在</h2><a href="#" data-page="home" class="back-to-home">返回首頁</a>';
             return;
         }
-
         const isEncrypted = article.tags && article.tags.includes('加密');
-        let mainContent = article.content || "";
-        let correctPassword = '';
-        let showPrompt = false;
-
+        let mainContent = article.content || "", correctPassword = '', showPrompt = false;
         if (isEncrypted) {
             const lines = mainContent.trim().split('\n');
-            if (lines.length > 1) {
-                correctPassword = lines.pop().trim();
-                mainContent = lines.join('\n');
-                showPrompt = true;
-            }
+            if (lines.length > 1) { correctPassword = lines.pop().trim(); mainContent = lines.join('\n'); showPrompt = true; }
         }
-        
         container.innerHTML = `
             <a href="#" data-page="home" class="back-to-home">← 返回首頁</a>
             <div class="article-detail-header">
                 <h1>${escapeHtml(article.title)}</h1>
                 <div class="article-meta">${article.date.toLocaleDateString('zh-TW')}</div>
-                <div class="article-tags">
-                    ${(article.tags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}
-                </div>
-            </div>
-            <div class="markdown-content"></div>`;
-        
+                <div class="article-tags">${(article.tags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}</div>
+            </div><div class="markdown-content"></div>`;
         const contentWrapper = container.querySelector('.markdown-content');
-
         if (showPrompt && correctPassword) {
             contentWrapper.innerHTML = generatePasswordPromptHtml(article.id);
             setupDecryptionHandler(article.id, mainContent, correctPassword, contentWrapper);
-        } else {
-            renderMarkdown(mainContent, contentWrapper);
-        }
+        } else { renderMarkdown(mainContent, contentWrapper); }
     }
-
     function renderArchivePage() {
         const contentEl = document.getElementById('archive-content');
-        if (allArticles.length === 0) {
-            contentEl.innerHTML = '<p>目前沒有文章。</p>'; return;
-        }
+        if (allArticles.length === 0) { contentEl.innerHTML = '<p>目前沒有文章。</p>'; return; }
         const articlesByYear = {};
         [...allArticles].sort((a,b) => b.date - a.date).forEach(article => {
             const year = article.date.getFullYear();
@@ -675,27 +601,18 @@
             html += `<h2 class="archive-year">${year}</h2>`;
             articlesByYear[year].forEach(article => {
                 const dateStr = `${(article.date.getMonth() + 1).toString().padStart(2, '0')}-${article.date.getDate().toString().padStart(2, '0')}`;
-                html += `
-                    <div class="archive-item">
-                        <span class="archive-date">${dateStr}</span>
-                        <a href="#" class="archive-link" data-page="article-detail" data-id="${article.id}">${escapeHtml(article.title)}</a>
-                    </div>`;
+                html += `<div class="archive-item"><span class="archive-date">${dateStr}</span><a href="#" class="archive-link" data-page="article-detail" data-id="${article.id}">${escapeHtml(article.title)}</a></div>`;
             });
         }
-        html += '</div>';
-        contentEl.innerHTML = html;
+        html += '</div>'; contentEl.innerHTML = html;
     }
-
-    function renderAboutPage() {
-        renderMarkdown(aboutContent, document.getElementById('about-content'));
-    }
+    function renderAboutPage() { renderMarkdown(aboutContent, document.getElementById('about-content')); }
 
     // --- Filtering and Sorting ---
     function applyFiltersAndSort() {
         const sort = document.getElementById('sortSelect').value;
         const query = document.getElementById('keywordSearchInput').value.toLowerCase().trim();
         const activeTags = [...document.querySelectorAll('.hashtag-btn.active')].map(b => b.dataset.hashtag);
-
         filteredArticles = allArticles.filter(article => {
             const matchesQuery = !query || article.title.toLowerCase().includes(query) || article.content.toLowerCase().includes(query);
             const matchesTags = activeTags.length === 0 || activeTags.every(tag => (article.tags || []).includes(tag));
@@ -703,20 +620,11 @@
         });
         filteredArticles.sort((a, b) => (sort === 'newest' ? b.date - a.date : a.date - b.date));
     }
-    
     function generateHashtagFilters(tags) {
-        const container = document.getElementById('hashtagFilters');
-        container.innerHTML = '';
+        const container = document.getElementById('hashtagFilters'); container.innerHTML = '';
         tags.forEach(tag => {
-            const btn = document.createElement('button');
-            btn.className = 'hashtag-btn';
-            btn.textContent = `#${tag}`;
-            btn.dataset.hashtag = tag;
-            btn.onclick = () => {
-                btn.classList.toggle('active');
-                currentPage = 1;
-                navigateToPage('home');
-            };
+            const btn = document.createElement('button'); btn.className = 'hashtag-btn'; btn.textContent = `#${tag}`; btn.dataset.hashtag = tag;
+            btn.onclick = () => { btn.classList.toggle('active'); currentPage = 1; navigateToPage('home'); };
             container.appendChild(btn);
         });
     }
@@ -726,32 +634,22 @@
         document.getElementById('sortSelect').addEventListener('change', () => { currentPage = 1; navigateToPage('home'); });
         document.getElementById('keywordSearchButton').addEventListener('click', () => { currentPage = 1; navigateToPage('home'); });
         document.getElementById('keywordClearButton').addEventListener('click', () => {
-            document.getElementById('keywordSearchInput').value = '';
-            currentPage = 1;
-            navigateToPage('home');
+            document.getElementById('keywordSearchInput').value = ''; currentPage = 1; navigateToPage('home');
         });
         document.getElementById('keywordSearchInput').addEventListener('keyup', e => {
             if (e.key === 'Enter') { currentPage = 1; navigateToPage('home'); }
         });
-
         document.body.addEventListener('click', e => {
             const link = e.target.closest('a[data-page]');
             if (!link) return;
-            
             e.preventDefault();
             const page = link.dataset.page;
             const articleId = link.dataset.id;
             navigateToPage(page, articleId);
         });
-        
         window.addEventListener('popstate', (event) => {
-            // Check if there is state to restore
-            if (event.state) {
-                loadStateFromURL();
-            } else {
-                // If no state, default to home
-                navigateToPage('home', null, { fromURL: true });
-            }
+            if (event.state || window.location.search) { loadStateFromURL(); }
+            else { navigateToPage('home', null, { fromURL: true }); }
         });
     }
     
@@ -796,11 +694,8 @@
         const input = document.getElementById(`password-input-${articleId}`);
         const msg = document.getElementById(`decrypt-message-${articleId}`);
         const decrypt = () => {
-            if (input.value === correctPassword) {
-                renderMarkdown(mainContent, contentWrapper);
-            } else {
-                msg.textContent = '密碼錯誤，請再試一次。'; input.focus();
-            }
+            if (input.value === correctPassword) { renderMarkdown(mainContent, contentWrapper); }
+            else { msg.textContent = '密碼錯誤，請再試一次。'; input.focus(); }
         };
         btn.onclick = decrypt;
         input.onkeyup = e => { if (e.key === 'Enter') decrypt(); };
