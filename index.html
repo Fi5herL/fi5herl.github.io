@@ -303,7 +303,7 @@
 
     <main>
         <header class="site-header">
-            <a href="#" data-page="home" class="site-title">My Blog</a>
+            <a href="#" data-page="home" class="site-title">Fi5her Blog</a>
             <nav>
                 <ul class="site-nav">
                     <li><a href="#" class="nav-link" data-page="home">
@@ -364,15 +364,15 @@
     </main>
 
     <script>
-    // --- 【重要】請在此設定您的 GitHub 資訊 ---
+    // --- 【重要】GitHub 資訊設定 ---
     const GITHUB_USERNAME = "Fi5herL";
     const GITHUB_REPO = "fi5herl.github.io";
-    // -----------------------------------------
+    // ------------------------------------
 
-    const ARTICLES_PATH = "articles"; // 文章資料夾路徑
-    const ABOUT_PAGE_FILENAME = "about.md"; // "關於我" 頁面的檔名
+    const ARTICLES_PATH = "articles";
+    const ABOUT_PAGE_FILENAME = "about.md";
 
-    // 【新】智慧化建立網站的基礎 URL
+    // 【智慧化】建立網站的基礎 URL，自動判斷是否為 User/Org Page
     const isUserPage = GITHUB_REPO.toLowerCase() === `${GITHUB_USERNAME}.github.io`.toLowerCase();
     const BASE_URL = isUserPage 
         ? `https://${GITHUB_USERNAME}.github.io`
@@ -398,16 +398,16 @@
         setupEventListeners();
     });
 
-    // --- Data Loading and Parsing (使用 GitHub API) ---
+    // --- Data Loading and Parsing ---
     async function loadData() {
         loadingOverlay.classList.remove('hidden');
         try {
             const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${ARTICLES_PATH}`;
-            const response = await fetch(apiUrl);
-            if (!response.ok) {
+            const apiResponse = await fetch(apiUrl);
+            if (!apiResponse.ok) {
                 throw new Error(`無法從 GitHub API 讀取文章列表。請檢查您的 GITHUB_USERNAME ('${GITHUB_USERNAME}') 和 GITHUB_REPO ('${GITHUB_REPO}') 設定是否正確，以及 '${ARTICLES_PATH}' 資料夾是否存在。`);
             }
-            const contents = await response.json();
+            const contents = await apiResponse.json();
             if (!Array.isArray(contents)) {
                 throw new Error('GitHub API 回應格式錯誤，無法找到檔案列表。');
             }
@@ -415,9 +415,9 @@
             const mdFiles = contents.filter(item => item.type === 'file' && item.name.endsWith('.md'));
             const filenames = mdFiles.map(file => file.name);
 
-            // 【修改】使用完整的 BASE_URL 來讀取檔案
+            // 【最終修正】加上 Cache Busting (`?v=${Date.now()}`) 來強制讀取最新檔案
             const fetchPromises = filenames.map(filename => 
-                fetch(`${BASE_URL}/${ARTICLES_PATH}/${filename}`)
+                fetch(`${BASE_URL}/${ARTICLES_PATH}/${filename}?v=${Date.now()}`)
                     .then(res => {
                         if (!res.ok) throw new Error(`無法載入文章: ${filename}`);
                         return res.text();
