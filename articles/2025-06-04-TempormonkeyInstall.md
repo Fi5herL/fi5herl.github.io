@@ -3,7 +3,6 @@ title: 油猴腳本工具Tempormonkey安裝
 date: 2025-06-04
 ---
 
-# 油猴腳本工具Tempormonkey安裝
 ### Install Steps 👟
 
 1. Install browser extension [Tempermonkey](https://www.tampermonkey.net/#download)
