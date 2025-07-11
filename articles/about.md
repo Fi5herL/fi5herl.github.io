@@ -8,6 +8,7 @@ Renesas ARM RA, RZA, RE, RX, and RL78
 - **天尚科技** Android APP工程師 2019-07 ~ 2019-12
 Android, JAVA, Git
 - **亞東技術學院** 電子工程系 ARM, 51 MCU
+
 *業餘時間開發網頁前端與VBA, JS等腳本語言自動化工具*
 
 ## 擅長語言
