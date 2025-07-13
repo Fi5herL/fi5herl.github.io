@@ -4,7 +4,7 @@ date: 2025-07-13
 ---
 
 今天要來分享我們兒童排的精彩活動內容！這次的主題圍繞著「專心」，透過各種有趣的環節，讓孩子們在歡樂中學習重要的品格。
-[小小雙手為主作工](https://www.jgospel.net/portals/5/CmsUsers/1006/2020/1/12213205_%E5%B0%8F%E5%B0%8F%E9%9B%99%E6%89%8B%E7%82%BA%E4%B8%BB%E4%BD%9C%E5%B7%A5.mp4)
+
 <div style="position: relative; width: 100%; height: 0; padding-top: 141.4286%;
  padding-bottom: 0; box-shadow: 0 2px 8px 0 rgba(63,69,81,0.16); margin-top: 1.6em; margin-bottom: 0.9em; overflow: hidden;
  border-radius: 8px; will-change: transform;">
@@ -25,6 +25,7 @@ date: 2025-07-13
   </iframe>
 </div>
 <a href="https://www.canva.com/design/DAGrcfJK7R0/8dIbI0zOcwxn9LlDGgUwug/edit" target="_blank" rel="noopener">📋 兒童排PPT簡報 - 完整版</a>
+[🔗小小雙手為主作工](https://www.jgospel.net/portals/5/CmsUsers/1006/2020/1/12213205_%E5%B0%8F%E5%B0%8F%E9%9B%99%E6%89%8B%E7%82%BA%E4%B8%BB%E4%BD%9C%E5%B7%A5.mp4)
 
 ---
 
