@@ -3,8 +3,6 @@ title: Other Website Links
 date: 2025-07-13
 ---
 
-# Other Website Links
-
 - [Fi5her Blog V1](https://fi5herl.github.io/blog/)
 - [Hymns Search](https://fi5herl.github.io/2-4/Hymns.html)
 - [Bible Search](https://fi5herl.github.io/2-4/Bible.html)
