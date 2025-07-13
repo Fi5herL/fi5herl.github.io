@@ -25,6 +25,7 @@ date: 2025-07-13
   </iframe>
 </div>
 <a href="https://www.canva.com/design/DAGrcfJK7R0/8dIbI0zOcwxn9LlDGgUwug/edit" target="_blank" rel="noopener">📋 兒童排PPT簡報 - 完整版</a>
+
 [🔗小小雙手為主作工](https://www.jgospel.net/portals/5/CmsUsers/1006/2020/1/12213205_%E5%B0%8F%E5%B0%8F%E9%9B%99%E6%89%8B%E7%82%BA%E4%B8%BB%E4%BD%9C%E5%B7%A5.mp4)
 
 ---
