@@ -1,0 +1,4506 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerNote Pro - 筆記、任務與時間追蹤</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✒️</text></svg>">
+
+    <!-- Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/solarized.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/github.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-bg: #f8f9fa;
+            --secondary-bg: #ffffff;
+            --border-color: #dee2e6;
+            --text-color: #212529;
+            --header-bg: #e9ecef;
+            --accent-color: #007bff;
+            --button-bg: #6c757d;
+            --button-hover-bg: #5a6268;
+            --sidebar-width: 280px;
+            --task-panel-width: 380px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        .sidebar-toggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1001;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+            transition: margin-left 0.3s;
+        }
+
+        /* File Panel Styles */
+        .file-panel {
+            width: 300px;
+            flex-shrink: 0;
+            background: var(--secondary-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            transition: width 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+            order: -1; /* 確保在左側 */
+        }
+        .file-panel.collapsed {
+            width: 0;
+            opacity: 0;
+            border: none;
+        }
+        .file-panel-header {
+            background: var(--header-bg);
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-panel-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+        .file-panel-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .file-panel-actions button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .file-panel-actions button:hover {
+            background: #0056b3;
+        }
+        .file-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            transition: all 0.2s;
+        }
+        .file-item:hover {
+            background: #f5f5f5;
+            border-color: var(--accent-color);
+        }
+        .file-item.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        .file-item-name {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .file-item-actions {
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .file-item:hover .file-item-actions {
+            opacity: 1;
+        }
+        .file-item.active .file-item-actions {
+            opacity: 1;
+        }
+        .file-action-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .file-action-btn:hover {
+            background: rgba(0,0,0,0.1);
+            color: #333;
+        }
+        .file-item.active .file-action-btn {
+            color: rgba(255,255,255,0.8);
+        }
+        .file-item.active .file-action-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        /* File rename input */
+        .file-rename-input {
+            background: white;
+            border: 2px solid var(--accent-color);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 14px;
+            font-weight: 500;
+            width: 100%;
+        }
+        .file-rename-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+		/* Search Bar Styles */
+        .search-bar {
+            display: none; /* Initially hidden */
+            position: absolute; /* Changed from fixed to absolute within main-panel */
+            top: 70px; /* Adjust as needed, below toolbar */
+            right: 20px;
+            background: rgba(45, 45, 45, 0.95);
+            border-radius: 8px;
+            padding: 8px 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            /* display: flex; */
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .search-bar input[type="text"] {
+            padding: 6px 10px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: #333;
+            color: white;
+            font-size: 14px;
+            width: 180px;
+            outline: none;
+        }
+
+        .search-bar input[type="text"]::placeholder {
+            color: #bbb;
+        }
+
+        .search-bar input[type="text"]:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3);
+        }
+
+        .search-bar button {
+            background: var(--button-bg); /* Use existing button style */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .search-bar button:hover {
+            background: var(--button-hover-bg);
+        }
+
+        .search-bar button i {
+            margin: 0;
+        }
+        
+        .search-match-count {
+            font-size: 13px;
+            color: #ccc;
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* Highlighting styles for CodeMirror */
+        .CodeMirror .highlighted-search {
+            background-color: rgba(255, 255, 0, 0.5); /* Semi-transparent yellow */
+            border-radius: 2px;
+        }
+
+        .CodeMirror .current-highlighted-search {
+            background-color: rgba(255, 165, 0, 0.8); /* Opaque orange for current match */
+            outline: 1px solid #ff4500; /* Reddish orange border */
+            box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+        }
+		/* Search Bar Styles End */
+
+        /* Main Panel */
+        .main-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--primary-bg);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+		/* 針對 TOC Modal 內容的樣式 */
+		#toc-modal .modal-content {
+			margin-top: 5vh; /* 調整這個值來設定距離頂端的距離，例如 20px, 5%, 或 5vh */
+			margin-bottom: auto; /* 確保內容推向頂部，而不是底部也有對稱的 margin */
+		}
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        #toc-list { list-style: none; padding: 0; }
+        #toc-list li { padding: 5px 0; cursor: pointer; border-bottom: 1px solid #eee; }
+        #toc-list li:hover { background: #f0f0f0; }
+        #toc-list .toc-h1 { padding-left: 10px; font-weight: bold; }
+        #toc-list .toc-h2 { padding-left: 25px; }
+        #toc-list .toc-h3 { padding-left: 40px; }
+
+        /* PDF Slide styles */
+        .pdf-slide {
+            padding: 40px;
+            background: white;
+            width: 1920px; /* Fixed width for consistent export */
+            height: 1080px; /* Fixed height for consistent export */
+            box-sizing: border-box;
+        }
+
+
+        /* 改善工具列 */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 15px 20px;
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .toolbar button {
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .toolbar button:hover {
+            background: var(--button-hover-bg);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .toolbar button i {
+            margin-right: 5px;
+        }
+
+        /* Timer Button Styles */
+        .timer-btn {
+            background: var(--accent-color) !important;
+            position: relative;
+            font-weight: 600;
+        }
+        .timer-btn:hover {
+            background: #0056b3 !important;
+        }
+        .timer-btn.timing {
+            background: #28a745 !important;
+            animation: pulse 2s infinite;
+        }
+        .timer-btn.timing:hover {
+            background: #218838 !important;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+        }
+        #timer-display {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        /* Timer Modal Styles */
+        .timer-modal-content {
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            margin: 5% auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .timer-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .date-picker-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .date-picker-container input[type="date"] {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .date-picker-container button {
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .timer-controls input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            width: 200px;
+        }
+        .timer-controls button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 40px;
+        }
+        .timer-controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .timer-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .timer-actions button {
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .export-btn {
+            background: #28a745 !important;
+        }
+        .export-btn:hover {
+            background: #218838 !important;
+        }
+        .auto-timer-btn {
+            background: #17a2b8 !important;
+        }
+        .auto-timer-btn:hover {
+            background: #138496 !important;
+        }
+        .auto-timer-btn.active {
+            background: #28a745 !important;
+        }
+        .auto-timer-btn.active:hover {
+            background: #218838 !important;
+        }
+
+        /* Tab Styles */
+        .timer-view-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+            font-weight: 600;
+        }
+        .tab-btn:hover {
+            color: var(--accent-color);
+            background: rgba(0, 123, 255, 0.05);
+        }
+
+        /* Timeline Styles */
+        .timeline-container {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 300px;
+        }
+        
+        /* Chart Styles */
+        .chart-container {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 300px;
+        }
+        .chart-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        .chart-controls label {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .chart-controls select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+        .chart-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .chart-label {
+            min-width: 200px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-color);
+            margin-right: 15px;
+        }
+        .chart-bar-container {
+            flex: 1;
+            height: 24px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-right: 15px;
+            position: relative;
+        }
+        .chart-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-color), #0056b3);
+            border-radius: 12px;
+            transition: width 0.5s ease;
+        }
+        .chart-percentage {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: white;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .chart-duration {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--accent-color);
+            font-weight: 600;
+            min-width: 80px;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .timeline-item:hover {
+            background-color: #f8f9fa;
+        }
+        .timeline-time {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+            width: 120px;
+            flex-shrink: 0;
+        }
+        .timeline-duration {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--accent-color);
+            width: 80px;
+            flex-shrink: 0;
+            font-weight: 600;
+        }
+        .timeline-task {
+            flex: 1;
+            padding: 0 15px;
+            font-size: 14px;
+        }
+        .timeline-task.auto-generated {
+            color: #28a745;
+            font-weight: 500;
+        }
+        .timeline-bar {
+            width: 4px;
+            height: 20px;
+            background: var(--accent-color);
+            margin-right: 15px;
+            border-radius: 2px;
+        }
+        .timeline-bar.auto-generated {
+            background: #28a745;
+        }
+
+        /* Timer Stats */
+        .timer-stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-top: 1px solid var(--border-color);
+            background: #f8f9fa;
+            border-radius: 0 0 8px 8px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            display: block;
+        }
+        .stat-item span:last-child {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-color);
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        /* 改善編輯器和預覽區域 */
+        .main-editor-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        .editor-panel, .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .editor-header, .preview-header {
+            background: var(--header-bg);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        .editor-header i, .preview-header i {
+            margin-right: 8px;
+            color: var(--accent-color);
+        }
+        
+        /* Fold control buttons */
+        .fold-controls {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .fold-controls button {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            color: var(--text-color);
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .fold-controls button:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+        
+        .fold-controls button i {
+            margin: 0;
+        }
+        
+        /* CodeMirror fold gutter customization */
+        .CodeMirror-foldgutter {
+            width: 16px;
+        }
+        
+        .CodeMirror-foldgutter-open,
+        .CodeMirror-foldgutter-folded {
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--accent-color);
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .CodeMirror-foldgutter-open:hover,
+        .CodeMirror-foldgutter-folded:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        .CodeMirror-foldmarker {
+            color: var(--accent-color);
+            text-shadow: none;
+            font-family: monospace;
+            cursor: pointer;
+        }
+        .editor-container, .preview-container {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+            position: relative;
+        }
+        .CodeMirror {
+            height: 100%;
+            font-size: 22px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        #preview {
+            padding: 20px;
+            max-width: none;
+            line-height: 1.6;
+            font-size: 22px;
+        }
+        
+        /* Markdown Content Styling */
+        #preview h1 {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: var(--text-color);
+            margin: 32px 0 20px 0;
+            padding-bottom: 12px;
+            border-bottom: 3px solid var(--accent-color);
+            line-height: 1.3;
+        }
+        
+        #preview h2 {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 28px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(0, 123, 255, 0.3);
+            line-height: 1.3;
+        }
+        
+        #preview h3 {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 24px 0 14px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(0, 123, 255, 0.2);
+            line-height: 1.4;
+        }
+        
+        #preview h4 {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 20px 0 12px 0;
+            line-height: 1.4;
+        }
+        
+        #preview h5 {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text-color);
+            margin: 18px 0 10px 0;
+            line-height: 1.4;
+        }
+        
+        #preview h6 {
+            font-size: 1em;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin: 16px 0 8px 0;
+            line-height: 1.4;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        #preview p {
+            margin: 0 0 16px 0;
+            line-height: 1.7;
+        }
+        
+        #preview ul, #preview ol {
+            margin: 0 0 16px 0;
+            padding-left: 24px;
+        }
+        
+        #preview li {
+            margin: 6px 0;
+            line-height: 1.6;
+        }
+        
+        #preview ul ul, #preview ol ol, #preview ul ol, #preview ol ul {
+            margin: 8px 0;
+        }
+        
+        #preview blockquote {
+            margin: 20px 0;
+            padding: 16px 20px;
+            background: rgba(0, 123, 255, 0.05);
+            border-left: 4px solid var(--accent-color);
+            border-radius: 0 6px 6px 0;
+        }
+        
+        #preview blockquote p {
+            margin: 0;
+            font-style: italic;
+            color: rgba(33, 37, 41, 0.8);
+        }
+        
+        #preview code {
+            background: rgba(0, 123, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.95em;
+            color: #d63384;
+        }
+        
+        #preview pre {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 6px;
+            margin: 16px 0;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            max-width: 100%;
+            white-space: pre;
+            position: relative;
+        }
+        
+        #preview pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-color);
+            display: block;
+            overflow-x: auto;
+            white-space: pre;
+            word-wrap: normal;
+            max-width: 100%;
+            line-height: 1.5;
+            tab-size: 4;
+        }
+        
+        /* 處理長行的水平滾動 */
+        #preview pre {
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        
+        /* 限制縮排深度避免版面破壞 */
+        #preview pre code {
+            text-indent: 0;
+            padding-left: 0;
+        }
+        
+        /* 為不同語言添加語法高亮樣式 */
+        #preview pre[class*="language-"] {
+            position: relative;
+        }
+        
+        #preview pre[class*="language-"]:before {
+            content: attr(class);
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* 改善程式碼區塊的顯示 */
+        #preview pre {
+            font-size: 14px;
+            line-height: 1.4;
+            border-left: 4px solid var(--accent-color);
+            position: relative;
+            min-height: 20px;
+        }
+        
+        /* 添加行號支援 */
+        #preview pre.line-numbers {
+            padding-left: 50px;
+        }
+        
+        #preview pre.line-numbers:before {
+            content: counter(line);
+            counter-increment: line;
+            position: absolute;
+            left: 16px;
+            color: #999;
+            font-size: 12px;
+            width: 20px;
+            text-align: right;
+        }
+        
+        /* 處理超長程式碼行的樣式 */
+        @media (max-width: 768px) {
+            #preview pre {
+                font-size: 12px;
+                padding: 12px;
+                margin: 12px 0;
+            }
+            
+            #preview pre code {
+                font-size: 12px;
+            }
+        }
+        
+        /* 程式碼區塊的複製按鈕 */
+        #preview pre {
+            position: relative;
+        }
+        
+        #preview pre:hover .copy-button {
+            opacity: 1;
+        }
+        
+        .copy-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        
+        .copy-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+        
+        /* 處理不同縮排等級的視覺效果 */
+        #preview pre code .indent-1 { padding-left: 1em; }
+        #preview pre code .indent-2 { padding-left: 2em; }
+        #preview pre code .indent-3 { padding-left: 3em; }
+        #preview pre code .indent-4 { padding-left: 4em; }
+        
+        /* 限制最大縮排以避免版面破壞 */
+        #preview pre code {
+            max-width: calc(100% - 32px);
+            overflow-x: auto;
+        }
+        
+        /* 確保highlight.js樣式正確應用 */
+        #preview pre code.hljs {
+            background: inherit;
+            padding: 0;
+        }
+        
+        /* highlight.js的基本語法高亮樣式 */
+        #preview .hljs-keyword { color: #0077aa; font-weight: bold; }
+        #preview .hljs-string { color: #669900; }
+        #preview .hljs-comment { color: #999988; font-style: italic; }
+        #preview .hljs-number { color: #009999; }
+        #preview .hljs-function { color: #900; font-weight: bold; }
+        #preview .hljs-title { color: #900; font-weight: bold; }
+        #preview .hljs-variable { color: #333; }
+        #preview .hljs-literal { color: #78a960; }
+        #preview .hljs-built_in { color: #0086b3; }
+        #preview .hljs-attr { color: #008080; }
+        #preview .hljs-type { color: #458; font-weight: bold; }
+        #preview .hljs-meta { color: #999; }
+        #preview .hljs-doctag { color: #d73a49; }
+        #preview .hljs-tag { color: #000080; }
+        #preview .hljs-name { color: #000080; }
+        #preview .hljs-selector-id { color: #795da3; }
+        #preview .hljs-selector-class { color: #795da3; }
+        #preview .hljs-property { color: #0086b3; }
+        
+        #preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+        }
+        
+        #preview th, #preview td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        #preview th {
+            background: var(--header-bg);
+            font-weight: 600;
+        }
+        
+        #preview hr {
+            margin: 32px 0;
+            border: none;
+            height: 2px;
+            background: linear-gradient(to right, var(--accent-color), transparent);
+        }
+        
+        /* Wiki Link Styles */
+        .wiki-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            background: rgba(0, 123, 255, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid rgba(0, 123, 255, 0.2);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .wiki-link:hover {
+            background: rgba(0, 123, 255, 0.2);
+            border-color: var(--accent-color);
+            transform: translateY(-1px);
+        }
+        .wiki-link-missing {
+            color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            font-weight: 500;
+            cursor: help;
+        }
+        .preview-panel {
+            border-left: 1px solid var(--border-color);
+        }
+        
+        /* View Mode Toggle Buttons in Toolbar */
+        .view-mode-toolbar-btn {
+            background: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            margin: 0 2px;
+            min-width: 36px;
+        }
+        .view-mode-toolbar-btn:hover {
+            background: var(--button-hover-bg);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .view-mode-toolbar-btn.active {
+            background: var(--accent-color);
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+        }
+        .view-mode-toolbar-btn.active:hover {
+            background: #0056b3;
+        }
+        
+        /* Autocomplete Suggestions */
+        .autocomplete-dropdown {
+            position: absolute;
+            z-index: 1000;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 200px;
+            overflow-y: auto;
+            min-width: 200px;
+        }
+        .autocomplete-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+        .autocomplete-item:hover, .autocomplete-item.selected {
+            background: var(--accent-color);
+            color: white;
+        }
+        .autocomplete-note-name {
+            font-weight: 600;
+        }
+        .autocomplete-section {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+        .autocomplete-item:hover .autocomplete-section, 
+        .autocomplete-item.selected .autocomplete-section {
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Font Settings Modal Styles */
+        .settings-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--secondary-bg);
+        }
+        
+        .settings-section h3 {
+            margin: 0 0 15px 0;
+            color: var(--accent-color);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .font-size-controls label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .size-control button {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--accent-color);
+            background: var(--secondary-bg);
+            color: var(--accent-color);
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .size-control button:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        #font-size-display {
+            min-width: 50px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+        
+        #font-size-slider {
+            flex: 1;
+            min-width: 200px;
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        #font-size-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #font-size-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+        }
+        
+        .theme-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        
+        .theme-btn {
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            background: var(--secondary-bg);
+            color: var(--text-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .theme-btn:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+        }
+        
+        .theme-btn.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+        
+        .settings-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 20px 0 0 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: 30px;
+        }
+        
+        .settings-actions button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        #reset-settings-btn {
+            background: #6c757d;
+            color: white;
+        }
+        
+        #reset-settings-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+        
+        #apply-settings-btn {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        #apply-settings-btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        /* Theme-specific styles for preview and presentation */
+        .theme-default {
+            background: var(--secondary-bg);
+            color: var(--text-color);
+        }
+        
+        .theme-monokai {
+            background: #272822;
+            color: #f8f8f2;
+        }
+        
+        .theme-monokai #preview h1, .theme-monokai #preview h2, .theme-monokai #preview h3,
+        .theme-monokai #preview h4, .theme-monokai #preview h5, .theme-monokai #preview h6 {
+            color: #a6e22e;
+        }
+        
+        .theme-monokai #preview code {
+            background: rgba(166, 226, 46, 0.2);
+            color: #f92672;
+        }
+        
+        .theme-monokai #preview pre {
+            background: #1e1f1c;
+            border-color: #49483e;
+            border-left-color: #a6e22e;
+        }
+        
+        /* Monokai 主題的語法高亮 */
+        .theme-monokai #preview .hljs-keyword { color: #f92672; font-weight: bold; }
+        .theme-monokai #preview .hljs-string { color: #e6db74; }
+        .theme-monokai #preview .hljs-comment { color: #75715e; font-style: italic; }
+        .theme-monokai #preview .hljs-number { color: #ae81ff; }
+        .theme-monokai #preview .hljs-function { color: #a6e22e; font-weight: bold; }
+        .theme-monokai #preview .hljs-title { color: #a6e22e; font-weight: bold; }
+        .theme-monokai #preview .hljs-variable { color: #f8f8f2; }
+        .theme-monokai #preview .hljs-literal { color: #ae81ff; }
+        .theme-monokai #preview .hljs-built_in { color: #66d9ef; }
+        
+        .theme-solarized.dark {
+            background: #002b36;
+            color: #839496;
+        }
+        
+        .theme-solarized.dark #preview h1, .theme-solarized.dark #preview h2, .theme-solarized.dark #preview h3,
+        .theme-solarized.dark #preview h4, .theme-solarized.dark #preview h5, .theme-solarized.dark #preview h6 {
+            color: #268bd2;
+        }
+        
+        .theme-solarized.dark #preview code {
+            background: rgba(38, 139, 210, 0.2);
+            color: #dc322f;
+        }
+        
+        .theme-solarized.dark #preview pre {
+            background: #073642;
+            border-color: #586e75;
+            border-left-color: #268bd2;
+        }
+        
+        .theme-material {
+            background: #263238;
+            color: #eeffff;
+        }
+        
+        .theme-material #preview h1, .theme-material #preview h2, .theme-material #preview h3,
+        .theme-material #preview h4, .theme-material #preview h5, .theme-material #preview h6 {
+            color: #82b1ff;
+        }
+        
+        .theme-material #preview code {
+            background: rgba(130, 177, 255, 0.2);
+            color: #f78c6c;
+        }
+        
+        .theme-material #preview pre {
+            background: #1e272c;
+            border-color: #37474f;
+            border-left-color: #82b1ff;
+        }
+        
+        .theme-dracula {
+            background: #282a36;
+            color: #f8f8f2;
+        }
+        
+        .theme-dracula #preview h1, .theme-dracula #preview h2, .theme-dracula #preview h3,
+        .theme-dracula #preview h4, .theme-dracula #preview h5, .theme-dracula #preview h6 {
+            color: #bd93f9;
+        }
+        
+        .theme-dracula #preview code {
+            background: rgba(189, 147, 249, 0.2);
+            color: #ff79c6;
+        }
+        
+        .theme-dracula #preview pre {
+            background: #21222c;
+            border-color: #44475a;
+            border-left-color: #bd93f9;
+        }
+        
+        /* Dracula 主題的語法高亮 */
+        .theme-dracula #preview .hljs-keyword { color: #ff79c6; font-weight: bold; }
+        .theme-dracula #preview .hljs-string { color: #f1fa8c; }
+        .theme-dracula #preview .hljs-comment { color: #6272a4; font-style: italic; }
+        .theme-dracula #preview .hljs-number { color: #bd93f9; }
+        .theme-dracula #preview .hljs-function { color: #50fa7b; font-weight: bold; }
+        .theme-dracula #preview .hljs-title { color: #50fa7b; font-weight: bold; }
+        .theme-dracula #preview .hljs-variable { color: #f8f8f2; }
+        .theme-dracula #preview .hljs-literal { color: #bd93f9; }
+        .theme-dracula #preview .hljs-built_in { color: #8be9fd; }
+        
+        .theme-github {
+            background: #ffffff;
+            color: #24292e;
+        }
+        
+        .theme-github #preview h1, .theme-github #preview h2, .theme-github #preview h3,
+        .theme-github #preview h4, .theme-github #preview h5, .theme-github #preview h6 {
+            color: #0366d6;
+        }
+        
+        .theme-github #preview code {
+            background: rgba(3, 102, 214, 0.1);
+            color: #d73a49;
+        }
+        
+        .theme-github #preview pre {
+            background: #f6f8fa;
+            border-color: #e1e4e8;
+            border-left-color: #0366d6;
+        }
+        
+        /* Presentation mode theme support */
+        .presentation-mode.theme-monokai {
+            background: #272822;
+            color: #f8f8f2;
+        }
+        
+        .presentation-mode.theme-solarized.dark {
+            background: #002b36;
+            color: #839496;
+        }
+        
+        .presentation-mode.theme-material {
+            background: #263238;
+            color: #eeffff;
+        }
+        
+        .presentation-mode.theme-dracula {
+            background: #282a36;
+            color: #f8f8f2;
+        }
+        
+        .presentation-mode.theme-github {
+            background: #ffffff;
+            color: #24292e;
+        }
+
+        /* Presentation Mode Styles */
+        .presentation-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            z-index: 2000;
+            display: none;
+        }
+        .presentation-mode.active {
+            display: block;
+        }
+        .presentation-toolbar {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 2001;
+            background: rgba(0,0,0,0.7);
+            border-radius: 6px;
+            padding: 10px;
+        }
+        .presentation-toolbar button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin: 0 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .presentation-toolbar button:hover {
+            background: #0056b3;
+        }
+        
+        /* Override reveal.js styles for better integration */
+        .reveal .slides {
+            text-align: left;
+        }
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4, .reveal h5, .reveal h6 {
+            color: var(--accent-color);
+        }
+        
+        /* Theme-specific reveal.js text colors */
+        .theme-monokai .reveal,
+        .theme-monokai .reveal p,
+        .theme-monokai .reveal li,
+        .theme-monokai .reveal div {
+            color: #f8f8f2 !important;
+        }
+        
+        .theme-monokai .reveal h1, .theme-monokai .reveal h2, .theme-monokai .reveal h3,
+        .theme-monokai .reveal h4, .theme-monokai .reveal h5, .theme-monokai .reveal h6 {
+            color: #a6e22e !important;
+        }
+        
+        .theme-solarized.dark .reveal,
+        .theme-solarized.dark .reveal p,
+        .theme-solarized.dark .reveal li,
+        .theme-solarized.dark .reveal div {
+            color: #839496 !important;
+        }
+        
+        .theme-solarized.dark .reveal h1, .theme-solarized.dark .reveal h2, .theme-solarized.dark .reveal h3,
+        .theme-solarized.dark .reveal h4, .theme-solarized.dark .reveal h5, .theme-solarized.dark .reveal h6 {
+            color: #268bd2 !important;
+        }
+        
+        .theme-material .reveal,
+        .theme-material .reveal p,
+        .theme-material .reveal li,
+        .theme-material .reveal div {
+            color: #eeffff !important;
+        }
+        
+        .theme-material .reveal h1, .theme-material .reveal h2, .theme-material .reveal h3,
+        .theme-material .reveal h4, .theme-material .reveal h5, .theme-material .reveal h6 {
+            color: #82b1ff !important;
+        }
+        
+        .theme-dracula .reveal,
+        .theme-dracula .reveal p,
+        .theme-dracula .reveal li,
+        .theme-dracula .reveal div {
+            color: #f8f8f2 !important;
+        }
+        
+        .theme-dracula .reveal h1, .theme-dracula .reveal h2, .theme-dracula .reveal h3,
+        .theme-dracula .reveal h4, .theme-dracula .reveal h5, .theme-dracula .reveal h6 {
+            color: #bd93f9 !important;
+        }
+        
+        .theme-github .reveal,
+        .theme-github .reveal p,
+        .theme-github .reveal li,
+        .theme-github .reveal div {
+            color: #24292e !important;
+        }
+        
+        .theme-github .reveal h1, .theme-github .reveal h2, .theme-github .reveal h3,
+        .theme-github .reveal h4, .theme-github .reveal h5, .theme-github .reveal h6 {
+            color: #0366d6 !important;
+        }
+        .reveal .slides .mermaid {
+            text-align: center;
+            margin: 20px auto;
+            max-width: 100%;
+            overflow: auto;
+        }
+        .reveal .slides .mermaid svg {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+
+        /* 響應式設計改善 */
+        @media (max-width: 768px) {
+            .main-editor-content {
+                flex-direction: column;
+            }
+            .editor-panel, .preview-panel {
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="file-input" multiple accept=".md,.markdown,.txt" style="display:none;">
+    <input type="file" id="workspace-input" accept=".json" style="display:none;">
+
+    <div class="container" id="main-container">
+        <!-- File Panel -->
+        <div id="file-panel" class="file-panel collapsed">
+            <div class="file-panel-header">
+                <h3><i class="fas fa-folder-open"></i> 檔案管理</h3>
+                <div class="file-panel-actions">
+                    <button id="new-file-btn" title="新建檔案"><i class="fas fa-plus"></i></button>
+                    <button id="open-files-btn" title="開啟檔案"><i class="fas fa-folder-open"></i></button>
+                    <button id="export-workspace-btn" title="匯出工作區"><i class="fas fa-download"></i></button>
+                    <button id="import-workspace-btn" title="匯入工作區"><i class="fas fa-upload"></i></button>
+                    <button id="close-file-panel" title="關閉面板"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="file-list" id="file-list">
+                <!-- File items will be dynamically added here -->
+            </div>
+        </div>
+        
+        <div class="main-panel">
+            <div class="toolbar">
+                <button id="file-panel-toggle"><i class="fas fa-folder"></i> 檔案</button>
+                <button id="toc-btn"><i class="fas fa-list-ul"></i> 目錄</button>
+				<!-- View Mode Toggle Buttons -->
+                <button id="split-view-btn" class="view-mode-toolbar-btn active" title="編輯/渲染模式"><i class="fas fa-columns"></i></button>
+                <button id="edit-only-btn" class="view-mode-toolbar-btn" title="純編輯模式"><i class="fas fa-edit"></i></button>
+                <button id="preview-only-btn" class="view-mode-toolbar-btn" title="純渲染模式"><i class="fas fa-eye"></i></button>
+                <button id="timer-btn" class="timer-btn"><i class="fas fa-clock"></i> <span id="timer-display">00:00</span></button>
+                <!-- <button onclick="insertHeading()"><i class="fas fa-heading"></i> 標題</button>
+                <button onclick="insertBold()"><i class="fas fa-bold"></i> 粗體</button>
+                <button onclick="insertItalic()"><i class="fas fa-italic"></i> 斜體</button>
+                <button onclick="insertCode()"><i class="fas fa-code"></i> 代碼</button>
+                <button onclick="insertLink()"><i class="fas fa-link"></i> 連結</button>
+                <button onclick="insertTable()"><i class="fas fa-table"></i> 表格</button> -->
+                <button id="insert-gantt-btn"><i class="fas fa-project-diagram"></i> 插入甘特圖</button>
+                <button id="font-settings-btn"><i class="fas fa-text-height"></i> <span id="current-font-size">22px</span></button>
+                
+                <div style="margin-left: auto;"></div>
+                <button id="export-md-btn"><i class="fas fa-file-text"></i> 匯出MD</button>
+                <button id="export-html-btn"><i class="fas fa-file-code"></i> 匯出HTML</button>
+                <button id="presentation-toggle-btn"><i class="fas fa-presentation-screen"></i> 簡報模式</button>
+				<button id="search-toggle-btn"><i class="fas fa-search"></i> 搜尋</button>
+            </div>
+
+            <!-- Search Bar -->
+            <div id="search-bar" class="search-bar">
+                <input type="text" id="search-input" placeholder="搜尋..." title="多個關鍵字請用空白分隔 (AND 邏輯)" />
+                <span id="search-match-count" class="search-match-count">0 / 0</span>
+                <button id="search-prev-btn" title="上一個"><i class="fas fa-chevron-up"></i></button>
+                <button id="search-next-btn" title="下一個"><i class="fas fa-chevron-down"></i></button>
+                <button id="search-scope-toggle" title="切換搜尋範圍 (當前檔案/所有檔案)"><i class="fas fa-folder"></i> 當前檔案</button>
+                <button id="search-close-btn" title="關閉搜尋 (Esc)"><i class="fas fa-times"></i></button>
+            </div>
+            <!-- End Search Bar -->
+
+            <div class="main-editor-content">
+                <div class="editor-panel" id="editor-panel">
+                    <div class="editor-header">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div><i class="fas fa-edit"></i> <span id="current-file-name">新筆記</span></div>
+                            <div class="fold-controls">
+                                <button id="fold-all-btn" title="收闔所有區塊 (Ctrl+Shift+Q)"><i class="fas fa-compress"></i></button>
+                                <button id="unfold-all-btn" title="展開所有區塊 (Ctrl+Shift+Q)"><i class="fas fa-expand"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="editor-container"><textarea id="editor"></textarea></div>
+                </div>
+                <div class="preview-panel" id="preview-panel">
+                    <div class="preview-header"><i class="fas fa-eye"></i> 預覽</div>
+                    <div class="preview-container"><div id="preview" class="markdown-body"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOC Modal -->
+    <div id="toc-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-toc-btn">&times;</span>
+            <h2>文件目錄</h2>
+            <ul id="toc-list"></ul>
+        </div>
+    </div>
+
+    <!-- Timer History Modal -->
+    <div id="timer-modal" class="modal">
+        <div class="modal-content timer-modal-content">
+            <span class="close-btn" id="close-timer-btn">&times;</span>
+            <h2><i class="fas fa-clock"></i> 任務計時記錄</h2>
+            
+            <div class="timer-modal-header">
+                <div class="date-picker-container">
+                    <input type="date" id="date-picker" />
+                    <button id="today-btn">今天</button>
+                </div>
+                <div class="timer-controls">
+                    <input type="text" id="modal-task-input" placeholder="輸入任務名稱..." />
+                    <button id="modal-start-btn"><i class="fas fa-play"></i></button>
+                    <button id="modal-stop-btn" disabled><i class="fas fa-stop"></i></button>
+                </div>
+                <div class="timer-actions">
+                    <button id="modal-auto-timer-toggle" class="auto-timer-btn active"><i class="fas fa-magic"></i> 自動計時</button>
+                    <button id="modal-export-csv-btn" class="export-btn"><i class="fas fa-file-csv"></i> 匯出CSV</button>
+                </div>
+            </div>
+            
+            <div class="timer-view-tabs">
+                <button id="timeline-tab-btn" class="tab-btn active">時間軸</button>
+                <button id="chart-tab-btn" class="tab-btn">比例圖</button>
+            </div>
+            
+            <div class="timeline-container" id="timeline-container">
+                <div id="timeline-view"></div>
+            </div>
+            
+            <div class="chart-container" id="chart-container" style="display: none;">
+                <div class="chart-controls">
+                    <label>視角層級：</label>
+                    <select id="chart-level-select">
+                        <option value="file">文件</option>
+                        <option value="level1">第一層標題</option>
+                        <option value="level2">第二層標題</option>
+                        <option value="level3">第三層標題</option>
+                        <option value="level4">第四層標題</option>
+                    </select>
+                </div>
+                <div id="chart-view"></div>
+            </div>
+            
+            <div class="timer-stats">
+                <div class="stat-item">
+                    <span class="stat-label">總計時時間：</span>
+                    <span id="total-time">00:00:00</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">任務數量：</span>
+                    <span id="task-count">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Font Settings Modal -->
+    <div id="font-settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-font-settings-btn">&times;</span>
+            <h2><i class="fas fa-text-height"></i> 字體與主題設定</h2>
+            
+            <div class="settings-section">
+                <h3><i class="fas fa-font"></i> 字體大小設定</h3>
+                <div class="font-size-controls">
+                    <label>編輯器與預覽字體大小:</label>
+                    <div class="size-control">
+                        <button id="font-size-minus">-</button>
+                        <span id="font-size-display">22px</span>
+                        <button id="font-size-plus">+</button>
+                        <input type="range" id="font-size-slider" min="12" max="32" value="22" step="1">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3><i class="fas fa-palette"></i> 編輯器主題</h3>
+                <div class="theme-buttons">
+                    <button class="theme-btn active" data-theme="default">預設</button>
+                    <button class="theme-btn" data-theme="monokai">Monokai</button>
+                    <button class="theme-btn" data-theme="solarized dark">Solarized Dark</button>
+                    <button class="theme-btn" data-theme="material">Material</button>
+                    <button class="theme-btn" data-theme="dracula">Dracula</button>
+                    <button class="theme-btn" data-theme="github">GitHub</button>
+                </div>
+            </div>
+            
+            <div class="settings-actions">
+                <button id="reset-settings-btn"><i class="fas fa-undo"></i> 重置為預設</button>
+                <button id="apply-settings-btn"><i class="fas fa-check"></i> 套用設定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Presentation Mode -->
+    <div id="presentation-mode" class="presentation-mode">
+        <div class="presentation-toolbar">
+            <button id="prev-slide-btn"><i class="fas fa-chevron-left"></i> 上一頁</button>
+            <button id="next-slide-btn">下一頁 <i class="fas fa-chevron-right"></i></button>
+            <button id="export-presentation-html-btn"><i class="fas fa-download"></i> 導出HTML</button>
+            <button id="exit-presentation-btn"><i class="fas fa-times"></i> 退出簡報</button>
+        </div>
+        <div class="reveal">
+            <div class="slides" id="presentation-slides">
+                <!-- Slides will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/markdown-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/xml-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/indent-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- 添加更多語言支援 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- CodeMirror Search Addons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css">
+
+    <!-- Reveal.js for presentations -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/theme/white.css">
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.3.1/dist/reveal.js"></script>
+    
+    <script>
+        // --- Full Application Logic 2.1 (with Scroll Sync) ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化highlight.js
+            hljs.configure({
+                ignoreUnescapedHTML: true,
+                languages: ['python', 'javascript', 'java', 'cpp', 'csharp', 'php', 'go', 'rust', 'sql', 'bash', 'json', 'xml', 'css', 'typescript']
+            });
+            
+            // Global state
+            let tasks = [], currentTask = null, isTimerRunning = false;
+            let files = [], currentFile = null;
+            let editor;
+            let isSyncing = false; // Prevents scroll event loops
+            let autoTimerEnabled = true; // 自動計時功能開關
+            let currentViewMode = 'split'; // split, edit-only, preview-only
+            let autocompleteDropdown = null;
+            let autocompleteSelectedIndex = -1;
+            
+            // Font and theme settings
+            let currentFontSize = 22;
+            let currentEditorTheme = 'default';
+
+            // Search related variables
+            let searchBar = null;
+            let searchInput = null;
+            let searchPrevBtn = null;
+            let searchNextBtn = null;
+            let searchScopeToggle = null;
+            let searchCloseBtn = null;
+            let searchMatchCount = null;
+			let searchToggleButton = null; // 搜尋切換按鈕的引用
+
+            let allSearchResults = []; // Stores { fileId, from, to } for all files
+            let currentHighlightedMarkers = []; // CodeMirror TextMarker objects for all matches
+            let currentMatchMarker = null; // CodeMirror TextMarker for the currently focused match
+            let currentSearchMatchIndex = -1;
+            let currentSearchScope = 'current'; // 'current' or 'all'
+            let searchKeywords = []; // Array of strings for multi-keyword search
+
+            // DOM Elements
+            const mainContainer = document.getElementById('main-container');
+            const filePanel = document.getElementById('file-panel');
+            const filePanelToggle = document.getElementById('file-panel-toggle');
+            const closeFilePanelBtn = document.getElementById('close-file-panel');
+            const newFileBtn = document.getElementById('new-file-btn');
+            const previewContainer = document.querySelector('.preview-container');
+            const tocModal = document.getElementById('toc-modal');
+            const timerModal = document.getElementById('timer-modal');
+            const fontSettingsModal = document.getElementById('font-settings-modal');
+            const allButtons = document.querySelectorAll('button'); // For event delegation
+            const fileListEl = document.getElementById('file-list');
+            const tocListEl = document.getElementById('toc-list');
+            const fileInput = document.getElementById('file-input');
+            const workspaceInput = document.getElementById('workspace-input');
+            const exportWorkspaceBtn = document.getElementById('export-workspace-btn');
+            const importWorkspaceBtn = document.getElementById('import-workspace-btn');
+            const currentFileNameEl = document.getElementById('current-file-name');
+
+            // Search Bar Elements
+            searchBar = document.getElementById('search-bar');
+            searchInput = document.getElementById('search-input');
+            searchPrevBtn = document.getElementById('search-prev-btn');
+            searchNextBtn = document.getElementById('search-next-btn');
+            searchScopeToggle = document.getElementById('search-scope-toggle');
+            searchCloseBtn = document.getElementById('search-close-btn');
+            searchMatchCount = document.getElementById('search-match-count');
+			searchToggleButton = document.getElementById('search-toggle-btn'); // 獲取按鈕引用
+            
+            // Timer Modal Elements
+            const timerBtn = document.getElementById('timer-btn');
+            const timerDisplay = document.getElementById('timer-display');
+            const datePicker = document.getElementById('date-picker');
+            const todayBtn = document.getElementById('today-btn');
+            const modalTaskInput = document.getElementById('modal-task-input');
+            const modalStartBtn = document.getElementById('modal-start-btn');
+            const modalStopBtn = document.getElementById('modal-stop-btn');
+            const modalAutoTimerToggle = document.getElementById('modal-auto-timer-toggle');
+            const modalExportCsvBtn = document.getElementById('modal-export-csv-btn');
+            const timelineView = document.getElementById('timeline-view');
+            const totalTimeEl = document.getElementById('total-time');
+            const taskCountEl = document.getElementById('task-count');
+            
+            // Chart Elements
+            const timelineTabBtn = document.getElementById('timeline-tab-btn');
+            const chartTabBtn = document.getElementById('chart-tab-btn');
+            const timelineContainer = document.getElementById('timeline-container');
+            const chartContainer = document.getElementById('chart-container');
+            const chartLevelSelect = document.getElementById('chart-level-select');
+            const chartView = document.getElementById('chart-view');
+            
+            // Presentation Elements
+            const presentationMode = document.getElementById('presentation-mode');
+            const presentationToggleBtn = document.getElementById('presentation-toggle-btn');
+            const presentationSlides = document.getElementById('presentation-slides');
+            const prevSlideBtn = document.getElementById('prev-slide-btn');
+            const nextSlideBtn = document.getElementById('next-slide-btn');
+            const exitPresentationBtn = document.getElementById('exit-presentation-btn');
+            
+            // State
+            let revealInstance = null;
+            let isPresentationMode = false;
+            
+            // Timer state
+            let timerHistory = {}; // { 'YYYY-MM-DD': [tasks] }
+            let currentTimerStartTime = null;
+            let timerInterval = null;
+
+
+            // --- Initialization ---
+            function initialize() {
+                initEditor();
+                configureMarked();
+                mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+                loadDataFromStorage();
+                loadSettingsFromStorage();
+                
+                updateCurrentTime();
+                setInterval(updateCurrentTime, 1000);
+
+                attachEventListeners();
+                
+                // 初始化console日誌
+                console.log('PowerNote Pro 2.2 系統啟動');
+                console.log(`自動計時功能：${autoTimerEnabled ? '已開啟' : '已關閉'}`);
+                
+                if (files.length > 0) {
+                    loadFile(files[0].id);
+                } else {
+                    editor.setValue(getWelcomeMessage());
+                }
+            }
+
+            // --- Code Folding Functions ---
+            
+            // Simple and safe markdown fold function
+            function markdownHeaderFold(cm, start) {
+                const line = cm.getLine(start.line);
+                const match = line.match(/^(#{1,6})\s/);
+                
+                if (match) {
+                    const headerLevel = match[1].length;
+                    let end = start.line + 1;
+                    
+                    while (end < cm.lineCount()) {
+                        const nextLine = cm.getLine(end);
+                        const nextMatch = nextLine.match(/^(#{1,6})\s/);
+                        
+                        if (nextMatch && nextMatch[1].length <= headerLevel) {
+                            break;
+                        }
+                        end++;
+                    }
+                    
+                    if (end > start.line + 1) {
+                        return {
+                            from: CodeMirror.Pos(start.line, line.length),
+                            to: CodeMirror.Pos(end - 1, cm.getLine(end - 1).length)
+                        };
+                    }
+                }
+                return null;
+            }
+            
+            // Register the fold helper
+            if (typeof CodeMirror !== 'undefined') {
+                CodeMirror.registerHelper("fold", "markdown", markdownHeaderFold);
+            }
+            
+            // Fold all sections function
+            function foldAllSections() {
+                if (!editor) return;
+                
+                const cm = editor;
+                for (let i = 0; i < cm.lineCount(); i++) {
+                    const line = cm.getLine(i);
+                    if (line.match(/^#{1,6}\s/) || line.trim().startsWith('```')) {
+                        cm.foldCode(CodeMirror.Pos(i, 0));
+                    }
+                }
+                showNotification('已收闔所有區塊');
+            }
+            
+            // Unfold all sections function
+            function unfoldAllSections() {
+                if (!editor) return;
+                editor.execCommand("unfoldAll");
+                showNotification('已展開所有區塊');
+            }
+
+            // --- Editor, Preview, and Scroll Sync ---
+            function initEditor() {
+                editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+                    mode: 'markdown',
+                    theme: 'default',
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    autofocus: true,
+                    foldGutter: true,
+                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                    extraKeys: {
+                        "Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); },
+                        "Ctrl-Shift-Q": function(cm){ cm.execCommand("unfoldAll"); }
+                    }
+                });
+                editor.on('change', (instance, changeObj) => {
+                    if (currentFile) {
+                        currentFile.content = editor.getValue();
+                        saveFilesToStorage();
+                    }
+                    updatePreview();
+                    
+                    // Handle wiki link autocomplete
+                    if (changeObj.origin === '+input' && changeObj.text.length === 1) {
+                        const cursor = editor.getCursor();
+                        const line = editor.getLine(cursor.line);
+                        const beforeCursor = line.substring(0, cursor.ch);
+                        
+                        // Check if we just typed '[['
+                        if (beforeCursor.endsWith('[[')) {
+                            const items = getAutocompleteItems('');
+                            if (items.length > 0) {
+                                createAutocompleteDropdown(items, cursor);
+                            }
+                        }
+                        // Check if we're typing inside [[]]
+                        else {
+                            const wikiLinkMatch = beforeCursor.match(/\[\[([^\]]*?)$/);
+                            if (wikiLinkMatch) {
+                                const query = wikiLinkMatch[1];
+                                const items = getAutocompleteItems(query);
+                                if (items.length > 0) {
+                                    createAutocompleteDropdown(items, cursor);
+                                } else {
+                                    removeAutocompleteDropdown();
+                                }
+                            } else {
+                                removeAutocompleteDropdown();
+                            }
+                        }
+                    }
+                    
+                    // 檢查是否輸入了標題或結束線
+                    if (changeObj.origin === '+input') {
+                        if (autoTimerEnabled) {
+                            handleAutoTimer(changeObj);
+                        }
+                    }
+                });
+                
+                // Handle keyboard navigation for autocomplete
+                editor.on('keydown', (instance, e) => {
+                    if (handleAutocompleteNavigation(e)) {
+                        return;
+                    }
+                });
+                // Scroll Sync Listener
+                editor.on('scroll', syncPreviewScroll);
+                
+                // Setup drag and drop for images
+                setupImageDragDrop();
+            }
+
+            // Setup drag and drop functionality for images
+            function setupImageDragDrop() {
+                const editorElement = editor.getWrapperElement();
+                
+                // Prevent default drag behaviors
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    editorElement.addEventListener(eventName, preventDefaults, false);
+                    document.body.addEventListener(eventName, preventDefaults, false);
+                });
+                
+                // Highlight drop area
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    editorElement.addEventListener(eventName, highlight, false);
+                });
+                
+                ['dragleave', 'drop'].forEach(eventName => {
+                    editorElement.addEventListener(eventName, unhighlight, false);
+                });
+                
+                // Handle dropped files
+                editorElement.addEventListener('drop', handleImageDrop, false);
+                
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                
+                function highlight(e) {
+                    editorElement.style.border = '2px dashed #007bff';
+                    editorElement.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+                }
+                
+                function unhighlight(e) {
+                    editorElement.style.border = '';
+                    editorElement.style.backgroundColor = '';
+                }
+                
+                function handleImageDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    
+                    [...files].forEach(file => {
+                        if (file.type.startsWith('image/')) {
+                            insertImageReference(file);
+                        }
+                    });
+                }
+                
+                function insertImageReference(file) {
+                    const cursor = editor.getCursor();
+                    const filePath = file.path || file.name;
+                    
+                    // Try to create a relative path if possible
+                    let imagePath = filePath;
+                    const currentDir = getCurrentDirectory();
+                    
+                    if (filePath.startsWith(currentDir)) {
+                        // Create relative path
+                        imagePath = './' + filePath.substring(currentDir.length + 1).replace(/\\/g, '/');
+                    } else {
+                        // Use absolute path
+                        imagePath = filePath.replace(/\\/g, '/');
+                    }
+                    
+                    const imageMarkdown = `![${file.name}](${imagePath})`;
+                    editor.replaceRange(imageMarkdown, cursor);
+                    
+                    // Move cursor to end of inserted text
+                    const newCursor = {
+                        line: cursor.line,
+                        ch: cursor.ch + imageMarkdown.length
+                    };
+                    editor.setCursor(newCursor);
+                    
+                    // Trigger preview update
+                    updatePreview();
+                }
+            }
+
+            function configureMarked() {
+                const renderer = new marked.Renderer();
+                
+                // Override text renderer to handle wiki links
+                renderer.text = function(text) {
+                    // Handle wiki links [[note name]] or [[note name#section]]
+                    text = text.replace(/\[\[([^\]]+)\]\]/g, function(match, linkContent) {
+                        const parts = linkContent.split('#');
+                        const noteName = parts[0];
+                        const sectionName = parts[1];
+                        
+                        const targetFile = files.find(f => 
+                            f.name.toLowerCase().includes(noteName.toLowerCase()) ||
+                            f.name.replace(/\.[^/.]+$/, "").toLowerCase() === noteName.toLowerCase()
+                        );
+                        
+                        if (targetFile) {
+                            const displayText = sectionName ? `${noteName}#${sectionName}` : noteName;
+                            return `<a href="#" class="wiki-link" data-file-id="${targetFile.id}" data-section="${sectionName || ''}" title="跳轉到 ${targetFile.name}${sectionName ? ' - ' + sectionName : ''}">${displayText}</a>`;
+                        } else {
+                            return `<span class="wiki-link-missing" title="找不到筆記: ${noteName}">${linkContent}</span>`;
+                        }
+                    });
+                    return text;
+                };
+                
+                marked.setOptions({ 
+                    renderer: renderer,
+                    highlight: function(code, lang) {
+                        // 清理語言名稱
+                        if (lang) {
+                            lang = lang.toLowerCase().trim();
+                            // 處理常見的語言別名
+                            const langMap = {
+                                'js': 'javascript',
+                                'py': 'python',
+                                'c++': 'cpp',
+                                'c#': 'csharp',
+                                'ts': 'typescript',
+                                'sh': 'bash',
+                                'shell': 'bash'
+                            };
+                            lang = langMap[lang] || lang;
+                        }
+                        
+                        if (lang && hljs.getLanguage(lang)) {
+                            try {
+                                const result = hljs.highlight(code, { language: lang });
+                                return result.value;
+                            } catch (err) {
+                                console.warn('Highlight.js error for language', lang, ':', err);
+                            }
+                        }
+                        
+                        try {
+                            const result = hljs.highlightAuto(code);
+                            return result.value;
+                        } catch (err) {
+                            console.warn('Highlight.js auto-detection error:', err);
+                            return code;
+                        }
+                    },
+                    breaks: true, 
+                    gfm: true,
+                    sanitize: false  // Allow HTML content
+                });
+            }
+
+            // 增強程式碼區塊顯示功能
+            function enhanceCodeBlocks(container) {
+                const codeBlocks = container.querySelectorAll('pre code');
+                
+                codeBlocks.forEach((codeBlock, index) => {
+                    const pre = codeBlock.parentElement;
+                    
+                    // 確保code元素有hljs類名
+                    if (!codeBlock.classList.contains('hljs')) {
+                        codeBlock.classList.add('hljs');
+                    }
+                    
+                    // 添加語言標籤
+                    const className = codeBlock.className;
+                    if (className.includes('language-')) {
+                        const lang = className.replace('language-', '').split(' ')[0];
+                        if (!pre.querySelector('.lang-label')) {
+                            const langLabel = document.createElement('span');
+                            langLabel.className = 'lang-label';
+                            langLabel.textContent = lang.toUpperCase();
+                            langLabel.style.cssText = `
+                                position: absolute;
+                                top: 8px;
+                                right: 8px;
+                                background: rgba(0,0,0,0.6);
+                                color: white;
+                                padding: 2px 6px;
+                                border-radius: 3px;
+                                font-size: 10px;
+                                font-weight: bold;
+                                z-index: 5;
+                            `;
+                            pre.appendChild(langLabel);
+                        }
+                    }
+                    
+                    // 添加複製按鈕
+                    if (!pre.querySelector('.copy-button')) {
+                        const copyBtn = document.createElement('button');
+                        copyBtn.className = 'copy-button';
+                        copyBtn.innerHTML = '📋';
+                        copyBtn.title = '複製程式碼';
+                        copyBtn.onclick = function() {
+                            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                                copyBtn.innerHTML = '✅';
+                                setTimeout(() => {
+                                    copyBtn.innerHTML = '📋';
+                                }, 1000);
+                            });
+                        };
+                        pre.appendChild(copyBtn);
+                    }
+                    
+                    // 處理超長行和縮排
+                    const lines = codeBlock.textContent.split('\n');
+                    let maxIndent = 0;
+                    let hasLongLines = false;
+                    
+                    lines.forEach(line => {
+                        if (line.length > 80) hasLongLines = true;
+                        const indent = line.match(/^\s*/);
+                        if (indent) {
+                            maxIndent = Math.max(maxIndent, indent[0].length);
+                        }
+                    });
+                    
+                    // 如果縮排過深，調整樣式
+                    if (maxIndent > 16) {
+                        pre.style.fontSize = '12px';
+                        pre.style.tabSize = '2';
+                    }
+                    
+                    // 如果有長行，確保水平滾動
+                    if (hasLongLines) {
+                        pre.style.overflowX = 'auto';
+                        pre.style.whiteSpace = 'pre';
+                        codeBlock.style.whiteSpace = 'pre';
+                        codeBlock.style.wordWrap = 'normal';
+                    }
+                });
+            }
+
+            // Process local images in preview
+            function processLocalImages(container) {
+                const images = container.querySelectorAll('img');
+                images.forEach(img => {
+                    const src = img.getAttribute('src');
+                    if (src && isLocalPath(src)) {
+                        // Convert relative paths to absolute paths if needed
+                        const absolutePath = resolveLocalPath(src);
+                        // Create file URL for local images
+                        img.src = `file:///${absolutePath.replace(/\\/g, '/')}`;
+                        img.onerror = function() {
+                            this.style.border = '2px dashed #ccc';
+                            this.style.padding = '10px';
+                            this.style.backgroundColor = '#f9f9f9';
+                            this.alt = `圖片載入失敗: ${src}`;
+                            this.title = `無法載入圖片: ${absolutePath}`;
+                        };
+                    }
+                });
+            }
+
+            // Check if path is local
+            function isLocalPath(path) {
+                if (!path) return false;
+                // Check for relative paths (./ or ../) or absolute paths (C:\ or /)
+                return path.startsWith('./') || 
+                       path.startsWith('../') || 
+                       /^[A-Za-z]:[\\\/]/.test(path) || 
+                       path.startsWith('/') && !path.startsWith('//') && !path.includes('://');
+            }
+
+            // Resolve local path to absolute path
+            function resolveLocalPath(path) {
+                if (path.startsWith('./')) {
+                    // Relative to current directory
+                    const currentDir = getCurrentDirectory();
+                    return currentDir + '\\' + path.substring(2).replace(/\//g, '\\');
+                } else if (path.startsWith('../')) {
+                    // Relative to parent directory
+                    const currentDir = getCurrentDirectory();
+                    const parts = currentDir.split('\\');
+                    const upLevels = (path.match(/\.\.\//g) || []).length;
+                    const newParts = parts.slice(0, -upLevels);
+                    const remainingPath = path.replace(/\.\.\//g, '').replace(/\//g, '\\');
+                    return newParts.join('\\') + '\\' + remainingPath;
+                } else if (/^[A-Za-z]:[\\\/]/.test(path)) {
+                    // Already absolute path
+                    return path.replace(/\//g, '\\');
+                } else if (path.startsWith('/')) {
+                    // Unix-style absolute path - treat as relative to current drive
+                    const currentDir = getCurrentDirectory();
+                    const drive = currentDir.split(':')[0] + ':';
+                    return drive + path.replace(/\//g, '\\');
+                }
+                return path;
+            }
+
+            // Get current directory (approximation)
+            function getCurrentDirectory() {
+                // Use the document location to approximate current directory
+                // This is a best-effort approach for file:// URLs
+                const pathname = window.location.pathname;
+                if (pathname.includes('/')) {
+                    const parts = pathname.split('/');
+                    parts.pop(); // Remove filename
+                    return parts.join('\\').substring(1); // Remove leading slash and convert to backslashes
+                }
+                // Fallback to a reasonable default
+                return 'C:\\Users\\28041\\OneDrive - UL Solutions\\Documents\\zzz_Automation Tools\\tool_index_page\\PowerNote';
+            }
+
+            async function updatePreview() {
+                const markdown = editor.getValue();
+                const previewEl = document.getElementById('preview');
+                previewEl.innerHTML = marked.parse(markdown);
+                
+                // Process local images
+                processLocalImages(previewEl);
+                
+                // 手動對程式碼區塊應用語法高亮
+                const codeBlocks = previewEl.querySelectorAll('pre code:not(.hljs)');
+                codeBlocks.forEach(block => {
+                    hljs.highlightElement(block);
+                });
+                
+                // 增強程式碼區塊顯示
+                enhanceCodeBlocks(previewEl);
+                
+                await mermaid.run({ nodes: document.querySelectorAll('.language-mermaid') });
+                
+                // Add click handlers for wiki links
+                previewEl.querySelectorAll('.wiki-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const fileId = e.target.dataset.fileId;
+                        const sectionName = e.target.dataset.section;
+                        if (fileId) {
+                            loadFile(fileId);
+                            if (sectionName) {
+                                // Navigate to specific section after file loads
+                                setTimeout(() => {
+                                    navigateToSection(sectionName);
+                                }, 100);
+                                showNotification(`已跳轉到筆記：${e.target.textContent}`);
+                            } else {
+                                showNotification(`已跳轉到筆記：${e.target.textContent}`);
+                            }
+                        }
+                    });
+                });
+                
+                // 確保預覽容器可以滾動
+                setTimeout(() => {
+                    if (previewContainer.scrollHeight > previewContainer.clientHeight) {
+                        previewContainer.style.overflowY = 'auto';
+                    }
+                }, 100);
+            }
+
+            function syncPreviewScroll() {
+                if (isSyncing) return;
+                isSyncing = true;
+                
+                const editorScrollInfo = editor.getScrollInfo();
+                const editorMaxScroll = editorScrollInfo.height - editorScrollInfo.clientHeight;
+                const previewMaxScroll = previewContainer.scrollHeight - previewContainer.clientHeight;
+                
+                if (editorMaxScroll > 0 && previewMaxScroll > 0) {
+                    const editorRatio = editorScrollInfo.top / editorMaxScroll;
+                    previewContainer.scrollTop = previewMaxScroll * editorRatio;
+                }
+                
+                setTimeout(() => { isSyncing = false; }, 50); // Reduce debounce time
+            }
+
+            function syncEditorScroll() {
+                if (isSyncing) return;
+                isSyncing = true;
+                
+                const editorScrollInfo = editor.getScrollInfo();
+                const editorMaxScroll = editorScrollInfo.height - editorScrollInfo.clientHeight;
+                const previewMaxScroll = previewContainer.scrollHeight - previewContainer.clientHeight;
+                
+                if (previewMaxScroll > 0 && editorMaxScroll > 0) {
+                    const previewRatio = previewContainer.scrollTop / previewMaxScroll;
+                    editor.scrollTo(null, editorMaxScroll * previewRatio);
+                }
+                
+                setTimeout(() => { isSyncing = false; }, 50); // Reduce debounce time
+            }
+
+            // --- Table of Contents ---
+            function generateToc() {
+                tocListEl.innerHTML = '';
+                editor.getValue().split('\n').forEach((line, index) => {
+                    const match = line.match(/^(#+)\s+(.*)/);
+                    if (match) {
+                        const li = document.createElement('li');
+                        li.textContent = match[2];
+                        li.className = `toc-h${match[1].length}`;
+                        li.dataset.line = index;
+                        tocListEl.appendChild(li);
+                    }
+                });
+                tocModal.style.display = 'block';
+            }
+
+            function navigateToTocLine(line) {
+                editor.setCursor({ line: parseInt(line), ch: 0 });
+                editor.focus();
+                tocModal.style.display = 'none';
+            }
+
+            // --- Time and Task Management ---
+            function updateCurrentTime() { 
+                updateTimerDisplay();
+            }
+            
+            function updateTimerDisplay() {
+                if (isTimerRunning && currentTimerStartTime) {
+                    const elapsed = Math.floor((Date.now() - currentTimerStartTime) / 1000);
+                    timerDisplay.textContent = formatDurationShort(elapsed);
+                    timerBtn.classList.add('timing');
+                } else {
+                    const now = new Date();
+                    timerDisplay.textContent = now.toTimeString().substring(0, 5); // HH:MM
+                    timerBtn.classList.remove('timing');
+                }
+            }
+            
+            function formatDuration(s) { return new Date(s * 1000).toISOString().substr(11, 8); }
+            function formatDurationShort(s) {
+                const hours = Math.floor(s / 3600);
+                const minutes = Math.floor((s % 3600) / 60);
+                return hours > 0 ? `${hours}:${String(minutes).padStart(2, '0')}` : `${minutes}:${String(s % 60).padStart(2, '0')}`;
+            }
+            
+            function getTodayDateString() {
+                return new Date().toISOString().split('T')[0];
+            }
+            
+            function getDateString(date) {
+                return date.toISOString().split('T')[0];
+            }
+            
+            // Timer History Management
+            function addTaskToHistory(task) {
+                const dateStr = getDateString(task.startTime);
+                if (!timerHistory[dateStr]) {
+                    timerHistory[dateStr] = [];
+                }
+                
+                // Add file and section information to task
+                task.fileId = currentFile ? currentFile.id : null;
+                task.fileName = currentFile ? currentFile.name : null;
+                task.section = getCurrentSection();
+                
+                timerHistory[dateStr].push(task);
+                saveTimerHistory();
+            }
+            
+            function getCurrentSection() {
+                if (!editor) return null;
+                
+                const cursor = editor.getCursor();
+                const lines = editor.getValue().split('\n');
+                let currentSection = null;
+                
+                // Find the most recent heading before current cursor position
+                for (let i = cursor.line; i >= 0; i--) {
+                    const match = lines[i].match(/^(#+)\s+(.*)/);
+                    if (match) {
+                        currentSection = {
+                            level: match[1].length,
+                            title: match[2],
+                            line: i
+                        };
+                        break;
+                    }
+                }
+                
+                return currentSection;
+            }
+            
+            function navigateToTask(task) {
+                if (task.fileId && task.fileId !== (currentFile ? currentFile.id : null)) {
+                    // Switch to the correct file first
+                    loadFile(task.fileId);
+                }
+                
+                // Navigate to section if available
+                if (task.section && task.section.line !== undefined) {
+                    setTimeout(() => {
+                        editor.setCursor({ line: task.section.line, ch: 0 });
+                        editor.focus();
+                        timerModal.style.display = 'none';
+                    }, 100);
+                } else {
+                    timerModal.style.display = 'none';
+                }
+            }
+
+            // 自動計時處理函數
+            let lastProcessedHeadingLine = -1; // 記錄上次處理的標題行號，避免重複處理
+            
+            function handleAutoTimer(changeObj) {
+                console.log('handleAutoTimer called with:', {
+                    text: changeObj.text,
+                    from: changeObj.from,
+                    to: changeObj.to,
+                    removed: changeObj.removed
+                });
+                
+                // 檢測換行的更好方式：檢查是否新增了一行
+                const isNewLine = changeObj.text.some(line => line === '') ||
+                                  changeObj.text.length > 1;
+                
+                if (!isNewLine) {
+                    console.log('跳過非換行輸入');
+                    return;
+                }
+                
+                console.log('偵測到換行輸入！開始檢查標題...');
+                
+                // 檢查當前行和前一行
+                const currentLineNum = changeObj.from.line;
+                const currentLine = editor.getLine(currentLineNum);
+                console.log(`檢查第 ${currentLineNum + 1} 行：'${currentLine || '(空行)'}'`);
+                
+                // 只檢查前一行是否為標題，並且當前行是空行（這是標題行按Enter後的情況）
+                if (currentLineNum > 0) {
+                    const previousLine = editor.getLine(currentLineNum - 1);
+                    console.log(`檢查前一行 第 ${currentLineNum} 行：'${previousLine || '(空行)'}'`);
+                    
+                    const prevHeadingMatch = previousLine.match(/^#+\s+(.+)$/);
+                    if (prevHeadingMatch && (!currentLine || currentLine.trim() === '')) {
+                        const headingText = prevHeadingMatch[1].trim();
+                        if (headingText) {
+                            // 檢查是否已經處理過這個標題行
+                            if (lastProcessedHeadingLine === currentLineNum - 1) {
+                                console.log('跳過重複處理的標題行');
+                                return;
+                            }
+                            
+                            console.log(`偵測到前一行標題：${headingText}`);
+                            lastProcessedHeadingLine = currentLineNum - 1; // 記錄處理過的標題行
+                            
+                            if (isTimerRunning) {
+                                console.log('停止目前進行中的任務');
+                                stopCurrentTask();
+                            }
+                            startAutoTaskWithHierarchy(currentLineNum - 1, headingText);
+                            return;
+                        }
+                    }
+                }
+                
+                // 檢查是否輸入了結束線 ---
+                if (currentLine && currentLine.trim() === '---') {
+                    console.log('偵測到結束線 ---');
+                    if (isTimerRunning) {
+                        console.log('停止目前進行中的任務');
+                        stopCurrentTask();
+                    }
+                    return;
+                }
+            }
+
+            // 獲取標題的完整層級路徑
+            function getHeadingHierarchy(lineNumber) {
+                const lines = editor.getValue().split('\n');
+                const currentLine = lines[lineNumber];
+                const currentMatch = currentLine.match(/^(#+)\s+(.+)$/);
+                
+                if (!currentMatch) return null;
+                
+                const currentLevel = currentMatch[1].length;
+                const currentTitle = currentMatch[2].trim();
+                const hierarchy = [];
+                
+                // 往上找父級標題
+                for (let i = lineNumber - 1; i >= 0; i--) {
+                    const line = lines[i];
+                    const match = line.match(/^(#+)\s+(.+)$/);
+                    if (match) {
+                        const level = match[1].length;
+                        const title = match[2].trim();
+                        
+                        // 如果是更高級別的標題（更少的#），加入層級
+                        if (level < currentLevel) {
+                            hierarchy.unshift({ level, title, line: i });
+                            // 如果找到了所有需要的層級就停止
+                            if (level === 1) break;
+                        }
+                    }
+                }
+                
+                // 加入當前標題
+                hierarchy.push({ level: currentLevel, title: currentTitle, line: lineNumber });
+                
+                return hierarchy;
+            }
+            
+            // 構建帶層級的任務名稱
+            function buildHierarchicalTaskName(hierarchy) {
+                if (!hierarchy || hierarchy.length === 0) return '未命名任務';
+                
+                // 取得文件名（去掉副檔名）
+                const fileName = currentFile ? currentFile.name.replace(/\.[^/.]+$/, "") : '未命名文件';
+                
+                // 構建層級路徑
+                const hierarchyPath = hierarchy.map(h => h.title).join('_');
+                
+                return `${fileName}_${hierarchyPath}`;
+            }
+            
+            // 帶層級的自動任務開始
+            function startAutoTaskWithHierarchy(lineNumber, taskName) {
+                console.log(`開始層級自動計時：${taskName}`);
+                
+                const hierarchy = getHeadingHierarchy(lineNumber);
+                const hierarchicalName = buildHierarchicalTaskName(hierarchy);
+                
+                console.log('層級結構:', hierarchy);
+                console.log('層級任務名稱:', hierarchicalName);
+                
+                const now = new Date();
+                currentTask = { 
+                    id: `auto-task-${now.getTime()}`, 
+                    name: `📝 ${hierarchicalName}`, 
+                    originalTitle: taskName,
+                    hierarchy: hierarchy,
+                    startTime: now, 
+                    endTime: null, 
+                    duration: 0,
+                    isAutoGenerated: true
+                };
+                tasks.push(currentTask);
+                isTimerRunning = true;
+                currentTimerStartTime = now.getTime();
+                updateTimerUI();
+                saveTasks();
+                
+                // Update modal UI if it's open
+                if (timerModal.style.display === 'block') {
+                    updateModalTimerUI();
+                }
+                
+                // 顯示通知
+                showNotification(`已開始計時：${taskName}`);
+            }
+            
+            // 保留舊的函數用於手動任務
+            function startAutoTask(taskName) {
+                console.log(`開始自動計時：${taskName}`);
+                const now = new Date();
+                currentTask = { 
+                    id: `auto-task-${now.getTime()}`, 
+                    name: `📝 ${taskName}`, 
+                    startTime: now, 
+                    endTime: null, 
+                    duration: 0,
+                    isAutoGenerated: true
+                };
+                tasks.push(currentTask);
+                isTimerRunning = true;
+                currentTimerStartTime = now.getTime();
+                updateTimerUI();
+                saveTasks();
+                
+                // Update modal UI if it's open
+                if (timerModal.style.display === 'block') {
+                    updateModalTimerUI();
+                }
+                
+                // 顯示通知
+                showNotification(`已開始計時：${taskName}`);
+            }
+
+            // 顯示通知
+            function showNotification(message) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed; 
+                    top: 60px; 
+                    right: 20px; 
+                    background: var(--accent-color); 
+                    color: white; 
+                    padding: 10px 20px; 
+                    border-radius: 6px; 
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.2); 
+                    z-index: 1002; 
+                    font-size: 14px;
+                    opacity: 0;
+                    transition: opacity 0.3s;
+                `;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                // 淡入效果
+                setTimeout(() => notification.style.opacity = '1', 100);
+                
+                // 3秒後移除
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    setTimeout(() => document.body.removeChild(notification), 300);
+                }, 3000);
+            }
+
+            
+            function startModalTask() {
+                if (isTimerRunning) stopCurrentTask();
+                const taskName = modalTaskInput.value.trim() || `未命名任務`;
+                const now = new Date();
+                currentTask = { id: `modal-task-${now.getTime()}`, name: taskName, startTime: now, endTime: null, duration: 0 };
+                tasks.push(currentTask);
+                isTimerRunning = true;
+                currentTimerStartTime = now.getTime();
+                updateModalTimerUI();
+                saveTasks();
+                showNotification(`已開始計時：${taskName}`);
+            }
+
+            function stopCurrentTask() {
+                if (!currentTask) return;
+                currentTask.endTime = new Date();
+                currentTask.duration = Math.round((currentTask.endTime - currentTask.startTime) / 1000);
+                
+                // Add to timer history
+                addTaskToHistory(currentTask);
+                
+                // 如果是自動生成的任務，顯示完成通知
+                if (currentTask.isAutoGenerated) {
+                    showNotification(`計時結束：${currentTask.name.replace('📝 ', '')} (${formatDuration(currentTask.duration)})`);
+                }
+                
+                isTimerRunning = false; 
+                currentTimerStartTime = null;
+                currentTask = null;
+                updateTimerUI(); 
+                updateModalTimerUI();
+                saveTasks();
+                
+                // Update timeline if modal is open
+                if (timerModal.style.display === 'block') {
+                    renderTimeline();
+                }
+            }
+            
+            function updateModalTimerUI() {
+                if (modalStartBtn) modalStartBtn.disabled = isTimerRunning;
+                if (modalStopBtn) modalStopBtn.disabled = !isTimerRunning;
+                if (modalTaskInput) modalTaskInput.value = '';
+            }
+
+            function updateTimerUI() {
+                // This function is kept for compatibility but doesn't need to do anything now
+            }
+
+            function renderTasks() {
+                // This function is kept for compatibility with existing task system
+                // The new timer system uses renderTimeline() instead
+            }
+
+            function insertGanttChart() {
+                // Get today's tasks from timer history
+                const todayStr = getTodayDateString();
+                const todayTasks = timerHistory[todayStr] || [];
+                const completedTasks = todayTasks.filter(task => task.endTime);
+                
+                if (completedTasks.length === 0) {
+                    showNotification('今日沒有已完成的任務可生成甘特圖');
+                    return;
+                }
+                
+                // Sort tasks by start time
+                const sortedTasks = [...completedTasks].sort((a, b) => a.startTime - b.startTime);
+                
+                // Create hourly-based Gantt chart with today's date
+                const today = new Date();
+                const todayDateStr = today.toISOString().split('T')[0];
+                
+                let gantt = `\`\`\`mermaid
+gantt
+    title 今日任務甘特圖 (${todayDateStr})
+    dateFormat YYYY-MM-DD HH:mm
+    axisFormat %H:%M
+    
+    section 今日任務
+`;
+                
+                sortedTasks.forEach((task, index) => {
+                    const taskName = task.name.replace(/📝 /, '').replace(/[:\[\]]/g, ''); // Clean task name
+                    const startTime = `${todayDateStr} ${task.startTime.toTimeString().substring(0, 5)}`;
+                    const endTime = `${todayDateStr} ${task.endTime.toTimeString().substring(0, 5)}`;
+                    const duration = Math.round(task.duration / 60); // Convert to minutes for better display
+                    
+                    gantt += `    ${taskName} (${duration}min) :done, task${index + 1}, ${startTime}, ${endTime}\n`;
+                });
+                
+                gantt += '```';
+                editor.replaceSelection(gantt);
+                showNotification(`已插入包含 ${completedTasks.length} 個任務的小時制甘特圖`);
+            }
+
+            // --- File Management & Persistence ---
+            function handleFileSelection(event) {
+                Array.from(event.target.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const newFile = { id: `file-${Date.now()}-${Math.random()}`, name: file.name, content: e.target.result };
+                        files.push(newFile);
+                        saveFilesToStorage(); renderFileList(); loadFile(newFile.id);
+                    };
+                    reader.readAsText(file);
+                });
+            }
+
+            function loadFile(fileId) {
+                currentFile = files.find(f => f.id === fileId) || files[0];
+                if (!currentFile) return;
+                editor.setValue(currentFile.content);
+                currentFileNameEl.textContent = currentFile.name;
+                renderFileList();
+				// Re-highlight search results for the newly loaded file
+                if (searchBar.style.display === 'flex') { // Only if search bar is active
+                    highlightAllSearchResults();
+                    highlightCurrentMatch(); // Ensure the current match is highlighted if it's in this file
+                }
+            }
+
+            function renderFileList() {
+                fileListEl.innerHTML = '';
+                if (files.length === 0) {
+                    fileListEl.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">尚未開啟任何檔案</div>';
+                    return;
+                }
+                
+                files.forEach(file => {
+                    const item = document.createElement('div');
+                    item.className = 'file-item';
+                    item.dataset.fileId = file.id;
+                    if (currentFile && currentFile.id === file.id) item.classList.add('active');
+                    
+                    item.innerHTML = `
+                        <div class="file-item-name" data-file-id="${file.id}">${file.name}</div>
+                        <div class="file-item-actions">
+                            <button class="file-action-btn rename-btn" data-file-id="${file.id}" title="重新命名">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="file-action-btn delete-btn" data-file-id="${file.id}" title="刪除檔案">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    fileListEl.appendChild(item);
+                });
+            }
+            
+            // File panel control functions
+            function toggleFilePanel() {
+                const isCollapsed = filePanel.classList.contains('collapsed');
+                if (isCollapsed) {
+                    filePanel.classList.remove('collapsed');
+                    filePanelToggle.style.background = 'var(--accent-color)';
+                } else {
+                    filePanel.classList.add('collapsed');
+                    filePanelToggle.style.background = '';
+                }
+            }
+            
+            function closeFilePanel() {
+                filePanel.classList.add('collapsed');
+                filePanelToggle.style.background = '';
+            }
+            
+            // New file creation function
+            function createNewFile() {
+                const fileName = prompt('請輸入新檔案名稱：', '新筆記');
+                if (!fileName) return;
+                
+                // Add .md extension if not present
+                const fullFileName = fileName.includes('.') ? fileName : `${fileName}.md`;
+                
+                // Check if file name already exists
+                if (files.some(f => f.name === fullFileName)) {
+                    alert('檔案名稱已存在，請選擇其他名稱。');
+                    return;
+                }
+                
+                // Create new file object
+                const newFile = {
+                    id: `file-${Date.now()}-${Math.random()}`,
+                    name: fullFileName,
+                    content: `# ${fileName}\n\n`
+                };
+                
+                // Add to files array
+                files.push(newFile);
+                
+                // Save to storage
+                saveFilesToStorage();
+                
+                // Load the new file
+                loadFile(newFile.id);
+                
+                // Update file list
+                renderFileList();
+                
+                // Show notification
+                showNotification(`已創建新檔案「${fullFileName}」`);
+                
+                // Open file panel if it's closed
+                if (filePanel.classList.contains('collapsed')) {
+                    toggleFilePanel();
+                }
+            }
+            
+            // File management functions
+            function deleteFile(fileId) {
+                const file = files.find(f => f.id === fileId);
+                if (!file) return;
+                
+                if (confirm(`確定要刪除檔案「${file.name}」嗎？此操作無法復原。`)) {
+                    // Remove from files array
+                    files = files.filter(f => f.id !== fileId);
+                    
+                    // If this was the current file, switch to another file or create new
+                    if (currentFile && currentFile.id === fileId) {
+                        if (files.length > 0) {
+                            loadFile(files[0].id);
+                        } else {
+                            currentFile = null;
+                            currentFileNameEl.textContent = '新筆記';
+                            editor.setValue(getWelcomeMessage());
+                        }
+                    }
+                    
+                    saveFilesToStorage();
+                    renderFileList();
+                    showNotification(`已刪除檔案「${file.name}」`);
+                }
+            }
+            
+            function startRenameFile(fileId) {
+                const file = files.find(f => f.id === fileId);
+                if (!file) return;
+                
+                const fileItemName = document.querySelector(`.file-item-name[data-file-id="${fileId}"]`);
+                if (!fileItemName) return;
+                
+                const originalName = file.name;
+                const nameWithoutExt = originalName.replace(/\.[^/.]+$/, "");
+                
+                fileItemName.innerHTML = `<input type="text" class="file-rename-input" value="${nameWithoutExt}" data-file-id="${fileId}" />`;
+                
+                const input = fileItemName.querySelector('.file-rename-input');
+                input.focus();
+                input.select();
+                
+                // Handle rename on Enter or blur
+                const finishRename = () => {
+                    const newName = input.value.trim();
+                    if (newName && newName !== nameWithoutExt) {
+                        const extension = originalName.includes('.') ? originalName.split('.').pop() : 'md';
+                        const fullNewName = newName.includes('.') ? newName : `${newName}.${extension}`;
+                        
+                        file.name = fullNewName;
+                        if (currentFile && currentFile.id === fileId) {
+                            currentFileNameEl.textContent = fullNewName;
+                        }
+                        
+                        saveFilesToStorage();
+                        showNotification(`檔案已重新命名為「${fullNewName}」`);
+                    }
+                    renderFileList();
+                };
+                
+                const cancelRename = () => {
+                    renderFileList();
+                };
+                
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        finishRename();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        cancelRename();
+                    }
+                });
+                
+                input.addEventListener('blur', finishRename);
+            }
+
+            function loadDataFromStorage() {
+                // Load legacy tasks for backward compatibility
+                const savedTasks = localStorage.getItem('powernote_tasks');
+                if (savedTasks) {
+                    try {
+                        tasks = JSON.parse(savedTasks).map(t => ({ 
+                            ...t, 
+                            startTime: new Date(t.startTime), 
+                            endTime: t.endTime ? new Date(t.endTime) : null 
+                        }));
+                    } catch (e) {
+                        console.warn('Failed to load legacy tasks:', e);
+                        tasks = [];
+                    }
+                }
+                
+                // Load files
+                const savedFiles = localStorage.getItem('powernote_files');
+                if (savedFiles) { 
+                    try {
+                        files = JSON.parse(savedFiles); 
+                        renderFileList(); 
+                    } catch (e) {
+                        console.warn('Failed to load files:', e);
+                        files = [];
+                    }
+                }
+                
+                // Load timer history
+                const savedTimerHistory = localStorage.getItem('powernote_timer_history');
+                if (savedTimerHistory) {
+                    try {
+                        const parsed = JSON.parse(savedTimerHistory);
+                        timerHistory = {};
+                        Object.keys(parsed).forEach(date => {
+                            timerHistory[date] = parsed[date].map(t => ({
+                                ...t,
+                                startTime: new Date(t.startTime),
+                                endTime: t.endTime ? new Date(t.endTime) : null
+                            }));
+                        });
+                    } catch (e) {
+                        console.warn('Failed to load timer history:', e);
+                        timerHistory = {};
+                    }
+                }
+            }
+            function saveTasks() { localStorage.setItem('powernote_tasks', JSON.stringify(tasks)); }
+            function saveFilesToStorage() { localStorage.setItem('powernote_files', JSON.stringify(files)); }
+            function saveTimerHistory() { localStorage.setItem('powernote_timer_history', JSON.stringify(timerHistory)); }
+            function saveDataToStorage() {
+                saveFilesToStorage();
+                saveTimerHistory();
+                saveTasks();
+            }
+            
+            // Timeline rendering
+            function renderTimeline() {
+                const selectedDate = datePicker.value || getTodayDateString();
+                const dayTasks = timerHistory[selectedDate] || [];
+                
+                timelineView.innerHTML = '';
+                
+                if (dayTasks.length === 0) {
+                    timelineView.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">此日期沒有計時記錄</div>';
+                    updateStats(0, 0);
+                    return;
+                }
+                
+                // Sort tasks by start time
+                const sortedTasks = [...dayTasks].sort((a, b) => a.startTime - b.startTime);
+                
+                let totalDuration = 0;
+                sortedTasks.forEach(task => {
+                    if (task.endTime) {
+                        totalDuration += task.duration;
+                        
+                        const timelineItem = document.createElement('div');
+                        timelineItem.className = 'timeline-item';
+                        timelineItem.innerHTML = `
+                            <div class="timeline-bar ${task.isAutoGenerated ? 'auto-generated' : ''}"></div>
+                            <div class="timeline-time">${task.startTime.toTimeString().substring(0, 5)} - ${task.endTime.toTimeString().substring(0, 5)}</div>
+                            <div class="timeline-duration">${formatDurationShort(task.duration)}</div>
+                            <div class="timeline-task ${task.isAutoGenerated ? 'auto-generated' : ''}">
+                                ${task.name}
+                                ${task.section ? `<div style="font-size: 12px; color: #888;">📍 ${task.section.title}</div>` : ''}
+                                ${task.fileName ? `<div style="font-size: 12px; color: #888;">📄 ${task.fileName}</div>` : ''}
+                            </div>
+                        `;
+                        
+                        timelineItem.addEventListener('click', () => navigateToTask(task));
+                        timelineView.appendChild(timelineItem);
+                    }
+                });
+                
+                updateStats(sortedTasks.length, totalDuration);
+            }
+            
+            function updateStats(taskCount, totalDuration) {
+                taskCountEl.textContent = taskCount;
+                totalTimeEl.textContent = formatDuration(totalDuration);
+            }
+            
+            function openTimerModal() {
+                // Set today's date
+                datePicker.value = getTodayDateString();
+                timerModal.style.display = 'block';
+                renderTimeline();
+                updateModalTimerUI();
+                updateAutoTimerUI();
+                
+                // Initialize tab state
+                showTimelineView();
+            }
+            
+            // Tab switching functions
+            function showTimelineView() {
+                timelineTabBtn.classList.add('active');
+                chartTabBtn.classList.remove('active');
+                timelineContainer.style.display = 'block';
+                chartContainer.style.display = 'none';
+            }
+            
+            function showChartView() {
+                timelineTabBtn.classList.remove('active');
+                chartTabBtn.classList.add('active');
+                timelineContainer.style.display = 'none';
+                chartContainer.style.display = 'block';
+                renderChart();
+            }
+            
+            // Chart rendering function
+            function renderChart() {
+                const selectedDate = datePicker.value || getTodayDateString();
+                const dayTasks = timerHistory[selectedDate] || [];
+                const completedTasks = dayTasks.filter(task => task.endTime);
+                const level = chartLevelSelect.value;
+                
+                chartView.innerHTML = '';
+                
+                if (completedTasks.length === 0) {
+                    chartView.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">此日期沒有已完成的任務</div>';
+                    return;
+                }
+                
+                // Group tasks by selected level
+                const groupedData = groupTasksByLevel(completedTasks, level);
+                const totalDuration = completedTasks.reduce((sum, task) => sum + task.duration, 0);
+                
+                // Sort by duration descending
+                const sortedGroups = Object.entries(groupedData)
+                    .map(([key, data]) => ({ key, ...data }))
+                    .sort((a, b) => b.totalDuration - a.totalDuration);
+                
+                sortedGroups.forEach(group => {
+                    const percentage = ((group.totalDuration / totalDuration) * 100).toFixed(1);
+                    const chartItem = document.createElement('div');
+                    chartItem.className = 'chart-item';
+                    chartItem.innerHTML = `
+                        <div class="chart-label">${group.key}</div>
+                        <div class="chart-bar-container">
+                            <div class="chart-bar" style="width: ${percentage}%"></div>
+                            <div class="chart-percentage">${percentage}%</div>
+                        </div>
+                        <div class="chart-duration">${formatDurationShort(group.totalDuration)}</div>
+                    `;
+                    chartView.appendChild(chartItem);
+                });
+            }
+            
+            // Group tasks by hierarchy level
+            function groupTasksByLevel(tasks, level) {
+                const groups = {};
+                
+                tasks.forEach(task => {
+                    let groupKey = '未分類';
+                    
+                    if (level === 'file') {
+                        groupKey = task.fileName || '未命名文件';
+                    } else if (task.hierarchy && task.hierarchy.length > 0) {
+                        const levelIndex = parseInt(level.replace('level', '')) - 1;
+                        if (levelIndex < task.hierarchy.length) {
+                            // Build hierarchical path up to the selected level
+                            const pathParts = task.hierarchy.slice(0, levelIndex + 1).map(h => h.title);
+                            groupKey = pathParts.join(' > ');
+                        } else {
+                            // If task doesn't have enough hierarchy levels, use the deepest available
+                            groupKey = task.hierarchy.map(h => h.title).join(' > ');
+                        }
+                    }
+                    
+                    if (!groups[groupKey]) {
+                        groups[groupKey] = {
+                            totalDuration: 0,
+                            taskCount: 0,
+                            tasks: []
+                        };
+                    }
+                    
+                    groups[groupKey].totalDuration += task.duration;
+                    groups[groupKey].taskCount += 1;
+                    groups[groupKey].tasks.push(task);
+                });
+                
+                return groups;
+            }
+
+            // --- Exporting ---
+            function exportToMd() {
+                const content = editor.getValue();
+                const title = currentFile ? currentFile.name.replace(/\.[^/.]+$/, "") : "document";
+                downloadBlob(new Blob([content], { type: 'text/markdown' }), `${title}.md`);
+                showNotification(`已匯出 ${title}.md 檔案`);
+            }
+
+            function exportToHtml() {
+                const content = document.getElementById('preview').innerHTML;
+                const title = currentFile ? currentFile.name.replace(/\.[^/.]+$/, "") : "document";
+                const html = `<!DOCTYPE html><html><head><title>${title}</title><style>body{font-family:sans-serif;max-width:800px;margin:auto;padding:20px;}.mermaid-container{text-align:center;}</style></head><body>${content}</body></html>`;
+                downloadBlob(new Blob([html], { type: 'text/html' }), `${title}.html`);
+                showNotification(`已匯出 ${title}.html 檔案`);
+            }
+
+            // Export presentation to standalone HTML - Ultra safe version
+            function exportPresentationToHtml() {
+                if (!isPresentationMode) {
+                    showNotification('請先進入簡報模式再導出');
+                    return;
+                }
+
+                var title = currentFile ? currentFile.name.replace(/\.[^/.]+$/, "") + "_presentation" : "presentation";
+                var slidesElement = document.getElementById('presentation-slides');
+                var sections = slidesElement.getElementsByTagName('section');
+                
+                // Create HTML in small, safe pieces
+                var parts = [];
+                parts.push('<!DOCTYPE html>');
+                parts.push('<html>');
+                parts.push('<head>');
+                parts.push('<meta charset="UTF-8">');
+                parts.push('<title>' + title + '</title>');
+                parts.push('<style>');
+                parts.push('body{margin:0;font-family:Arial,sans-serif;background:white;color:black;overflow:hidden;}');
+                parts.push('.slide{display:none;position:absolute;top:0;left:0;width:100vw;height:100vh;padding:60px;box-sizing:border-box;background:white;justify-content:center;align-items:center;flex-direction:column;text-align:center;}');
+                parts.push('.slide.active{display:flex;}');
+                parts.push('.slide h1{font-size:6em;margin:0.5em 0;color:black;}');
+                parts.push('.slide h2{font-size:5em;margin:0.5em 0;color:black;}');
+                parts.push('.slide h3{font-size:4em;margin:0.5em 0;color:black;}');
+                parts.push('.slide p{font-size:2.6em;line-height:1.6;margin:0.5em 0;}');
+                parts.push('.slide ul,.slide ol{font-size:2.6em;line-height:1.6;margin:0.5em 0;text-align:left;max-width:80%;padding-left:2em;}');
+                parts.push('.slide li{margin:0.3em 0;text-align:left;}');
+                parts.push('.slide table{border-collapse:collapse;margin:20px auto;font-size:2.6em;}');
+                parts.push('.slide table,.slide th,.slide td{border:2px solid black;padding:15px;text-align:center;}');
+                parts.push('.slide th{background:#f0f0f0;font-weight:bold;}');
+                parts.push('.slide td{background:white;}');
+                parts.push('.controls{position:fixed;bottom:15px;right:15px;z-index:1000;display:flex;gap:5px;}');
+                parts.push('.btn{background:rgba(0,0,0,0.1);border:1px solid rgba(0,0,0,0.3);color:black;padding:2px 3px;border-radius:50%;cursor:pointer;font-size:4.5px;width:10px;height:10px;display:inline-flex;align-items:center;justify-content:center;transition:all 0.3s ease;}');
+                parts.push('.btn:hover{background:rgba(0,0,0,0.2);transform:scale(1.1);}');
+                parts.push('.counter{position:fixed;bottom:15px;right:80px;background:rgba(0,0,0,0.1);color:black;padding:2.5px;border-radius:5px;font-size:3.5px;}');
+                parts.push('</style>');
+                parts.push('</head>');
+                parts.push('<body>');
+                
+                // Add slides
+                for (var i = 0; i < sections.length; i++) {
+                    var activeClass = i === 0 ? ' active' : '';
+                    parts.push('<div class="slide' + activeClass + '">');
+                    parts.push(sections[i].innerHTML);
+                    parts.push('</div>');
+                }
+                
+                // Add controls
+                parts.push('<div class="controls">');
+                parts.push('<button class="btn" onclick="goPrev()">&lt;</button>');
+                parts.push('<button class="btn" onclick="goNext()">&gt;</button>');
+                parts.push('</div>');
+                parts.push('<div class="counter" id="counter">1 / ' + sections.length + '</div>');
+                
+                // Add safe JavaScript - no complex quotes
+                parts.push('<script>');
+                parts.push('var current=0;');
+                parts.push('var total=' + sections.length + ';');
+                parts.push('var slides=document.querySelectorAll(".slide");');
+                parts.push('function updateDisplay(){');
+                parts.push('for(var i=0;i<slides.length;i++){');
+                parts.push('slides[i].classList.remove("active");');
+                parts.push('}');
+                parts.push('slides[current].classList.add("active");');
+                parts.push('document.getElementById("counter").textContent=(current+1)+" / "+total;');
+                parts.push('}');
+                parts.push('function goNext(){');
+                parts.push('if(current<total-1){');
+                parts.push('current++;');
+                parts.push('updateDisplay();');
+                parts.push('}');
+                parts.push('}');
+                parts.push('function goPrev(){');
+                parts.push('if(current>0){');
+                parts.push('current--;');
+                parts.push('updateDisplay();');
+                parts.push('}');
+                parts.push('}');
+                parts.push('document.addEventListener("keydown",function(e){');
+                parts.push('if(e.key=="ArrowRight"){goNext();}');
+                parts.push('if(e.key=="ArrowLeft"){goPrev();}');
+                parts.push('});');
+                parts.push('</' + 'script>');
+                parts.push('</body>');
+                parts.push('</html>');
+                
+                var finalHtml = parts.join('');
+                downloadBlob(new Blob([finalHtml], { type: 'text/html' }), title + '.html');
+                showNotification('已匯出互動簡報檔案 ' + title + '.html');
+            }
+
+            // Get current theme helper function
+            function getCurrentTheme() {
+                const themeClasses = ['theme-default', 'theme-dark', 'theme-monokai', 'theme-solarized', 'theme-material', 'theme-dracula', 'theme-github'];
+                const presentationMode = document.getElementById('presentation-mode');
+                
+                for (const themeClass of themeClasses) {
+                    if (presentationMode && presentationMode.classList.contains(themeClass)) {
+                        return themeClass.replace('theme-', '');
+                    }
+                }
+                return 'default';
+            }
+
+            // Presentation Mode Functions
+            function togglePresentationMode() {
+                if (isPresentationMode) {
+                    exitPresentationMode();
+                } else {
+                    enterPresentationMode();
+                }
+            }
+
+            async function enterPresentationMode() {
+                const markdown = editor.getValue();
+                const slides = createSlidesFromMarkdown(markdown);
+                
+                presentationSlides.innerHTML = slides;
+                presentationMode.classList.add('active');
+                
+                // Render Mermaid diagrams in presentation mode
+                try {
+                    await mermaid.run({ nodes: presentationSlides.querySelectorAll('.mermaid') });
+                } catch (error) {
+                    console.warn('Mermaid rendering error in presentation:', error);
+                }
+                
+                // Initialize or reinitialize Reveal.js
+                if (revealInstance) {
+                    // Destroy existing instance to avoid conflicts
+                    revealInstance.destroy();
+                    revealInstance = null;
+                }
+                
+                // Wait a bit for DOM to settle
+                setTimeout(() => {
+                    revealInstance = new Reveal({
+                        hash: false, // Disable hash to avoid URL conflicts
+                        controls: true,
+                        progress: true,
+                        center: true,
+                        transition: 'slide',
+                        embedded: false,
+                        touch: true,
+                        loop: false,
+                        rtl: false,
+                        navigationMode: 'default',
+                        shuffle: false,
+                        fragments: true,
+                        fragmentInURL: false,
+                        help: true,
+                        pause: true,
+                        showNotes: false,
+                        autoPlayMedia: null,
+                        preloadIframes: null,
+                        autoAnimateEasing: 'ease',
+                        autoAnimateDuration: 1.0,
+                        autoAnimateUnmatched: true,
+                        autoSlide: 0,
+                        autoSlideStoppable: true,
+                        autoSlideMethod: null,
+                        defaultTiming: null,
+                        mouseWheel: false,
+                        previewLinks: false,
+                        postMessage: true,
+                        postMessageEvents: false,
+                        focusBodyOnPageVisibilityChange: true,
+                        transition: 'slide',
+                        transitionSpeed: 'default',
+                        backgroundTransition: 'fade'
+                    });
+                    
+                    revealInstance.initialize().then(() => {
+                        isPresentationMode = true;
+                        updatePresentationButton();
+                        showNotification('已進入簡報模式，使用方向鍵或按鈕切換投影片');
+                        
+                        // Force refresh of first slide to ensure proper display
+                        setTimeout(() => {
+                            if (revealInstance) {
+                                revealInstance.sync();
+                            }
+                        }, 100);
+                    });
+                }, 50);
+            }
+
+            function exitPresentationMode() {
+                presentationMode.classList.remove('active');
+                isPresentationMode = false;
+                updatePresentationButton();
+                showNotification('已退出簡報模式');
+                
+                // Clean up reveal.js instance
+                if (revealInstance) {
+                    revealInstance.destroy();
+                    revealInstance = null;
+                }
+            }
+
+            function updatePresentationButton() {
+                if (isPresentationMode) {
+                    presentationToggleBtn.innerHTML = '<i class="fas fa-times"></i> 退出簡報';
+                    presentationToggleBtn.style.background = '#dc3545';
+                } else {
+                    presentationToggleBtn.innerHTML = '<i class="fas fa-presentation-screen"></i> 簡報模式';
+                    presentationToggleBtn.style.background = '';
+                }
+            }
+
+            function createSlidesFromMarkdown(markdown) {
+                // Clean up markdown first
+                markdown = markdown.trim();
+                if (!markdown) {
+                    return '<section><h1>空白投影片</h1></section>';
+                }
+                
+                // Split by horizontal rules (---) for slide breaks
+                const slideContents = markdown.split(/^---$/m);
+                let slides = [];
+                
+                if (slideContents.length > 1) {
+                    // Use horizontal rules as separators
+                    slides = slideContents.filter(slide => slide.trim());
+                } else {
+                    // Try splitting by h1 headers
+                    const h1Parts = markdown.split(/^# /m);
+                    if (h1Parts.length > 1) {
+                        slides = h1Parts.filter(slide => slide.trim());
+                        // Add back the # to non-first slides (except empty first part)
+                        slides = slides.map((slide, index) => {
+                            if (index === 0 && !slide.trim()) return null;
+                            return index === 0 || !slide.trim() ? slide : '# ' + slide;
+                        }).filter(slide => slide !== null);
+                    } else {
+                        // Try splitting by h2 headers
+                        const h2Parts = markdown.split(/^## /m);
+                        if (h2Parts.length > 1) {
+                            slides = h2Parts.filter(slide => slide.trim());
+                            // Add back the ## to non-first slides
+                            slides = slides.map((slide, index) => {
+                                if (index === 0 && !slide.trim()) return null;
+                                return index === 0 || !slide.trim() ? slide : '## ' + slide;
+                            }).filter(slide => slide !== null);
+                        } else {
+                            // No clear separators, use entire content as one slide
+                            slides = [markdown];
+                        }
+                    }
+                }
+
+                // Process each slide and handle Mermaid content
+                const processedSlides = slides.map((slideContent, index) => {
+                    if (!slideContent || !slideContent.trim()) {
+                        return '<section><p>空白投影片</p></section>';
+                    }
+                    
+                    try {
+                        const htmlContent = marked.parse(slideContent.trim());
+                        const slideEl = document.createElement('div');
+                        slideEl.innerHTML = htmlContent;
+                        
+                        // Process Mermaid diagrams in this slide
+                        const mermaidElements = slideEl.querySelectorAll('code.language-mermaid');
+                        mermaidElements.forEach(mermaidEl => {
+                            const mermaidCode = mermaidEl.textContent;
+                            const mermaidContainer = document.createElement('div');
+                            mermaidContainer.className = 'mermaid';
+                            mermaidContainer.textContent = mermaidCode;
+                            const preElement = mermaidEl.closest('pre');
+                            if (preElement) {
+                                preElement.replaceWith(mermaidContainer);
+                            }
+                        });
+                        
+                        return `<section>${slideEl.innerHTML}</section>`;
+                    } catch (error) {
+                        console.error('Error parsing slide content:', error);
+                        return `<section><p>投影片解析錯誤: ${error.message}</p></section>`;
+                    }
+                });
+
+                return processedSlides.length > 0 ? processedSlides.join('') : '<section><h1>空白投影片</h1></section>';
+            }
+
+            function nextSlide() {
+                if (revealInstance) {
+                    revealInstance.next();
+                }
+            }
+
+            function prevSlide() {
+                if (revealInstance) {
+                    revealInstance.prev();
+                }
+            }
+            
+            function exportToCsv() {
+                // Get all tasks from timer history
+                let allTasks = [];
+                Object.keys(timerHistory).forEach(date => {
+                    timerHistory[date].forEach(task => {
+                        if (task.endTime) {
+                            allTasks.push({
+                                ...task,
+                                date: date
+                            });
+                        }
+                    });
+                });
+                
+                if (allTasks.length === 0) {
+                    showNotification('沒有可匯出的任務記錄');
+                    return;
+                }
+                
+                // Sort by date and start time
+                allTasks.sort((a, b) => {
+                    if (a.date !== b.date) return a.date.localeCompare(b.date);
+                    return a.startTime - b.startTime;
+                });
+                
+                const headers = ["日期", "任務名稱", "開始時間", "結束時間", "持續時間(秒)", "文件名", "章節", "類型"];
+                let csv = allTasks.map(t => [
+                    `"${t.date}"`,
+                    `"${t.name}"`,
+                    `"${t.startTime.toLocaleString()}"`,
+                    `"${t.endTime.toLocaleString()}"`,
+                    t.duration,
+                    `"${t.fileName || ''}"`,
+                    `"${t.section ? t.section.title : ''}"`,
+                    `"${t.isAutoGenerated ? '自動計時' : '手動計時'}"`
+                ].join(','));
+                
+                csv.unshift(headers.join(','));
+                downloadBlob(new Blob(['\uFEFF' + csv.join('\n')], { type: 'text/csv;charset=utf-8;' }), `計時記錄_${new Date().toISOString().split('T')[0]}.csv`);
+                showNotification(`已匯出 ${allTasks.length} 條計時記錄`);
+            }
+
+            function downloadBlob(blob, filename) {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            }
+
+            // --- Event Listeners ---
+            function attachEventListeners() {
+                // Helper function to safely add event listeners
+                function safeAddEventListener(elementId, event, handler) {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.addEventListener(event, handler);
+                    } else {
+                        console.warn(`Element with id '${elementId}' not found`);
+                    }
+                }
+                
+                // Main actions
+                safeAddEventListener('insert-gantt-btn', 'click', insertGanttChart);
+                safeAddEventListener('export-md-btn', 'click', exportToMd);
+                safeAddEventListener('export-html-btn', 'click', exportToHtml);
+                safeAddEventListener('presentation-toggle-btn', 'click', togglePresentationMode);
+                safeAddEventListener('open-files-btn', 'click', () => fileInput.click());
+                if (fileInput) fileInput.addEventListener('change', handleFileSelection);
+                
+                // Presentation controls
+                if (prevSlideBtn) prevSlideBtn.addEventListener('click', prevSlide);
+                if (nextSlideBtn) nextSlideBtn.addEventListener('click', nextSlide);
+                safeAddEventListener('export-presentation-html-btn', 'click', exportPresentationToHtml);
+                if (exitPresentationBtn) exitPresentationBtn.addEventListener('click', exitPresentationMode);
+                
+                // Font settings controls
+                safeAddEventListener('font-settings-btn', 'click', () => fontSettingsModal.style.display = 'block');
+                safeAddEventListener('close-font-settings-btn', 'click', () => fontSettingsModal.style.display = 'none');
+                safeAddEventListener('font-size-plus', 'click', increaseFontSize);
+                safeAddEventListener('font-size-minus', 'click', decreaseFontSize);
+                safeAddEventListener('font-size-slider', 'input', handleFontSizeSlider);
+                safeAddEventListener('reset-settings-btn', 'click', resetSettings);
+                safeAddEventListener('apply-settings-btn', 'click', applySettings);
+                
+                // Theme button delegation
+                const themeButtons = document.querySelectorAll('.theme-btn');
+                themeButtons.forEach(btn => {
+                    btn.addEventListener('click', () => selectTheme(btn.dataset.theme));
+                });
+                
+                // Timer modal actions
+                if (timerBtn) timerBtn.addEventListener('click', openTimerModal);
+                safeAddEventListener('close-timer-btn', 'click', () => timerModal.style.display = 'none');
+                if (modalStartBtn) modalStartBtn.addEventListener('click', startModalTask);
+                if (modalStopBtn) modalStopBtn.addEventListener('click', stopCurrentTask);
+                if (modalAutoTimerToggle) modalAutoTimerToggle.addEventListener('click', toggleAutoTimer);
+                if (modalExportCsvBtn) modalExportCsvBtn.addEventListener('click', exportToCsv);
+                if (todayBtn) todayBtn.addEventListener('click', () => {
+                    datePicker.value = getTodayDateString();
+                    renderTimeline();
+                    if (chartContainer.style.display !== 'none') {
+                        renderChart();
+                    }
+                });
+                if (datePicker) datePicker.addEventListener('change', () => {
+                    renderTimeline();
+                    if (chartContainer.style.display !== 'none') {
+                        renderChart();
+                    }
+                });
+                
+                // Tab switching
+                if (timelineTabBtn) timelineTabBtn.addEventListener('click', showTimelineView);
+                if (chartTabBtn) chartTabBtn.addEventListener('click', showChartView);
+                if (chartLevelSelect) chartLevelSelect.addEventListener('change', renderChart);
+                
+                // TOC listeners
+                safeAddEventListener('toc-btn', 'click', generateToc);
+                safeAddEventListener('close-toc-btn', 'click', () => tocModal.style.display = 'none');
+                if (tocListEl) tocListEl.addEventListener('click', (e) => { if (e.target.tagName === 'LI') navigateToTocLine(e.target.dataset.line); });
+
+                // File panel controls
+                if (filePanelToggle) filePanelToggle.addEventListener('click', toggleFilePanel);
+                if (closeFilePanelBtn) closeFilePanelBtn.addEventListener('click', closeFilePanel);
+                if (newFileBtn) newFileBtn.addEventListener('click', createNewFile);
+                if (exportWorkspaceBtn) exportWorkspaceBtn.addEventListener('click', exportWorkspace);
+                if (importWorkspaceBtn) importWorkspaceBtn.addEventListener('click', () => workspaceInput.click());
+                if (workspaceInput) workspaceInput.addEventListener('change', handleWorkspaceImport);
+                
+                // View mode controls
+                safeAddEventListener('split-view-btn', 'click', () => setViewMode('split'));
+                safeAddEventListener('edit-only-btn', 'click', () => setViewMode('edit-only'));
+                safeAddEventListener('preview-only-btn', 'click', () => setViewMode('preview-only'));
+                
+                // Fold controls
+                safeAddEventListener('fold-all-btn', 'click', foldAllSections);
+                safeAddEventListener('unfold-all-btn', 'click', unfoldAllSections);
+
+                // Delegation for dynamic elements
+                if (fileListEl) {
+                    fileListEl.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('file-item') || e.target.classList.contains('file-item-name')) {
+                            const fileId = e.target.dataset.fileId || e.target.closest('.file-item').dataset.fileId;
+                            if (fileId) loadFile(fileId);
+                        } else if (e.target.closest('.delete-btn')) {
+                            e.stopPropagation();
+                            const fileId = e.target.closest('.delete-btn').dataset.fileId;
+                            if (fileId) deleteFile(fileId);
+                        } else if (e.target.closest('.rename-btn')) {
+                            e.stopPropagation();
+                            const fileId = e.target.closest('.rename-btn').dataset.fileId;
+                            if (fileId) startRenameFile(fileId);
+                        }
+                    });
+                }
+
+                // Scroll sync - 確保事件監聽器正確綁定
+                if (previewContainer) previewContainer.addEventListener('scroll', syncEditorScroll, { passive: true });
+                
+                // Modal close on outside click
+                window.addEventListener('click', (e) => {
+                    if (e.target === tocModal) tocModal.style.display = 'none';
+                    if (e.target === timerModal) timerModal.style.display = 'none';
+                    if (e.target === fontSettingsModal) fontSettingsModal.style.display = 'none';
+                    
+                    // Close autocomplete if clicking outside
+                    if (autocompleteDropdown && !autocompleteDropdown.contains(e.target)) {
+                        removeAutocompleteDropdown();
+                    }
+                });
+                
+                // Search Bar Listeners
+                if (searchPrevBtn) searchPrevBtn.addEventListener('click', jumpToPrevSearchMatch);
+                if (searchNextBtn) searchNextBtn.addEventListener('click', jumpToNextSearchMatch);
+                if (searchScopeToggle) searchScopeToggle.addEventListener('click', toggleSearchScope);
+                if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearch);
+                if (searchInput) {
+                    searchInput.addEventListener('input', performSearch);
+                    searchInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            jumpToNextSearchMatch();
+                        } else if (e.key === 'Escape') {
+                            e.preventDefault();
+                            closeSearch();
+                        }
+                    });
+                }
+
+                // Keyboard shortcuts for presentation mode
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey && e.key === 'f') {
+						e.preventDefault();
+						toggleSearchBar();
+					}
+					if (isPresentationMode) {
+						if (e.key === 'Escape') {
+                            exitPresentationMode();
+                        }
+                    } else {
+                        // F5 to enter presentation mode
+                        if (e.key === 'F5') {
+                            e.preventDefault();
+                            enterPresentationMode();
+                        }
+                        // Ctrl+N to create new file
+                        if (e.ctrlKey && e.key === 'n') {
+                            e.preventDefault();
+                            createNewFile();
+                        }
+                        // Ctrl+O to open file panel
+                        if (e.ctrlKey && e.key === 'o') {
+                            e.preventDefault();
+                            toggleFilePanel();
+                        }
+                    }
+                });
+                
+                // 確保預覽容器初始化後可以滾動
+                setTimeout(() => {
+                    if (previewContainer) {
+                        console.log('Preview container height:', previewContainer.scrollHeight, 'Client height:', previewContainer.clientHeight);
+                    }
+                }, 1000);
+
+                // 搜尋切換按鈕的事件監聽器
+                if (searchToggleButton) searchToggleButton.addEventListener('click', toggleSearchBar);
+            }
+
+			// --- Search Functions ---
+            function toggleSearchBar() {
+                if (searchBar.style.display === 'flex') {
+                    closeSearch();
+                } else {
+                    searchBar.style.display = 'flex';
+                    searchInput.focus();
+                    if (searchInput.value) {
+                        performSearch(); // Re-run search if there's already a query
+                    }
+                }
+            }
+
+            // Utility for escaping regex special characters
+            function escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+
+            function performSearch() {
+                clearAllSearchHighlights();
+                allSearchResults = [];
+                currentSearchMatchIndex = -1;
+                if (currentMatchMarker) { currentMatchMarker.clear(); currentMatchMarker = null; }
+
+                const queryText = searchInput.value.trim();
+                if (!queryText) {
+                    updateSearchMatchCounter(0, 0);
+                    return;
+                }
+
+                // Treat space-separated keywords as AND logic for matching lines,
+                // but highlight all occurrences of any keyword within those lines.
+                searchKeywords = queryText.split(/\s+/).filter(k => k.length > 0);
+                if (searchKeywords.length === 0) {
+                    updateSearchMatchCounter(0, 0);
+                    return;
+                }
+                
+                // Regex to highlight any of the keywords
+                const highlightPattern = new RegExp(`(${searchKeywords.map(k => escapeRegExp(k)).join('|')})`, 'gi');
+
+                let filesToSearch = [];
+                if (currentSearchScope === 'current' && currentFile) {
+                    filesToSearch = [currentFile];
+                } else if (currentSearchScope === 'all') {
+                    filesToSearch = files;
+                } else {
+                    updateSearchMatchCounter(0, 0);
+                    return;
+                }
+
+                filesToSearch.forEach(file => {
+                    const content = file.content;
+                    const lines = content.split('\n');
+                    
+                    lines.forEach((line, lineIndex) => {
+                        // AND logic: Check if all keywords are present in the line (case-insensitive)
+                        const allKeywordsPresent = searchKeywords.every(keyword => 
+                            line.toLowerCase().includes(keyword.toLowerCase())
+                        );
+
+                        if (allKeywordsPresent) {
+                            // If all keywords are present, find all occurrences of *any* keyword for highlighting
+                            let match;
+                            // Reset the regex lastIndex for each line to ensure correct matching
+                            highlightPattern.lastIndex = 0; 
+                            while ((match = highlightPattern.exec(line)) !== null) {
+                                const from = { line: lineIndex, ch: match.index };
+                                const to = { line: lineIndex, ch: match.index + match[0].length };
+                                allSearchResults.push({ fileId: file.id, from, to });
+                            }
+                        }
+                    });
+                });
+
+                highlightAllSearchResults();
+                updateSearchMatchCounter(0, allSearchResults.length);
+                if (allSearchResults.length > 0) {
+                    jumpToSearchMatch(0);
+                } else {
+                    editor.setSelection(editor.getCursor()); // Clear previous selection
+                }
+            }
+
+            function highlightAllSearchResults() {
+                clearAllSearchHighlights();
+                allSearchResults.forEach(result => {
+                    if (currentFile && result.fileId === currentFile.id) {
+                        const marker = editor.markText(result.from, result.to, { className: 'highlighted-search' });
+                        currentHighlightedMarkers.push(marker);
+                    }
+                });
+            }
+
+            function clearAllSearchHighlights() {
+                currentHighlightedMarkers.forEach(marker => marker.clear());
+                currentHighlightedMarkers = [];
+                if (currentMatchMarker) { currentMatchMarker.clear(); currentMatchMarker = null; }
+            }
+
+            function jumpToSearchMatch(index) {
+                if (allSearchResults.length === 0) return;
+
+                const clampedIndex = Math.max(0, Math.min(index, allSearchResults.length - 1));
+                currentSearchMatchIndex = clampedIndex;
+
+                const match = allSearchResults[currentSearchMatchIndex];
+                
+                if (currentFile && match.fileId === currentFile.id) {
+                    // Match in current open file, just jump
+                    editor.setSelection(match.from, match.to);
+                    editor.scrollIntoView(match.from, 20); // scrollIntoView with padding
+                    highlightCurrentMatch();
+                } else {
+                    // Match in another file, load it first
+                    loadFile(match.fileId); 
+                    // Need a slight delay for editor to update its content before setting cursor/highlighting
+                    setTimeout(() => {
+                        editor.setSelection(match.from, match.to);
+                        editor.scrollIntoView(match.from, 20);
+                        highlightAllSearchResults(); // Re-highlight all matches for the new file
+                        highlightCurrentMatch();
+                    }, 100);
+                }
+                updateSearchMatchCounter(currentSearchMatchIndex + 1, allSearchResults.length);
+            }
+
+            function jumpToNextSearchMatch() {
+                if (allSearchResults.length === 0) return;
+                let nextIndex = currentSearchMatchIndex + 1;
+                if (nextIndex >= allSearchResults.length) {
+                    nextIndex = 0; // Wrap around
+                }
+                jumpToSearchMatch(nextIndex);
+            }
+
+            function jumpToPrevSearchMatch() {
+                if (allSearchResults.length === 0) return;
+                let prevIndex = currentSearchMatchIndex - 1;
+                if (prevIndex < 0) {
+                    prevIndex = allSearchResults.length - 1; // Wrap around
+                }
+                jumpToSearchMatch(prevIndex);
+            }
+
+            function highlightCurrentMatch() {
+                if (currentMatchMarker) {
+                    currentMatchMarker.clear();
+                    currentMatchMarker = null;
+                }
+
+                if (allSearchResults.length > 0) {
+                    const currentMatch = allSearchResults[currentSearchMatchIndex];
+                    if (currentFile && currentMatch.fileId === currentFile.id) {
+                        currentMatchMarker = editor.markText(currentMatch.from, currentMatch.to, { className: 'current-highlighted-search' });
+                    }
+                }
+            }
+
+            function updateSearchMatchCounter(current, total) {
+                searchMatchCount.textContent = total > 0 ? `${current} / ${total}` : '0 / 0';
+            }
+
+            function toggleSearchScope() {
+                currentSearchScope = currentSearchScope === 'current' ? 'all' : 'current';
+                searchScopeToggle.innerHTML = `<i class="fas fa-folder"></i> ${currentSearchScope === 'current' ? '當前檔案' : '所有檔案'}`;
+                performSearch(); // Re-run search with new scope
+            }
+
+            function closeSearch() {
+                searchBar.style.display = 'none';
+                clearAllSearchHighlights();
+                allSearchResults = [];
+                currentSearchMatchIndex = -1;
+                searchInput.value = '';
+                editor.focus();
+            }
+			// --- Search Functions End ---
+
+            // 切換自動計時功能
+            function toggleAutoTimer() {
+                autoTimerEnabled = !autoTimerEnabled;
+                updateAutoTimerUI();
+                console.log(`自動計時功能${autoTimerEnabled ? '已開啟' : '已關閉'}`);
+                showNotification(`自動計時功能${autoTimerEnabled ? '已開啟' : '已關閉'}`);
+            }
+            
+            function updateAutoTimerUI() {
+                if (modalAutoTimerToggle) {
+                    if (autoTimerEnabled) {
+                        modalAutoTimerToggle.classList.add('active');
+                        modalAutoTimerToggle.innerHTML = '<i class="fas fa-magic"></i> 自動計時';
+                    } else {
+                        modalAutoTimerToggle.classList.remove('active');
+                        modalAutoTimerToggle.innerHTML = '<i class="fas fa-magic"></i> 自動計時';
+                    }
+                }
+            }
+
+            // --- View Mode Functions ---
+            function setViewMode(mode) {
+                currentViewMode = mode;
+                const editorPanel = document.getElementById('editor-panel');
+                const previewPanel = document.getElementById('preview-panel');
+                const splitBtn = document.getElementById('split-view-btn');
+                const editBtn = document.getElementById('edit-only-btn');
+                const previewBtn = document.getElementById('preview-only-btn');
+                
+                // Reset button states
+                [splitBtn, editBtn, previewBtn].forEach(btn => {
+                    if (btn) btn.classList.remove('active');
+                });
+                
+                switch(mode) {
+                    case 'split':
+                        editorPanel.style.display = 'flex';
+                        previewPanel.style.display = 'flex';
+                        splitBtn.classList.add('active');
+                        break;
+                    case 'edit-only':
+                        editorPanel.style.display = 'flex';
+                        previewPanel.style.display = 'none';
+                        editBtn.classList.add('active');
+                        break;
+                    case 'preview-only':
+                        editorPanel.style.display = 'none';
+                        previewPanel.style.display = 'flex';
+                        previewBtn.classList.add('active');
+                        break;
+                }
+                
+                // Refresh editor if switching back to edit mode
+                if (mode !== 'preview-only') {
+                    setTimeout(() => editor.refresh(), 100);
+                }
+            }
+            
+            // --- Section Navigation ---
+            function navigateToSection(sectionName) {
+                if (!editor || !sectionName) return;
+                
+                const lines = editor.getValue().split('\n');
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    const match = line.match(/^#+\s+(.+)$/);
+                    if (match && match[1].toLowerCase().includes(sectionName.toLowerCase())) {
+                        editor.setCursor({ line: i, ch: 0 });
+                        editor.focus();
+                        showNotification(`已跳轉到段落：${sectionName}`);
+                        break;
+                    }
+                }
+            }
+            
+            // --- Wiki Link Autocomplete ---
+            function createAutocompleteDropdown(items, cursorPos) {
+                removeAutocompleteDropdown();
+                
+                if (items.length === 0) return;
+                
+                autocompleteDropdown = document.createElement('div');
+                autocompleteDropdown.className = 'autocomplete-dropdown';
+                autocompleteSelectedIndex = -1;
+                
+                items.forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'autocomplete-item';
+                    div.dataset.index = index;
+                    
+                    if (item.section) {
+                        div.innerHTML = `
+                            <div class="autocomplete-note-name">${item.fileName}</div>
+                            <div class="autocomplete-section"># ${item.section}</div>
+                        `;
+                        div.dataset.insertText = `${item.fileName}#${item.section}`;
+                    } else {
+                        div.innerHTML = `<div class="autocomplete-note-name">${item.fileName}</div>`;
+                        div.dataset.insertText = item.fileName;
+                    }
+                    
+                    div.addEventListener('click', () => {
+                        insertAutocompleteItem(div.dataset.insertText);
+                    });
+                    
+                    autocompleteDropdown.appendChild(div);
+                });
+                
+                // Position the dropdown
+                const coords = editor.cursorCoords(cursorPos, 'page');
+                autocompleteDropdown.style.left = coords.left + 'px';
+                autocompleteDropdown.style.top = (coords.bottom + 5) + 'px';
+                
+                document.body.appendChild(autocompleteDropdown);
+            }
+            
+            function removeAutocompleteDropdown() {
+                if (autocompleteDropdown && autocompleteDropdown.parentNode) {
+                    autocompleteDropdown.parentNode.removeChild(autocompleteDropdown);
+                    autocompleteDropdown = null;
+                    autocompleteSelectedIndex = -1;
+                }
+            }
+            
+            function insertAutocompleteItem(text) {
+                const cursor = editor.getCursor();
+                const line = editor.getLine(cursor.line);
+                const start = line.lastIndexOf('[[', cursor.ch);
+                
+                if (start !== -1) {
+                    editor.replaceRange(
+                        `[[${text}]]`,
+                        { line: cursor.line, ch: start },
+                        { line: cursor.line, ch: cursor.ch }
+                    );
+                }
+                
+                removeAutocompleteDropdown();
+                editor.focus();
+            }
+            
+            function getAutocompleteItems(query) {
+                const items = [];
+                
+                files.forEach(file => {
+                    const fileName = file.name.replace(/\.[^/.]+$/, "");
+                    
+                    // Add file name match
+                    if (fileName.toLowerCase().includes(query.toLowerCase())) {
+                        items.push({ fileName, file });
+                    }
+                    
+                    // Add section matches
+                    const lines = file.content.split('\n');
+                    lines.forEach(line => {
+                        const match = line.match(/^#+\s+(.+)$/);
+                        if (match) {
+                            const sectionTitle = match[1];
+                            if (sectionTitle.toLowerCase().includes(query.toLowerCase())) {
+                                items.push({ 
+                                    fileName, 
+                                    section: sectionTitle, 
+                                    file 
+                                });
+                            }
+                        }
+                    });
+                });
+                
+                return items.slice(0, 10); // Limit to 10 items
+            }
+            
+            function handleAutocompleteNavigation(e) {
+                if (!autocompleteDropdown) return false;
+                
+                const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    autocompleteSelectedIndex = Math.min(autocompleteSelectedIndex + 1, items.length - 1);
+                    updateAutocompleteSelection();
+                    return true;
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    autocompleteSelectedIndex = Math.max(autocompleteSelectedIndex - 1, -1);
+                    updateAutocompleteSelection();
+                    return true;
+                } else if (e.key === 'Enter' && autocompleteSelectedIndex >= 0) {
+                    e.preventDefault();
+                    const selectedItem = items[autocompleteSelectedIndex];
+                    insertAutocompleteItem(selectedItem.dataset.insertText);
+                    return true;
+                } else if (e.key === 'Escape') {
+                    removeAutocompleteDropdown();
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            function updateAutocompleteSelection() {
+                if (!autocompleteDropdown) return;
+                
+                const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+                items.forEach((item, index) => {
+                    if (index === autocompleteSelectedIndex) {
+                        item.classList.add('selected');
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+            }
+
+            // --- Helper Functions ---
+            function getWelcomeMessage() {
+                return `# 歡迎使用 PowerNote Pro 2.4!\n\n**最新功能：**\n- Wiki連結自動補全功能\n- 支援段落跳轉 [[筆記名#段落名]]\n- 編輯模式切換（編輯/渲染、純編輯、純渲染）\n- 支援HTML內容渲染\n\n## Wiki連結使用方法\n\n1. 輸入 [[ 會自動顯示筆記建議\n2. 支援 [[筆記名]] 和 [[筆記名#段落名]] 語法\n3. 點擊連結可快速跳轉到對應筆記和段落\n\n## 編輯模式\n\n- **編輯/渲染**：同時顯示編輯器和預覽\n- **純編輯**：只顯示編輯器\n- **純渲染**：只顯示預覽\n\n*祝您有充滿生產力的一天！*`;
+            }
+            
+            // --- Global Insert Functions ---
+            window.insertHeading = () => editor.replaceSelection('\n## ');
+            window.insertBold = () => editor.replaceSelection('**粗體文字**');
+            window.insertItalic = () => editor.replaceSelection('*斜體文字*');
+            window.insertCode = () => editor.replaceSelection('`代碼`');
+            window.insertLink = () => editor.replaceSelection('[連結文字](https://)');
+            window.insertTable = () => editor.replaceSelection('\n| 標題1 | 標題2 |\n|---|---|\n| 內容1 | 內容2 |\n');
+
+            // --- Font and Theme Settings Functions ---
+            function updateFontSize(size) {
+                currentFontSize = size;
+                
+                // Update editor font size
+                const codeMirrorElement = document.querySelector('.CodeMirror');
+                if (codeMirrorElement) {
+                    codeMirrorElement.style.fontSize = size + 'px';
+                }
+                
+                // Update preview font size
+                const previewElement = document.getElementById('preview');
+                if (previewElement) {
+                    previewElement.style.fontSize = size + 'px';
+                }
+                
+                // Update UI elements
+                const currentFontSizeSpan = document.getElementById('current-font-size');
+                const fontSizeDisplay = document.getElementById('font-size-display');
+                const fontSizeSlider = document.getElementById('font-size-slider');
+                
+                if (currentFontSizeSpan) currentFontSizeSpan.textContent = size + 'px';
+                if (fontSizeDisplay) fontSizeDisplay.textContent = size + 'px';
+                if (fontSizeSlider) fontSizeSlider.value = size;
+                
+                // Save to localStorage
+                localStorage.setItem('powernote-font-size', size);
+            }
+            
+            function increaseFontSize() {
+                if (currentFontSize < 32) {
+                    updateFontSize(currentFontSize + 1);
+                }
+            }
+            
+            function decreaseFontSize() {
+                if (currentFontSize > 12) {
+                    updateFontSize(currentFontSize - 1);
+                }
+            }
+            
+            function handleFontSizeSlider(event) {
+                const size = parseInt(event.target.value);
+                updateFontSize(size);
+            }
+            
+            function selectTheme(theme) {
+                currentEditorTheme = theme;
+                
+                // Update editor theme
+                if (editor) {
+                    editor.setOption('theme', theme);
+                }
+                
+                // Apply theme to preview area
+                const previewContainer = document.querySelector('.preview-container');
+                const mainPanel = document.querySelector('.main-panel');
+                const presentationMode = document.getElementById('presentation-mode');
+                
+                // Remove all theme classes
+                const themeClasses = ['theme-default', 'theme-monokai', 'theme-solarized', 'theme-material', 'theme-dracula', 'theme-github'];
+                
+                if (previewContainer) {
+                    themeClasses.forEach(cls => previewContainer.classList.remove(cls));
+                    // Handle solarized dark special case
+                    previewContainer.classList.remove('dark');
+                }
+                
+                if (presentationMode) {
+                    themeClasses.forEach(cls => presentationMode.classList.remove(cls));
+                    presentationMode.classList.remove('dark');
+                }
+                
+                // Apply new theme class
+                let themeClass = 'theme-' + theme.replace(' ', '-');
+                let darkClass = '';
+                
+                if (theme === 'solarized dark') {
+                    themeClass = 'theme-solarized';
+                    darkClass = 'dark';
+                }
+                
+                if (previewContainer) {
+                    previewContainer.classList.add(themeClass);
+                    if (darkClass) previewContainer.classList.add(darkClass);
+                }
+                
+                if (presentationMode) {
+                    presentationMode.classList.add(themeClass);
+                    if (darkClass) presentationMode.classList.add(darkClass);
+                }
+                
+                // Update theme button states
+                const themeButtons = document.querySelectorAll('.theme-btn');
+                themeButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.theme === theme) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Save to localStorage
+                localStorage.setItem('powernote-editor-theme', theme);
+            }
+            
+            function resetSettings() {
+                updateFontSize(22);
+                selectTheme('default');
+                showNotification('設定已重置為預設值');
+            }
+            
+            function applySettings() {
+                fontSettingsModal.style.display = 'none';
+                showNotification('設定已套用');
+            }
+            
+            function loadSettingsFromStorage() {
+                // Load font size
+                const savedFontSize = localStorage.getItem('powernote-font-size');
+                if (savedFontSize) {
+                    const size = parseInt(savedFontSize);
+                    if (size >= 12 && size <= 32) {
+                        updateFontSize(size);
+                    }
+                }
+                
+                // Load editor theme
+                const savedTheme = localStorage.getItem('powernote-editor-theme');
+                if (savedTheme) {
+                    selectTheme(savedTheme);
+                }
+            }
+
+            // --- Workspace Import/Export Functions ---
+            function exportWorkspace() {
+                try {
+                    const workspace = {
+                        version: '2.4.0',
+                        exportDate: new Date().toISOString(),
+                        files: files,
+                        timerHistory: timerHistory,
+                        settings: {
+                            currentFontSize: currentFontSize,
+                            currentEditorTheme: currentEditorTheme,
+                            autoTimerEnabled: autoTimerEnabled,
+                            currentViewMode: currentViewMode
+                        },
+                        localStorage: {
+                            'powernote_files': localStorage.getItem('powernote_files'),
+                            'powernote_timer_history': localStorage.getItem('powernote_timer_history'),
+                            'powernote_tasks': localStorage.getItem('powernote_tasks'),
+                            'powernote-font-size': localStorage.getItem('powernote-font-size'),
+                            'powernote-editor-theme': localStorage.getItem('powernote-editor-theme')
+                        }
+                    };
+
+                    const dataStr = JSON.stringify(workspace, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    
+                    const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+                    const filename = `PowerNote-Workspace-${timestamp}.json`;
+                    
+                    downloadBlob(dataBlob, filename);
+                    showNotification(`工作區已成功匯出為 ${filename}`);
+                } catch (error) {
+                    console.error('Workspace export error:', error);
+                    showNotification('匯出工作區時發生錯誤：' + error.message);
+                }
+            }
+
+            function handleWorkspaceImport(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                if (!file.name.endsWith('.json')) {
+                    showNotification('請選擇 JSON 格式的工作區檔案');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const workspace = JSON.parse(e.target.result);
+                        
+                        // Validate workspace structure
+                        if (!workspace.version || !workspace.files) {
+                            throw new Error('無效的工作區檔案格式');
+                        }
+
+                        // Show confirmation dialog
+                        const confirmed = confirm(
+                            `確定要匯入此工作區嗎？\n\n` +
+                            `版本：${workspace.version}\n` +
+                            `匯出日期：${workspace.exportDate ? new Date(workspace.exportDate).toLocaleString() : '未知'}\n` +
+                            `檔案數量：${workspace.files.length}\n` +
+                            `時間記錄：${Object.keys(workspace.timerHistory || {}).length} 天\n\n` +
+                            `⚠️ 這將覆蓋現有的所有資料！`
+                        );
+
+                        if (!confirmed) {
+                            workspaceInput.value = ''; // Clear file input
+                            return;
+                        }
+
+                        // Import files
+                        if (workspace.files && Array.isArray(workspace.files)) {
+                            files = workspace.files;
+                        }
+
+                        // Import timer history
+                        if (workspace.timerHistory) {
+                            timerHistory = workspace.timerHistory;
+                        }
+
+                        // Import settings
+                        if (workspace.settings) {
+                            const settings = workspace.settings;
+                            
+                            if (settings.currentFontSize) {
+                                updateFontSize(settings.currentFontSize);
+                            }
+                            
+                            if (settings.currentEditorTheme) {
+                                selectTheme(settings.currentEditorTheme);
+                            }
+                            
+                            if (typeof settings.autoTimerEnabled === 'boolean') {
+                                autoTimerEnabled = settings.autoTimerEnabled;
+                            }
+                            
+                            if (settings.currentViewMode) {
+                                setViewMode(settings.currentViewMode);
+                            }
+                        }
+
+                        // Import localStorage data
+                        if (workspace.localStorage) {
+                            Object.keys(workspace.localStorage).forEach(key => {
+                                const value = workspace.localStorage[key];
+                                if (value !== null && value !== undefined) {
+                                    localStorage.setItem(key, value);
+                                }
+                            });
+                        }
+
+                        // Save imported data to localStorage
+                        saveDataToStorage();
+                        
+                        // Refresh UI
+                        renderFileList();
+                        
+                        // Load first file if available
+                        if (files.length > 0) {
+                            loadFile(files[0].id);
+                        } else {
+                            editor.setValue(getWelcomeMessage());
+                            currentFile = null;
+                            currentFileNameEl.textContent = '新筆記';
+                        }
+
+                        showNotification(`工作區匯入成功！共匯入 ${files.length} 個檔案和相關設定。`);
+                        
+                    } catch (error) {
+                        console.error('Workspace import error:', error);
+                        showNotification('匯入工作區時發生錯誤：' + error.message);
+                    }
+                    
+                    // Clear file input
+                    workspaceInput.value = '';
+                };
+                
+                reader.onerror = function() {
+                    showNotification('讀取檔案時發生錯誤');
+                    workspaceInput.value = '';
+                };
+                
+                reader.readAsText(file);
+            }
+
+            // Start the application
+            initialize();
+        });
+    </script>
+</body>
+</html>
