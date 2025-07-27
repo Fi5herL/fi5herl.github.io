@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>夜間生命讀經、聖經共讀班腳本自動化產生工具</title>
+    <!-- 連結我們的樣式檔案 -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header>
+        <h1>共讀班腳本產生工具</h1>
+    </header>
+
+    <main class="container">
+        <!-- 左側控制面板 -->
+        <div class="controls">
+			<!-- 聖經文本 (來自 sidebar2.html) - 更新後的版本 -->
+			<div class="control-section">
+				<h2>聖經文本 (範圍擷取)</h2>
+				<label for="bookSelect2">書卷:</label>
+				<select id="bookSelect2"></select>
+
+				<label for="chapterSelect2">章:</label>
+				<select id="chapterSelect2"></select>
+
+				<div style="display: flex; gap: 10px;">
+					<div style="flex-grow: 1; width: 30%;">
+						<label for="startVerse">從:</label>
+						<input type="number" id="startVerse" placeholder="節" min="1" value="1">
+					</div>
+					<div style="flex-grow: 1; width: 30%;">
+						<label for="endVerse">到:</label>
+						<input type="number" id="endVerse" placeholder="節" min="1">
+					</div>
+				</div>
+
+				<button onclick="insertBiblePassage()">擷取聖經經文</button>
+			</div>
+		
+            <!-- 生命讀經文本 (來自 sidebar.html) -->
+            <div class="control-section">
+                <h2>生命讀經文本</h2>
+                <label for="bookSelect">選擇書卷:</label>
+                <select id="bookSelect"></select>
+
+                <label for="chapterSelect">選擇篇:</label>
+                <select id="chapterSelect"></select>
+
+                <label>網址:</label>
+                <div id="urlDisplay" class="url-display"></div>
+
+                <label for="startString">起始字串 (可選):</label>
+                <input type="text" id="startString" placeholder="預設從綱要開始">
+
+                <label for="endString">結束字串 (可選):</label>
+                <input type="text" id="endString" placeholder="預設到 '臺灣福音書房'">
+
+                <button onclick="runLifeStudyExtraction()">擷取生命讀經</button>
+                <div id="status" class="status-message"></div>
+            </div>
+
+            <!-- 全文統計 (來自 sidebar3.html) -->
+            <div class="control-section">
+                 <h2>全文統計</h2>
+                 <div id="stats-container">
+                    <!-- 統計數據將由 JS 動態填入 -->
+                 </div>
+                 <button onclick="updateStatistics()">更新統計</button>
+            </div>
+			
+			<!-- 共讀班資訊 (來自 共讀班資訊.gs) -->
+            <div class="control-section">
+                <h2>共讀班資訊</h2>
+                <button onclick="generateClassInfo()">產生共讀資訊</button>
+                <textarea id="classInfoResult" rows="6" readonly></textarea>
+            </div>
+        </div>
+
+        <!-- 右側文件編輯區 -->
+        <div class="editor-container">
+            <h2>腳本內容</h2>
+            <textarea id="main-editor" placeholder="這裡是您的腳本編輯區，擷取的內容會插入到對應的關鍵字下方..."></textarea>
+        </div>
+    </main>
+    
+    <!-- 連結我們的腳本檔案 -->
+    <script src="scripts.js"></script>
+</body>
+</html>
