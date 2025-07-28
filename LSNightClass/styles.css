@@ -46,3 +46,21 @@ button:hover { background-color: #45a049; }
 .stat-item { margin-bottom: 5px; }
 .stat-label { color: #333; }
 .stat-value { font-weight: bold; color: #003D79; }
+
+.verse-range-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.verse-range-row > div {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.verse-range-row input[type="number"] {
+    width: 100%;
+    box-sizing: border-box;
+}

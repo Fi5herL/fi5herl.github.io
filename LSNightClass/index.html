@@ -25,16 +25,16 @@
 				<label for="chapterSelect2">章:</label>
 				<select id="chapterSelect2"></select>
 
-				<div style="display: flex; gap: 10px;">
-					<div style="flex-grow: 1; width: 30%;">
-						<label for="startVerse">從:</label>
-						<input type="number" id="startVerse" placeholder="節" min="1" value="1">
-					</div>
-					<div style="flex-grow: 1; width: 30%;">
-						<label for="endVerse">到:</label>
-						<input type="number" id="endVerse" placeholder="節" min="1">
-					</div>
-				</div>
+            <div class="verse-range-row">
+                <div>
+                    <label for="startVerse">從:</label>
+                    <input type="number" id="startVerse" placeholder="節" min="1" value="1">
+                </div>
+                <div>
+                    <label for="endVerse">到:</label>
+                    <input type="number" id="endVerse" placeholder="節" min="1">
+                </div>
+            </div>
 
 				<button onclick="insertBiblePassage()">擷取聖經經文</button>
 			</div>
