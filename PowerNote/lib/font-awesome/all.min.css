@@ -44,6 +44,7 @@
 .fa-keyboard::before { content: "🎹"; }
 .fa-draw-polygon::before { content: "🖼️"; }
 .fa-sort::before { content: "🗃️"; }
+.fa-sync::before { content: "🟰"; }
 
 /* Margin for icons */
 .fa + *:not(:empty), * + .fa:not(:empty) {
