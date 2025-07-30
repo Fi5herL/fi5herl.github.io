@@ -487,7 +487,7 @@
             transform: translateY(-50%);
             width: 12px;
             height: 12px;
-            background: #007bff;
+            background: #28a745;
             border: none;
             border-radius: 2px;
             color: white;
@@ -2426,9 +2426,14 @@
                     <div class="editor-header">
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div><i class="fas fa-edit"></i> <span id="current-file-name">新筆記</span></div>
-                            <button id="fold-all-btn" class="fold-toggle-btn" title="收摺所有標題">
-                                <i class="fas fa-compress"></i>
-                            </button>
+                            <div style="display: flex; gap: 5px;">
+                                <button id="sync-scroll-toggle" class="fold-toggle-btn" title="同步滾動" style="display: none;">
+                                    <i class="fas fa-sync"></i>
+                                </button>
+                                <button id="fold-all-btn" class="fold-toggle-btn" title="收摺所有標題">
+                                    <i class="fas fa-compress"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="editor-container"><textarea id="editor"></textarea></div>
@@ -2458,9 +2463,6 @@
                                 </button>
                                 <button id="generate-mermaid-btn" class="drawing-tool-btn" title="生成Mermaid代碼">
                                     <i class="fas fa-code"></i>
-                                </button>
-                                <button id="clear-drawing-btn" class="drawing-tool-btn" title="清空畫布">
-                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
@@ -2823,6 +2825,10 @@
             let autocompleteDropdown = null;
             let autocompleteSelectedIndex = -1;
             
+            // Sync scroll functionality
+            let syncScrollEnabled = false;
+            let syncScrollIgnoreNext = false;
+            
             // Font and theme settings
             let currentFontSize = 22;
             let currentEditorTheme = 'default';
@@ -2964,6 +2970,10 @@
                     if (previewPanel) previewPanel.style.display = 'flex';
                     if (drawingPanel) drawingPanel.style.display = 'none';
                     if (splitBtn) splitBtn.classList.add('active');
+                    
+                    // Show sync scroll button in split mode
+                    const syncScrollToggle = document.getElementById('sync-scroll-toggle');
+                    if (syncScrollToggle) syncScrollToggle.style.display = 'block';
                     
                     // Remove active class from other buttons
                     const editBtn = document.getElementById('edit-only-btn');
@@ -3365,6 +3375,232 @@
 
             }
 
+            // Smart hiding for HTML syntax and markdown links
+            function handleSmartHiding(cm) {
+                if (!cm) return;
+                
+                const cursor = cm.getCursor();
+                const line = cursor.line;
+                const ch = cursor.ch;
+                
+                // Clear all existing marks
+                const marks = cm.getAllMarks();
+                marks.forEach(mark => {
+                    if (mark.className && mark.className.includes('smart-hide')) {
+                        mark.clear();
+                    }
+                });
+                
+                const totalLines = cm.lineCount();
+                
+                // Handle HTML blocks (independent processing)
+                handleHtmlBlocks(cm, cursor, totalLines);
+                
+                // Handle markdown links (independent processing)
+                handleMarkdownLinks(cm, cursor, totalLines);
+            }
+            
+            // Handle HTML blocks - identify and hide multi-line HTML regions
+            function handleHtmlBlocks(cm, cursor, totalLines) {
+                const processedLines = new Set(); // Track processed lines to avoid duplicate processing
+                
+                for (let i = 0; i < totalLines; i++) {
+                    if (processedLines.has(i) || isInsideCodeBlock(cm, i)) {
+                        continue;
+                    }
+                    
+                    const lineText = cm.getLine(i);
+                    
+                    // Check if this line contains HTML tags
+                    const htmlTagRegex = /<[^>]+>/;
+                    if (htmlTagRegex.test(lineText)) {
+                        // Find the HTML block boundaries
+                        const htmlBlock = findHtmlBlock(cm, i, totalLines);
+                        
+                        // Mark processed lines
+                        for (let j = htmlBlock.start; j <= htmlBlock.end; j++) {
+                            processedLines.add(j);
+                        }
+                        
+                        // Check if cursor is within this HTML block
+                        const isCursorInBlock = cursor.line >= htmlBlock.start && cursor.line <= htmlBlock.end;
+                        
+                        if (!isCursorInBlock) {
+                            // Hide the HTML block, keeping only first 30 chars of first line
+                            hideHtmlBlock(cm, htmlBlock);
+                        }
+                    }
+                }
+            }
+            
+            // Find HTML block boundaries (multi-line HTML detection)
+            function findHtmlBlock(cm, startLine, totalLines) {
+                let start = startLine;
+                let end = startLine;
+                
+                // Look backwards to find actual start of HTML block
+                for (let i = startLine - 1; i >= 0; i--) {
+                    if (isInsideCodeBlock(cm, i)) break;
+                    
+                    const lineText = cm.getLine(i);
+                    if (/<[^>]+>/.test(lineText) || lineText.trim() === '') {
+                        if (/<[^>]+>/.test(lineText)) {
+                            start = i;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Look forwards to find end of HTML block
+                for (let i = startLine + 1; i < totalLines; i++) {
+                    if (isInsideCodeBlock(cm, i)) break;
+                    
+                    const lineText = cm.getLine(i);
+                    if (/<[^>]+>/.test(lineText) || lineText.trim() === '') {
+                        if (/<[^>]+>/.test(lineText)) {
+                            end = i;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                
+                return { start, end };
+            }
+            
+            // Hide HTML block, keeping only first 30 chars of first line
+            function hideHtmlBlock(cm, htmlBlock) {
+                if (htmlBlock.start === htmlBlock.end) {
+                    // Single line HTML - just hide part of it
+                    const firstLineText = cm.getLine(htmlBlock.start);
+                    const keepLength = Math.min(30, firstLineText.length);
+                    
+                    if (firstLineText.length > 30) {
+                        cm.markText(
+                            {line: htmlBlock.start, ch: keepLength}, 
+                            {line: htmlBlock.start, ch: firstLineText.length}, 
+                            {
+                                className: 'smart-hide',
+                                css: 'display: none;'
+                            }
+                        );
+                    }
+                } else {
+                    // Multi-line HTML - use folding
+                    const firstLineText = cm.getLine(htmlBlock.start);
+                    const keepLength = Math.min(30, firstLineText.length);
+                    
+                    // Create a truncated version of the first line
+                    let truncatedText = firstLineText.substring(0, keepLength);
+                    if (firstLineText.length > 30) {
+                        truncatedText += '...';
+                    }
+                    
+                    // Create a fold range that hides the content but shows truncated first line
+                    const range = {
+                        from: {line: htmlBlock.start, ch: 0},
+                        to: {line: htmlBlock.end, ch: cm.getLine(htmlBlock.end).length}
+                    };
+                    
+                    // Create a custom fold widget
+                    const foldWidget = document.createElement('span');
+                    foldWidget.className = 'smart-hide-html-fold';
+                    foldWidget.style.cssText = 'background: #f0f0f0; padding: 2px 4px; border-radius: 3px; color: #666; cursor: pointer; font-size: 0.9em;';
+                    foldWidget.textContent = truncatedText;
+                    foldWidget.title = 'Click to expand HTML block';
+                    
+                    // Replace the entire HTML block with the widget
+                    const marker = cm.markText(range.from, range.to, {
+                        className: 'smart-hide',
+                        replacedWith: foldWidget,
+                        clearOnEnter: false,
+                        handleMouseEvents: true
+                    });
+                    
+                    // Add click handler to expand when clicked
+                    foldWidget.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        marker.clear();
+                        cm.setCursor(htmlBlock.start, 0);
+                        cm.focus();
+                    });
+                }
+            }
+            
+            // Handle markdown links independently
+            function handleMarkdownLinks(cm, cursor, totalLines) {
+                for (let i = 0; i < totalLines; i++) {
+                    if (isInsideCodeBlock(cm, i)) {
+                        continue;
+                    }
+                    
+                    const lineText = cm.getLine(i);
+                    
+                    // Handle markdown links [text](url)
+                    const markdownLinkRegex = /\[([^\]]*)\]\(([^)]*)\)/g;
+                    let match;
+                    
+                    while ((match = markdownLinkRegex.exec(lineText)) !== null) {
+                        const start = match.index;
+                        const end = start + match[0].length;
+                        const linkText = match[1];
+                        
+                        // Check if cursor is on this line and within the link
+                        const isActive = (cursor.line === i && cursor.ch >= start && cursor.ch <= end);
+                        
+                        if (isActive) {
+                            // Show full syntax when cursor is on it
+                            continue;
+                        } else {
+                            // Hide brackets and URL, show only link text
+                            if (linkText.trim()) {
+                                // Hide opening bracket
+                                cm.markText({line: i, ch: start}, {line: i, ch: start + 1}, {
+                                    className: 'smart-hide',
+                                    css: 'display: none;'
+                                });
+                                
+                                // Hide closing bracket and opening parenthesis
+                                cm.markText({line: i, ch: start + 1 + linkText.length}, {line: i, ch: start + 1 + linkText.length + 2}, {
+                                    className: 'smart-hide',
+                                    css: 'display: none;'
+                                });
+                                
+                                // Hide URL and closing parenthesis
+                                cm.markText({line: i, ch: start + 1 + linkText.length + 2}, {line: i, ch: end}, {
+                                    className: 'smart-hide',
+                                    css: 'display: none;'
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Helper function to check if a line is inside a code block
+            function isInsideCodeBlock(cm, lineNum) {
+                const totalLines = cm.lineCount();
+                let inCodeBlock = false;
+                
+                for (let i = 0; i <= lineNum && i < totalLines; i++) {
+                    const lineText = cm.getLine(i);
+                    
+                    // Check for code block delimiters (```)
+                    if (lineText.trim().startsWith('```')) {
+                        inCodeBlock = !inCodeBlock;
+                    }
+                    
+                    // If we're at the target line and it's a code block delimiter, 
+                    // consider it as not inside code block for the purpose of hiding
+                    if (i === lineNum && lineText.trim().startsWith('```')) {
+                        return false;
+                    }
+                }
+                
+                return inCodeBlock;
+            }
+
             // Detect mobile device
             function isMobileDevice() {
                 return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -3449,7 +3685,8 @@
                         }
                     }, 100);
                 });
-                editor.on('cursorActivity', handleCursorTimerTracking);
+                // 移除游標活動計時觸發，改用文字編輯觸發
+                // editor.on('cursorActivity', handleCursorTimerTracking);
 
                 editor.on('change', async (instance, changeObj) => {
                     if (currentFile) {
@@ -3464,7 +3701,7 @@
                         updateToc();
                     }
                     
-                    // Handle wiki link autocomplete
+                    // Handle autocomplete (wiki links and hashtags)
                     if (changeObj.origin === '+input' && changeObj.text.length === 1) {
                         const cursor = editor.getCursor();
                         const line = editor.getLine(cursor.line);
@@ -3478,47 +3715,37 @@
                             }
                         }
                         // Check if we're typing inside [[]]
-                        else {
+                        else if (beforeCursor.match(/\[\[([^\]]*?)$/)) {
                             const wikiLinkMatch = beforeCursor.match(/\[\[([^\]]*?)$/);
-                            if (wikiLinkMatch) {
-                                const query = wikiLinkMatch[1];
-                                const items = getAutocompleteItems(query);
-                                if (items.length > 0) {
-                                    createAutocompleteDropdown(items, cursor);
-                                } else {
-                                    removeAutocompleteDropdown();
-                                }
+                            const query = wikiLinkMatch[1];
+                            const items = getAutocompleteItems(query);
+                            if (items.length > 0) {
+                                createAutocompleteDropdown(items, cursor);
                             } else {
                                 removeAutocompleteDropdown();
                             }
                         }
-                    }
-                    
-                    // Handle hashtag autocomplete
-                    if (changeObj.origin === '+input' && changeObj.text.length === 1) {
-                        const cursor = editor.getCursor();
-                        const line = editor.getLine(cursor.line);
-                        const beforeCursor = line.substring(0, cursor.ch);
-                        
                         // Check if we just typed '#'
-                        if (beforeCursor.endsWith('#')) {
+                        else if (beforeCursor.endsWith('#')) {
                             const items = getHashtagAutocompleteItems('');
                             if (items.length > 0) {
                                 createHashtagAutocompleteDropdown(items, cursor);
                             }
                         }
                         // Check if we're typing after #
-                        else {
+                        else if (beforeCursor.match(/#([^#\s]*)$/)) {
                             const hashtagMatch = beforeCursor.match(/#([^#\s]*)$/);
-                            if (hashtagMatch) {
-                                const query = hashtagMatch[1];
-                                const items = getHashtagAutocompleteItems(query);
-                                if (items.length > 0) {
-                                    createHashtagAutocompleteDropdown(items, cursor);
-                                } else {
-                                    removeAutocompleteDropdown();
-                                }
+                            const query = hashtagMatch[1];
+                            const items = getHashtagAutocompleteItems(query);
+                            if (items.length > 0) {
+                                createHashtagAutocompleteDropdown(items, cursor);
+                            } else {
+                                removeAutocompleteDropdown();
                             }
+                        }
+                        // Remove autocomplete if none of the above conditions match
+                        else {
+                            removeAutocompleteDropdown();
                         }
                     }
                     
@@ -3543,6 +3770,12 @@
                         }
                     }
                 });
+                
+                // Smart hiding for HTML and markdown links
+                editor.on('cursorActivity', function(cm) {
+                    handleSmartHiding(cm);
+                });
+                
                 // Scroll Sync Listener
                 editor.on('scroll', syncPreviewScroll);
                 
@@ -4160,7 +4393,7 @@
             }
 
             function syncPreviewScroll() {
-                if (isSyncing) return;
+                if (isSyncing || !syncScrollEnabled) return;
                 isSyncing = true;
                 
                 const editorScrollInfo = editor.getScrollInfo();
@@ -4176,7 +4409,7 @@
             }
 
             function syncEditorScroll() {
-                if (isSyncing) return;
+                if (isSyncing || !syncScrollEnabled) return;
                 isSyncing = true;
                 
                 const editorScrollInfo = editor.getScrollInfo();
@@ -4189,6 +4422,21 @@
                 }
                 
                 setTimeout(() => { isSyncing = false; }, 50); // Reduce debounce time
+            }
+
+            // Toggle sync scroll functionality
+            function toggleSyncScroll() {
+                syncScrollEnabled = !syncScrollEnabled;
+                const syncScrollToggle = document.getElementById('sync-scroll-toggle');
+                if (syncScrollToggle) {
+                    if (syncScrollEnabled) {
+                        syncScrollToggle.classList.add('active');
+                        syncScrollToggle.title = '同步滾動 (已開啟)';
+                    } else {
+                        syncScrollToggle.classList.remove('active');
+                        syncScrollToggle.title = '同步滾動 (已關閉)';
+                    }
+                }
             }
 
             // --- Table of Contents ---
@@ -4309,7 +4557,7 @@
             }
 
             // 自動計時處理函數
-            let lastProcessedHeadingLine = -1; // 記錄上次處理的標題行號，避免重複處理
+            // 不再需要 lastProcessedHeadingLine，因為新邏輯是基於當前編輯位置
             
             async function handleAutoTimer(changeObj) {
                 console.log('handleAutoTimer called with:', {
@@ -4319,51 +4567,20 @@
                     removed: changeObj.removed
                 });
                 
-                // 檢測換行的更好方式：檢查是否新增了一行
-                const isNewLine = changeObj.text.some(line => line === '') ||
-                                  changeObj.text.length > 1;
+                // 新邏輯：任何文字編輯都觸發檢查（不只是換行）
+                // 檢查是否為實際的文字編輯（不是單純的游標移動）
+                const hasTextChange = changeObj.text.join('') !== '' || changeObj.removed.join('') !== '';
                 
-                if (!isNewLine) {
-                    console.log('跳過非換行輸入');
+                if (!hasTextChange) {
+                    console.log('跳過無文字變更的操作');
                     return;
                 }
                 
-                console.log('偵測到換行輸入！開始檢查標題...');
-                
-                // 檢查當前行和前一行
-                const currentLineNum = changeObj.from.line;
-                const currentLine = editor.getLine(currentLineNum);
-                console.log(`檢查第 ${currentLineNum + 1} 行：'${currentLine || '(空行)'}'`);
-                
-                // 只檢查前一行是否為標題，並且當前行是空行（這是標題行按Enter後的情況）
-                if (currentLineNum > 0) {
-                    const previousLine = editor.getLine(currentLineNum - 1);
-                    console.log(`檢查前一行 第 ${currentLineNum} 行：'${previousLine || '(空行)'}'`);
-                    
-                    const prevHeadingMatch = previousLine.match(/^#+\s+(.+)$/);
-                    if (prevHeadingMatch && (!currentLine || currentLine.trim() === '')) {
-                        const headingText = prevHeadingMatch[1].trim();
-                        if (headingText) {
-                            // 檢查是否已經處理過這個標題行
-                            if (lastProcessedHeadingLine === currentLineNum - 1) {
-                                console.log('跳過重複處理的標題行');
-                                return;
-                            }
-                            
-                            console.log(`偵測到前一行標題：${headingText}`);
-                            lastProcessedHeadingLine = currentLineNum - 1; // 記錄處理過的標題行
-                            
-                            if (isTimerRunning) {
-                                console.log('停止目前進行中的任務（保持原任務名稱）');
-                                await stopCurrentTask(); // 停止時會保留原始任務名稱
-                            }
-                            await startAutoTaskWithHierarchy(currentLineNum - 1, headingText);
-                            return;
-                        }
-                    }
-                }
+                console.log('偵測到文字編輯！檢查當前位置所屬章節...');
                 
                 // 檢查是否輸入了結束線 ---
+                const currentLineNum = changeObj.from.line;
+                const currentLine = editor.getLine(currentLineNum);
                 if (currentLine && currentLine.trim() === '---') {
                     console.log('偵測到結束線 ---');
                     if (isTimerRunning) {
@@ -4372,9 +4589,39 @@
                     }
                     return;
                 }
+                
+                // 找到當前編輯位置所屬的標題章節
+                const currentSection = findCurrentSection(changeObj.from.line);
+                if (!currentSection) {
+                    console.log('未找到當前位置的章節標題');
+                    return;
+                }
+                
+                console.log(`當前編輯章節：${currentSection.title} (第${currentSection.line + 1}行)`);
+                
+                // 檢查是否需要切換任務
+                const needSwitchTask = !isTimerRunning || 
+                                     !currentTask || 
+                                     !currentTask.hierarchy ||
+                                     currentTask.hierarchy[currentTask.hierarchy.length - 1]?.line !== currentSection.line;
+                
+                if (needSwitchTask) {
+                    console.log('需要切換任務章節');
+                    
+                    // 停止當前任務（如果有的話）
+                    if (isTimerRunning && currentTask) {
+                        console.log('停止目前進行中的任務');
+                        await stopCurrentTask();
+                    }
+                    
+                    // 開始新的章節任務
+                    await startAutoTaskWithHierarchy(currentSection.line, currentSection.title);
+                } else {
+                    console.log('繼續當前章節的計時');
+                }
             }
 
-            // 獲取標題的完整層級路徑
+            // 獲取標題的完整層級路徑（只包含直系祖先）
             function getHeadingHierarchy(lineNumber) {
                 const lines = editor.getValue().split('\n');
                 const currentLine = lines[lineNumber];
@@ -4386,19 +4633,21 @@
                 const currentTitle = currentMatch[2].trim();
                 const hierarchy = [];
                 
-                // 往上找父級標題
-                for (let i = lineNumber - 1; i >= 0; i--) {
+                // 追蹤需要找的下一個父級層級
+                let nextParentLevel = currentLevel - 1;
+                
+                // 往上找直系祖先標題
+                for (let i = lineNumber - 1; i >= 0 && nextParentLevel > 0; i--) {
                     const line = lines[i];
                     const match = line.match(/^(#+)\s+(.+)$/);
                     if (match) {
                         const level = match[1].length;
                         const title = match[2].trim();
                         
-                        // 如果是更高級別的標題（更少的#），加入層級
-                        if (level < currentLevel) {
+                        // 只找直系父級（層級剛好少1的標題）
+                        if (level === nextParentLevel) {
                             hierarchy.unshift({ level, title, line: i });
-                            // 如果找到了所有需要的層級就停止
-                            if (level === 1) break;
+                            nextParentLevel = level - 1; // 繼續找上一級的父級
                         }
                     }
                 }
@@ -4407,6 +4656,29 @@
                 hierarchy.push({ level: currentLevel, title: currentTitle, line: lineNumber });
                 
                 return hierarchy;
+            }
+            
+            // 找到指定行號所屬的標題章節
+            function findCurrentSection(lineNumber) {
+                const lines = editor.getValue().split('\n');
+                
+                // 從指定行號往上查找最近的標題行
+                for (let i = lineNumber; i >= 0; i--) {
+                    const line = lines[i];
+                    const match = line.match(/^(#+)\s+(.+)$/);
+                    if (match) {
+                        const level = match[1].length;
+                        const title = match[2].trim();
+                        return {
+                            line: i,
+                            level: level,
+                            title: title,
+                            fullLine: line
+                        };
+                    }
+                }
+                
+                return null; // 沒有找到標題
             }
             
             // 構建帶層級的任務名稱
@@ -4787,7 +5059,6 @@ gantt
             }
             
             async function handleHashtagCreation(hashtag, fileName) {
-                console.log('handleHashtagCreation called with:', hashtag, fileName);
                 
                 // Find or create NoteTag.md file
                 let noteTagFile = files.find(f => f.name === 'NoteTag.md');
@@ -4837,30 +5108,41 @@ gantt
                         const linkToAdd = `[[${fileName}]]`;
                         let linkExists = false;
                         
-                        // Check if the link already exists in this section
-                        for (let i = insertIndex - 1; i >= 0; i--) {
-                            if (lines[i].match(/^###\s/)) break; // reached previous header
-                            if (lines[i].includes(`[[${fileName}]]`)) {
-                                linkExists = true;
+                        // Check if the link already exists in this hashtag section
+                        // Look from the hashtag header to the next header (or end of file)
+                        let hashtagStartIndex = -1;
+                        for (let i = 0; i < lines.length; i++) {
+                            if (lines[i] === `### ${hashtag}`) {
+                                hashtagStartIndex = i;
                                 break;
                             }
                         }
                         
+                        if (hashtagStartIndex !== -1) {
+                            // Check from header to next header or end of file
+                            for (let i = hashtagStartIndex + 1; i < lines.length; i++) {
+                                if (lines[i].match(/^###\s/)) break; // reached next header
+                                if (lines[i].includes(`[[${fileName}]]`)) {
+                                    linkExists = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
                         if (!linkExists) {
-                            // Find the line after the header to add the link
-                            let addIndex = insertIndex - 1;
-                            while (addIndex >= 0 && !lines[addIndex].match(/^###\s/)) {
-                                addIndex--;
+                            // Find where to add the link - right after the hashtag header
+                            if (hashtagStartIndex !== -1) {
+                                // Check if there's already content on the line after the header
+                                const contentLineIndex = hashtagStartIndex + 1;
+                                if (contentLineIndex < lines.length && lines[contentLineIndex].trim() !== '') {
+                                    // Add to existing content on same line
+                                    lines[contentLineIndex] += ` ${linkToAdd}`;
+                                } else {
+                                    // Create new line with the link
+                                    lines.splice(contentLineIndex, 0, linkToAdd);
+                                }
+                                noteTagFile.content = lines.join('\n');
                             }
-                            addIndex++; // Move to line after header
-                            
-                            // Add link to existing content on the same line
-                            if (lines[addIndex] && lines[addIndex].trim() !== '') {
-                                lines[addIndex] += ` ${linkToAdd}`;
-                            } else {
-                                lines[addIndex] = linkToAdd;
-                            }
-                            noteTagFile.content = lines.join('\n');
                         }
                     }
                 }
@@ -4906,7 +5188,7 @@ gantt
                     return;
                 }
                 
-                // Sort files with system files (NoteTag.md, NoteTask.md) always at top
+                // Sort files - system files follow normal sort order, not pinned to top
                 const sortedFiles = getSortedFiles();
                 
                 sortedFiles.forEach(file => {
@@ -4951,45 +5233,40 @@ gantt
                 return fileName === 'NoteTag.md' || fileName === 'NoteTask.md' || fileName === 'NoteConfig.md';
             }
             
+            // Helper function to sort file arrays based on current sort mode
+            function sortFileArray(fileArray, sortMode) {
+                switch (sortMode) {
+                    case 'name-asc':
+                        fileArray.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    case 'name-desc':
+                        fileArray.sort((a, b) => b.name.localeCompare(a.name));
+                        break;
+                    case 'time-asc':
+                        fileArray.sort((a, b) => (a.lastModified || 0) - (b.lastModified || 0));
+                        break;
+                    case 'time-desc':
+                        fileArray.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
+                        break;
+                }
+            }
+            
             function getSortedFiles() {
-                // Separate pinned files and regular files (no special treatment for system files)
+                // Separate files into three categories:
+                // 1. Pinned files (including pinned system files) - appear at top
+                // 2. Regular non-system files - appear in middle  
+                // 3. Unpinned system files - appear at bottom
                 const pinnedFiles_array = files.filter(file => pinnedFiles.has(file.id));
-                const regularFiles = files.filter(file => !pinnedFiles.has(file.id));
+                const regularFiles = files.filter(file => !pinnedFiles.has(file.id) && !isSystemFile(file.name));
+                const unpinnedSystemFiles = files.filter(file => !pinnedFiles.has(file.id) && isSystemFile(file.name));
                 
-                // Sort pinned files based on current sort mode
-                switch (fileSortMode) {
-                    case 'name-asc':
-                        pinnedFiles_array.sort((a, b) => a.name.localeCompare(b.name));
-                        break;
-                    case 'name-desc':
-                        pinnedFiles_array.sort((a, b) => b.name.localeCompare(a.name));
-                        break;
-                    case 'time-asc':
-                        pinnedFiles_array.sort((a, b) => (a.lastModified || 0) - (b.lastModified || 0));
-                        break;
-                    case 'time-desc':
-                        pinnedFiles_array.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
-                        break;
-                }
+                // Sort each category based on current sort mode
+                sortFileArray(pinnedFiles_array, fileSortMode);
+                sortFileArray(regularFiles, fileSortMode); 
+                sortFileArray(unpinnedSystemFiles, fileSortMode);
                 
-                // Sort regular files based on current sort mode
-                switch (fileSortMode) {
-                    case 'name-asc':
-                        regularFiles.sort((a, b) => a.name.localeCompare(b.name));
-                        break;
-                    case 'name-desc':
-                        regularFiles.sort((a, b) => b.name.localeCompare(a.name));
-                        break;
-                    case 'time-asc':
-                        regularFiles.sort((a, b) => (a.lastModified || 0) - (b.lastModified || 0));
-                        break;
-                    case 'time-desc':
-                        regularFiles.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
-                        break;
-                }
-                
-                // Return pinned files first, then regular files
-                return [...pinnedFiles_array, ...regularFiles];
+                // Return files in order: pinned files, regular files, unpinned system files
+                return [...pinnedFiles_array, ...regularFiles, ...unpinnedSystemFiles];
             }
             
             function cycleSortMode() {
@@ -5412,7 +5689,8 @@ gantt
                     },
                     viewSettings: {
                         currentViewMode: currentViewMode,
-                        mobileViewMode: mobileViewMode
+                        mobileViewMode: mobileViewMode,
+                        syncScrollEnabled: syncScrollEnabled
                     },
                     currentFile: {
                         id: currentFile ? currentFile.id : null,
@@ -5433,7 +5711,8 @@ gantt
                     `- Editor Theme: \`${config.fontSettings.theme}\`\n\n` +
                     `## View Settings\n` +
                     `- Current View Mode: \`${config.viewSettings.currentViewMode}\`\n` +
-                    `- Mobile View Mode: \`${config.viewSettings.mobileViewMode}\`\n\n` +
+                    `- Mobile View Mode: \`${config.viewSettings.mobileViewMode}\`\n` +
+                    `- Sync Scroll Enabled: \`${config.viewSettings.syncScrollEnabled}\`\n\n` +
                     `## Current File\n` +
                     `- File ID: \`${config.currentFile.id || 'none'}\`\n` +
                     `- File Name: \`${config.currentFile.name || 'none'}\`\n\n` +
@@ -5498,10 +5777,12 @@ gantt
                     
                     const currentViewModeMatch = content.match(/- Current View Mode: `([^`]+)`/);
                     const mobileViewModeMatch = content.match(/- Mobile View Mode: `([^`]+)`/);
+                    const syncScrollMatch = content.match(/- Sync Scroll Enabled: `([^`]+)`/);
                     
                     config.viewSettings = {
                         currentViewMode: currentViewModeMatch ? currentViewModeMatch[1] : 'split',
-                        mobileViewMode: mobileViewModeMatch ? mobileViewModeMatch[1] : 'edit'
+                        mobileViewMode: mobileViewModeMatch ? mobileViewModeMatch[1] : 'edit',
+                        syncScrollEnabled: syncScrollMatch ? (syncScrollMatch[1] === 'true') : false
                     };
                     
                     const fileIdMatch = content.match(/- File ID: `([^`]+)`/);
@@ -5651,6 +5932,7 @@ gantt
                     
                     currentViewMode = config.viewSettings.currentViewMode;
                     mobileViewMode = config.viewSettings.mobileViewMode;
+                    syncScrollEnabled = config.viewSettings.syncScrollEnabled || false;
                     
                     // Apply sidebar visibility
                     const filePanel = document.getElementById('file-panel');
@@ -5691,6 +5973,9 @@ gantt
                             if (divider) divider.style.display = 'flex';
                             if (mainContent) mainContent.classList.remove('drawing-mode');
                             if (splitBtn) splitBtn.classList.add('active');
+                            // Show sync scroll button in split mode
+                            const syncScrollToggle = document.getElementById('sync-scroll-toggle');
+                            if (syncScrollToggle) syncScrollToggle.style.display = 'block';
                             break;
                         case 'edit-only':
                             if (editorPanel) editorPanel.style.display = 'flex';
@@ -5699,6 +5984,9 @@ gantt
                             if (divider) divider.style.display = 'none';
                             if (mainContent) mainContent.classList.remove('drawing-mode');
                             if (editBtn) editBtn.classList.add('active');
+                            // Hide sync scroll button in edit-only mode
+                            const syncScrollToggleEdit = document.getElementById('sync-scroll-toggle');
+                            if (syncScrollToggleEdit) syncScrollToggleEdit.style.display = 'none';
                             break;
                         case 'preview-only':
                             if (editorPanel) editorPanel.style.display = 'none';
@@ -5710,6 +5998,9 @@ gantt
                             if (divider) divider.style.display = 'none';
                             if (mainContent) mainContent.classList.remove('drawing-mode');
                             if (previewBtn) previewBtn.classList.add('active');
+                            // Hide sync scroll button in preview-only mode
+                            const syncScrollTogglePreview = document.getElementById('sync-scroll-toggle');
+                            if (syncScrollTogglePreview) syncScrollTogglePreview.style.display = 'none';
                             break;
                         case 'drawing':
                             if (editorPanel) editorPanel.style.display = 'flex';
@@ -5718,7 +6009,22 @@ gantt
                             if (divider) divider.style.display = 'flex';
                             if (mainContent) mainContent.classList.add('drawing-mode');
                             if (drawingBtn) drawingBtn.classList.add('active');
+                            // Hide sync scroll button in drawing mode
+                            const syncScrollToggleDrawing = document.getElementById('sync-scroll-toggle');
+                            if (syncScrollToggleDrawing) syncScrollToggleDrawing.style.display = 'none';
                             break;
+                    }
+                    
+                    // Update sync scroll button state
+                    const syncScrollToggle = document.getElementById('sync-scroll-toggle');
+                    if (syncScrollToggle) {
+                        if (syncScrollEnabled) {
+                            syncScrollToggle.classList.add('active');
+                            syncScrollToggle.title = '同步滾動 (已開啟)';
+                        } else {
+                            syncScrollToggle.classList.remove('active');
+                            syncScrollToggle.title = '同步滾動 (已關閉)';
+                        }
                     }
                     
                     renderFileList(); // Update file list with correct sorting
@@ -6845,6 +7151,9 @@ gantt
                 
                 // Fold all button
                 safeAddEventListener('fold-all-btn', 'click', foldAllContent);
+                
+                // Sync scroll toggle button
+                safeAddEventListener('sync-scroll-toggle', 'click', toggleSyncScroll);
 
                 // Delegation for dynamic elements
                 if (fileListEl) {
@@ -7024,8 +7333,9 @@ gantt
                 if (searchToggleButton) searchToggleButton.addEventListener('click', toggleSearchBar);
             }
 
-            window.addEventListener('blur', () => { handleCursorTimerTracking(); });
-            if (editor) editor.on('blur', handleCursorTimerTracking);
+            // 移除失去焦點時的計時觸發，改用文字編輯觸發
+            // window.addEventListener('blur', () => { handleCursorTimerTracking(); });
+            // if (editor) editor.on('blur', handleCursorTimerTracking);
 
 			// --- Search Functions ---
             function toggleSearchBar() {
@@ -7236,6 +7546,7 @@ gantt
                 const editBtn = document.getElementById('edit-only-btn');
                 const previewBtn = document.getElementById('preview-only-btn');
                 const drawingBtn = document.getElementById('drawing-mode-btn');
+                const syncScrollToggle = document.getElementById('sync-scroll-toggle');
                 
                 // Reset button states
                 [splitBtn, editBtn, previewBtn, drawingBtn].forEach(btn => {
@@ -7262,6 +7573,7 @@ gantt
                         drawingPanel.style.display = 'none';
                         if (divider) divider.style.display = 'none';
                         if (mainContent) mainContent.classList.remove('drawing-mode');
+                        if (syncScrollToggle) syncScrollToggle.style.display = 'block';
                         splitBtn.classList.add('active');
                         break;
                     case 'edit-only':
@@ -7271,6 +7583,7 @@ gantt
                         drawingPanel.style.display = 'none';
                         if (divider) divider.style.display = 'none';
                         if (mainContent) mainContent.classList.remove('drawing-mode');
+                        if (syncScrollToggle) syncScrollToggle.style.display = 'none';
                         editBtn.classList.add('active');
                         break;
                     case 'preview-only':
@@ -7280,6 +7593,7 @@ gantt
                         drawingPanel.style.display = 'none';
                         if (divider) divider.style.display = 'none';
                         if (mainContent) mainContent.classList.remove('drawing-mode');
+                        if (syncScrollToggle) syncScrollToggle.style.display = 'none';
                         previewBtn.classList.add('active');
                         break;
                     case 'drawing':
@@ -7290,6 +7604,7 @@ gantt
                         
                         // Add drawing mode class for special layout
                         if (mainContent) mainContent.classList.add('drawing-mode');
+                        if (syncScrollToggle) syncScrollToggle.style.display = 'none';
                         
                         drawingBtn.classList.add('active');
                         initDrawingCanvas();
@@ -7459,10 +7774,8 @@ gantt
                                 { line: cursor.line, ch: endPos }
                             );
                             
-                            // If it's a new hashtag, handle creation
-                            if (selectedItem.classList.contains('new-hashtag')) {
-                                handleHashtagCreation(value, getCurrentFileName());
-                            }
+                            // Handle hashtag creation for both new and existing hashtags
+                            handleHashtagCreation(value, getCurrentFileName());
                             
                             removeAutocompleteDropdown();
                         }
@@ -8095,7 +8408,6 @@ gantt
                 const saveBtn = document.getElementById('save-drawing-btn');
                 const exportBtn = document.getElementById('export-drawing-btn');
                 const mermaidBtn = document.getElementById('generate-mermaid-btn');
-                const clearBtn = document.getElementById('clear-drawing-btn');
                 
                 if (saveBtn) {
                     saveBtn.replaceWith(saveBtn.cloneNode(true));
@@ -8108,10 +8420,6 @@ gantt
                 if (mermaidBtn) {
                     mermaidBtn.replaceWith(mermaidBtn.cloneNode(true));
                     document.getElementById('generate-mermaid-btn').addEventListener('click', generateMermaidFromDrawing);
-                }
-                if (clearBtn) {
-                    clearBtn.replaceWith(clearBtn.cloneNode(true));
-                    document.getElementById('clear-drawing-btn').addEventListener('click', clearDrawing);
                 }
             }
 
@@ -8200,49 +8508,6 @@ gantt
                 }
             }
 
-            function clearDrawing() {
-                console.log('clearDrawing called');
-                
-                if (confirm('確定要清空繪圖嗎？')) {
-                    try {
-                        // Clear global state
-                        window.currentExcalidrawElements = [];
-                        window.currentExcalidrawAppState = { viewBackgroundColor: '#ffffff' };
-                        window.currentExcalidrawFiles = {};
-                        
-                        // Re-initialize Excalidraw
-                        const container = document.getElementById('excalidraw-container');
-                        if (container) {
-                            // Clear the container
-                            container.innerHTML = '';
-                            
-                            // Re-create Excalidraw
-                            const excalidrawElement = React.createElement(
-                                ExcalidrawLib.Excalidraw,
-                                {
-                                    onChange: (elements, appState, files) => {
-                                        window.currentExcalidrawElements = elements;
-                                        window.currentExcalidrawAppState = appState;
-                                        window.currentExcalidrawFiles = files;
-                                    },
-                                    initialData: {
-                                        elements: [],
-                                        appState: {
-                                            viewBackgroundColor: '#ffffff'
-                                        }
-                                    }
-                                }
-                            );
-                            
-                            ReactDOM.render(excalidrawElement, container);
-                            // 畫布已清空
-                        }
-                    } catch (error) {
-                        console.error('clearDrawing error:', error);
-                        console.error('清空失敗:', error.message);
-                    }
-                }
-            }
 
             function generateMermaidFromDrawing() {
                 console.log('generateMermaidFromDrawing called');
