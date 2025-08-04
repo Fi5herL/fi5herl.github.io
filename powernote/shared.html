@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分享文章 - PowerNote</title>
+    <meta name="description" content="PowerNote 分享的文章">
+    <meta property="og:title" content="PowerNote 分享文章">
+    <meta property="og:description" content="來自 PowerNote 的精彩內容">
+    <meta property="og:type" content="article">
+    
+    <!-- Libraries -->
+    <script src="lib/marked/marked.min.js"></script>
+    <script src="lib/highlight.js/highlight.min.js"></script>
+    <!-- 添加更多語言支援 -->
+    <script src="lib/highlight.js/languages/python.min.js"></script>
+    <script src="lib/highlight.js/languages/javascript.min.js"></script>
+    <script src="lib/highlight.js/languages/java.min.js"></script>
+    <script src="lib/highlight.js/languages/cpp.min.js"></script>
+    <script src="lib/highlight.js/languages/csharp.min.js"></script>
+    <script src="lib/highlight.js/languages/php.min.js"></script>
+    <script src="lib/highlight.js/languages/go.min.js"></script>
+    <script src="lib/highlight.js/languages/rust.min.js"></script>
+    <script src="lib/highlight.js/languages/sql.min.js"></script>
+    <script src="lib/highlight.js/languages/bash.min.js"></script>
+    <script src="lib/highlight.js/languages/json.min.js"></script>
+    <script src="lib/highlight.js/languages/xml.min.js"></script>
+    <script src="lib/highlight.js/languages/css.min.js"></script>
+    <script src="lib/highlight.js/languages/typescript.min.js"></script>
+    <script src="lib/mermaid/mermaid.min.js"></script>
+    <link rel="stylesheet" href="lib/highlight.js/styles/github.min.css">
+    <link rel="stylesheet" href="lib/font-awesome/all.min.css">
+    
+    <!-- KaTeX for math formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    
+    <!-- Reveal.js for presentations -->
+    <link rel="stylesheet" href="lib/reveal.js/reveal.css">
+    <link rel="stylesheet" href="lib/reveal.js/theme/white.css">
+    <script src="lib/reveal.js/reveal.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #e74c3c;
+            background: #fdf2f2;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        
+        .header .meta {
+            color: #7f8c8d;
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .content {
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        
+        .content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .content h1, .content h2, .content h3, .content h4, .content h5, .content h6 {
+            margin: 2em 0 1em 0;
+            color: #2c3e50;
+            line-height: 1.3;
+        }
+        
+        .content h1 { 
+            font-size: 2em; 
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .content h2 { 
+            font-size: 1.6em;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        .content h3 { font-size: 1.3em; }
+        .content h4 { font-size: 1.1em; }
+        
+        .content p {
+            margin: 1.2em 0;
+        }
+        
+        .content ul, .content ol {
+            margin: 1.2em 0;
+            padding-left: 2em;
+        }
+        
+        .content li {
+            margin: 0.8em 0;
+        }
+        
+        .content blockquote {
+            border-left: 4px solid #3498db;
+            padding-left: 1.5em;
+            margin: 1.5em 0;
+            font-style: italic;
+            background: #f8f9fa;
+            padding: 1.5em;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .content code {
+            background: #f1f2f6;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #e74c3c;
+        }
+        
+        .content pre {
+            background: #2f3640;
+            color: #f5f6fa;
+            padding: 1.5em;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1.5em 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .content pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            border-radius: 0;
+        }
+        
+        .content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1.5em 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .content th, .content td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .content th {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .content tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .content a {
+            color: #3498db;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .content a:hover {
+            border-bottom-color: #3498db;
+        }
+        
+        .footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        /* Action buttons */
+        .action-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .action-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.3s;
+        }
+        
+        .action-btn:hover {
+            background: #2980b9;
+        }
+        
+        .action-btn i {
+            font-size: 16px;
+        }
+        
+        /* Mermaid diagrams */
+        .mermaid {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* Math formulas */
+        .katex-display {
+            margin: 1.5em 0;
+            text-align: center;
+        }
+        
+        /* Enhanced code blocks with copy button */
+        .code-block-container {
+            position: relative;
+            margin: 1.5em 0;
+        }
+        
+        .copy-code-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .code-block-container:hover .copy-code-btn {
+            opacity: 1;
+        }
+        
+        .copy-code-btn:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Presentation mode */
+        .presentation-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 10000;
+            display: none;
+        }
+        
+        .presentation-mode.active {
+            display: block;
+        }
+        
+        .presentation-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10001;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .presentation-btn {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .presentation-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+        
+        .powernote-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 12px;
+            margin-top: 15px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .powernote-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        
+        .share-info {
+            background: #e8f6f3;
+            border: 1px solid #a2d9d9;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .content {
+                font-size: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .content table {
+                font-size: 14px;
+            }
+            
+            .content th, .content td {
+                padding: 8px;
+            }
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <p>正在載入分享內容...</p>
+    </div>
+    
+    <div id="error" class="error" style="display: none;">
+        <h2>😅 載入失敗</h2>
+        <p id="error-message">無法載入分享內容，請檢查連結是否正確。</p>
+    </div>
+    
+    <!-- Action buttons -->
+    <div class="action-buttons" id="action-buttons" style="display: none;">
+        <button class="action-btn" id="download-md-btn" title="下載 Markdown 檔案">
+            <i class="fas fa-download"></i>
+            <span>MD</span>
+        </button>
+        <button class="action-btn" id="download-html-btn" title="下載 HTML 檔案">
+            <i class="fas fa-file-code"></i>
+            <span>HTML</span>
+        </button>
+        <button class="action-btn" id="presentation-btn" title="簡報模式">
+            <i class="fas fa-presentation-screen"></i>
+            <span>簡報</span>
+        </button>
+    </div>
+    
+    <!-- Presentation mode -->
+    <div class="presentation-mode" id="presentation-mode">
+        <div class="reveal">
+            <div class="slides" id="presentation-slides">
+                <!-- Slides will be generated here -->
+            </div>
+        </div>
+        <div class="presentation-controls">
+            <button class="presentation-btn" id="exit-presentation-btn" title="退出簡報">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div id="content-container" style="display: none;">
+        <div class="header">
+            <h1 id="article-title">載入中...</h1>
+            <div class="meta">
+                <div class="meta-item">
+                    <span>📅</span>
+                    <span id="share-date">-</span>
+                </div>
+                <div class="meta-item">
+                    <span>📝</span>
+                    <span id="file-name">-</span>
+                </div>
+                <div class="meta-item">
+                    <span>👀</span>
+                    <span>來自 PowerNote</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="article-content" class="content">
+            <!-- 文章內容將在這裡顯示 -->
+        </div>
+        
+        <div class="footer">
+            <p>本文章由 <strong>PowerNote</strong> 分享</p>
+            <a href="../index.html" class="powernote-badge">🚀 開啟 PowerNote</a>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentContent = '';
+        let currentTitle = '';
+        let currentFileName = '';
+        
+        // 初始化所有功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化 highlight.js
+            hljs.configure({
+                ignoreUnescapedHTML: true,
+                languages: ['javascript', 'python', 'java', 'cpp', 'csharp', 'php', 'go', 'rust', 'sql', 'bash', 'json', 'xml', 'css', 'typescript']
+            });
+            
+            // 初始化 Mermaid
+            mermaid.initialize({ 
+                startOnLoad: false, 
+                theme: 'default',
+                flowchart: { useMaxWidth: true },
+                sequence: { useMaxWidth: true },
+                gantt: { useMaxWidth: true }
+            });
+            
+            // 配置 marked
+            configureMarked();
+            
+            // 載入內容
+            loadSharedContent();
+            
+            // 綁定按鈕事件
+            setupEventListeners();
+        });
+        
+        // 配置 marked.js
+        function configureMarked() {
+            const renderer = new marked.Renderer();
+            
+            marked.setOptions({ 
+                renderer: renderer,
+                highlight: function(code, lang) {
+                    // 清理語言名稱
+                    if (lang) {
+                        lang = lang.toLowerCase().trim();
+                        // 移除可能的額外字符
+                        lang = lang.replace(/[^a-z0-9+#-]/g, '');
+                        
+                        // 處理常見的語言別名
+                        const langAliases = {
+                            'js': 'javascript',
+                            'ts': 'typescript',
+                            'py': 'python',
+                            'cpp': 'cpp',
+                            'c++': 'cpp',
+                            'c#': 'csharp',
+                            'cs': 'csharp'
+                        };
+                        
+                        if (langAliases[lang]) {
+                            lang = langAliases[lang];
+                        }
+                    }
+                    
+                    // 特殊處理 mermaid 圖表
+                    if (lang === 'mermaid') {
+                        return code; // 不進行語法高亮，保持原始代碼
+                    }
+                    
+                    // 嘗試使用指定語言高亮
+                    if (lang && hljs.getLanguage(lang)) {
+                        try {
+                            const result = hljs.highlight(code, { language: lang });
+                            return result.value;
+                        } catch (err) {
+                            console.warn('Highlight.js error:', err);
+                        }
+                    }
+                    
+                    // 嘗試自動檢測語言
+                    try {
+                        const result = hljs.highlightAuto(code);
+                        return result.value;
+                    } catch (err) {
+                        console.warn('Highlight.js auto-detect error:', err);
+                        return code;
+                    }
+                },
+                breaks: true,
+                gfm: true
+            });
+        }
+        
+        // 從 URL 參數獲取 Gist ID 和檔案名
+        function getUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return {
+                gistId: urlParams.get('gist'),
+                fileName: urlParams.get('file')
+            };
+        }
+        
+        // 載入並顯示分享內容
+        async function loadSharedContent() {
+            const { gistId, fileName } = getUrlParams();
+            
+            if (!gistId || !fileName) {
+                showError('缺少必要參數：需要 gist 和 file 參數');
+                return;
+            }
+            
+            try {
+                console.log('Loading shared content:', { gistId, fileName });
+                
+                // 從 GitHub API 獲取 Gist 內容
+                const response = await fetch(`https://api.github.com/gists/${gistId}`);
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('找不到指定的 Gist，請檢查連結是否正確');
+                    } else {
+                        throw new Error(`GitHub API 錯誤: ${response.status}`);
+                    }
+                }
+                
+                const gist = await response.json();
+                
+                // 查找指定的檔案
+                const file = gist.files[fileName];
+                if (!file) {
+                    const availableFiles = Object.keys(gist.files).join(', ');
+                    throw new Error(`找不到檔案 "${fileName}"。可用檔案: ${availableFiles}`);
+                }
+                
+                // 獲取檔案內容
+                let content = file.content;
+                
+                // 移除 #SHARE 標籤
+                content = content.replace(/#SHARE\s*/g, '');
+                
+                // 儲存內容供其他功能使用
+                currentContent = content;
+                currentFileName = fileName;
+                
+                // 獲取文章標題
+                const titleMatch = content.match(/^#\s+(.+)$/m);
+                const title = titleMatch ? titleMatch[1] : fileName.replace('.md', '');
+                currentTitle = title;
+                
+                // 更新頁面標題和 meta
+                document.title = `${title} - PowerNote 分享`;
+                document.querySelector('meta[property="og:title"]').setAttribute('content', title);
+                
+                // 渲染內容
+                await displayContent(title, content, fileName, gist.updated_at);
+                
+            } catch (error) {
+                console.error('Error loading shared content:', error);
+                showError(error.message);
+            }
+        }
+        
+        // 顯示內容
+        async function displayContent(title, content, fileName, updatedAt) {
+            // 隱藏載入畫面
+            document.getElementById('loading').style.display = 'none';
+            
+            // 顯示內容和功能按鈕
+            document.getElementById('content-container').style.display = 'block';
+            document.getElementById('action-buttons').style.display = 'flex';
+            
+            // 設定標題和meta資訊
+            document.getElementById('article-title').textContent = title;
+            document.getElementById('file-name').textContent = fileName;
+            document.getElementById('share-date').textContent = new Date(updatedAt).toLocaleDateString('zh-TW');
+            
+            // 渲染 Markdown 內容
+            const htmlContent = marked.parse(content);
+            const articleContent = document.getElementById('article-content');
+            articleContent.innerHTML = htmlContent;
+            
+            // 後處理渲染內容
+            await postProcessContent(articleContent);
+            
+            console.log('Content loaded successfully');
+        }
+        
+        // 後處理渲染內容
+        async function postProcessContent(container) {
+            // 1. 處理代碼高亮
+            const codeBlocks = container.querySelectorAll('pre code:not(.hljs)');
+            codeBlocks.forEach(block => {
+                hljs.highlightElement(block);
+            });
+            
+            // 2. 增強代碼塊（添加複製按鈕）
+            enhanceCodeBlocks(container);
+            
+            // 3. 處理 Mermaid 圖表
+            const mermaidBlocks = container.querySelectorAll('code.language-mermaid');
+            for (const block of mermaidBlocks) {
+                const mermaidCode = block.textContent;
+                const mermaidContainer = document.createElement('div');
+                mermaidContainer.className = 'mermaid';
+                mermaidContainer.textContent = mermaidCode;
+                
+                // 替換 pre > code 結構
+                const preElement = block.closest('pre');
+                if (preElement) {
+                    preElement.replaceWith(mermaidContainer);
+                }
+            }
+            
+            // 渲染所有 Mermaid 圖表
+            try {
+                await mermaid.run({ nodes: container.querySelectorAll('.mermaid') });
+            } catch (error) {
+                console.warn('Mermaid rendering error:', error);
+            }
+            
+            // 4. 渲染數學公式
+            try {
+                renderMathInElement(container, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                        { left: '\\[', right: '\\]', display: true },
+                        { left: '\\(', right: '\\)', display: false }
+                    ]
+                });
+            } catch (error) {
+                console.warn('KaTeX rendering error:', error);
+            }
+        }
+        
+        // 增強代碼塊
+        function enhanceCodeBlocks(container) {
+            const preElements = container.querySelectorAll('pre');
+            preElements.forEach(pre => {
+                if (pre.querySelector('.copy-code-btn')) return; // 已經處理過
+                
+                const wrapper = document.createElement('div');
+                wrapper.className = 'code-block-container';
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-code-btn';
+                copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+                copyBtn.title = '複製代碼';
+                
+                copyBtn.addEventListener('click', () => {
+                    const code = pre.querySelector('code');
+                    const text = code ? code.textContent : pre.textContent;
+                    
+                    navigator.clipboard.writeText(text).then(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('複製失敗:', err);
+                    });
+                });
+                
+                pre.parentNode.insertBefore(wrapper, pre);
+                wrapper.appendChild(pre);
+                wrapper.appendChild(copyBtn);
+            });
+        }
+        
+        // 設置事件監聽器
+        function setupEventListeners() {
+            // 下載 MD 檔案
+            document.getElementById('download-md-btn').addEventListener('click', downloadMarkdown);
+            
+            // 下載 HTML 檔案  
+            document.getElementById('download-html-btn').addEventListener('click', downloadHTML);
+            
+            // 簡報模式
+            document.getElementById('presentation-btn').addEventListener('click', enterPresentationMode);
+            document.getElementById('exit-presentation-btn').addEventListener('click', exitPresentationMode);
+            
+            // ESC 鍵退出簡報模式
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.getElementById('presentation-mode').classList.contains('active')) {
+                    exitPresentationMode();
+                }
+            });
+        }
+        
+        // 下載功能
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function downloadMarkdown() {
+            const blob = new Blob([currentContent], { type: 'text/markdown' });
+            const filename = currentFileName || 'shared-article.md';
+            downloadBlob(blob, filename);
+        }
+        
+        function downloadHTML() {
+            const content = document.getElementById('article-content').innerHTML;
+            const title = currentTitle || 'Shared Article';
+            const html = `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .mermaid { text-align: center; margin: 20px 0; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        code { background: #f1f1f1; padding: 2px 4px; border-radius: 3px; }
+        blockquote { border-left: 4px solid #ddd; padding-left: 15px; margin: 15px 0; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>${title}</h1>
+    ${content}
+</body>
+</html>`;
+            const blob = new Blob([html], { type: 'text/html' });
+            const filename = currentTitle.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '_') + '.html';
+            downloadBlob(blob, filename);
+        }
+        
+        // 簡報模式
+        async function enterPresentationMode() {
+            const presentationMode = document.getElementById('presentation-mode');
+            const slidesContainer = document.getElementById('presentation-slides');
+            
+            // 生成簡報內容
+            const slides = generateSlides(currentContent);
+            slidesContainer.innerHTML = slides;
+            
+            // 顯示簡報模式
+            presentationMode.classList.add('active');
+            
+            // 初始化 Reveal.js
+            if (typeof Reveal !== 'undefined') {
+                Reveal.initialize({
+                    hash: true,
+                    controls: true,
+                    progress: true,
+                    center: true,
+                    transition: 'slide'
+                });
+            }
+            
+            // 處理簡報中的 Mermaid 圖表
+            try {
+                await mermaid.run({ nodes: slidesContainer.querySelectorAll('.mermaid') });
+            } catch (error) {
+                console.warn('Mermaid rendering error in presentation:', error);
+            }
+        }
+        
+        function exitPresentationMode() {
+            document.getElementById('presentation-mode').classList.remove('active');
+            if (typeof Reveal !== 'undefined') {
+                Reveal.destroy();
+            }
+        }
+        
+        function generateSlides(content) {
+            const lines = content.split('\n');
+            const slides = [];
+            let currentSlide = [];
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                
+                // 新的簡報頁（## 標題）
+                if (trimmed.startsWith('## ')) {
+                    if (currentSlide.length > 0) {
+                        slides.push(processSlide(currentSlide.join('\n')));
+                        currentSlide = [];
+                    }
+                    currentSlide.push(line);
+                } else if (trimmed.startsWith('# ')) {
+                    // 標題頁
+                    if (currentSlide.length > 0) {
+                        slides.push(processSlide(currentSlide.join('\n')));
+                        currentSlide = [];
+                    }
+                    currentSlide.push(line);
+                } else {
+                    currentSlide.push(line);
+                }
+            }
+            
+            if (currentSlide.length > 0) {
+                slides.push(processSlide(currentSlide.join('\n')));
+            }
+            
+            return slides.join('\n');
+        }
+        
+        function processSlide(slideContent) {
+            try {
+                const htmlContent = marked.parse(slideContent.trim());
+                const slideEl = document.createElement('div');
+                slideEl.innerHTML = htmlContent;
+                
+                // 處理 Mermaid 圖表
+                const mermaidElements = slideEl.querySelectorAll('code.language-mermaid');
+                mermaidElements.forEach(mermaidEl => {
+                    const mermaidCode = mermaidEl.textContent;
+                    const mermaidContainer = document.createElement('div');
+                    mermaidContainer.className = 'mermaid';
+                    mermaidContainer.textContent = mermaidCode;
+                    const preElement = mermaidEl.closest('pre');
+                    if (preElement) {
+                        preElement.replaceWith(mermaidContainer);
+                    }
+                });
+                
+                return `<section>${slideEl.innerHTML}</section>`;
+            } catch (error) {
+                console.error('Error processing slide:', error);
+                return `<section><p>處理簡報頁面時發生錯誤</p></section>`;
+            }
+        }
+        
+        // 顯示錯誤
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+        }
+    </script>
+</body>
+</html>
