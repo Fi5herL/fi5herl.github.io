@@ -48,14 +48,23 @@
             box-sizing: border-box;
         }
         
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --border-color: #eeeeee;
+            --code-bg: #f1f2f6;
+            --blockquote-bg: #f8f9fa;
+        }
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: #fff;
+            color: var(--text-color);
+            background: var(--bg-color);
             max-width: 900px;
             margin: 0 auto;
             padding: 20px;
+            transition: background 0.3s, color 0.3s;
         }
         
         .loading {
@@ -150,13 +159,13 @@
             padding-left: 1.5em;
             margin: 1.5em 0;
             font-style: italic;
-            background: #f8f9fa;
+            background: var(--blockquote-bg);
             padding: 1.5em;
             border-radius: 0 8px 8px 0;
         }
         
         .content code {
-            background: #f1f2f6;
+            background: var(--code-bg);
             padding: 3px 8px;
             border-radius: 4px;
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -191,7 +200,7 @@
         }
         
         .content th, .content td {
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             padding: 12px;
             text-align: left;
         }
@@ -220,42 +229,169 @@
         .footer {
             margin-top: 60px;
             padding-top: 30px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
             text-align: center;
             color: #7f8c8d;
             font-size: 14px;
         }
         
-        /* Action buttons */
-        .action-buttons {
+        /* 浮動控制面板 */
+        .floating-control {
             position: fixed;
-            top: 20px;
+            bottom: 20px;
             right: 20px;
-            display: flex;
-            gap: 10px;
             z-index: 1000;
         }
         
-        .action-btn {
-            background: #3498db;
+        .control-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #2980b9);
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
             cursor: pointer;
-            font-size: 14px;
             display: flex;
             align-items: center;
-            gap: 5px;
-            transition: background 0.3s;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .control-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        .control-panel {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            padding: 15px;
+            min-width: 200px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .control-panel.active {
+            display: flex;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .control-group {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .control-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .control-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .action-btn {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            width: 100%;
+            justify-content: flex-start;
         }
         
         .action-btn:hover {
-            background: #2980b9;
+            background: #e9ecef;
+            color: #3498db;
+            border-color: #3498db;
         }
         
         .action-btn i {
-            font-size: 16px;
+            font-size: 14px;
+            width: 16px;
+            text-align: center;
+        }
+        
+        /* 字體控制 */
+        .font-controls {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .font-btn {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .font-btn:hover {
+            background: #e9ecef;
+            color: #3498db;
+            border-color: #3498db;
+        }
+        
+        .font-size-display {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* 主題選擇 */
+        .theme-selector {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 6px;
+            font-size: 13px;
+            color: #495057;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .theme-selector:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
         
         /* Mermaid diagrams */
@@ -426,20 +562,62 @@
         <p id="error-message">無法載入分享內容，請檢查連結是否正確。</p>
     </div>
     
-    <!-- Action buttons -->
-    <div class="action-buttons" id="action-buttons" style="display: none;">
-        <button class="action-btn" id="download-md-btn" title="下載 Markdown 檔案">
-            <i class="fas fa-download"></i>
-            <span>MD</span>
+    <!-- 浮動控制面板 -->
+    <div class="floating-control" id="floating-control" style="display: none;">
+        <button class="control-toggle" id="control-toggle" title="開啟控制面板">
+            ⚙️
         </button>
-        <button class="action-btn" id="download-html-btn" title="下載 HTML 檔案">
-            <i class="fas fa-file-code"></i>
-            <span>HTML</span>
-        </button>
-        <button class="action-btn" id="presentation-btn" title="簡報模式">
-            <i class="fas fa-presentation-screen"></i>
-            <span>簡報</span>
-        </button>
+        
+        <div class="control-panel" id="control-panel">
+            <!-- 顯示控制 -->
+            <div class="control-group">
+                <div class="control-label">📐 顯示設定</div>
+                
+                <!-- 字體大小控制 -->
+                <div style="margin-bottom: 10px;">
+                    <div style="font-size: 11px; color: #888; margin-bottom: 5px;">字體大小</div>
+                    <div class="font-controls">
+                        <button class="font-btn" id="font-decrease" title="縮小字體">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <div class="font-size-display" id="font-size-display">16px</div>
+                        <button class="font-btn" id="font-increase" title="放大字體">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 主題選擇 -->
+                <div>
+                    <div style="font-size: 11px; color: #888; margin-bottom: 5px;">閱讀主題</div>
+                    <select class="theme-selector" id="theme-selector">
+                        <option value="light">☀️ 亮色主題</option>
+                        <option value="dark">🌙 暗色主題</option>
+                        <option value="sepia">📜 護眼主題</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- 功能按鈕 -->
+            <div class="control-group">
+                <div class="control-label">🛠️ 功能操作</div>
+                
+                <button class="action-btn" id="download-md-btn" title="下載 Markdown 檔案">
+                    <i class="fas fa-download"></i>
+                    <span>下載 MD</span>
+                </button>
+                
+                <button class="action-btn" id="download-html-btn" title="下載 HTML 檔案">
+                    <i class="fas fa-file-code"></i>
+                    <span>下載 HTML</span>
+                </button>
+                
+                <button class="action-btn" id="presentation-btn" title="簡報模式">
+                    <i class="fas fa-presentation-screen"></i>
+                    <span>簡報模式</span>
+                </button>
+            </div>
+        </div>
     </div>
     
     <!-- Presentation mode -->
@@ -490,6 +668,8 @@
         let currentContent = '';
         let currentTitle = '';
         let currentFileName = '';
+        let currentFontSize = 16;
+        let currentTheme = 'light';
         
         // 初始化所有功能
         document.addEventListener('DOMContentLoaded', function() {
@@ -650,9 +830,9 @@
             // 隱藏載入畫面
             document.getElementById('loading').style.display = 'none';
             
-            // 顯示內容和功能按鈕
+            // 顯示內容和控制面板
             document.getElementById('content-container').style.display = 'block';
-            document.getElementById('action-buttons').style.display = 'flex';
+            document.getElementById('floating-control').style.display = 'block';
             
             // 設定標題和meta資訊
             document.getElementById('article-title').textContent = title;
@@ -754,6 +934,26 @@
         
         // 設置事件監聽器
         function setupEventListeners() {
+            // 控制面板切換
+            document.getElementById('control-toggle').addEventListener('click', toggleControlPanel);
+            
+            // 點擊外部關閉控制面板
+            document.addEventListener('click', (e) => {
+                const floatingControl = document.getElementById('floating-control');
+                const controlPanel = document.getElementById('control-panel');
+                
+                if (!floatingControl.contains(e.target)) {
+                    controlPanel.classList.remove('active');
+                }
+            });
+            
+            // 字體大小控制
+            document.getElementById('font-decrease').addEventListener('click', decreaseFontSize);
+            document.getElementById('font-increase').addEventListener('click', increaseFontSize);
+            
+            // 主題切換
+            document.getElementById('theme-selector').addEventListener('change', changeTheme);
+            
             // 下載 MD 檔案
             document.getElementById('download-md-btn').addEventListener('click', downloadMarkdown);
             
@@ -770,6 +970,9 @@
                     exitPresentationMode();
                 }
             });
+            
+            // 初始化設定
+            initializeSettings();
         }
         
         // 下載功能
@@ -923,6 +1126,101 @@
                 console.error('Error processing slide:', error);
                 return `<section><p>處理簡報頁面時發生錯誤</p></section>`;
             }
+        }
+        
+        // 控制面板功能
+        function toggleControlPanel() {
+            const controlPanel = document.getElementById('control-panel');
+            controlPanel.classList.toggle('active');
+        }
+        
+        function initializeSettings() {
+            // 從 localStorage 載入設定
+            const savedFontSize = localStorage.getItem('powernote-shared-font-size');
+            const savedTheme = localStorage.getItem('powernote-shared-theme');
+            
+            if (savedFontSize) {
+                currentFontSize = parseInt(savedFontSize);
+                updateFontSize();
+            }
+            
+            if (savedTheme) {
+                currentTheme = savedTheme;
+                document.getElementById('theme-selector').value = currentTheme;
+                applyTheme();
+            }
+        }
+        
+        function decreaseFontSize() {
+            if (currentFontSize > 12) {
+                currentFontSize -= 2;
+                updateFontSize();
+                saveFontSize();
+            }
+        }
+        
+        function increaseFontSize() {
+            if (currentFontSize < 24) {
+                currentFontSize += 2;
+                updateFontSize();
+                saveFontSize();
+            }
+        }
+        
+        function updateFontSize() {
+            document.getElementById('font-size-display').textContent = currentFontSize + 'px';
+            document.querySelector('.content').style.fontSize = currentFontSize + 'px';
+        }
+        
+        function saveFontSize() {
+            localStorage.setItem('powernote-shared-font-size', currentFontSize.toString());
+        }
+        
+        function changeTheme() {
+            currentTheme = document.getElementById('theme-selector').value;
+            applyTheme();
+            saveTheme();
+        }
+        
+        function applyTheme() {
+            const body = document.body;
+            
+            // 移除所有主題類別
+            body.classList.remove('theme-light', 'theme-dark', 'theme-sepia');
+            
+            // 應用新主題
+            body.classList.add('theme-' + currentTheme);
+            
+            // 更新 CSS 變數
+            const root = document.documentElement;
+            
+            switch (currentTheme) {
+                case 'dark':
+                    root.style.setProperty('--bg-color', '#1a1a1a');
+                    root.style.setProperty('--text-color', '#e0e0e0');
+                    root.style.setProperty('--border-color', '#333');
+                    root.style.setProperty('--code-bg', '#2d2d2d');
+                    root.style.setProperty('--blockquote-bg', '#2a2a2a');
+                    break;
+                case 'sepia':
+                    root.style.setProperty('--bg-color', '#f7f3e9');
+                    root.style.setProperty('--text-color', '#5c4b37');
+                    root.style.setProperty('--border-color', '#d4c5a9');
+                    root.style.setProperty('--code-bg', '#ede4d2');
+                    root.style.setProperty('--blockquote-bg', '#f0e8d6');
+                    break;
+                default: // light
+                    root.style.setProperty('--bg-color', '#ffffff');
+                    root.style.setProperty('--text-color', '#333333');
+                    root.style.setProperty('--border-color', '#eeeeee');
+                    root.style.setProperty('--code-bg', '#f1f2f6');
+                    root.style.setProperty('--blockquote-bg', '#f8f9fa');
+                    break;
+            }
+        }
+        
+        function saveTheme() {
+            localStorage.setItem('powernote-shared-theme', currentTheme);
         }
         
         // 顯示錯誤

@@ -321,17 +321,17 @@
             /* Enhanced mobile word wrap */
             .CodeMirror {
                 line-height: 1.3 !important;
-                font-size: 14px !important;
+                /* 移除固定字體大小，讓用戶設定生效 */
             }
             
             /* Enhanced mobile preview word wrap */
             .preview-container {
-                font-size: 14px !important;
+                /* 移除固定字體大小，讓預覽也能隨設定變化 */
                 line-height: 1.4 !important;
             }
             
-            /* Hide unnecessary buttons on mobile */
-            .toolbar button:not(#sidebar-toggle):not(#mobile-view-toggle) {
+            /* Hide unnecessary buttons on mobile, but show timer, font, search and mobile jump */
+            .toolbar button:not(#sidebar-toggle):not(#mobile-view-toggle):not(#timer-btn):not(#font-settings-btn):not(#search-toggle-btn):not(#mobile-jump-btn) {
                 display: none !important;
             }
             
@@ -346,6 +346,36 @@
                 font-size: 14px !important;
                 min-width: 44px; /* Touch friendly size */
                 margin: 0 2px;
+            }
+            
+            /* Mobile specific styling for new buttons */
+            #timer-btn, #font-settings-btn, #search-toggle-btn, #mobile-jump-btn {
+                display: block !important;
+                height: 44px;
+            }
+            
+            /* Mobile jump button specific styling */
+            #mobile-jump-btn {
+                background: var(--accent-color) !important;
+                color: white !important;
+                border: 2px solid rgba(255, 255, 255, 0.3) !important;
+                animation: pulse 2s infinite;
+            }
+            
+            @keyframes pulse {
+                0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
+                70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+            }
+            
+            /* Adjust timer button on mobile */
+            #timer-btn #timer-display {
+                font-size: 12px !important;
+            }
+            
+            /* Hide button text on mobile for cleaner look */
+            .toolbar .btn-text {
+                display: none !important;
             }
             
             /* Full screen sidebar on mobile */
@@ -658,11 +688,61 @@
             padding: 8px 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             z-index: 1000;
-            /* display: flex; */
             align-items: center;
             gap: 10px;
             color: white;
             font-size: 14px;
+        }
+
+        /* Desktop search bar layout */
+        .search-bar-row-1,
+        .search-bar-row-2 {
+            display: contents; /* Make child elements behave as if they're direct children of search-bar */
+        }
+
+        /* Show search bar as flex on desktop */
+        .search-bar.active {
+            display: flex !important;
+        }
+
+        /* Mobile search bar layout */
+        @media (max-width: 768px) {
+            .search-bar {
+                right: 10px;
+                left: 10px;
+                width: calc(100% - 20px);
+                max-width: none;
+                padding: 12px;
+            }
+            
+            .search-bar.active {
+                display: grid !important;
+                grid-template-columns: 1fr;
+                grid-gap: 8px;
+            }
+            
+            .search-bar-row-1,
+            .search-bar-row-2 {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .search-bar-row-2 {
+                justify-content: space-between;
+            }
+            
+            .search-bar-row-1 input[type="text"] {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .search-bar-row-2 button {
+                min-width: 44px;
+                height: 32px;
+                padding: 4px 8px;
+                font-size: 12px;
+            }
         }
 
         .search-bar input[type="text"] {
@@ -2618,6 +2698,104 @@
             justify-content: flex-end;
         }
 
+        /* Tag Filter Modal Styles */
+        .tag-filter-content {
+            padding: 20px 0;
+        }
+
+        .tag-filter-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--secondary-bg);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .tag-filter-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: flex-end;
+        }
+
+        .filter-control-btn {
+            padding: 4px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--secondary-bg);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .filter-control-btn:hover {
+            background: var(--button-hover-bg);
+            color: white;
+        }
+
+        .tag-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
+            background: var(--secondary-bg);
+        }
+
+        .tag-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: 4px 0;
+            background: var(--main-bg);
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .tag-item:hover {
+            background: var(--button-hover-bg);
+        }
+
+        .tag-item input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .tag-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .tag-filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--secondary-bg);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            background: var(--button-hover-bg);
+            color: white;
+        }
+
+        .filter-btn.primary {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
         /* Cloud sync button styles */
         #sync-to-cloud-btn,
         #load-from-cloud-btn,
@@ -2640,6 +2818,161 @@
         
         #publish-shared-btn:hover {
             background: #229954;
+        }
+        
+        /* CodeMirror Markdown 簡潔樣式 - 預設主題 */
+        .cm-s-default .cm-header,
+        .cm-s-default .cm-header-1,
+        .cm-s-default .cm-header-2,
+        .cm-s-default .cm-header-3,
+        .cm-s-default .cm-header-4,
+        .cm-s-default .cm-header-5,
+        .cm-s-default .cm-header-6 {
+            color: #000000 !important; /* 標題改為黑色 */
+            font-weight: normal !important;
+        }
+        
+        /* Markdown 結構符號加粗 - 使用更廣泛的選擇器 */
+        
+        /* 所有可能的格式化符號類別 */
+        .cm-s-default .cm-formatting,
+        .cm-s-default .cm-formatting-header,
+        .cm-s-default .cm-formatting-quote,
+        .cm-s-default .cm-formatting-list,
+        .cm-s-default .cm-formatting-list-ul,
+        .cm-s-default .cm-formatting-list-ol,
+        .cm-s-default .cm-header-1:first-child,
+        .cm-s-default .cm-header-2:first-child,
+        .cm-s-default .cm-header-3:first-child,
+        .cm-s-default .cm-header-4:first-child,
+        .cm-s-default .cm-header-5:first-child,
+        .cm-s-default .cm-header-6:first-child {
+            font-weight: bold !important;
+            color: #000000 !important;
+        }
+        
+        /* 針對引用符號 */
+        .cm-s-default .cm-quote:first-child {
+            font-weight: bold !important;
+        }
+        
+        /* 針對列表符號 */
+        .cm-s-default .cm-variable-2:first-child,
+        .cm-s-default .cm-variable-3:first-child {
+            font-weight: bold !important;
+        }
+        
+        /* 確保內容本身保持正常字重 */
+        .cm-s-default .cm-header,
+        .cm-s-default .cm-quote,
+        .cm-s-default .cm-variable-2,
+        .cm-s-default .cm-variable-3 {
+            color: #000000 !important;
+            font-weight: normal !important;
+        }
+        
+        /* 結構符號加粗樣式 */
+        .bold-structural-symbol {
+            font-weight: bold !important;
+            color: #000000 !important;
+        }
+        
+        .cm-s-default .cm-atom {
+            color: #000000 !important; /* 一般文字改為黑色 */
+        }
+        
+        .cm-s-default .cm-def {
+            color: #000000 !important; /* 定義改為黑色 */
+        }
+        
+        .cm-s-default .cm-meta {
+            color: #000000 !important; /* meta 標籤改為黑色 */
+        }
+        
+        .cm-s-default .cm-link {
+            color: #000000 !important; /* 連結文字改為黑色 */
+        }
+        
+        .cm-s-default .cm-url {
+            color: #000000 !important; /* URL 改為黑色 */
+        }
+        
+        /* 保留特殊樣式 */
+        .cm-s-default .cm-strong {
+            color: #000000 !important; /* 粗體保持黑色且粗體 */
+            font-weight: bold !important;
+        }
+        
+        .cm-s-default .cm-code {
+            color: #dc3545 !important; /* 內聯程式碼改為淺紅色 */
+            background-color: #f8f9fa !important;
+            padding: 1px 3px !important;
+            border-radius: 3px !important;
+        }
+        
+        .cm-s-default .cm-comment {
+            color: #6c757d !important; /* 程式碼區塊改為灰色 */
+            font-style: normal !important;
+        }
+        
+        /* TODO 項目樣式 */
+        .cm-s-default .cm-variable:has(+ .cm-variable-2):first-child {
+            color: #000000 !important; /* 未完成的 TODO 保持黑色 */
+        }
+        
+        /* 已完成的 TODO - 透過檢查行內容 */
+        .CodeMirror-line:has([class*="cm-variable"]) {
+            color: inherit;
+        }
+        
+        /* 使用 JavaScript 動態處理已完成的 TODO */
+        .completed-todo {
+            color: #6c757d !important; /* 已完成的 TODO 改為灰色 */
+            text-decoration: line-through !important;
+        }
+        
+        
+        /* 列表符號保持黑色 */
+        .cm-s-default .cm-variable-2 {
+            color: #000000 !important;
+        }
+        
+        /* 確保基本文字為黑色 */
+        .cm-s-default .cm-variable {
+            color: #000000 !important;
+        }
+        
+        .cm-s-default {
+            color: #000000 !important; /* 基礎文字顏色 */
+        }
+        
+        /* 刪除線樣式 */
+        .cm-s-default .cm-strikethrough {
+            text-decoration: line-through !important;
+            color: #6c757d !important;
+        }
+        
+        /* 隱藏的 Markdown 語法符號 */
+        .hidden-markdown-syntax {
+            display: none !important;
+        }
+        
+        /* CodeMirror 編輯器底部空白區域 - 讓最後一行可以滾動到頂端 */
+        .CodeMirror-code::after {
+            content: '';
+            display: block;
+            height: 70vh; /* 添加底部空白，約為視窗高度的70% */
+            width: 100%;
+        }
+        
+        /* 確保編輯器可以正常滾動 */
+        .CodeMirror {
+            height: 100% !important;
+        }
+        
+        .CodeMirror-scroll {
+            overflow-y: auto !important;
+            padding-bottom: 0 !important;
         }
     </style>
 </head>
@@ -2713,11 +3046,9 @@
         
         <div class="main-panel">
             <div class="toolbar">
-                <button id="sidebar-toggle"><i class="fas fa-bars"></i> <span class="btn-text">側邊欄</span></button>
+                <button id="sidebar-toggle"><i class="fas fa-bars"></i> <span class="btn-text"></span></button>
                 <button id="mobile-view-toggle" title="切換檢視模式"><i class="fas fa-eye"></i></button>
                 <button id="timer-btn" class="timer-btn"><i class="fas fa-clock"></i> <span id="timer-display">00:00</span></button>
-                <button onclick="insertTable()"><i class="fas fa-table"></i> <span class="btn-text">表</span></button>
-                <button id="insert-gantt-btn"><i class="fas fa-project-diagram"></i> <span class="btn-text">G</span></button>
                 <button id="font-settings-btn"><i class="fas fa-text-height"></i> <span id="current-font-size">22px</span></button>
                 <button id="shortcuts-help-btn" title="快捷鍵說明"><i class="fas fa-keyboard"></i></button>
                 
@@ -2728,20 +3059,25 @@
                 <button id="drawing-mode-btn" class="view-mode-toolbar-btn" title="繪圖模式"><i class="fas fa-draw-polygon"></i></button>
                 
                 <div style="margin-left: auto;"></div>
-                <button id="export-md-btn"><i class="fas fa-file-text"></i> 匯出MD</button>
-                <button id="export-html-btn"><i class="fas fa-file-code"></i> 匯出HTML</button>
-                <button id="presentation-toggle-btn"><i class="fas fa-presentation-screen"></i> 簡報模式</button>
-				<button id="search-toggle-btn"><i class="fas fa-search"></i> 搜尋</button>
+                <button id="export-md-btn"><i class="fas fa-file-text"></i>MD</button>
+                <button id="export-html-btn"><i class="fas fa-file-code"></i>HTML</button>
+                <button id="presentation-toggle-btn"><i class="fas fa-presentation-screen"></i>PPT</button>
+				<button id="search-toggle-btn"><i class="fas fa-search"></i>搜尋</button>
             </div>
 
             <!-- Search Bar -->
             <div id="search-bar" class="search-bar">
-                <input type="text" id="search-input" placeholder="搜尋..." title="多個關鍵字請用空白分隔 (AND 邏輯)" />
-                <span id="search-match-count" class="search-match-count">0 / 0</span>
-                <button id="search-prev-btn" title="上一個"><i class="fas fa-chevron-up"></i></button>
-                <button id="search-next-btn" title="下一個"><i class="fas fa-chevron-down"></i></button>
-                <button id="search-scope-toggle" title="切換搜尋範圍 (當前檔案/所有檔案)"><i class="fas fa-folder"></i> 當前檔案</button>
-                <button id="search-close-btn" title="關閉搜尋 (Esc)"><i class="fas fa-times"></i></button>
+                <div class="search-bar-row-1">
+                    <input type="text" id="search-input" placeholder="搜尋..." title="多個關鍵字請用空白分隔 (AND 邏輯)" />
+                </div>
+                <div class="search-bar-row-2">
+                    <span id="search-match-count" class="search-match-count">0 / 0</span>
+                    <button id="search-prev-btn" title="上一個">上</button>
+                    <button id="search-next-btn" title="下一個">下</button>
+                    <button id="search-scope-toggle" title="切換搜尋範圍 (當前檔案/所有檔案)">當前檔案</button>
+                    <button id="search-tag-filter-btn" title="標籤過濾" style="display: none;">標籤</button>
+                    <button id="search-close-btn" title="關閉搜尋 (Esc)">X</button>
+                </div>
             </div>
             <!-- End Search Bar -->
 
@@ -2829,64 +3165,7 @@
                 <div class="timer-actions">
                     <button id="modal-auto-timer-toggle" class="auto-timer-btn active"><i class="fas fa-magic"></i> 自動計時</button>
                     <button id="modal-export-csv-btn" class="export-btn"><i class="fas fa-file-csv"></i> 匯出CSV</button>
-                </div>
-            </div>
-            
-            <div class="timer-view-tabs">
-                <button id="timeline-tab-btn" class="tab-btn active">時間軸</button>
-                <button id="chart-tab-btn" class="tab-btn">圓餅圖</button>
-            </div>
-            
-            <div class="timeline-container" id="timeline-container">
-                <div id="timeline-view"></div>
-            </div>
-            
-            <div class="chart-container" id="chart-container" style="display: none;">
-                <div class="chart-controls">
-                    <label>視角層級：</label>
-                    <select id="chart-level-select">
-                        <option value="file">文件</option>
-                        <option value="level1">第一層標題</option>
-                        <option value="level2">第二層標題</option>
-                        <option value="level3">第三層標題</option>
-                        <option value="level4">第四層標題</option>
-                    </select>
-                </div>
-                <div id="chart-view"></div>
-            </div>
-            
-            <div class="timer-stats">
-                <div class="stat-item">
-                    <span class="stat-label">總計時時間：</span>
-                    <span id="total-time">00:00:00</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">任務數量：</span>
-                    <span id="task-count">0</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Timer History Modal -->
-    <div id="timer-modal" class="modal">
-        <div class="modal-content timer-modal-content">
-            <span class="close-btn" id="close-timer-btn">&times;</span>
-            <h2><i class="fas fa-clock"></i> 任務計時記錄</h2>
-            
-            <div class="timer-modal-header">
-                <div class="date-picker-container">
-                    <input type="date" id="date-picker" />
-                    <button id="today-btn">今天</button>
-                </div>
-                <div class="timer-controls">
-                    <input type="text" id="modal-task-input" placeholder="輸入任務名稱..." />
-                    <button id="modal-start-btn"><i class="fas fa-play"></i></button>
-                    <button id="modal-stop-btn" disabled><i class="fas fa-stop"></i></button>
-                </div>
-                <div class="timer-actions">
-                    <button id="modal-auto-timer-toggle" class="auto-timer-btn active"><i class="fas fa-magic"></i> 自動計時</button>
-                    <button id="modal-export-csv-btn" class="export-btn"><i class="fas fa-file-csv"></i> 匯出CSV</button>
+                    <button id="modal-insert-gantt-btn" class="export-btn"><i class="fas fa-project-diagram"></i> 匯入今日甘特圖</button>
                 </div>
             </div>
             
@@ -2994,8 +3273,37 @@
             </div>
             
             <div class="version-actions">
+                <button id="quick-load-latest-btn" class="version-btn primary">快速載入最新版本</button>
                 <button id="refresh-versions-btn" class="version-btn">重新整理</button>
-                <button id="create-backup-btn" class="version-btn primary">建立備份點</button>
+                <button id="create-backup-btn" class="version-btn">建立備份點</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tag Filter Modal -->
+    <div id="tag-filter-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-tag-filter-btn">&times;</span>
+            <h2><i class="fas fa-tags"></i> 標籤過濾</h2>
+            
+            <div class="tag-filter-content">
+                <div class="tag-filter-info">
+                    <p>選擇要搜尋的標籤範圍 (取消全選則搜尋所有文件)</p>
+                </div>
+                
+                <div class="tag-filter-controls">
+                    <button id="select-all-tags-btn" class="filter-control-btn">全選</button>
+                    <button id="deselect-all-tags-btn" class="filter-control-btn">全不選</button>
+                </div>
+                
+                <div class="tag-list" id="tag-filter-list">
+                    <!-- 標籤列表將動態添加 -->
+                </div>
+                
+                <div class="tag-filter-actions">
+                    <button id="apply-tag-filter-btn" class="filter-btn primary">套用過濾</button>
+                    <button id="cancel-tag-filter-btn" class="filter-btn">取消</button>
+                </div>
             </div>
         </div>
     </div>
@@ -3313,6 +3621,8 @@
             let currentSearchMatchIndex = -1;
             let currentSearchScope = 'current'; // 'current' or 'all'
             let searchKeywords = []; // Array of strings for multi-keyword search
+            let selectedTags = new Set(); // Set of selected tag names for filtering
+            let availableTags = []; // Array of available tags from NoteTag.md
 
             // DOM Elements
             const mainContainer = document.getElementById('main-container');
@@ -3352,6 +3662,16 @@
             searchCloseBtn = document.getElementById('search-close-btn');
             searchMatchCount = document.getElementById('search-match-count');
 			searchToggleButton = document.getElementById('search-toggle-btn'); // 獲取按鈕引用
+            searchTagFilterBtn = document.getElementById('search-tag-filter-btn');
+            
+            // Tag Filter Modal Elements
+            const tagFilterModal = document.getElementById('tag-filter-modal');
+            const closeTagFilterBtn = document.getElementById('close-tag-filter-btn');
+            const tagFilterList = document.getElementById('tag-filter-list');
+            const selectAllTagsBtn = document.getElementById('select-all-tags-btn');
+            const deselectAllTagsBtn = document.getElementById('deselect-all-tags-btn');
+            const applyTagFilterBtn = document.getElementById('apply-tag-filter-btn');
+            const cancelTagFilterBtn = document.getElementById('cancel-tag-filter-btn');
             
             // Sync Modal Elements
             const syncSettingsModal = document.getElementById('sync-settings-modal');
@@ -3423,7 +3743,7 @@
                     return result;
                 }
                 
-                async loadFromGist(gistId = null, version = null) {
+                async loadFromGist(gistId = null, version = null, useMergeMode = true) {
                     const { token } = syncSettings.github;
                     const targetGistId = gistId || syncSettings.github.gistId;
                     
@@ -3455,7 +3775,7 @@
                     }
                     
                     const workspace = JSON.parse(workspaceFile.content);
-                    await this.importWorkspace(workspace);
+                    await this.importWorkspace(workspace, useMergeMode); // 使用指定的模式
                     
                     return gist;
                 }
@@ -3617,15 +3937,48 @@
                     return workspace;
                 }
                 
-                async importWorkspace(workspace) {
+                async importWorkspace(workspace, mergeMode = false) {
                     if (workspace.files && Array.isArray(workspace.files)) {
-                        files = workspace.files.map(file => ({
-                            ...file,
-                            id: file.id || this.generateFileId(),
-                            name: file.name || 'untitled.md',
-                            content: file.content || '',
-                            lastModified: new Date(file.lastModified || Date.now())
-                        }));
+                        if (mergeMode) {
+                            // 合併模式：更新現有筆記，新增不存在的筆記，保留UNSYNC筆記
+                            const existingFiles = [...files]; // 保留原有檔案列表的副本
+                            const existingFileMap = new Map(existingFiles.map(file => [file.id, file]));
+                            
+                            // 處理從雲端/工作區匯入的檔案
+                            workspace.files.forEach(importedFile => {
+                                const normalizedFile = {
+                                    ...importedFile,
+                                    id: importedFile.id || this.generateFileId(),
+                                    name: importedFile.name || 'untitled.md',
+                                    content: importedFile.content || '',
+                                    lastModified: new Date(importedFile.lastModified || Date.now())
+                                };
+                                
+                                if (existingFileMap.has(normalizedFile.id)) {
+                                    // 更新現有檔案（只有當本地檔案不是UNSYNC時）
+                                    const existingFile = existingFileMap.get(normalizedFile.id);
+                                    if (!this.hasUnsyncTag(existingFile, existingFiles)) {
+                                        existingFileMap.set(normalizedFile.id, normalizedFile);
+                                    }
+                                    // 如果是UNSYNC檔案，保持原狀不更新
+                                } else {
+                                    // 新增不存在的檔案
+                                    existingFileMap.set(normalizedFile.id, normalizedFile);
+                                }
+                            });
+                            
+                            // 更新files陣列
+                            files = Array.from(existingFileMap.values());
+                        } else {
+                            // 原有的覆蓋模式
+                            files = workspace.files.map(file => ({
+                                ...file,
+                                id: file.id || this.generateFileId(),
+                                name: file.name || 'untitled.md',
+                                content: file.content || '',
+                                lastModified: new Date(file.lastModified || Date.now())
+                            }));
+                        }
                     }
                     
                     if (workspace.tasks && Array.isArray(workspace.tasks)) {
@@ -3999,6 +4352,7 @@
             const modalStopBtn = document.getElementById('modal-stop-btn');
             const modalAutoTimerToggle = document.getElementById('modal-auto-timer-toggle');
             const modalExportCsvBtn = document.getElementById('modal-export-csv-btn');
+            const modalInsertGanttBtn = document.getElementById('modal-insert-gantt-btn');
             const timelineView = document.getElementById('timeline-view');
             const totalTimeEl = document.getElementById('total-time');
             const taskCountEl = document.getElementById('task-count');
@@ -4434,6 +4788,249 @@
                 }, 150);
             }
             
+            // 處理 TODO 項目樣式的函數
+            function updateTodoStyles(cm) {
+                if (!cm) return;
+                
+                // 獲取所有行
+                for (let i = 0; i < cm.lineCount(); i++) {
+                    const lineText = cm.getLine(i);
+                    const lineElement = cm.getLineHandle(i);
+                    
+                    // 檢查是否為已完成的 TODO 項目 (- [x] 或 * [x])
+                    if (lineText.match(/^[\s]*[-*]\s*\[x\]/i)) {
+                        // 為已完成的 TODO 添加樣式類
+                        cm.addLineClass(i, 'text', 'completed-todo');
+                    } else {
+                        // 移除已完成 TODO 的樣式類
+                        cm.removeLineClass(i, 'text', 'completed-todo');
+                    }
+                }
+            }
+            
+            // 處理結構符號加粗的函數
+            function applyStructuralBold(cm) {
+                if (!cm) return;
+                
+                // 清除之前的標記
+                if (window.boldMarks) {
+                    window.boldMarks.forEach(mark => mark.clear());
+                }
+                window.boldMarks = [];
+                
+                for (let i = 0; i < cm.lineCount(); i++) {
+                    const lineText = cm.getLine(i);
+                    if (!lineText) continue;
+                    
+                    // 在代碼塊中不處理
+                    if (isInsideCodeBlock(cm, i)) continue;
+                    
+                    // 處理標題符號 # ## ###
+                    const headerMatch = lineText.match(/^(\s*)(#{1,6})(\s)/);
+                    if (headerMatch) {
+                        const start = headerMatch[1].length;
+                        const end = start + headerMatch[2].length;
+                        const mark = cm.markText(
+                            {line: i, ch: start},
+                            {line: i, ch: end},
+                            {className: 'bold-structural-symbol'}
+                        );
+                        window.boldMarks.push(mark);
+                    }
+                    
+                    // 處理引用符號 >
+                    const quoteMatch = lineText.match(/^(\s*)(>)(\s)/);
+                    if (quoteMatch) {
+                        const start = quoteMatch[1].length;
+                        const end = start + 1;
+                        const mark = cm.markText(
+                            {line: i, ch: start},
+                            {line: i, ch: end},
+                            {className: 'bold-structural-symbol'}
+                        );
+                        window.boldMarks.push(mark);
+                    }
+                    
+                    // 處理無序列表符號 - * +
+                    const ulMatch = lineText.match(/^(\s*)([-*+])(\s)/);
+                    if (ulMatch) {
+                        const start = ulMatch[1].length;
+                        const end = start + 1;
+                        const mark = cm.markText(
+                            {line: i, ch: start},
+                            {line: i, ch: end},
+                            {className: 'bold-structural-symbol'}
+                        );
+                        window.boldMarks.push(mark);
+                    }
+                    
+                    // 處理有序列表符號 1. 2. a. b.
+                    const olMatch = lineText.match(/^(\s*)(\d+\.|[a-zA-Z]\.)(\s)/);
+                    if (olMatch) {
+                        const start = olMatch[1].length;
+                        const end = start + olMatch[2].length;
+                        const mark = cm.markText(
+                            {line: i, ch: start},
+                            {line: i, ch: end},
+                            {className: 'bold-structural-symbol'}
+                        );
+                        window.boldMarks.push(mark);
+                    }
+                }
+            }
+            
+            // 存儲隱藏的標記
+            let hiddenMarks = [];
+            
+            // 隱藏 Markdown 格式符號的函數
+            function hideMarkdownSyntax(cm) {
+                if (!cm) return;
+                
+                // 清除之前的標記
+                hiddenMarks.forEach(mark => mark.clear());
+                hiddenMarks = [];
+                
+                const cursor = cm.getCursor();
+                const currentLine = cursor.line;
+                
+                for (let i = 0; i < cm.lineCount(); i++) {
+                    // 跳過當前游標所在行
+                    if (i === currentLine) continue;
+                    
+                    const lineText = cm.getLine(i);
+                    if (!lineText) continue;
+                    
+                    // 在代碼塊中不處理
+                    if (isInsideCodeBlock(cm, i)) continue;
+                    
+                    // 處理粗體 **text** 或 __text__
+                    let boldRegex = /(\*\*|__)((?:(?!\1)[^\\]|\\.)+?)\1/g;
+                    let match;
+                    while ((match = boldRegex.exec(lineText)) !== null) {
+                        const start = match.index;
+                        const end = start + match[0].length;
+                        const innerStart = start + match[1].length;
+                        const innerEnd = end - match[1].length;
+                        
+                        // 隱藏開始符號
+                        const startMark = cm.markText(
+                            {line: i, ch: start},
+                            {line: i, ch: innerStart},
+                            {
+                                css: 'display: none',
+                                className: 'hidden-markdown-syntax'
+                            }
+                        );
+                        hiddenMarks.push(startMark);
+                        
+                        // 隱藏結束符號
+                        const endMark = cm.markText(
+                            {line: i, ch: innerEnd},
+                            {line: i, ch: end},
+                            {
+                                css: 'display: none',
+                                className: 'hidden-markdown-syntax'
+                            }
+                        );
+                        hiddenMarks.push(endMark);
+                    }
+                    
+                    // 處理斜體 *text* 或 _text_ (但不是粗體的一部分)
+                    // 先移除所有粗體部分，然後處理剩餘的斜體
+                    let lineTextForItalic = lineText.replace(/(\*\*|__)[^*_\n]+?\1/g, (match) => ' '.repeat(match.length));
+                    let italicRegex = /(\*|_)([^*_\n]+?)\1/g;
+                    while ((match = italicRegex.exec(lineTextForItalic)) !== null) {
+                        const start = match.index;
+                        const end = start + match[0].length;
+                        const innerStart = start + 1;
+                        const innerEnd = end - 1;
+                        
+                        // 隱藏開始符號
+                        const startMark = cm.markText(
+                            {line: i, ch: start},
+                            {line: i, ch: innerStart},
+                            {
+                                css: 'display: none',
+                                className: 'hidden-markdown-syntax'
+                            }
+                        );
+                        hiddenMarks.push(startMark);
+                        
+                        // 隱藏結束符號
+                        const endMark = cm.markText(
+                            {line: i, ch: innerEnd},
+                            {line: i, ch: end},
+                            {
+                                css: 'display: none',
+                                className: 'hidden-markdown-syntax'
+                            }
+                        );
+                        hiddenMarks.push(endMark);
+                    }
+                    
+                    // 處理內聯代碼 `code`
+                    let codeRegex = /`([^`\n]+?)`/g;
+                    while ((match = codeRegex.exec(lineText)) !== null) {
+                        const start = match.index;
+                        const end = start + match[0].length;
+                        const innerStart = start + 1;
+                        const innerEnd = end - 1;
+                        
+                        // 隱藏開始符號
+                        const startMark = cm.markText(
+                            {line: i, ch: start},
+                            {line: i, ch: innerStart},
+                            {
+                                css: 'display: none',
+                                className: 'hidden-markdown-syntax'
+                            }
+                        );
+                        hiddenMarks.push(startMark);
+                        
+                        // 隱藏結束符號
+                        const endMark = cm.markText(
+                            {line: i, ch: innerEnd},
+                            {line: i, ch: end},
+                            {
+                                css: 'display: none',
+                                className: 'hidden-markdown-syntax'
+                            }
+                        );
+                        hiddenMarks.push(endMark);
+                    }
+                    
+                    // 處理刪除線 ~~text~~
+                    let strikeRegex = /~~([^~\n]+?)~~/g;
+                    while ((match = strikeRegex.exec(lineText)) !== null) {
+                        const start = match.index;
+                        const end = start + match[0].length;
+                        const innerStart = start + 2;
+                        const innerEnd = end - 2;
+                        
+                        // 隱藏開始符號
+                        const startMark = cm.markText(
+                            {line: i, ch: start},
+                            {line: i, ch: innerStart},
+                            {
+                                css: 'display: none',
+                                className: 'hidden-markdown-syntax'
+                            }
+                        );
+                        hiddenMarks.push(startMark);
+                        
+                        // 隱藏結束符號
+                        const endMark = cm.markText(
+                            {line: i, ch: innerEnd},
+                            {line: i, ch: end},
+                            {
+                                css: 'display: none',
+                                className: 'hidden-markdown-syntax'
+                            }
+                        );
+                        hiddenMarks.push(endMark);
+                    }
+                }
+            }
             
             // Unfold all sections function (for Ctrl+Shift+Q)
             function unfoldAllSections() {
@@ -4765,7 +5362,15 @@
                 editor.refresh();
                 
                 // Initialize line number colors for foldable lines
-                setTimeout(() => initLineNumberColors(editor), 200);
+                setTimeout(() => {
+                    initLineNumberColors(editor);
+                    // 初始化 TODO 樣式
+                    updateTodoStyles(editor);
+                    // 初始化結構符號加粗
+                    applyStructuralBold(editor);
+                    // 初始化 Markdown 語法隱藏
+                    hideMarkdownSyntax(editor);
+                }, 200);
                 
                 // Re-initialize line numbers when content changes
                 editor.on('change', function(cm) {
@@ -4782,6 +5387,12 @@
                                 btn.title = '收摺所有內容';
                             }
                         }
+                        // 處理 TODO 項目樣式
+                        updateTodoStyles(cm);
+                        // 更新結構符號加粗
+                        applyStructuralBold(cm);
+                        // 更新 Markdown 語法隱藏
+                        hideMarkdownSyntax(cm);
                     }, 100);
                 });
                 
@@ -4942,6 +5553,30 @@
                 // Smart hiding for HTML and markdown links
                 editor.on('cursorActivity', function(cm) {
                     handleSmartHiding(cm);
+                    // 更新結構符號加粗（當游標移動時）
+                    applyStructuralBold(cm);
+                    // 更新 Markdown 語法隱藏（當游標移動時）
+                    hideMarkdownSyntax(cm);
+                    
+                    // 手機版游標移動檢測，更新轉跳按鈕
+                    if (isMobileDevice()) {
+                        updateMobileJumpButton(cm);
+                    }
+                });
+                
+                // Add click handler for Ctrl+Click navigation
+                editor.on('mousedown', function(cm, event) {
+                    // 電腦版：檢查 Ctrl/Cmd + 點擊
+                    if (!isMobileDevice() && (event.ctrlKey || event.metaKey)) {
+                        const pos = cm.coordsChar({left: event.clientX, top: event.clientY});
+                        const token = cm.getTokenAt(pos);
+                        const line = cm.getLine(pos.line);
+                        
+                        if (handleEditorLinkClick(cm, pos, line, token)) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                    }
                 });
                 
                 // Scroll Sync Listener
@@ -6480,7 +7115,7 @@ gantt
                 renderFileList();
                 generateToc(); // 刷新目錄
 				// Re-highlight search results for the newly loaded file
-                if (searchBar.style.display === 'flex') { // Only if search bar is active
+                if (searchBar.classList.contains('active')) { // Only if search bar is active
                     highlightAllSearchResults();
                     highlightCurrentMatch(); // Ensure the current match is highlighted if it's in this file
                 }
@@ -6600,15 +7235,18 @@ gantt
                 const currentIndex = modes.indexOf(fileSortMode);
                 fileSortMode = modes[(currentIndex + 1) % modes.length];
                 
-                // Update button title to show current mode
+                // Update button title and icon to show current mode
                 const sortBtn = document.getElementById('sort-files-btn');
-                const modeNames = {
-                    'name-asc': '檔名(順序)',
-                    'name-desc': '檔名(逆序)', 
-                    'time-asc': '修改時間(最早)',
-                    'time-desc': '修改時間(最晚)'
+                const modeConfig = {
+                    'name-asc': { name: '檔名(A→Z)', icon: 'fas fa-sort-alpha-down' },
+                    'name-desc': { name: '檔名(Z→A)', icon: 'fas fa-sort-alpha-up' },
+                    'time-asc': { name: '修改時間(舊→新)', icon: 'fas fa-sort-numeric-down' },
+                    'time-desc': { name: '修改時間(新→舊)', icon: 'fas fa-sort-numeric-up' }
                 };
-                sortBtn.title = `檔案排序: ${modeNames[fileSortMode]}`;
+                
+                const currentConfig = modeConfig[fileSortMode];
+                sortBtn.title = `檔案排序: ${currentConfig.name}`;
+                sortBtn.innerHTML = `<i class="${currentConfig.icon}"></i>`;
                 
                 renderFileList();
                 // Only save configuration if not currently loading configuration
@@ -7462,15 +8100,19 @@ gantt
                     
                     renderFileList(); // Update file list with correct sorting
                     
+                    // Update sort button icon and title
                     const sortBtn = document.getElementById('sort-files-btn');
                     if (sortBtn) {
-                        const modeNames = {
-                            'name-asc': '檔名(順序)',
-                            'name-desc': '檔名(逆序)', 
-                            'time-asc': '修改時間(最早)',
-                            'time-desc': '修改時間(最晚)'
+                        const modeConfig = {
+                            'name-asc': { name: '檔名(A→Z)', icon: 'fas fa-sort-alpha-down' },
+                            'name-desc': { name: '檔名(Z→A)', icon: 'fas fa-sort-alpha-up' },
+                            'time-asc': { name: '修改時間(舊→新)', icon: 'fas fa-sort-numeric-down' },
+                            'time-desc': { name: '修改時間(新→舊)', icon: 'fas fa-sort-numeric-up' }
                         };
-                        sortBtn.title = `檔案排序: ${modeNames[fileSortMode]}`;
+                        
+                        const currentConfig = modeConfig[fileSortMode] || modeConfig['name-asc'];
+                        sortBtn.title = `檔案排序: ${currentConfig.name}`;
+                        sortBtn.innerHTML = `<i class="${currentConfig.icon}"></i>`;
                     }
                     
                     // Load the previously open file, or load first available file
@@ -8503,11 +9145,10 @@ gantt
                 }
                 
                 // Main actions
-                safeAddEventListener('insert-gantt-btn', 'click', insertGanttChart);
                 safeAddEventListener('export-md-btn', 'click', exportToMd);
                 safeAddEventListener('export-html-btn', 'click', exportToHtml);
                 safeAddEventListener('presentation-toggle-btn', 'click', togglePresentationMode);
-                safeAddEventListener('open-files-btn', 'click', () => fileInput.click());
+                safeAddEventListener('editor-open-files-btn', 'click', () => fileInput.click());
                 if (fileInput) fileInput.addEventListener('change', handleFileSelection);
                 
                 // Presentation controls
@@ -8542,6 +9183,7 @@ gantt
                 if (modalStopBtn) modalStopBtn.addEventListener('click', async () => await stopCurrentTask());
                 if (modalAutoTimerToggle) modalAutoTimerToggle.addEventListener('click', toggleAutoTimer);
                 if (modalExportCsvBtn) modalExportCsvBtn.addEventListener('click', exportToCsv);
+                if (modalInsertGanttBtn) modalInsertGanttBtn.addEventListener('click', insertGanttChart);
                 if (todayBtn) todayBtn.addEventListener('click', () => {
                     datePicker.value = getTodayDateString();
                     renderTimeline();
@@ -8577,6 +9219,7 @@ gantt
                 
                 // Version History Modal
                 safeAddEventListener('close-version-history-btn', 'click', () => versionHistoryModal.style.display = 'none');
+                safeAddEventListener('quick-load-latest-btn', 'click', quickLoadLatestVersion);
                 safeAddEventListener('refresh-versions-btn', 'click', refreshVersionHistory);
                 safeAddEventListener('create-backup-btn', 'click', createBackup);
                 
@@ -8771,6 +9414,7 @@ gantt
                 if (searchPrevBtn) searchPrevBtn.addEventListener('click', jumpToPrevSearchMatch);
                 if (searchNextBtn) searchNextBtn.addEventListener('click', jumpToNextSearchMatch);
                 if (searchScopeToggle) searchScopeToggle.addEventListener('click', toggleSearchScope);
+                if (searchTagFilterBtn) searchTagFilterBtn.addEventListener('click', openTagFilterModal);
                 if (searchCloseBtn) searchCloseBtn.addEventListener('click', closeSearch);
                 if (searchInput) {
                     searchInput.addEventListener('input', performSearch);
@@ -8888,11 +9532,6 @@ gantt
                             toggleLinePrefix('> ', '引用文字');
                         }
                         
-                        // Table shortcut
-                        if (e.ctrlKey && e.shiftKey && e.key === 'K') {
-                            e.preventDefault();
-                            window.insertTable();
-                        }
                     }
                 });
                 
@@ -8905,6 +9544,22 @@ gantt
 
                 // 搜尋切換按鈕的事件監聽器
                 if (searchToggleButton) searchToggleButton.addEventListener('click', toggleSearchBar);
+                
+                // Tag Filter Modal Event Listeners
+                if (closeTagFilterBtn) closeTagFilterBtn.addEventListener('click', cancelTagFilter);
+                if (selectAllTagsBtn) selectAllTagsBtn.addEventListener('click', selectAllTags);
+                if (deselectAllTagsBtn) deselectAllTagsBtn.addEventListener('click', deselectAllTags);
+                if (applyTagFilterBtn) applyTagFilterBtn.addEventListener('click', applyTagFilter);
+                if (cancelTagFilterBtn) cancelTagFilterBtn.addEventListener('click', cancelTagFilter);
+                
+                // Click outside modal to close
+                if (tagFilterModal) {
+                    tagFilterModal.addEventListener('click', (e) => {
+                        if (e.target === tagFilterModal) {
+                            cancelTagFilter();
+                        }
+                    });
+                }
             }
 
             // 移除失去焦點時的計時觸發，改用文字編輯觸發
@@ -8913,10 +9568,10 @@ gantt
 
 			// --- Search Functions ---
             function toggleSearchBar() {
-                if (searchBar.style.display === 'flex') {
+                if (searchBar.classList.contains('active')) {
                     closeSearch();
                 } else {
-                    searchBar.style.display = 'flex';
+                    searchBar.classList.add('active');
                     searchInput.focus();
                     if (searchInput.value) {
                         performSearch(); // Re-run search if there's already a query
@@ -8957,6 +9612,11 @@ gantt
                     filesToSearch = [currentFile];
                 } else if (currentSearchScope === 'all') {
                     filesToSearch = files;
+                    
+                    // Apply tag filtering if in 'all' scope and tags are selected
+                    if (selectedTags.size > 0) {
+                        filesToSearch = filesToSearch.filter(file => shouldIncludeFileByTags(file));
+                    }
                 } else {
                     updateSearchMatchCounter(0, 0);
                     return;
@@ -9077,11 +9737,124 @@ gantt
             function toggleSearchScope() {
                 currentSearchScope = currentSearchScope === 'current' ? 'all' : 'current';
                 searchScopeToggle.innerHTML = `<i class="fas fa-folder"></i> ${currentSearchScope === 'current' ? '當前檔案' : '所有檔案'}`;
+                
+                // Show/hide tag filter button based on scope
+                if (currentSearchScope === 'all') {
+                    searchTagFilterBtn.style.display = 'block';
+                } else {
+                    searchTagFilterBtn.style.display = 'none';
+                }
+                
                 performSearch(); // Re-run search with new scope
             }
 
+            // Tag filtering functions
+            function getAvailableTagsFromNoteTag() {
+                const noteTagFile = files.find(f => f.name === 'NoteTag.md');
+                if (!noteTagFile) return [];
+                
+                const tags = [];
+                const hashtagRegex = /^### (.+)$/gm;
+                let match;
+                
+                while ((match = hashtagRegex.exec(noteTagFile.content)) !== null) {
+                    tags.push(match[1]);
+                }
+                
+                return tags;
+            }
+
+            function openTagFilterModal() {
+                availableTags = getAvailableTagsFromNoteTag();
+                
+                if (availableTags.length === 0) {
+                    showNotification('找不到可用的標籤。請先在 NoteTag.md 中定義標籤。');
+                    return;
+                }
+                
+                populateTagFilterList();
+                tagFilterModal.style.display = 'block';
+            }
+
+            function populateTagFilterList() {
+                tagFilterList.innerHTML = '';
+                
+                availableTags.forEach(tag => {
+                    const tagItem = document.createElement('div');
+                    tagItem.className = 'tag-item';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `tag-${tag}`;
+                    checkbox.value = tag;
+                    checkbox.checked = selectedTags.has(tag);
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `tag-${tag}`;
+                    label.textContent = tag;
+                    
+                    tagItem.appendChild(checkbox);
+                    tagItem.appendChild(label);
+                    tagFilterList.appendChild(tagItem);
+                });
+            }
+
+            function selectAllTags() {
+                const checkboxes = tagFilterList.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(cb => cb.checked = true);
+            }
+
+            function deselectAllTags() {
+                const checkboxes = tagFilterList.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(cb => cb.checked = false);
+            }
+
+            function applyTagFilter() {
+                const checkboxes = tagFilterList.querySelectorAll('input[type="checkbox"]');
+                selectedTags.clear();
+                
+                checkboxes.forEach(cb => {
+                    if (cb.checked) {
+                        selectedTags.add(cb.value);
+                    }
+                });
+                
+                tagFilterModal.style.display = 'none';
+                performSearch(); // Re-run search with tag filter
+                
+                // Update button text to show filter status
+                const filterText = selectedTags.size === 0 ? '標籤' : `標籤(${selectedTags.size})`;
+                searchTagFilterBtn.textContent = filterText;
+            }
+
+            function cancelTagFilter() {
+                tagFilterModal.style.display = 'none';
+            }
+
+            // Check if a file should be included based on tag filtering
+            function shouldIncludeFileByTags(file) {
+                // If no tags are selected, include all files
+                if (selectedTags.size === 0) {
+                    return true;
+                }
+                
+                // Check if the file content contains any of the selected tags as hashtags
+                const content = file.content;
+                if (!content) return false;
+                
+                // Look for #tagname patterns in the file content
+                for (const tag of selectedTags) {
+                    const tagPattern = new RegExp(`^#${escapeRegExp(tag)}(?=\\s|$)`, 'gm');
+                    if (tagPattern.test(content)) {
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+
             function closeSearch() {
-                searchBar.style.display = 'none';
+                searchBar.classList.remove('active');
                 clearAllSearchHighlights();
                 allSearchResults = [];
                 currentSearchMatchIndex = -1;
@@ -9211,6 +9984,183 @@ gantt
                         showNotification(`已跳轉到段落：${sectionName}`);
                         break;
                     }
+                }
+            }
+
+            // --- Editor Link Click Handling ---
+            function handleEditorLinkClick(cm, pos, line, token) {
+                const text = line;
+                const ch = pos.ch;
+                
+                // 檢查hashtag (#tag)
+                const hashtagMatch = findLinkAtPosition(text, ch, /(?:^|\s)(#([^\s#]+))(?=\s|$)/g);
+                if (hashtagMatch) {
+                    const hashtag = hashtagMatch.match[2]; // 提取標籤名（不包含#）
+                    navigateToHashtag(hashtag);
+                    return true;
+                }
+                
+                // 檢查wiki連結 ([[link]])
+                const wikiMatch = findLinkAtPosition(text, ch, /\[\[([^\]]+)\]\]/g);
+                if (wikiMatch) {
+                    const linkContent = wikiMatch.match[1];
+                    const [noteName, sectionName] = linkContent.split('#');
+                    
+                    // 查找對應的檔案
+                    const targetFile = files.find(f => 
+                        f.name.replace(/\.[^/.]+$/, "").toLowerCase() === noteName.toLowerCase()
+                    );
+                    
+                    if (targetFile) {
+                        loadFile(targetFile.id);
+                        if (sectionName) {
+                            setTimeout(() => {
+                                navigateToSection(sectionName);
+                            }, 100);
+                        }
+                        showNotification(`已跳轉到：${noteName}${sectionName ? '#' + sectionName : ''}`);
+                    } else {
+                        showNotification(`找不到筆記：${noteName}`);
+                    }
+                    return true;
+                }
+                
+                // 檢查URL連結
+                const urlMatch = findLinkAtPosition(text, ch, /(https?:\/\/[^\s\)]+)/g);
+                if (urlMatch) {
+                    const url = urlMatch.match[1];
+                    window.open(url, '_blank');
+                    showNotification(`已開啟連結：${url}`);
+                    return true;
+                }
+                
+                return false;
+            }
+
+            // 輔助函數：在指定位置查找連結
+            function findLinkAtPosition(text, ch, regex) {
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    const start = match.index;
+                    const end = start + match[0].length;
+                    
+                    if (ch >= start && ch <= end) {
+                        return { match: match, start: start, end: end };
+                    }
+                }
+                return null;
+            }
+
+            // --- Mobile Jump Button ---
+            let currentMobileLink = null;
+            
+            function updateMobileJumpButton(cm) {
+                const cursor = cm.getCursor();
+                const line = cm.getLine(cursor.line);
+                const token = cm.getTokenAt(cursor);
+                
+                const linkInfo = detectLinkAtCursor(line, cursor.ch);
+                const jumpBtn = document.getElementById('mobile-jump-btn');
+                
+                if (linkInfo) {
+                    currentMobileLink = linkInfo;
+                    if (!jumpBtn) {
+                        createMobileJumpButton();
+                    } else {
+                        jumpBtn.style.display = 'block';
+                        jumpBtn.title = `跳轉到：${linkInfo.display}`;
+                    }
+                } else {
+                    currentMobileLink = null;
+                    if (jumpBtn) {
+                        jumpBtn.style.display = 'none';
+                    }
+                }
+            }
+
+            function detectLinkAtCursor(line, ch) {
+                // 檢查hashtag
+                const hashtagMatch = findLinkAtPosition(line, ch, /(?:^|\s)(#([^\s#]+))(?=\s|$)/g);
+                if (hashtagMatch) {
+                    return {
+                        type: 'hashtag',
+                        content: hashtagMatch.match[2],
+                        display: `#${hashtagMatch.match[2]}`
+                    };
+                }
+                
+                // 檢查wiki連結
+                const wikiMatch = findLinkAtPosition(line, ch, /\[\[([^\]]+)\]\]/g);
+                if (wikiMatch) {
+                    return {
+                        type: 'wiki',
+                        content: wikiMatch.match[1],
+                        display: wikiMatch.match[1]
+                    };
+                }
+                
+                // 檢查URL
+                const urlMatch = findLinkAtPosition(line, ch, /(https?:\/\/[^\s\)]+)/g);
+                if (urlMatch) {
+                    return {
+                        type: 'url',
+                        content: urlMatch.match[1],
+                        display: urlMatch.match[1]
+                    };
+                }
+                
+                return null;
+            }
+
+            function createMobileJumpButton() {
+                const toolbar = document.querySelector('.toolbar');
+                if (!toolbar) return;
+                
+                const jumpBtn = document.createElement('button');
+                jumpBtn.id = 'mobile-jump-btn';
+                jumpBtn.innerHTML = '<i class="fas fa-external-link-alt"></i>';
+                jumpBtn.title = '跳轉連結';
+                jumpBtn.style.display = 'none';
+                jumpBtn.addEventListener('click', handleMobileJumpClick);
+                
+                // 插入到工具列適當位置（在搜尋按鈕之前）
+                const searchBtn = document.getElementById('search-toggle-btn');
+                if (searchBtn) {
+                    toolbar.insertBefore(jumpBtn, searchBtn);
+                } else {
+                    toolbar.appendChild(jumpBtn);
+                }
+            }
+
+            function handleMobileJumpClick() {
+                if (!currentMobileLink) return;
+                
+                switch (currentMobileLink.type) {
+                    case 'hashtag':
+                        navigateToHashtag(currentMobileLink.content);
+                        break;
+                    case 'wiki':
+                        const [noteName, sectionName] = currentMobileLink.content.split('#');
+                        const targetFile = files.find(f => 
+                            f.name.replace(/\.[^/.]+$/, "").toLowerCase() === noteName.toLowerCase()
+                        );
+                        
+                        if (targetFile) {
+                            loadFile(targetFile.id);
+                            if (sectionName) {
+                                setTimeout(() => {
+                                    navigateToSection(sectionName);
+                                }, 100);
+                            }
+                            showNotification(`已跳轉到：${noteName}${sectionName ? '#' + sectionName : ''}`);
+                        } else {
+                            showNotification(`找不到筆記：${noteName}`);
+                        }
+                        break;
+                    case 'url':
+                        window.open(currentMobileLink.content, '_blank');
+                        showNotification(`已開啟連結：${currentMobileLink.content}`);
+                        break;
                 }
             }
             
@@ -9387,7 +10337,6 @@ gantt
             }
             
             // --- Global Insert Functions ---
-            window.insertTable = () => editor.replaceSelection('\n| 標題1 | 標題2 |\n|---|---|\n| 內容1 | 內容2 |\n');
 
             // --- Font and Theme Settings Functions ---
             function updateFontSize(size) {
@@ -9617,6 +10566,35 @@ gantt
                 }
             }
 
+            // 顯示匯入模式選擇對話框
+            function showImportModeDialog(workspace, timerDays, event) {
+                const message = 
+                    `匯入工作區資訊：\n\n` +
+                    `版本：${workspace.version}\n` +
+                    `匯出日期：${workspace.exportDate ? new Date(workspace.exportDate).toLocaleString() : '未知'}\n` +
+                    `檔案數量：${workspace.files.length}\n` +
+                    `時間記錄：${timerDays} 天\n\n` +
+                    `請選擇匯入模式：\n\n` +
+                    `[確定] - 合併模式：更新相同ID的筆記，新增不存在的筆記，保留UNSYNC筆記\n` +
+                    `[取消] - 取消匯入\n\n` +
+                    `⚠️ 要使用覆蓋模式（完全替換所有資料），請按住 Shift 鍵再點選確定`;
+                
+                // 檢查是否按住 Shift 鍵
+                const isShiftPressed = event && event.shiftKey;
+                
+                if (isShiftPressed) {
+                    const overwriteConfirm = confirm(
+                        `⚠️ 覆蓋模式警告 ⚠️\n\n` +
+                        `這將完全覆蓋現有的所有資料，包括UNSYNC筆記！\n\n` +
+                        `確定要繼續嗎？`
+                    );
+                    return overwriteConfirm ? 'overwrite' : null;
+                } else {
+                    const confirmed = confirm(message);
+                    return confirmed ? 'merge' : null;
+                }
+            }
+
             function handleWorkspaceImport(event) {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -9646,28 +10624,28 @@ gantt
                             timerDays = Object.keys(workspace.timerHistory).length;
                         }
 
-                        // Show confirmation dialog
-                        const confirmed = confirm(
-                            `確定要匯入此工作區嗎？\n\n` +
-                            `版本：${workspace.version}\n` +
-                            `匯出日期：${workspace.exportDate ? new Date(workspace.exportDate).toLocaleString() : '未知'}\n` +
-                            `檔案數量：${workspace.files.length}\n` +
-                            `時間記錄：${timerDays} 天\n\n` +
-                            `⚠️ 這將覆蓋現有的所有資料！`
-                        );
-
-                        if (!confirmed) {
+                        // Show mode selection dialog
+                        const dialogResult = showImportModeDialog(workspace, timerDays, event);
+                        
+                        if (dialogResult === null) {
                             workspaceInput.value = ''; // Clear file input
                             return;
                         }
+                        
+                        const mergeMode = dialogResult === 'merge';
 
-                        // Import files
-                        if (workspace.files && Array.isArray(workspace.files)) {
-                            // Ensure all files have lastModified timestamp
-                            files = workspace.files.map(file => ({
-                                ...file,
-                                lastModified: file.lastModified || Date.now()
-                            }));
+                        // Import files using syncManager's importWorkspace method
+                        if (dialogResult === 'overwrite') {
+                            // 覆蓋模式：使用原有邏輯
+                            if (workspace.files && Array.isArray(workspace.files)) {
+                                files = workspace.files.map(file => ({
+                                    ...file,
+                                    lastModified: file.lastModified || Date.now()
+                                }));
+                            }
+                        } else {
+                            // 合併模式：使用syncManager的新邏輯
+                            await syncManager.importWorkspace(workspace, mergeMode);
                         }
 
                         // Import timer history (for backward compatibility and migration)
@@ -10333,6 +11311,8 @@ gantt
                         openSyncSettings();
                         return;
                     }
+                    
+                    // 直接顯示版本歷史，讓用戶選擇
                     showVersionHistoryModal();
                 } catch (error) {
                     console.error('Load from cloud error:', error);
@@ -10562,6 +11542,32 @@ gantt
                 }
             }
 
+            async function quickLoadLatestVersion() {
+                try {
+                    // 詢問是否要合併模式載入最新版本
+                    const useMergeMode = confirm(
+                        '選擇載入模式：\n\n' +
+                        '[確定] - 合併模式：保留UNSYNC筆記，更新其他筆記\n' +
+                        '[取消] - 覆蓋模式：完全替換所有筆記\n\n' +
+                        '推薦使用合併模式以保護本地未同步的筆記。'
+                    );
+                    
+                    showNotification('正在從雲端載入最新版本...');
+                    const result = await syncManager.loadFromGist(null, null, useMergeMode);
+                    showNotification(`最新版本載入成功（${useMergeMode ? '合併' : '覆蓋'}模式）`);
+                    versionHistoryModal.style.display = 'none';
+                    
+                    // 刷新UI
+                    renderFileList();
+                    if (files.length > 0 && !currentFile) {
+                        loadFile(files[0].id);
+                    }
+                } catch (error) {
+                    console.error('Quick load latest version error:', error);
+                    showNotification('載入最新版本失敗: ' + error.message);
+                }
+            }
+
             async function refreshVersionHistory() {
                 const versionList = document.getElementById('version-list');
                 
@@ -10612,9 +11618,23 @@ gantt
             // Make functions global for onclick handlers
             window.loadVersion = async function(version) {
                 try {
-                    const result = await syncManager.loadFromGist(null, version);
-                    showNotification('版本載入成功');
+                    // 詢問是否要合併模式載入版本
+                    const useMergeMode = confirm(
+                        '選擇版本載入模式：\n\n' +
+                        '[確定] - 合併模式：保留UNSYNC筆記，更新其他筆記\n' +
+                        '[取消] - 覆蓋模式：完全替換所有筆記\n\n' +
+                        '推薦使用合併模式以保護本地未同步的筆記。'
+                    );
+                    
+                    const result = await syncManager.loadFromGist(null, version, useMergeMode);
+                    showNotification(`版本載入成功（${useMergeMode ? '合併' : '覆蓋'}模式）`);
                     versionHistoryModal.style.display = 'none';
+                    
+                    // 刷新UI
+                    renderFileList();
+                    if (files.length > 0 && !currentFile) {
+                        loadFile(files[0].id);
+                    }
                 } catch (error) {
                     console.error('Load version error:', error);
                     showNotification('載入版本失敗: ' + error.message);

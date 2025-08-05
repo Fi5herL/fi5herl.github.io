@@ -9,6 +9,7 @@
 /* Common icons using Unicode alternatives */
 .fa-bars::before { content: "☰"; }
 .fa-folder::before, .fa-folder-open::before { content: "📁"; }
+.fa-minus::before { content: "-"; }
 .fa-plus::before { content: "+"; }
 .fa-download::before { content: "💾"; }
 .fa-save::before { content: "⬇️"; }
@@ -43,13 +44,18 @@
 .fa-stop::before { content: "⏹"; }
 .fa-keyboard::before { content: "🎹"; }
 .fa-draw-polygon::before { content: "🖼️"; }
-.fa-sort::before { content: "🗃️"; }
+/*.fa-sort::before { content: "🗃️"; }*/
 .fa-sync::before { content: "🟰"; }
 .fa-cloud-upload-alt::before { content: "上"; }
 .fa-cloud-download-alt::before { content: "️下"; }
 .fa-cog::before { content: "設"; }
 .fa-share-alt::before { content: "享"; }
 .fa-globe::before { content: "🌐"; }
+.fa-sort-alpha-down::before { content: "A"; }
+.fa-sort-alpha-up::before { content: "Z"; }
+.fa-sort-numeric-down::before { content: "👴"; }
+.fa-sort-numeric-up::before { content: "🐣"; }
+.fa-external-link-alt::before { content: "🦘"; }
 
 /* Margin for icons */
 .fa + *:not(:empty), * + .fa:not(:empty) {
