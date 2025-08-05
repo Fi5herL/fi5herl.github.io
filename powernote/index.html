@@ -19,6 +19,9 @@
     <link rel="stylesheet" href="lib/highlight.js/styles/vs2015.min.css">
     <link rel="stylesheet" href="lib/highlight.js/styles/atom-one-dark.min.css">
     <link rel="stylesheet" href="lib/font-awesome/all.min.css">
+    
+    <!-- KaTeX for math formulas -->
+    <link rel="stylesheet" href="lib/katex/katex.min.css">
 
     <style>
         :root {
@@ -253,6 +256,8 @@
             word-wrap: break-word !important;
             overflow-wrap: break-word !important;
             white-space: normal !important;
+            /* Add bottom padding to match editor's bottom space */
+            padding-bottom: 75vh !important;
         }
         .preview-container * {
             word-wrap: break-word !important;
@@ -2974,6 +2979,13 @@
             overflow-y: auto !important;
             padding-bottom: 0 !important;
         }
+        
+        /* Hashtag highlighting in editor */
+        .cm-hashtag-existing {
+            background-color: rgba(135, 206, 235, 0.3) !important; /* 淺藍色背景 */
+            border-radius: 3px !important;
+            padding: 1px 2px !important;
+        }
     </style>
 </head>
 <body>
@@ -3502,6 +3514,11 @@
     <script src="lib/highlight.js/languages/css.min.js"></script>
     <script src="lib/highlight.js/languages/typescript.min.js"></script>
     <script src="lib/mermaid/mermaid.min.js"></script>
+    
+    <!-- KaTeX for math formulas -->
+    <script src="lib/katex/katex.min.js"></script>
+    <script src="lib/katex/auto-render.min.js"></script>
+    
     <script src="lib/jspdf/jspdf.umd.min.js"></script>
     
     <!-- React dependencies for Excalidraw -->
@@ -3533,6 +3550,10 @@
             let tasks = [], currentTask = null, isTimerRunning = false;
             let files = [], currentFile = null;
             let pinnedFiles = new Set(); // 儲存釘選的檔案ID
+            
+            // Hashtag tracking
+            let fileHashtagSnapshots = new Map(); // 存儲每個檔案的 hashtag 快照
+            let hashtagSyncTimer = null; // 延遲同步計時器
             let editor;
             let isSyncing = false; // Prevents scroll event loops
             let autoTimerEnabled = true; // 自動計時功能開關
@@ -3595,7 +3616,7 @@
             let autocompleteSelectedIndex = -1;
             
             // Sync scroll functionality
-            let syncScrollEnabled = false;
+            let syncScrollEnabled = true; // Enable by default for testing
             let syncScrollIgnoreNext = false;
             
             // Font and theme settings
@@ -4392,6 +4413,11 @@
                 await loadDataFromStorage();
                 await loadSettingsFromStorage();
                 
+                // Initialize hashtag snapshots for all files
+                files.forEach(file => {
+                    initializeHashtagSnapshot(file.id);
+                });
+                
                 // Initialize Cloud Sync Manager
                 syncManager = new CloudSyncManager();
                 await syncManager.loadSyncSettings();
@@ -4476,6 +4502,15 @@
                 
                 // Initialize auto timer UI
                 updateAutoTimerUI();
+                
+                // Initialize sync scroll button state
+                const syncScrollToggle = document.getElementById('sync-scroll-toggle');
+                if (syncScrollToggle && syncScrollEnabled) {
+                    syncScrollToggle.classList.add('active');
+                    syncScrollToggle.title = '同步滾動 (已開啟)';
+                    console.log('Sync scroll enabled by default');
+                }
+                
                 console.log('系統初始化完成 - 自動計時功能:', autoTimerEnabled ? '已開啟' : '已關閉');
             }
 
@@ -5393,6 +5428,19 @@
                         applyStructuralBold(cm);
                         // 更新 Markdown 語法隱藏
                         hideMarkdownSyntax(cm);
+                        // 更新 hashtag 高亮
+                        applyHashtagHighlighting();
+                        
+                        // 延遲同步 hashtag 變更 (2秒後)
+                        if (hashtagSyncTimer) {
+                            clearTimeout(hashtagSyncTimer);
+                        }
+                        hashtagSyncTimer = setTimeout(() => {
+                            if (currentFile && currentFile.name !== 'NoteTag.md') {
+                                console.log(`⏰ Auto-syncing hashtags for ${currentFile.name}`);
+                                syncHashtagChanges(currentFile.id, editor.getValue());
+                            }
+                        }, 2000);
                     }, 100);
                 });
                 
@@ -6117,6 +6165,22 @@
                 
                 await mermaid.run({ nodes: document.querySelectorAll('.language-mermaid') });
                 
+                // Process math formulas with KaTeX
+                if (typeof renderMathInElement !== 'undefined') {
+                    try {
+                        renderMathInElement(previewEl, {
+                            delimiters: [
+                                { left: '$$', right: '$$', display: true },
+                                { left: '$', right: '$', display: false },
+                                { left: '\\[', right: '\\]', display: true },
+                                { left: '\\(', right: '\\)', display: false }
+                            ]
+                        });
+                    } catch (error) {
+                        console.warn('KaTeX rendering error in main preview:', error);
+                    }
+                }
+                
                 // Add click handlers for wiki links
                 previewEl.querySelectorAll('.wiki-link').forEach(link => {
                     link.addEventListener('click', (e) => {
@@ -6192,39 +6256,204 @@
                     if (previewContainer.scrollHeight > previewContainer.clientHeight) {
                         previewContainer.style.overflowY = 'auto';
                     }
+                    
+                    // Rebuild line to element mapping after preview update
+                    buildLineToElementMapping();
                 }, 100);
+            }
+
+            // Line to DOM element mapping for precise sync
+            let lineToElementMap = new Map();
+            let elementToLineMap = new Map();
+            
+            // Build mapping between editor lines and preview DOM elements
+            function buildLineToElementMapping() {
+                lineToElementMap.clear();
+                elementToLineMap.clear();
+                
+                try {
+                    const previewContainer = document.getElementById('preview');
+                    if (!previewContainer) return;
+                    
+                    const markdownText = editor.getValue();
+                    const lines = markdownText.split('\n');
+                    
+                    // Get all significant elements from preview
+                    const elements = previewContainer.querySelectorAll('h1, h2, h3, h4, h5, h6, p, pre, ul, ol, blockquote, table, hr, .mermaid');
+                    
+                    let elementIndex = 0;
+                    let inCodeBlock = false;
+                    let codeBlockStartLine = -1;
+                    
+                    // Improved mapping strategy
+                    for (let i = 0; i < lines.length && elementIndex < elements.length; i++) {
+                        const line = lines[i];
+                        const trimmedLine = line.trim();
+                        
+                        // Handle code blocks specially
+                        if (trimmedLine.startsWith('```')) {
+                            if (!inCodeBlock) {
+                                inCodeBlock = true;
+                                codeBlockStartLine = i;
+                            } else {
+                                inCodeBlock = false;
+                                // Map the entire code block to the pre element
+                                const element = elements[elementIndex];
+                                if (element && (element.tagName === 'PRE' || element.classList.contains('mermaid'))) {
+                                    lineToElementMap.set(codeBlockStartLine, element);
+                                    elementToLineMap.set(element, codeBlockStartLine);
+                                    element.setAttribute('data-line', codeBlockStartLine);
+                                    elementIndex++;
+                                }
+                            }
+                            continue;
+                        }
+                        
+                        // Skip lines inside code blocks
+                        if (inCodeBlock) continue;
+                        
+                        // Skip empty lines
+                        if (!trimmedLine) continue;
+                        
+                        // Map different markdown elements
+                        let shouldMap = false;
+                        const element = elements[elementIndex];
+                        
+                        if (trimmedLine.match(/^#{1,6}\s/)) {
+                            // Headers
+                            shouldMap = element && element.tagName.match(/^H[1-6]$/);
+                        } else if (trimmedLine.match(/^\s*[-*+]\s/) || trimmedLine.match(/^\s*\d+\.\s/)) {
+                            // List items - map to ul/ol, not individual li
+                            shouldMap = element && (element.tagName === 'UL' || element.tagName === 'OL');
+                        } else if (trimmedLine.match(/^>\s/)) {
+                            // Blockquotes
+                            shouldMap = element && element.tagName === 'BLOCKQUOTE';
+                        } else if (trimmedLine.match(/^\|.*\|/)) {
+                            // Tables
+                            shouldMap = element && element.tagName === 'TABLE';
+                        } else if (trimmedLine.match(/^---+$/)) {
+                            // Horizontal rules
+                            shouldMap = element && element.tagName === 'HR';
+                        } else if (trimmedLine.length > 0) {
+                            // Regular paragraphs
+                            shouldMap = element && element.tagName === 'P';
+                        }
+                        
+                        if (shouldMap && element) {
+                            lineToElementMap.set(i, element);
+                            elementToLineMap.set(element, i);
+                            element.setAttribute('data-line', i);
+                            elementIndex++;
+                        }
+                    }
+                    
+                    console.log(`Built improved line mapping: ${lineToElementMap.size} elements mapped from ${elements.length} total elements`);
+                } catch (error) {
+                    console.warn('Error building line mapping:', error);
+                }
+            }
+            
+            // Find the closest preview element for a given line number
+            function findPreviewElementByLine(lineNumber) {
+                // Direct mapping first
+                if (lineToElementMap.has(lineNumber)) {
+                    return lineToElementMap.get(lineNumber);
+                }
+                
+                // Find closest mapped line
+                let closestLine = -1;
+                let closestDistance = Infinity;
+                
+                for (const [mappedLine] of lineToElementMap) {
+                    const distance = Math.abs(mappedLine - lineNumber);
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestLine = mappedLine;
+                    }
+                }
+                
+                return closestLine >= 0 ? lineToElementMap.get(closestLine) : null;
             }
 
             function syncPreviewScroll() {
                 if (isSyncing || !syncScrollEnabled) return;
                 isSyncing = true;
                 
-                const editorScrollInfo = editor.getScrollInfo();
-                const editorMaxScroll = editorScrollInfo.height - editorScrollInfo.clientHeight;
-                const previewMaxScroll = previewContainer.scrollHeight - previewContainer.clientHeight;
-                
-                if (editorMaxScroll > 0 && previewMaxScroll > 0) {
-                    const editorRatio = editorScrollInfo.top / editorMaxScroll;
-                    previewContainer.scrollTop = previewMaxScroll * editorRatio;
+                try {
+                    // Use the preview container parent which is the actual scrollable container
+                    const previewContainer = document.querySelector('.preview-container');
+                    if (!previewContainer) return;
+                    
+                    // Get scroll info from editor
+                    const scrollInfo = editor.getScrollInfo();
+                    const editorMaxScroll = scrollInfo.height - scrollInfo.clientHeight;
+                    const previewMaxScroll = previewContainer.scrollHeight - previewContainer.clientHeight;
+                    
+                    // Simple ratio-based sync (now should work correctly with matched bottom padding)
+                    if (editorMaxScroll > 0 && previewMaxScroll > 0) {
+                        const editorRatio = scrollInfo.top / editorMaxScroll;
+                        previewContainer.scrollTop = previewMaxScroll * editorRatio;
+                    }
+                    
+                } catch (error) {
+                    console.warn('Sync scroll error:', error);
                 }
                 
-                setTimeout(() => { isSyncing = false; }, 50); // Reduce debounce time
+                setTimeout(() => { isSyncing = false; }, 50);
             }
 
+            // Find the line number for a given preview element
+            function findLineByPreviewElement(element) {
+                if (elementToLineMap.has(element)) {
+                    return elementToLineMap.get(element);
+                }
+                
+                // Check if element has data-line attribute
+                const dataLine = element.getAttribute('data-line');
+                if (dataLine !== null) {
+                    return parseInt(dataLine);
+                }
+                
+                // Find closest parent with line mapping
+                let current = element.parentElement;
+                while (current && current !== document.getElementById('preview')) {
+                    if (elementToLineMap.has(current)) {
+                        return elementToLineMap.get(current);
+                    }
+                    const parentDataLine = current.getAttribute('data-line');
+                    if (parentDataLine !== null) {
+                        return parseInt(parentDataLine);
+                    }
+                    current = current.parentElement;
+                }
+                
+                return null;
+            }
+            
             function syncEditorScroll() {
                 if (isSyncing || !syncScrollEnabled) return;
                 isSyncing = true;
                 
-                const editorScrollInfo = editor.getScrollInfo();
-                const editorMaxScroll = editorScrollInfo.height - editorScrollInfo.clientHeight;
-                const previewMaxScroll = previewContainer.scrollHeight - previewContainer.clientHeight;
-                
-                if (previewMaxScroll > 0 && editorMaxScroll > 0) {
-                    const previewRatio = previewContainer.scrollTop / previewMaxScroll;
-                    editor.scrollTo(null, editorMaxScroll * previewRatio);
+                try {
+                    // Use the preview container parent which is the actual scrollable container
+                    const previewContainer = document.querySelector('.preview-container');
+                    if (!previewContainer) return;
+                    
+                    // Simple ratio-based reverse sync
+                    const previewMaxScroll = previewContainer.scrollHeight - previewContainer.clientHeight;
+                    const editorScrollInfo = editor.getScrollInfo();
+                    const editorMaxScroll = editorScrollInfo.height - editorScrollInfo.clientHeight;
+                    
+                    if (previewMaxScroll > 0 && editorMaxScroll > 0) {
+                        const previewRatio = previewContainer.scrollTop / previewMaxScroll;
+                        editor.scrollTo(null, editorMaxScroll * previewRatio);
+                    }
+                    
+                } catch (error) {
+                    console.warn('Reverse sync scroll error:', error);
                 }
                 
-                setTimeout(() => { isSyncing = false; }, 50); // Reduce debounce time
+                setTimeout(() => { isSyncing = false; }, 50);
             }
 
             // Toggle sync scroll functionality
@@ -6811,6 +7040,22 @@ gantt
                         });
                     }
                     
+                    // Process math formulas with KaTeX
+                    if (typeof renderMathInElement !== 'undefined') {
+                        try {
+                            renderMathInElement(previewContent, {
+                                delimiters: [
+                                    { left: '$$', right: '$$', display: true },
+                                    { left: '$', right: '$', display: false },
+                                    { left: '\\[', right: '\\]', display: true },
+                                    { left: '\\(', right: '\\)', display: false }
+                                ]
+                            });
+                        } catch (error) {
+                            console.warn('KaTeX rendering error in wiki preview:', error);
+                        }
+                    }
+                    
                     // Process any other elements that need special handling
                     const links = previewContent.querySelectorAll('a[href^="http"]');
                     links.forEach(link => {
@@ -7083,6 +7328,12 @@ gantt
             function loadFile(fileId) {
                 const previousFile = currentFile;
                 
+                // Sync hashtag changes for the previous file before switching
+                if (previousFile && previousFile.name !== 'NoteTag.md' && editor) {
+                    console.log(`🔄 Syncing hashtags before switching from ${previousFile.name}`);
+                    syncHashtagChanges(previousFile.id, editor.getValue());
+                }
+                
                 // Check if we're switching away from NoteTag.md and need to trigger hashtag update
                 if (currentFile && currentFile.name === 'NoteTag.md' && hashtagUpdateTimer) {
                     clearTimeout(hashtagUpdateTimer);
@@ -7109,7 +7360,15 @@ gantt
                     }, 100);
                 }
                 
+                // Initialize hashtag snapshot for the current file
+                initializeHashtagSnapshot(currentFile.id);
+                
                 editor.setValue(currentFile.content);
+                
+                // Apply hashtag highlighting after content is loaded
+                setTimeout(() => {
+                    applyHashtagHighlighting();
+                }, 100);
                 editor.clearHistory();
                 currentFileNameEl.textContent = currentFile.name;
                 renderFileList();
@@ -7637,9 +7896,19 @@ gantt
                 if (!currentFile) return;
                 
                 const oldContent = currentFile.content;
-                currentFile.content = editor.getValue();
+                const newContent = editor.getValue();
+                currentFile.content = newContent;
                 currentFile.lastModified = Date.now();
                 await saveFilesToStorage();
+                
+                // Sync hashtag changes for non-NoteTag files
+                console.log(`💾 Saving file: ${currentFile.name} (ID: ${currentFile.id})`);
+                if (currentFile.name !== 'NoteTag.md') {
+                    console.log(`🔍 Triggering hashtag sync for ${currentFile.name}`);
+                    syncHashtagChanges(currentFile.id, newContent);
+                } else {
+                    console.log(`⏭️ Skipping hashtag sync for NoteTag.md`);
+                }
                 
                 // Check if UNSYNC status changed and update file list styling
                 const oldHasUnsync = oldContent.includes('#UNSYNC');
@@ -9058,6 +9327,22 @@ gantt
                             }
                         });
                         
+                        // Process math formulas with KaTeX in slides
+                        if (typeof renderMathInElement !== 'undefined') {
+                            try {
+                                renderMathInElement(slideEl, {
+                                    delimiters: [
+                                        { left: '$$', right: '$$', display: true },
+                                        { left: '$', right: '$', display: false },
+                                        { left: '\\[', right: '\\]', display: true },
+                                        { left: '\\(', right: '\\)', display: false }
+                                    ]
+                                });
+                            } catch (error) {
+                                console.warn('KaTeX rendering error in slide:', error);
+                            }
+                        }
+                        
                         // 如果包含 Mermaid，添加特殊類別
                         const sectionClass = hasMermaid ? ' class="has-mermaid"' : '';
                         return `<section${sectionClass}>${slideEl.innerHTML}</section>`;
@@ -9394,8 +9679,11 @@ gantt
                     });
                 }
 
-                // Scroll sync - 確保事件監聽器正確綁定
-                if (previewContainer) previewContainer.addEventListener('scroll', syncEditorScroll, { passive: true });
+                // Scroll sync - bind to the actual scrollable container
+                const previewContainer = document.querySelector('.preview-container');
+                if (previewContainer) {
+                    previewContainer.addEventListener('scroll', syncEditorScroll, { passive: true });
+                }
                 
                 // Modal close on outside click
                 window.addEventListener('click', (e) => {
@@ -11706,6 +11994,244 @@ gantt
                 }
             }
             
+            // Smart hashtag extraction (only from regular paragraphs)
+            function extractValidHashtags(content) {
+                if (!content) return new Set();
+                
+                const lines = content.split('\n');
+                const validHashtags = new Set();
+                let inCodeBlock = false;
+                
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    
+                    // Handle code blocks
+                    if (trimmedLine.startsWith('```')) {
+                        inCodeBlock = !inCodeBlock;
+                        continue;
+                    }
+                    if (inCodeBlock) continue;
+                    
+                    // Skip headers, lists, blockquotes, and other special syntax
+                    if (trimmedLine.match(/^#{1,6}\s/) ||           // Headers
+                        trimmedLine.match(/^\s*[-*+]\s/) ||        // Unordered lists
+                        trimmedLine.match(/^\s*\d+\.\s/) ||        // Ordered lists
+                        trimmedLine.match(/^\s*>\s/) ||            // Blockquotes
+                        trimmedLine.match(/^\|.*\|/) ||            // Tables
+                        trimmedLine.match(/^---+$/) ||             // Horizontal rules
+                        trimmedLine.startsWith('    ') ||          // Code indentation
+                        trimmedLine.startsWith('\t')) {            // Code tabs
+                        continue;
+                    }
+                    
+                    // Extract hashtags from regular paragraphs only
+                    // Hashtag must be preceded by start of line or space, and followed by space, newline, or end of line
+                    const hashtagPattern = /(?:^|\s)(#[^\s#]+)(?=\s|$)/g;
+                    let match;
+                    
+                    while ((match = hashtagPattern.exec(line)) !== null) {
+                        const fullHashtag = match[1]; // includes the #
+                        const cleanTag = fullHashtag.substring(1); // remove the #
+                        
+                        if (cleanTag.length > 0) {
+                            validHashtags.add(cleanTag);
+                        }
+                    }
+                }
+                
+                return validHashtags;
+            }
+
+            // Test hashtag extraction with sample text (for debugging)
+            function testHashtagExtraction() {
+                const testCases = [
+                    "#hash1 #hash2",           // ✅ Valid: at start and after space
+                    "   #hash001   #hash002",  // ✅ Valid: with extra spaces
+                    "text#invalid",            // ❌ Invalid: no space before
+                    "#valid followed by text", // ❌ Invalid: no space after
+                    "#valid #also_valid",      // ✅ Valid: both valid
+                    "Check this #demo test",   // ✅ Valid: space before and after
+                    "- #invalid_in_list",      // ❌ Invalid: in list
+                    "# #invalid_in_header",    // ❌ Invalid: in header
+                ];
+                
+                console.log("🧪 Testing hashtag extraction:");
+                testCases.forEach((testCase, i) => {
+                    const result = extractValidHashtags(testCase);
+                    console.log(`${i + 1}. "${testCase}" → [${Array.from(result).join(', ')}]`);
+                });
+            }
+
+            // Get hashtags that exist in NoteTag.md
+            function getExistingNoteTagHashtags() {
+                const noteTagFile = files.find(f => f.name === 'NoteTag.md');
+                if (!noteTagFile) return new Set();
+                
+                const existingHashtags = new Set();
+                const headerRegex = /^### (.+)$/gm;
+                let match;
+                
+                while ((match = headerRegex.exec(noteTagFile.content)) !== null) {
+                    existingHashtags.add(match[1].trim());
+                }
+                
+                return existingHashtags;
+            }
+
+            // Initialize hashtag snapshot for a file
+            function initializeHashtagSnapshot(fileId) {
+                const file = files.find(f => f.id === fileId);
+                if (!file) {
+                    console.warn(`File not found for ID: ${fileId}`);
+                    return;
+                }
+                
+                const hashtags = extractValidHashtags(file.content);
+                fileHashtagSnapshots.set(fileId, hashtags);
+                console.log(`✅ Initialized hashtag snapshot for ${file.name}:`, Array.from(hashtags));
+            }
+
+            // Compare and sync hashtag changes
+            function syncHashtagChanges(fileId, newContent) {
+                console.log(`🔄 syncHashtagChanges called for fileId: ${fileId}`);
+                
+                const file = files.find(f => f.id === fileId);
+                if (!file) {
+                    console.warn(`❌ File not found for ID: ${fileId}`);
+                    return;
+                }
+                
+                if (file.name === 'NoteTag.md') {
+                    console.log(`⏭️ Skipping NoteTag.md`);
+                    return; // Skip NoteTag.md itself
+                }
+                
+                const oldHashtags = fileHashtagSnapshots.get(fileId) || new Set();
+                const newHashtags = extractValidHashtags(newContent);
+                
+                console.log(`📊 Hashtag comparison for ${file.name}:`);
+                console.log(`   Old hashtags:`, Array.from(oldHashtags));
+                console.log(`   New hashtags:`, Array.from(newHashtags));
+                
+                // Find removed hashtags
+                const removedHashtags = new Set([...oldHashtags].filter(tag => !newHashtags.has(tag)));
+                
+                if (removedHashtags.size > 0) {
+                    console.log(`❌ Hashtags removed from ${file.name}:`, Array.from(removedHashtags));
+                    removeFileLinksFromNoteTag(file.name, removedHashtags);
+                } else {
+                    console.log(`✅ No hashtags removed from ${file.name}`);
+                }
+                
+                // Update snapshot
+                fileHashtagSnapshots.set(fileId, newHashtags);
+                console.log(`📝 Updated snapshot for ${file.name}`);
+            }
+
+            // Apply hashtag highlighting in editor
+            function applyHashtagHighlighting() {
+                if (!editor || !currentFile) return;
+                
+                // Clear existing markers
+                const existingMarkers = editor.getAllMarks();
+                existingMarkers.forEach(marker => {
+                    if (marker.className === 'cm-hashtag-existing') {
+                        marker.clear();
+                    }
+                });
+                
+                // Get hashtags that exist in NoteTag.md
+                const existingHashtags = getExistingNoteTagHashtags();
+                if (existingHashtags.size === 0) return;
+                
+                // Find and mark hashtags in current file
+                const content = editor.getValue();
+                const lines = content.split('\n');
+                let inCodeBlock = false;
+                
+                for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+                    const line = lines[lineNum];
+                    const trimmedLine = line.trim();
+                    
+                    // Handle code blocks
+                    if (trimmedLine.startsWith('```')) {
+                        inCodeBlock = !inCodeBlock;
+                        continue;
+                    }
+                    if (inCodeBlock) continue;
+                    
+                    // Skip headers, lists, blockquotes, etc.
+                    if (trimmedLine.match(/^#{1,6}\s/) ||
+                        trimmedLine.match(/^\s*[-*+]\s/) ||
+                        trimmedLine.match(/^\s*\d+\.\s/) ||
+                        trimmedLine.match(/^\s*>\s/) ||
+                        trimmedLine.match(/^\|.*\|/) ||
+                        trimmedLine.match(/^---+$/) ||
+                        trimmedLine.startsWith('    ') ||
+                        trimmedLine.startsWith('\t')) {
+                        continue;
+                    }
+                    
+                    // Find hashtags in regular paragraphs
+                    // Hashtag must be preceded by start of line or space, and followed by space, newline, or end of line
+                    const hashtagPattern = /(?:^|\s)(#[^\s#]+)(?=\s|$)/g;
+                    let match;
+                    
+                    while ((match = hashtagPattern.exec(line)) !== null) {
+                        const fullHashtag = match[1]; // includes the #
+                        const hashtag = fullHashtag.substring(1); // remove the # for comparison
+                        const matchStart = match.index;
+                        const hashtagStart = matchStart + (match[0].indexOf('#')); // find actual # position
+                        const hashtagEnd = hashtagStart + fullHashtag.length;
+                        
+                        // Check if this hashtag exists in NoteTag.md
+                        if (existingHashtags.has(hashtag)) {
+                            const from = { line: lineNum, ch: hashtagStart };
+                            const to = { line: lineNum, ch: hashtagEnd };
+                            
+                            editor.markText(from, to, {
+                                className: 'cm-hashtag-existing'
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Remove file links from NoteTag.md for deleted hashtags
+            function removeFileLinksFromNoteTag(fileName, removedHashtags) {
+                const noteTagFile = files.find(f => f.name === 'NoteTag.md');
+                if (!noteTagFile) return;
+                
+                let content = noteTagFile.content;
+                let modified = false;
+                
+                for (const hashtag of removedHashtags) {
+                    // Create pattern to match the file link exactly
+                    const linkPattern = new RegExp(`\\[\\[${fileName.replace(/\.md$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]\\]`, 'g');
+                    
+                    // Check if the link exists in the content
+                    if (content.match(linkPattern)) {
+                        // Simply replace the link with empty string, preserving all whitespace and newlines
+                        content = content.replace(linkPattern, '');
+                        modified = true;
+                        console.log(`✅ Removed [[${fileName.replace(/\.md$/, '')}]] from hashtag: ${hashtag}`);
+                    }
+                }
+                
+                if (modified) {
+                    noteTagFile.content = content;
+                    saveFilesToStorage();
+                    
+                    // Update preview if NoteTag.md is currently open
+                    if (currentFile && currentFile.name === 'NoteTag.md') {
+                        editor.setValue(content);
+                        updatePreview();
+                    }
+                    
+                    console.log('📝 NoteTag.md updated after hashtag removal');
+                }
+            }
+
             // Generate sharing URL for current file
             function generateSharingUrl(file, viewMode = 'preview') {
                 if (!file) return '';
