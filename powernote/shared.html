@@ -244,8 +244,8 @@
         }
         
         .control-toggle {
-            width: 60px;
-            height: 60px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             background: linear-gradient(135deg, #3498db, #2980b9);
             color: white;
@@ -254,7 +254,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 18px;
             box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
             transition: all 0.3s ease;
         }
@@ -549,6 +549,487 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* 左下角目錄按鈕 */
+        .toc-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+        
+        .toc-toggle:hover {
+            background: rgba(52, 152, 219, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        /* 目錄浮動視窗 */
+        .toc-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .toc-modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .toc-content {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .toc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .toc-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .toc-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+            padding: 5px;
+        }
+        
+        .toc-close:hover {
+            color: #333;
+        }
+        
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .toc-item {
+            margin: 8px 0;
+        }
+        
+        .toc-link {
+            display: block;
+            padding: 8px 12px;
+            text-decoration: none;
+            color: #666;
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .toc-link:hover {
+            background: #f8f9fa;
+            color: #3498db;
+            border-bottom: none;
+        }
+        
+        .toc-link.toc-h1 {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .toc-link.toc-h2 {
+            padding-left: 20px;
+        }
+        
+        .toc-link.toc-h3 {
+            padding-left: 30px;
+            font-size: 13px;
+        }
+        
+        .toc-link.toc-h4 {
+            padding-left: 40px;
+            font-size: 12px;
+        }
+        
+        /* 文字選取工具列 */
+        .selection-toolbar {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(51, 51, 51, 0.95);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            display: none;
+            z-index: 2000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: slideUpIn 0.3s ease;
+            white-space: nowrap;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @keyframes slideUpIn {
+            from { 
+                transform: translateX(-50%) translateY(100%);
+                opacity: 0;
+            }
+            to { 
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .selection-toolbar.active {
+            display: block;
+        }
+        
+        .toolbar-title {
+            font-size: 12px;
+            margin-bottom: 8px;
+            text-align: center;
+            color: #bbb;
+        }
+        
+        .toolbar-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .toolbar-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 40px;
+            justify-content: center;
+        }
+        
+        .toolbar-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .toolbar-btn:active {
+            transform: translateY(0);
+        }
+        
+        .bubble-btn.highlight-light-green {
+            background: #90EE90;
+            color: #333;
+        }
+        
+        .bubble-btn.highlight-yellow {
+            background: #FFFF00;
+            color: #333;
+        }
+        
+        .bubble-btn.highlight-light-red {
+            background: #FFB6C1;
+            color: #333;
+        }
+        
+        /* 高亮樣式 */
+        .highlight {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .highlight.light-green {
+            background: rgba(144, 238, 144, 0.5);
+        }
+        
+        .highlight.yellow {
+            background: rgba(255, 255, 0, 0.5);
+        }
+        
+        .highlight.light-red {
+            background: rgba(255, 182, 193, 0.5);
+        }
+        
+        /* 備註提示 */
+        .note-tooltip {
+            position: absolute;
+            background: #444;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            max-width: 200px;
+            z-index: 2001;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .note-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 20px;
+            border: 6px solid transparent;
+            border-top-color: #444;
+        }
+        
+        /* 備註輸入框 */
+        .note-input {
+            position: absolute;
+            background: white;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 10px;
+            min-width: 250px;
+            z-index: 2002;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .note-input textarea {
+            width: 100%;
+            height: 60px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 12px;
+            resize: vertical;
+            outline: none;
+        }
+        
+        .note-input-buttons {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        
+        .note-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        
+        .note-btn.save {
+            background: #3498db;
+            color: white;
+        }
+        
+        .note-btn.save:hover {
+            background: #2980b9;
+        }
+        
+        .note-btn.cancel {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .note-btn.cancel:hover {
+            background: #7f8c8d;
+        }
+        
+        /* 註解按鈕 */
+        .note-indicator {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .note-button {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transition: all 0.2s;
+        }
+        
+        .note-button:hover {
+            background: #2980b9;
+            transform: scale(1.2);
+        }
+        
+        /* 註解彈出視窗 */
+        .note-popup {
+            position: fixed;
+            background: white;
+            border: 2px solid #3498db;
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 300px;
+            max-width: 500px;
+            z-index: 2001;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: none;
+            font-size: 14px;
+            line-height: 1.6;
+            backdrop-filter: blur(10px);
+            animation: popupFadeIn 0.3s ease;
+        }
+        
+        @keyframes popupFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        
+        
+        .note-popup-content {
+            margin-bottom: 15px;
+            word-wrap: break-word;
+        }
+        
+        .note-edit-textarea {
+            width: 100%;
+            min-height: 80px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 14px;
+            line-height: 1.4;
+            resize: vertical;
+            outline: none;
+            font-family: inherit;
+        }
+        
+        .note-edit-textarea:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .note-edit-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        
+        .note-edit-actions .note-popup-btn {
+            padding: 6px 16px;
+        }
+        
+        .delete-confirm {
+            background: #ffe6e6;
+            border: 1px solid #ffb3b3;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .delete-confirm-text {
+            margin-bottom: 15px;
+            color: #d63031;
+            font-weight: 500;
+        }
+        
+        .delete-confirm-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .note-popup-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        
+        .note-popup-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .note-popup-btn.edit {
+            background: #3498db;
+            color: white;
+        }
+        
+        .note-popup-btn.delete {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .note-popup-btn:hover {
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -560,6 +1041,66 @@
     <div id="error" class="error" style="display: none;">
         <h2>😅 載入失敗</h2>
         <p id="error-message">無法載入分享內容，請檢查連結是否正確。</p>
+    </div>
+    
+    <!-- 左下角目錄按鈕 -->
+    <button class="toc-toggle" id="toc-toggle" title="顯示目錄" style="display: none;">
+        ≡
+    </button>
+    
+    <!-- 目錄浮動視窗 -->
+    <div class="toc-modal" id="toc-modal">
+        <div class="toc-content">
+            <div class="toc-header">
+                <div class="toc-title">📋 文章目錄</div>
+                <button class="toc-close" id="toc-close">×</button>
+            </div>
+            <ul class="toc-list" id="toc-list">
+                <!-- 目錄項目將在這裡生成 -->
+            </ul>
+        </div>
+    </div>
+    
+    <!-- 文字選取工具列 -->
+    <div class="selection-toolbar" id="selection-toolbar">
+        <div class="toolbar-title">📝 選取工具</div>
+        <div class="toolbar-buttons">
+            <button class="toolbar-btn" id="copy-btn" title="複製文字">
+                📋
+            </button>
+            <button class="toolbar-btn" id="highlight-light-green" title="淺綠色標記">
+                🟢
+            </button>
+            <button class="toolbar-btn" id="highlight-yellow" title="螢光黃標記">
+                🟡
+            </button>
+            <button class="toolbar-btn" id="highlight-light-red" title="淺紅色標記">
+                🔴
+            </button>
+            <button class="toolbar-btn" id="note-btn" title="添加備註">
+                📝
+            </button>
+            <button class="toolbar-btn" id="remove-highlight" title="清除標記">
+                🧹
+            </button>
+            <button class="toolbar-btn" id="clear-selection" title="關閉">
+                ✖️
+            </button>
+        </div>
+    </div>
+    
+    <!-- 備註輸入框 -->
+    <div class="note-input" id="note-input">
+        <textarea id="note-textarea" placeholder="輸入您的備註..."></textarea>
+        <div class="note-input-buttons">
+            <button class="note-btn cancel" id="note-cancel">取消</button>
+            <button class="note-btn save" id="note-save">保存</button>
+        </div>
+    </div>
+    
+    <!-- 備註提示框 -->
+    <div class="note-tooltip" id="note-tooltip">
+        <div id="note-text"></div>
     </div>
     
     <!-- 浮動控制面板 -->
@@ -670,6 +1211,9 @@
         let currentFileName = '';
         let currentFontSize = 16;
         let currentTheme = 'light';
+        let annotations = JSON.parse(localStorage.getItem('powernote-annotations') || '{}');
+        let currentSelection = null;
+        let annotationCounter = 0;
         
         // 初始化所有功能
         document.addEventListener('DOMContentLoaded', function() {
@@ -696,6 +1240,12 @@
             
             // 綁定按鈕事件
             setupEventListeners();
+            
+            // 初始化註解計數器
+            const savedCounter = localStorage.getItem('powernote-annotation-counter');
+            if (savedCounter) {
+                annotationCounter = parseInt(savedCounter);
+            }
         });
         
         // 配置 marked.js
@@ -833,6 +1383,7 @@
             // 顯示內容和控制面板
             document.getElementById('content-container').style.display = 'block';
             document.getElementById('floating-control').style.display = 'block';
+            document.getElementById('toc-toggle').style.display = 'block';
             
             // 設定標題和meta資訊
             document.getElementById('article-title').textContent = title;
@@ -847,7 +1398,17 @@
             // 後處理渲染內容
             await postProcessContent(articleContent);
             
-            console.log('Content loaded successfully');
+            // 生成目錄
+            generateTableOfContents();
+            
+            // 初始化文字選取功能
+            initializeTextSelection();
+            
+            // 恢復已保存的標記
+            restoreAnnotations();
+            
+            
+            console.log('Content loaded successfully - text selection should now work');
         }
         
         // 後處理渲染內容
@@ -968,7 +1529,72 @@
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && document.getElementById('presentation-mode').classList.contains('active')) {
                     exitPresentationMode();
+                } else if (e.key === 'Escape') {
+                    // ESC 關閉目錄和選取工具
+                    closeToc();
+                    hideSelectionToolbar();
+                    hideNoteInput();
                 }
+            });
+            
+            // 目錄相關事件
+            document.getElementById('toc-toggle').addEventListener('click', toggleToc);
+            document.getElementById('toc-close').addEventListener('click', closeToc);
+            document.getElementById('toc-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'toc-modal') {
+                    closeToc();
+                }
+            });
+            
+            // 文字選取工具事件
+            document.getElementById('copy-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                copySelectedText();
+            });
+            document.getElementById('highlight-light-green').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                highlightText('light-green');
+            });
+            document.getElementById('highlight-yellow').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                highlightText('yellow');
+            });
+            document.getElementById('highlight-light-red').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                highlightText('light-red');
+            });
+            document.getElementById('note-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                showNoteInput();
+            });
+            document.getElementById('note-save').addEventListener('click', saveNote);
+            document.getElementById('note-cancel').addEventListener('click', hideNoteInput);
+            
+            // 防止點擊工具列時隱藏
+            document.getElementById('selection-toolbar').addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            
+            // 移除這個點擊事件處理器，因為在initializeTextSelection中已經有更好的處理
+            
+            // 添加清除標記按鈕事件
+            document.getElementById('remove-highlight').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                removeHighlightFromSelection();
+            });
+            
+            // 添加關閉工具列按鈕事件
+            document.getElementById('clear-selection').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.getSelection().removeAllRanges();
+                hideSelectionToolbar();
             });
             
             // 初始化設定
@@ -1228,6 +1854,797 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('error').style.display = 'block';
             document.getElementById('error-message').textContent = message;
+        }
+
+        // 生成目錄
+        function generateTableOfContents() {
+            const tocList = document.getElementById('toc-list');
+            const headings = document.querySelectorAll('#article-content h1, #article-content h2, #article-content h3, #article-content h4');
+            
+            tocList.innerHTML = '';
+            
+            headings.forEach((heading, index) => {
+                // 為標題添加ID
+                if (!heading.id) {
+                    heading.id = `heading-${index}`;
+                }
+                
+                const li = document.createElement('li');
+                li.className = 'toc-item';
+                
+                const link = document.createElement('a');
+                link.href = `#${heading.id}`;
+                link.className = `toc-link toc-${heading.tagName.toLowerCase()}`;
+                link.textContent = heading.textContent;
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.getElementById(heading.id).scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    closeToc();
+                });
+                
+                li.appendChild(link);
+                tocList.appendChild(li);
+            });
+        }
+        
+        // 目錄控制
+        function toggleToc() {
+            const modal = document.getElementById('toc-modal');
+            modal.classList.toggle('active');
+        }
+        
+        function closeToc() {
+            document.getElementById('toc-modal').classList.remove('active');
+        }
+        
+        // 初始化文字選取功能
+        function initializeTextSelection() {
+            const content = document.getElementById('article-content');
+            console.log('Initializing text selection...'); // 調試日誌
+            
+            // 只使用mouseup事件，避免selectionchange的干擾
+            document.addEventListener('mouseup', handleTextSelection);
+            
+            // 點擊文章區域外時隱藏工具列
+            document.addEventListener('mousedown', (e) => {
+                const contentDiv = document.getElementById('article-content');
+                const toolbar = document.getElementById('selection-toolbar');
+                const noteInput = document.getElementById('note-input');
+                const notePopup = document.querySelector('.note-popup');
+                
+                // 檢查是否點擊在註解按鈕上
+                if (e.target.classList.contains('note-button')) {
+                    console.log('Clicked on note button, not hiding toolbar');
+                    return;
+                }
+                
+                // 如果點擊不在內容區域、工具列、備註輸入框或註解彈出視窗內，隱藏工具列
+                if (!contentDiv.contains(e.target) && 
+                    !toolbar.contains(e.target) && 
+                    !noteInput.contains(e.target) &&
+                    (!notePopup || !notePopup.contains(e.target))) {
+                    hideSelectionToolbar();
+                }
+            });
+        }
+        
+        function handleTextSelection(e) {
+            // 如果點擊的是註解按鈕，不處理文字選取
+            if (e.target && e.target.classList.contains('note-button')) {
+                console.log('Note button clicked, skipping text selection handling');
+                return;
+            }
+            
+            // 延遲檢查選取狀態，確保選取已穩定
+            setTimeout(() => {
+                const selection = window.getSelection();
+                const selectedText = selection.toString().trim();
+                console.log('Text selection detected:', selectedText); // 調試日誌
+                
+                // 只有在真正有選取文字時才顯示工具列
+                if (selection.rangeCount === 0 || selection.isCollapsed || !selectedText) {
+                    console.log('No valid selection, hiding toolbar'); // 調試日誌
+                    hideSelectionToolbar();
+                    return;
+                }
+                
+                const range = selection.getRangeAt(0);
+                const contentDiv = document.getElementById('article-content');
+                
+                // 檢查選取是否在文章內容區域內
+                if (!contentDiv.contains(range.commonAncestorContainer) && 
+                    range.commonAncestorContainer !== contentDiv) {
+                    console.log('Selection outside content area'); // 調試日誌
+                    hideSelectionToolbar();
+                    return;
+                }
+                
+                console.log('Valid selection found, showing toolbar'); // 調試日誌
+                
+                currentSelection = {
+                    range: range.cloneRange(),
+                    text: selectedText
+                };
+                
+                showSelectionToolbar();
+            }, 100);
+        }
+        
+        
+        function showSelectionToolbar() {
+            const toolbar = document.getElementById('selection-toolbar');
+            toolbar.classList.add('active');
+            console.log('Showing selection toolbar'); // 調試日誌
+        }
+        
+        function hideSelectionToolbar() {
+            const toolbar = document.getElementById('selection-toolbar');
+            toolbar.classList.remove('active');
+            console.log('Hiding selection toolbar'); // 調試日誌
+        }
+        
+        // 複製選取文字
+        function copySelectedText() {
+            if (currentSelection && currentSelection.text) {
+                navigator.clipboard.writeText(currentSelection.text).then(() => {
+                    console.log('Text copied to clipboard');
+                    hideSelectionToolbar();
+                }).catch(err => {
+                    console.error('Failed to copy text:', err);
+                });
+            }
+        }
+        
+        // 高亮文字
+        function highlightText(color) {
+            if (!currentSelection) return;
+            
+            const annotationId = `annotation-${++annotationCounter}`;
+            localStorage.setItem('powernote-annotation-counter', annotationCounter.toString());
+            
+            const span = document.createElement('span');
+            span.className = `highlight ${color}`;
+            span.id = annotationId;
+            
+            try {
+                currentSelection.range.surroundContents(span);
+                
+                console.log('Highlight added successfully using surroundContents');
+                
+            } catch (error) {
+                console.log('surroundContents failed for highlight, trying alternative method:', error);
+                
+                // 備用方法：提取內容並重新插入
+                try {
+                    const contents = currentSelection.range.extractContents();
+                    span.appendChild(contents);
+                    currentSelection.range.insertNode(span);
+                    
+                    console.log('Highlight added successfully using alternative method');
+                    
+                } catch (alternativeError) {
+                    console.error('Both methods failed to add highlight:', alternativeError);
+                    return;
+                }
+            }
+            
+            // 保存標記到localStorage
+            const key = getPageKey();
+            if (!annotations[key]) annotations[key] = [];
+            
+            annotations[key].push({
+                id: annotationId,
+                type: 'highlight',
+                color: color,
+                text: currentSelection.text,
+                position: getElementPosition(span)
+            });
+            
+            saveAnnotations();
+            hideSelectionToolbar();
+            window.getSelection().removeAllRanges();
+        }
+        
+        
+        // 顯示備註輸入框
+        function showNoteInput() {
+            if (!currentSelection) return;
+            
+            const input = document.getElementById('note-input');
+            const textarea = document.getElementById('note-textarea');
+            
+            // 計算位置
+            const rect = currentSelection.range.getBoundingClientRect();
+            input.style.left = Math.min(rect.left, window.innerWidth - input.offsetWidth - 10) + 'px';
+            input.style.top = Math.max(rect.bottom + 10, 10) + 'px';
+            input.style.display = 'block';
+            
+            textarea.value = '';
+            textarea.focus();
+            hideSelectionToolbar();
+        }
+        
+        function hideNoteInput() {
+            document.getElementById('note-input').style.display = 'none';
+            document.getElementById('note-textarea').value = '';
+        }
+        
+        // 保存備註
+        function saveNote() {
+            const noteText = document.getElementById('note-textarea').value.trim();
+            if (!noteText || !currentSelection) {
+                hideNoteInput();
+                return;
+            }
+            
+            const annotationId = `annotation-${++annotationCounter}`;
+            localStorage.setItem('powernote-annotation-counter', annotationCounter.toString());
+            
+            const wrapper = document.createElement('span');
+            wrapper.className = 'note-indicator';
+            wrapper.id = annotationId;
+            
+            const span = document.createElement('span');
+            span.className = 'highlight yellow'; // 預設黃色背景
+            span.style.position = 'relative';
+            
+            try {
+                // 嘗試使用 surroundContents
+                currentSelection.range.surroundContents(span);
+                
+                // 將span包裝在wrapper中
+                span.parentNode.insertBefore(wrapper, span);
+                wrapper.appendChild(span);
+                
+                // 創建註解按鈕
+                const noteButton = createNoteButton(noteText, annotationId);
+                wrapper.appendChild(noteButton);
+                
+                console.log('Note added successfully using surroundContents');
+                
+            } catch (error) {
+                console.log('surroundContents failed, trying alternative method:', error);
+                
+                // 備用方法：提取內容並重新插入
+                try {
+                    const contents = currentSelection.range.extractContents();
+                    
+                    // 將提取的內容放入高亮span中
+                    span.appendChild(contents);
+                    
+                    // 將span放入wrapper中
+                    wrapper.appendChild(span);
+                    
+                    // 將wrapper插入到原位置
+                    currentSelection.range.insertNode(wrapper);
+                    
+                    // 創建註解按鈕
+                    const noteButton = createNoteButton(noteText, annotationId);
+                    wrapper.appendChild(noteButton);
+                    
+                    console.log('Note added successfully using alternative method');
+                    
+                } catch (alternativeError) {
+                    console.error('Both methods failed to add note:', alternativeError);
+                    hideNoteInput();
+                    return;
+                }
+            }
+            
+            // 保存到localStorage
+            const key = getPageKey();
+            if (!annotations[key]) annotations[key] = [];
+            
+            annotations[key].push({
+                id: annotationId,
+                type: 'note',
+                text: currentSelection.text,
+                note: noteText,
+                position: getElementPosition(wrapper)
+            });
+            
+            saveAnnotations();
+            hideNoteInput();
+            hideSelectionToolbar();
+            window.getSelection().removeAllRanges();
+        }
+        
+        // 顯示備註提示
+        function showNoteTooltip(e, noteText) {
+            const tooltip = document.getElementById('note-tooltip');
+            const noteTextDiv = document.getElementById('note-text');
+            
+            noteTextDiv.textContent = noteText;
+            tooltip.style.display = 'block';
+            
+            const rect = e.target.getBoundingClientRect();
+            tooltip.style.left = Math.min(rect.left, window.innerWidth - tooltip.offsetWidth - 10) + 'px';
+            tooltip.style.top = rect.bottom + 10 + 'px';
+        }
+        
+        function hideNoteTooltip() {
+            document.getElementById('note-tooltip').style.display = 'none';
+        }
+        
+        // 工具函數
+        function getPageKey() {
+            const params = new URLSearchParams(window.location.search);
+            return `${params.get('gist')}_${params.get('file')}`;
+        }
+        
+        function getElementPosition(element) {
+            const rect = element.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            
+            return {
+                top: rect.top + scrollTop,
+                left: rect.left + scrollLeft,
+                text: element.textContent
+            };
+        }
+        
+        function saveAnnotations() {
+            localStorage.setItem('powernote-annotations', JSON.stringify(annotations));
+        }
+        
+        // 恢復已保存的標記
+        function restoreAnnotations() {
+            const key = getPageKey();
+            const pageAnnotations = annotations[key];
+            
+            if (!pageAnnotations) return;
+            
+            pageAnnotations.forEach(annotation => {
+                try {
+                    restoreAnnotation(annotation);
+                } catch (error) {
+                    console.error('Failed to restore annotation:', error);
+                }
+            });
+        }
+        
+        function restoreAnnotation(annotation) {
+            const content = document.getElementById('article-content');
+            const textNodes = getTextNodes(content);
+            
+            // 簡單的文字匹配恢復（可以改進為更精確的位置匹配）
+            for (let node of textNodes) {
+                const text = node.textContent;
+                const index = text.indexOf(annotation.text);
+                
+                if (index !== -1) {
+                    const range = document.createRange();
+                    range.setStart(node, index);
+                    range.setEnd(node, index + annotation.text.length);
+                    
+                    if (annotation.type === 'highlight') {
+                        const span = document.createElement('span');
+                        span.className = `highlight ${annotation.color}`;
+                        span.id = annotation.id;
+                        
+                        try {
+                            range.surroundContents(span);
+                            break; // 成功後跳出循環
+                        } catch (error) {
+                            console.warn('Could not restore highlight:', error);
+                        }
+                    } else if (annotation.type === 'note') {
+                        const wrapper = document.createElement('span');
+                        wrapper.className = 'note-indicator';
+                        wrapper.id = annotation.id;
+                        
+                        const span = document.createElement('span');
+                        span.className = 'highlight yellow';
+                        span.style.position = 'relative';
+                        
+                        try {
+                            range.surroundContents(span);
+                            
+                            // 將span包裝在wrapper中
+                            span.parentNode.insertBefore(wrapper, span);
+                            wrapper.appendChild(span);
+                            
+                            // 創建註解按鈕
+                            const noteButton = createNoteButton(annotation.note, annotation.id);
+                            wrapper.appendChild(noteButton);
+                            
+                            break; // 成功後跳出循環
+                        } catch (error) {
+                            console.warn('Could not restore note:', error);
+                        }
+                    }
+                }
+            }
+        }
+        
+        function getTextNodes(element) {
+            const textNodes = [];
+            const walker = document.createTreeWalker(
+                element,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: function(node) {
+                        // 跳過已標記的元素內的文字節點
+                        if (node.parentElement.classList.contains('highlight')) {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+                        return node.textContent.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                }
+            );
+            
+            let node;
+            while (node = walker.nextNode()) {
+                textNodes.push(node);
+            }
+            
+            return textNodes;
+        }
+        
+        // 清除選取區域的標記
+        function removeHighlightFromSelection() {
+            if (!currentSelection) {
+                console.log('No current selection for removal');
+                return;
+            }
+            
+            const range = currentSelection.range;
+            const contentDiv = document.getElementById('article-content');
+            
+            // 查找所有高亮元素（包括標記和註解）
+            const allHighlights = contentDiv.querySelectorAll('.highlight, .note-indicator');
+            const toRemove = [];
+            
+            console.log('Found', allHighlights.length, 'potential elements to check');
+            
+            // 檢查每個高亮元素是否與選取範圍有重疊
+            allHighlights.forEach(element => {
+                try {
+                    // 檢查元素是否與選取範圍相交
+                    if (range.intersectsNode && range.intersectsNode(element)) {
+                        toRemove.push(element);
+                        console.log('Found intersecting element:', element.id || element.className);
+                    } else {
+                        // 備用檢查方法：檢查元素是否在選取範圍內
+                        const elementRange = document.createRange();
+                        elementRange.selectNodeContents(element);
+                        
+                        if (range.compareBoundaryPoints(Range.START_TO_END, elementRange) >= 0 &&
+                            range.compareBoundaryPoints(Range.END_TO_START, elementRange) <= 0) {
+                            toRemove.push(element);
+                            console.log('Found contained element:', element.id || element.className);
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Error checking element:', error);
+                }
+            });
+            
+            console.log('Elements to remove:', toRemove.length);
+            
+            // 移除找到的元素
+            toRemove.forEach(element => {
+                const elementId = element.id;
+                
+                // 從localStorage中移除
+                if (elementId) {
+                    removeAnnotation(elementId);
+                }
+                
+                // 從DOM中移除
+                const parent = element.parentNode;
+                if (parent) {
+                    // 檢查是否是註解指示器
+                    if (element.classList.contains('note-indicator')) {
+                        // 註解的特殊處理：移除高亮但保留文字
+                        const children = Array.from(element.childNodes);
+                        children.forEach(child => {
+                            if (child.nodeType === Node.ELEMENT_NODE) {
+                                if (child.classList && child.classList.contains('highlight')) {
+                                    // 提取高亮元素內的純文字
+                                    const textContent = child.textContent;
+                                    const textNode = document.createTextNode(textContent);
+                                    parent.insertBefore(textNode, element);
+                                } else if (!child.classList || !child.classList.contains('note-button')) {
+                                    // 非註解按鈕的元素直接移到父元素
+                                    parent.insertBefore(child, element);
+                                }
+                            } else {
+                                // 文字節點直接移到父元素
+                                parent.insertBefore(child, element);
+                            }
+                        });
+                    } else {
+                        // 普通高亮元素的處理：將內容移回父元素
+                        while (element.firstChild) {
+                            parent.insertBefore(element.firstChild, element);
+                        }
+                    }
+                    parent.removeChild(element);
+                    console.log('Removed element:', elementId);
+                }
+            });
+            
+            hideSelectionToolbar();
+            window.getSelection().removeAllRanges();
+            
+            if (toRemove.length > 0) {
+                console.log('Successfully removed', toRemove.length, 'highlights');
+            } else {
+                console.log('No highlights found in selection range');
+            }
+        }
+        
+        // 從localStorage中移除註解
+        function removeAnnotation(annotationId) {
+            const key = getPageKey();
+            if (annotations[key]) {
+                annotations[key] = annotations[key].filter(ann => ann.id !== annotationId);
+                saveAnnotations();
+            }
+        }
+        
+        // 創建註解按鈕
+        function createNoteButton(noteText, annotationId) {
+            const button = document.createElement('button');
+            button.className = 'note-button';
+            button.innerHTML = '💬';
+            button.title = '點擊查看註解';
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Note button clicked for:', annotationId, 'with text:', noteText);
+                showNotePopup(e, noteText, annotationId);
+            });
+            return button;
+        }
+        
+        // 顯示註解彈出視窗
+        function showNotePopup(e, noteText, annotationId) {
+            console.log('showNotePopup called with:', noteText, annotationId);
+            
+            // 移除現有的彈出視窗
+            const existingPopup = document.querySelector('.note-popup');
+            if (existingPopup) {
+                existingPopup.remove();
+            }
+            
+            const popup = document.createElement('div');
+            popup.className = 'note-popup';
+            popup.id = 'note-popup-' + annotationId;
+            
+            console.log('Creating popup element');
+            showNoteViewMode(popup, noteText, annotationId);
+            
+            document.body.appendChild(popup);
+            
+            // 定位彈出視窗到畫面中央
+            popup.style.position = 'fixed';
+            popup.style.left = '50%';
+            popup.style.top = '50%';
+            popup.style.transform = 'translate(-50%, -50%)';
+            popup.style.display = 'block';
+            popup.style.zIndex = '2001';
+            
+            console.log('Popup should be visible now');
+            
+            // 點擊其他地方關閉彈出視窗
+            setTimeout(() => {
+                const closeHandler = function(event) {
+                    if (!popup.contains(event.target)) {
+                        popup.remove();
+                        document.removeEventListener('click', closeHandler);
+                        console.log('Popup closed by clicking outside');
+                    }
+                };
+                document.addEventListener('click', closeHandler);
+            }, 200);
+        }
+        
+        // 顯示註解檢視模式
+        function showNoteViewMode(popup, noteText, annotationId) {
+            console.log('showNoteViewMode called with:', noteText, annotationId);
+            popup.innerHTML = '';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'note-popup-content';
+            contentDiv.textContent = noteText;
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'note-popup-actions';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'note-popup-btn edit';
+            editBtn.textContent = '編輯';
+            editBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('Edit button clicked');
+                showNoteEditMode(popup, noteText, annotationId);
+            });
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'note-popup-btn delete';
+            deleteBtn.textContent = '刪除';
+            deleteBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('Delete button clicked');
+                showDeleteConfirmMode(popup, annotationId);
+            });
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'note-popup-btn btn-secondary';
+            closeBtn.textContent = '關閉';
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                console.log('Close button clicked');
+                popup.remove();
+            });
+            
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+            actionsDiv.appendChild(closeBtn);
+            
+            popup.appendChild(contentDiv);
+            popup.appendChild(actionsDiv);
+            
+            console.log('View mode setup complete');
+        }
+        
+        // 顯示註解編輯模式
+        function showNoteEditMode(popup, currentNote, annotationId) {
+            popup.innerHTML = '';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'note-popup-content';
+            
+            const textarea = document.createElement('textarea');
+            textarea.className = 'note-edit-textarea';
+            textarea.value = currentNote;
+            textarea.placeholder = '輸入您的註解...';
+            
+            contentDiv.appendChild(textarea);
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'note-edit-actions';
+            
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'note-popup-btn edit';
+            saveBtn.textContent = '儲存';
+            saveBtn.onclick = () => {
+                const newNote = textarea.value.trim();
+                if (newNote) {
+                    updateAnnotation(annotationId, newNote);
+                    showNoteViewMode(popup, newNote, annotationId);
+                }
+            };
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'note-popup-btn btn-secondary';
+            cancelBtn.textContent = '取消';
+            cancelBtn.onclick = () => showNoteViewMode(popup, currentNote, annotationId);
+            
+            actionsDiv.appendChild(saveBtn);
+            actionsDiv.appendChild(cancelBtn);
+            
+            popup.appendChild(contentDiv);
+            popup.appendChild(actionsDiv);
+            
+            // 自動聚焦到文字框並選取所有文字
+            setTimeout(() => {
+                textarea.focus();
+                textarea.select();
+            }, 100);
+        }
+        
+        // 顯示刪除確認模式
+        function showDeleteConfirmMode(popup, annotationId) {
+            popup.innerHTML = '';
+            
+            const confirmDiv = document.createElement('div');
+            confirmDiv.className = 'delete-confirm';
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'delete-confirm-text';
+            textDiv.textContent = '確定要刪除這個註解嗎？';
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'delete-confirm-actions';
+            
+            const confirmBtn = document.createElement('button');
+            confirmBtn.className = 'note-popup-btn btn-danger';
+            confirmBtn.textContent = '確定刪除';
+            confirmBtn.onclick = () => {
+                const element = document.getElementById(annotationId);
+                if (element) {
+                    const parent = element.parentNode;
+                    
+                    // 找到註解容器內的所有內容
+                    const children = Array.from(element.childNodes);
+                    
+                    // 將所有子元素的內容提取出來，移除高亮樣式
+                    children.forEach(child => {
+                        if (child.nodeType === Node.ELEMENT_NODE) {
+                            // 如果是高亮元素，提取其文字內容
+                            if (child.classList && child.classList.contains('highlight')) {
+                                const textContent = child.textContent;
+                                const textNode = document.createTextNode(textContent);
+                                parent.insertBefore(textNode, element);
+                            } else if (!child.classList || !child.classList.contains('note-button')) {
+                                // 如果不是註解按鈕，直接移到父元素
+                                parent.insertBefore(child, element);
+                            }
+                        } else {
+                            // 文字節點直接移到父元素
+                            parent.insertBefore(child, element);
+                        }
+                    });
+                    
+                    // 移除註解容器
+                    parent.removeChild(element);
+                    
+                    console.log('Note annotation removed and text restored');
+                }
+                removeAnnotation(annotationId);
+                popup.remove();
+            };
+            
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'note-popup-btn btn-secondary';
+            cancelBtn.textContent = '取消';
+            cancelBtn.onclick = () => popup.remove();
+            
+            actionsDiv.appendChild(confirmBtn);
+            actionsDiv.appendChild(cancelBtn);
+            
+            confirmDiv.appendChild(textDiv);
+            confirmDiv.appendChild(actionsDiv);
+            
+            popup.appendChild(confirmDiv);
+        }
+        
+        // 保留全域函數以防其他地方需要使用，但現在主要使用內聯編輯
+        window.editNote = function(annotationId, currentNote) {
+            // 這個函數現在主要用於向後兼容
+            const popup = document.querySelector('.note-popup');
+            if (popup) {
+                showNoteEditMode(popup, currentNote, annotationId);
+            }
+        };
+        
+        window.deleteNote = function(annotationId) {
+            // 這個函數現在主要用於向後兼容
+            const popup = document.querySelector('.note-popup');
+            if (popup) {
+                showDeleteConfirmMode(popup, annotationId);
+            }
+        };
+        
+        // 更新註解
+        function updateAnnotation(annotationId, newNote) {
+            const key = getPageKey();
+            if (annotations[key]) {
+                const annotation = annotations[key].find(ann => ann.id === annotationId);
+                if (annotation) {
+                    annotation.note = newNote;
+                    saveAnnotations();
+                    
+                    // 更新按鈕的事件處理器
+                    const element = document.getElementById(annotationId);
+                    if (element) {
+                        const button = element.querySelector('.note-button');
+                        if (button) {
+                            button.onclick = (e) => {
+                                e.stopPropagation();
+                                showNotePopup(e, newNote, annotationId);
+                            };
+                        }
+                    }
+                }
+            }
         }
     </script>
 </body>
