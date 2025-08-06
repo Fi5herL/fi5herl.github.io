@@ -550,14 +550,19 @@
             /* 手機版Instagram風格工具列優化 */
             .selection-toolbar {
                 bottom: 60px;
-                padding: 6px 12px;
-                max-width: 90vw;
+                padding: 8px 10px;
+                width: 95vw;
+                max-width: 95vw;
+                left: 2.5vw;
+                transform: none;
+                border-radius: 25px;
             }
             
             .toolbar-buttons {
-                gap: 10px;
-                flex-wrap: wrap;
-                justify-content: center;
+                gap: 8px;
+                flex-wrap: nowrap;
+                justify-content: space-between;
+                width: 100%;
             }
             
             .toolbar-btn {
@@ -565,6 +570,7 @@
                 height: 36px;
                 font-size: 14px;
                 border-width: 2px;
+                flex-shrink: 0;
             }
             
             .toolbar-btn:hover {
