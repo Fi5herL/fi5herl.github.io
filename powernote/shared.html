@@ -92,7 +92,10 @@
         .header h1 {
             color: #2c3e50;
             margin-bottom: 10px;
-            font-size: 2.2em;
+            font-size: min(1.6em, 36px);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            line-height: 1.3;
         }
         
         .header .meta {
@@ -129,9 +132,9 @@
         }
         
         .content h1 { 
-            font-size: 2em; 
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
+            font-size: 1.6em; 
+            border-bottom: 1px solid #3498db;
+            padding-bottom: 8px;
         }
         .content h2 { 
             font-size: 1.6em;
@@ -518,7 +521,19 @@
             }
             
             .header h1 {
-                font-size: 1.8em;
+                font-size: min(1.6em, 36px);
+                border-bottom: 1px solid #eee;
+                padding-bottom: 8px;
+                line-height: 1.3;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: min(1.6em, 36px);
+                border-bottom: 1px solid #eee;
+                padding-bottom: 8px;
+                line-height: 1.3;
             }
             
             .meta {
@@ -1929,6 +1944,13 @@
         function updateFontSize() {
             document.getElementById('font-size-display').textContent = currentFontSize + 'px';
             document.querySelector('.content').style.fontSize = currentFontSize + 'px';
+            
+            // 直接設置h1的字體大小，確保不超過36px
+            const h1Element = document.querySelector('.header h1');
+            if (h1Element) {
+                const calculatedSize = Math.min(currentFontSize * 1, 36);
+                h1Element.style.fontSize = calculatedSize + 'px';
+            }
             
             // 同時更新註解輸入框的字體大小
             const noteInput = document.querySelector('.note-input');
