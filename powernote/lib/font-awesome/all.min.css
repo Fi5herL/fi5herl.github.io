@@ -55,7 +55,8 @@
 .fa-sort-alpha-up::before { content: "Z"; }
 .fa-sort-numeric-down::before { content: "👴"; }
 .fa-sort-numeric-up::before { content: "🐣"; }
-.fa-external-link-alt::before { content: "🦘"; }
+.fa-external-link-alt::before { content: "🔗"; }
+.fa-cloud::before { content: "☁️"; }
 
 /* Margin for icons */
 .fa + *:not(:empty), * + .fa:not(:empty) {
