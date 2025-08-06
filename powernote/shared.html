@@ -533,6 +533,78 @@
             .content th, .content td {
                 padding: 8px;
             }
+            
+            /* 手機版選取工具列優化 */
+            .selection-toolbar {
+                bottom: 60px;
+                padding: 10px 15px;
+                min-width: 280px;
+                max-width: 90vw;
+            }
+            
+            .toolbar-title {
+                font-size: 11px;
+                margin-bottom: 6px;
+            }
+            
+            .toolbar-buttons {
+                gap: 6px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .toolbar-btn {
+                padding: 10px 12px;
+                font-size: 16px;
+                min-width: 45px;
+                border-radius: 15px;
+            }
+            
+            .toolbar-btn:hover {
+                transform: translateY(-1px);
+            }
+            
+            /* 手機版控制面板優化 */
+            .floating-control {
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .control-toggle {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            /* 手機版目錄按鈕優化 */
+            .toc-toggle {
+                bottom: 15px;
+                left: 15px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            /* 手機版註解按鈕優化 */
+            .note-button {
+                width: 20px;
+                height: 20px;
+                font-size: 12px;
+                top: -10px;
+                right: -10px;
+            }
+            
+            /* 手機版註解彈出視窗優化 */
+            .note-popup {
+                min-width: 280px;
+                max-width: 90vw;
+                padding: 15px;
+            }
+            
+            .note-edit-textarea {
+                min-height: 100px;
+                font-size: 16px; /* 防止iOS縮放 */
+            }
         }
         
         .loading-spinner {
@@ -1905,11 +1977,17 @@
             const content = document.getElementById('article-content');
             console.log('Initializing text selection...'); // 調試日誌
             
-            // 只使用mouseup事件，避免selectionchange的干擾
+            // 桌面版事件
             document.addEventListener('mouseup', handleTextSelection);
             
-            // 點擊文章區域外時隱藏工具列
-            document.addEventListener('mousedown', (e) => {
+            // 手機版觸摸事件
+            document.addEventListener('touchend', handleTextSelection);
+            
+            // 通用的selectionchange事件作為備用
+            document.addEventListener('selectionchange', handleSelectionChange);
+            
+            // 點擊/觸摸文章區域外時隱藏工具列
+            const hideToolbarHandler = (e) => {
                 const contentDiv = document.getElementById('article-content');
                 const toolbar = document.getElementById('selection-toolbar');
                 const noteInput = document.getElementById('note-input');
@@ -1928,7 +2006,47 @@
                     (!notePopup || !notePopup.contains(e.target))) {
                     hideSelectionToolbar();
                 }
-            });
+            };
+            
+            document.addEventListener('mousedown', hideToolbarHandler);
+            document.addEventListener('touchstart', hideToolbarHandler);
+        }
+        
+        // 處理selectionchange事件（作為觸摸事件的備用）
+        function handleSelectionChange() {
+            // 延遲處理，避免過度頻繁觸發
+            clearTimeout(window.selectionChangeTimeout);
+            window.selectionChangeTimeout = setTimeout(() => {
+                const selection = window.getSelection();
+                const selectedText = selection.toString().trim();
+                
+                if (selectedText && selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const contentDiv = document.getElementById('article-content');
+                    
+                    // 檢查選取是否在文章內容區域內
+                    if (contentDiv.contains(range.commonAncestorContainer) || 
+                        range.commonAncestorContainer === contentDiv) {
+                        
+                        console.log('Selection detected via selectionchange:', selectedText);
+                        
+                        currentSelection = {
+                            range: range.cloneRange(),
+                            text: selectedText
+                        };
+                        
+                        showSelectionToolbar();
+                    }
+                } else if (selection.isCollapsed) {
+                    // 延遲隱藏，避免在點擊工具列按鈕時立即隱藏
+                    setTimeout(() => {
+                        const toolbar = document.getElementById('selection-toolbar');
+                        if (toolbar && !toolbar.matches(':hover')) {
+                            hideSelectionToolbar();
+                        }
+                    }, 300);
+                }
+            }, 100);
         }
         
         function handleTextSelection(e) {
@@ -1938,11 +2056,14 @@
                 return;
             }
             
+            // 對於觸摸事件，使用較長的延遲來確保選取完成
+            const delay = e.type === 'touchend' ? 200 : 100;
+            
             // 延遲檢查選取狀態，確保選取已穩定
             setTimeout(() => {
                 const selection = window.getSelection();
                 const selectedText = selection.toString().trim();
-                console.log('Text selection detected:', selectedText); // 調試日誌
+                console.log(`Text selection detected via ${e.type}:`, selectedText); // 調試日誌
                 
                 // 只有在真正有選取文字時才顯示工具列
                 if (selection.rangeCount === 0 || selection.isCollapsed || !selectedText) {
@@ -1970,7 +2091,7 @@
                 };
                 
                 showSelectionToolbar();
-            }, 100);
+            }, delay);
         }
         
         
