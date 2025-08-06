@@ -25,8 +25,8 @@
 .fa-table::before { content: "⊞"; }
 .fa-project-diagram::before { content: "📊"; }
 .fa-text-height::before { content: "🔤"; }
-.fa-columns::before { content: "✒️👀"; }
-.fa-edit::before { content: "✒️"; }
+.fa-columns::before { content: "✍️👀"; }
+.fa-edit::before { content: "✍️"; }
 .fa-eye::before { content: "👀"; }
 .fa-file-text::before { content: "📄"; }
 .fa-file-code::before { content: "📄"; }
