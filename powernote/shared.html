@@ -908,7 +908,7 @@
         
         /* 備註提示 */
         .note-tooltip {
-            position: absolute;
+            position: fixed;
             background: #444;
             color: white;
             padding: 8px 12px;
@@ -931,12 +931,16 @@
         
         /* 備註輸入框 */
         .note-input {
-            position: absolute;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: white;
             border: 2px solid #3498db;
             border-radius: 8px;
             padding: 10px;
-            min-width: 250px;
+            width: 80vw;
+            max-width: 80vw;
             z-index: 2002;
             display: none;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -944,13 +948,16 @@
         
         .note-input textarea {
             width: 100%;
-            height: 60px;
+            height: 50vh;
+            max-height: 50vh;
             border: 1px solid #ddd;
             border-radius: 4px;
             padding: 8px;
-            font-size: 12px;
+            font-size: inherit;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             resize: vertical;
             outline: none;
+            box-sizing: border-box;
         }
         
         .note-input-buttons {
@@ -965,7 +972,8 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: inherit;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             transition: background 0.05s;
         }
         
@@ -987,10 +995,19 @@
             background: #7f8c8d;
         }
         
-        /* 註解按鈕 */
+        /* 註解標記 - 紅底線樣式 */
         .note-indicator {
             position: relative;
-            display: inline-block;
+            display: inline;
+            background: transparent;
+            border-bottom: 2px solid #ff4444;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .note-indicator:hover {
+            border-bottom: 2px solid #ff6666;
+            background: rgba(255, 68, 68, 0.1);
         }
         
         .note-button {
@@ -1912,6 +1929,12 @@
         function updateFontSize() {
             document.getElementById('font-size-display').textContent = currentFontSize + 'px';
             document.querySelector('.content').style.fontSize = currentFontSize + 'px';
+            
+            // 同時更新註解輸入框的字體大小
+            const noteInput = document.querySelector('.note-input');
+            if (noteInput) {
+                noteInput.style.fontSize = currentFontSize + 'px';
+            }
         }
         
         function saveFontSize() {
@@ -2037,9 +2060,9 @@
                 const noteInput = document.getElementById('note-input');
                 const notePopup = document.querySelector('.note-popup');
                 
-                // 檢查是否點擊在註解按鈕上
-                if (e.target.classList.contains('note-button')) {
-                    console.log('Clicked on note button, not hiding toolbar');
+                // 檢查是否點擊在註解指示器上
+                if (e.target.classList.contains('note-indicator')) {
+                    console.log('Clicked on note indicator, not hiding toolbar');
                     return;
                 }
                 
@@ -2094,9 +2117,9 @@
         }
         
         function handleTextSelection(e) {
-            // 如果點擊的是註解按鈕，不處理文字選取
-            if (e.target && e.target.classList.contains('note-button')) {
-                console.log('Note button clicked, skipping text selection handling');
+            // 如果點擊的是註解指示器，不處理文字選取
+            if (e.target && e.target.classList.contains('note-indicator')) {
+                console.log('Note indicator clicked, skipping text selection handling');
                 return;
             }
             
@@ -2163,54 +2186,183 @@
             }
         }
         
-        // 高亮文字
+        // 檢查選取範圍是否安全，避免破壞HTML結構
+        function isSelectionSafe(range) {
+            const startContainer = range.startContainer;
+            const endContainer = range.endContainer;
+            
+            // 檢查是否跨越了不同的列表項目
+            const startListItem = startContainer.nodeType === Node.TEXT_NODE 
+                ? startContainer.parentElement?.closest('li')
+                : startContainer.closest?.('li');
+            const endListItem = endContainer.nodeType === Node.TEXT_NODE 
+                ? endContainer.parentElement?.closest('li')
+                : endContainer.closest?.('li');
+                
+            if (startListItem && endListItem && startListItem !== endListItem) {
+                console.warn('Selection spans across different list items');
+                return false;
+            }
+            
+            // 檢查是否跨越了其他塊級元素
+            const blockElements = ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'ol', 'ul', 'blockquote'];
+            
+            const startBlock = startContainer.nodeType === Node.TEXT_NODE 
+                ? getClosestBlock(startContainer.parentElement, blockElements)
+                : getClosestBlock(startContainer, blockElements);
+            const endBlock = endContainer.nodeType === Node.TEXT_NODE 
+                ? getClosestBlock(endContainer.parentElement, blockElements)
+                : getClosestBlock(endContainer, blockElements);
+                
+            if (startBlock && endBlock && startBlock !== endBlock) {
+                console.warn('Selection spans across different block elements');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // 輔助函數：查找最近的塊級元素
+        function getClosestBlock(element, blockElements) {
+            while (element && element !== document.body) {
+                if (blockElements.includes(element.tagName?.toLowerCase())) {
+                    return element;
+                }
+                element = element.parentElement;
+            }
+            return null;
+        }
+        
+        // 改進的高亮文字功能，支持跨元素選取
         function highlightText(color) {
             if (!currentSelection) return;
             
             const annotationId = `annotation-${++annotationCounter}`;
             localStorage.setItem('powernote-annotation-counter', annotationCounter.toString());
             
-            const span = document.createElement('span');
-            span.className = `highlight ${color}`;
-            span.id = annotationId;
+            const range = currentSelection.range;
+            
+            // 檢查選取範圍是否安全（避免破壞HTML結構）
+            if (!isSelectionSafe(range)) {
+                alert('無法在此選取範圍添加標記，請避免跨越列表項目或複雜HTML結構');
+                return;
+            }
             
             try {
-                currentSelection.range.surroundContents(span);
+                // 嘗試使用 surroundContents
+                const span = document.createElement('span');
+                span.className = `highlight ${color}`;
+                span.id = annotationId;
                 
+                range.surroundContents(span);
                 console.log('Highlight added successfully using surroundContents');
                 
-            } catch (error) {
-                console.log('surroundContents failed for highlight, trying alternative method:', error);
+                // 保存標記資訊
+                const key = getPageKey();
+                if (!annotations[key]) annotations[key] = [];
                 
-                // 備用方法：提取內容並重新插入
-                try {
-                    const contents = currentSelection.range.extractContents();
-                    span.appendChild(contents);
-                    currentSelection.range.insertNode(span);
+                annotations[key].push({
+                    id: annotationId,
+                    type: 'highlight',
+                    color: color,
+                    text: currentSelection.text,
+                    position: getElementPosition(span),
+                    // 添加更精確的位置資訊
+                    rangeInfo: {
+                        startOffset: range.startOffset,
+                        endOffset: range.endOffset,
+                        startContainer: range.startContainer.textContent,
+                        endContainer: range.endContainer.textContent
+                    }
+                });
+                
+            } catch (error) {
+                console.log('surroundContents failed, trying alternative method:', error);
+                
+                // 備用方法：手動建立標記結構
+                const span = highlightRangeManually(range, color, annotationId);
+                if (span) {
+                    console.log('Highlight added successfully using manual method');
                     
-                    console.log('Highlight added successfully using alternative method');
+                    // 保存標記資訊
+                    const key = getPageKey();
+                    if (!annotations[key]) annotations[key] = [];
                     
-                } catch (alternativeError) {
-                    console.error('Both methods failed to add highlight:', alternativeError);
+                    annotations[key].push({
+                        id: annotationId,
+                        type: 'highlight',
+                        color: color,
+                        text: currentSelection.text,
+                        position: getElementPosition(span),
+                        rangeInfo: {
+                            startOffset: range.startOffset,
+                            endOffset: range.endOffset,
+                            startContainer: range.startContainer.textContent,
+                            endContainer: range.endContainer.textContent
+                        }
+                    });
+                } else {
+                    console.error('Both highlighting methods failed');
                     return;
                 }
             }
             
-            // 保存標記到localStorage
-            const key = getPageKey();
-            if (!annotations[key]) annotations[key] = [];
-            
-            annotations[key].push({
-                id: annotationId,
-                type: 'highlight',
-                color: color,
-                text: currentSelection.text,
-                position: getElementPosition(span)
-            });
-            
             saveAnnotations();
             hideSelectionToolbar();
             window.getSelection().removeAllRanges();
+        }
+        
+        // 手動建立跨元素標記的輔助函數
+        function highlightRangeManually(range, color, annotationId) {
+            try {
+                const startContainer = range.startContainer;
+                const endContainer = range.endContainer;
+                const startOffset = range.startOffset;
+                const endOffset = range.endOffset;
+                const selectedText = range.toString();
+                
+                // 如果選取範圍在同一個文本節點內，使用安全的文本替換方法
+                if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
+                    const textNode = startContainer;
+                    const parent = textNode.parentNode;
+                    
+                    // 分割文本節點
+                    const beforeText = textNode.textContent.substring(0, startOffset);
+                    const afterText = textNode.textContent.substring(endOffset);
+                    
+                    // 創建高亮span
+                    const span = document.createElement('span');
+                    span.className = `highlight ${color}`;
+                    span.id = annotationId;
+                    span.textContent = selectedText;
+                    
+                    // 替換原文本節點
+                    parent.removeChild(textNode);
+                    
+                    if (beforeText) {
+                        parent.appendChild(document.createTextNode(beforeText));
+                    }
+                    parent.appendChild(span);
+                    if (afterText) {
+                        parent.appendChild(document.createTextNode(afterText));
+                    }
+                    
+                    return span;
+                } else {
+                    // 跨元素選取時，仍使用原方法但更謹慎
+                    console.warn('Cross-element highlighting, using extractContents method');
+                    const contents = range.extractContents();
+                    const span = document.createElement('span');
+                    span.className = `highlight ${color}`;
+                    span.id = annotationId;
+                    span.appendChild(contents);
+                    range.insertNode(span);
+                    return span;
+                }
+            } catch (error) {
+                console.error('Manual highlighting failed:', error);
+                return null;
+            }
         }
         
         
@@ -2218,27 +2370,18 @@
         function showNoteInput() {
             if (!currentSelection) return;
             
-            // 保存當前滾動位置
-            const currentScrollY = window.scrollY;
-            const currentScrollX = window.scrollX;
-            
             const input = document.getElementById('note-input');
             const textarea = document.getElementById('note-textarea');
             
-            // 計算位置
-            const rect = currentSelection.range.getBoundingClientRect();
-            input.style.left = Math.min(rect.left, window.innerWidth - input.offsetWidth - 10) + 'px';
-            input.style.top = Math.max(rect.bottom + 10, 10) + 'px';
+            // 使用CSS居中定位，並同步字體大小
             input.style.display = 'block';
-            
+            input.style.fontSize = currentFontSize + 'px';
             textarea.value = '';
             
-            // 使用setTimeout避免 focus()導致的滾動
+            // 聚焦到文本框
             setTimeout(() => {
                 textarea.focus({ preventScroll: true });
-                // 恢復原始滾動位置
-                window.scrollTo(currentScrollX, currentScrollY);
-            }, 1);
+            }, 50);
             
             hideSelectionToolbar();
         }
@@ -2256,58 +2399,42 @@
                 return;
             }
             
+            const range = currentSelection.range;
+            
+            // 檢查選取範圍是否安全
+            if (!isSelectionSafe(range)) {
+                alert('無法在此選取範圍添加註解，請避免跨越列表項目或複雜HTML結構');
+                hideNoteInput();
+                return;
+            }
+            
             const annotationId = `annotation-${++annotationCounter}`;
             localStorage.setItem('powernote-annotation-counter', annotationCounter.toString());
             
-            const wrapper = document.createElement('span');
-            wrapper.className = 'note-indicator';
-            wrapper.id = annotationId;
+            const selectedText = currentSelection.range.toString();
             
-            const span = document.createElement('span');
-            span.className = 'highlight yellow'; // 預設黃色背景
-            span.style.position = 'relative';
+            // 創建紅底線註解標記
+            const noteSpan = document.createElement('span');
+            noteSpan.className = 'note-indicator';
+            noteSpan.id = annotationId;
+            noteSpan.title = '點擊查看註解: ' + noteText.substring(0, 50) + (noteText.length > 50 ? '...' : '');
             
+            // 添加點擊事件
+            noteSpan.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showNotePopup(e, noteText, annotationId);
+            });
+            
+            // 使用 surroundContents 方法
             try {
-                // 嘗試使用 surroundContents
-                currentSelection.range.surroundContents(span);
-                
-                // 將span包裝在wrapper中
-                span.parentNode.insertBefore(wrapper, span);
-                wrapper.appendChild(span);
-                
-                // 創建註解按鈕
-                const noteButton = createNoteButton(noteText, annotationId);
-                wrapper.appendChild(noteButton);
-                
+                range.surroundContents(noteSpan);
                 console.log('Note added successfully using surroundContents');
-                
             } catch (error) {
-                console.log('surroundContents failed, trying alternative method:', error);
-                
-                // 備用方法：提取內容並重新插入
-                try {
-                    const contents = currentSelection.range.extractContents();
-                    
-                    // 將提取的內容放入高亮span中
-                    span.appendChild(contents);
-                    
-                    // 將span放入wrapper中
-                    wrapper.appendChild(span);
-                    
-                    // 將wrapper插入到原位置
-                    currentSelection.range.insertNode(wrapper);
-                    
-                    // 創建註解按鈕
-                    const noteButton = createNoteButton(noteText, annotationId);
-                    wrapper.appendChild(noteButton);
-                    
-                    console.log('Note added successfully using alternative method');
-                    
-                } catch (alternativeError) {
-                    console.error('Both methods failed to add note:', alternativeError);
-                    hideNoteInput();
-                    return;
-                }
+                console.log('Cannot add note to selection:', error);
+                alert('無法在此選取範圍添加註解，請選擇較簡單的文本片段');
+                hideNoteInput();
+                return;
             }
             
             // 保存到localStorage
@@ -2319,7 +2446,7 @@
                 type: 'note',
                 text: currentSelection.text,
                 note: noteText,
-                position: getElementPosition(wrapper)
+                position: getElementPosition(noteSpan)
             });
             
             saveAnnotations();
@@ -2356,10 +2483,15 @@
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
             
+            // 改進位置資訊以支持更精確的恢復
             return {
                 top: rect.top + scrollTop,
                 left: rect.left + scrollLeft,
-                text: element.textContent
+                text: element.textContent,
+                // 添加更多上下文資訊以提高匹配精度
+                parentText: element.parentElement ? element.parentElement.textContent.substring(0, 100) : '',
+                nextSiblingText: element.nextElementSibling ? element.nextElementSibling.textContent.substring(0, 50) : '',
+                previousSiblingText: element.previousElementSibling ? element.previousElementSibling.textContent.substring(0, 50) : ''
             };
         }
         
@@ -2385,9 +2517,222 @@
         
         function restoreAnnotation(annotation) {
             const content = document.getElementById('article-content');
+            
+            // 改進的文字匹配算法，支持跨元素待選
+            if (annotation.type === 'highlight') {
+                restoreHighlight(content, annotation);
+            } else if (annotation.type === 'note') {
+                restoreNoteAnnotation(content, annotation);
+            }
+        }
+        
+        function restoreHighlight(container, annotation) {
+            // 改進的標記恢復算法，支持模糊匹配和跨節點文字
+            const fullText = container.textContent;
+            const searchText = annotation.text.trim();
+            
+            console.log(`Trying to restore: "${searchText.substring(0, 50)}..."`);
+            console.log(`In fullText length: ${fullText.length}`);
+            
+            let matchIndex = -1;
+            let actualLength = searchText.length;
+            
+            // 嘗試精確匹配
+            matchIndex = fullText.indexOf(searchText);
+            if (matchIndex !== -1) {
+                console.log(`Found exact match at position ${matchIndex}`);
+            } else {
+                // 嘗試部分匹配（去除換行符影響）
+                const cleanSearchText = searchText.replace(/\s+/g, ' ');
+                const cleanFullText = fullText.replace(/\s+/g, ' ');
+                matchIndex = cleanFullText.indexOf(cleanSearchText);
+                if (matchIndex !== -1) {
+                    console.log(`Found match after cleaning whitespace at position ${matchIndex}`);
+                    // 找到原始位置
+                    matchIndex = fullText.indexOf(searchText.substring(0, 30));
+                } else {
+                    // 嘗試前50個字元
+                    const shortText = searchText.substring(0, Math.min(50, searchText.length));
+                    matchIndex = fullText.indexOf(shortText);
+                    actualLength = shortText.length;
+                    if (matchIndex !== -1) {
+                        console.log(`Found partial match (50 chars) at position ${matchIndex}`);
+                    } else {
+                        // 最後嘗試前30個字元
+                        const veryShortText = searchText.substring(0, Math.min(30, searchText.length));
+                        matchIndex = fullText.indexOf(veryShortText);
+                        actualLength = veryShortText.length;
+                        if (matchIndex !== -1) {
+                            console.log(`Found very short match (30 chars) at position ${matchIndex}`);
+                        }
+                    }
+                }
+            }
+            
+            if (matchIndex !== -1) {
+                try {
+                    // 找到匹配位置，建立 Range
+                    const range = createRangeFromTextPosition(container, matchIndex, actualLength);
+                    if (range) {
+                        const span = document.createElement('span');
+                        span.className = `highlight ${annotation.color}`;
+                        span.id = annotation.id;
+                        
+                        // 嘗試 surroundContents
+                        try {
+                            range.surroundContents(span);
+                            console.log(`Successfully restored highlight: ${annotation.id}`);
+                            return;
+                        } catch (error) {
+                            console.log(`surroundContents failed, trying text replacement method:`, error.message);
+                            // 使用安全的文本替換方法
+                            try {
+                                const startContainer = range.startContainer;
+                                const endContainer = range.endContainer;
+                                const startOffset = range.startOffset;
+                                const endOffset = range.endOffset;
+                                
+                                // 如果在同一個文本節點內，使用文本替換
+                                if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
+                                    const textNode = startContainer;
+                                    const parent = textNode.parentNode;
+                                    
+                                    const beforeText = textNode.textContent.substring(0, startOffset);
+                                    const afterText = textNode.textContent.substring(endOffset);
+                                    const selectedText = textNode.textContent.substring(startOffset, endOffset);
+                                    
+                                    span.textContent = selectedText;
+                                    
+                                    parent.removeChild(textNode);
+                                    
+                                    if (beforeText) {
+                                        parent.appendChild(document.createTextNode(beforeText));
+                                    }
+                                    parent.appendChild(span);
+                                    if (afterText) {
+                                        parent.appendChild(document.createTextNode(afterText));
+                                    }
+                                    
+                                    console.log(`Restored highlight using text replacement: ${annotation.id}`);
+                                    return;
+                                } else {
+                                    // 跨元素時仍使用原方法
+                                    const contents = range.extractContents();
+                                    span.appendChild(contents);
+                                    range.insertNode(span);
+                                    console.log(`Restored highlight using extractContents: ${annotation.id}`);
+                                    return;
+                                }
+                            } catch (backupError) {
+                                console.warn(`All restore methods failed:`, backupError.message);
+                            }
+                        }
+                    } else {
+                        console.warn(`Could not create range for annotation ${annotation.id}`);
+                    }
+                } catch (error) {
+                    console.warn(`Error creating range for annotation ${annotation.id}:`, error);
+                }
+            } else {
+                console.log(`No match found for text: "${searchText.substring(0, 30)}..."`);
+            }
+            
+            console.warn('無法恢復標記:', annotation);
+        }
+        
+        // 從文字位置建立 Range 的輔助函數
+        function createRangeFromTextPosition(container, startOffset, length) {
+            const walker = document.createTreeWalker(
+                container,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+            
+            let currentOffset = 0;
+            let startNode = null;
+            let startNodeOffset = 0;
+            let endNode = null;
+            let endNodeOffset = 0;
+            
+            let node;
+            while (node = walker.nextNode()) {
+                const nodeLength = node.textContent.length;
+                
+                // 找到開始節點
+                if (!startNode && currentOffset + nodeLength > startOffset) {
+                    startNode = node;
+                    startNodeOffset = startOffset - currentOffset;
+                }
+                
+                // 找到結束節點
+                if (startNode && currentOffset + nodeLength >= startOffset + length) {
+                    endNode = node;
+                    endNodeOffset = startOffset + length - currentOffset;
+                    break;
+                }
+                
+                currentOffset += nodeLength;
+            }
+            
+            if (startNode && endNode) {
+                try {
+                    const range = document.createRange();
+                    range.setStart(startNode, startNodeOffset);
+                    range.setEnd(endNode, endNodeOffset);
+                    return range;
+                } catch (error) {
+                    console.warn('Error creating range:', error);
+                    return null;
+                }
+            }
+            
+            return null;
+        }
+        
+        function restoreNoteAnnotation(container, annotation) {
+            // 直接恢復註解，使用 note-indicator 類別和紅底線樣式
+            const fullText = container.textContent;
+            const searchText = annotation.text.trim();
+            const matchIndex = fullText.indexOf(searchText);
+            
+            if (matchIndex !== -1) {
+                try {
+                    const range = createRangeFromTextPosition(container, matchIndex, searchText.length);
+                    if (range) {
+                        const noteSpan = document.createElement('span');
+                        noteSpan.className = 'note-indicator';
+                        noteSpan.id = annotation.id;
+                        noteSpan.title = '點擊查看註解: ' + annotation.note.substring(0, 50) + (annotation.note.length > 50 ? '...' : '');
+                        
+                        // 添加點擊事件
+                        noteSpan.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            showNotePopup(e, annotation.note, annotation.id);
+                        });
+                        
+                        // 嘗試恢復註解
+                        try {
+                            range.surroundContents(noteSpan);
+                            console.log(`Successfully restored note: ${annotation.id}`);
+                        } catch (error) {
+                            console.warn(`Could not restore note ${annotation.id}:`, error);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to restore note annotation:', error);
+                }
+            } else {
+                console.warn(`Could not find text for note ${annotation.id}: ${searchText.substring(0, 50)}...`);
+            }
+        }
+        
+        // 簡化版本（保持向後相容）
+        function restoreAnnotationOld(annotation) {
+            const content = document.getElementById('article-content');
             const textNodes = getTextNodes(content);
             
-            // 簡單的文字匹配恢復（可以改進為更精確的位置匹配）
             for (let node of textNodes) {
                 const text = node.textContent;
                 const index = text.indexOf(annotation.text);
@@ -2409,25 +2754,23 @@
                             console.warn('Could not restore highlight:', error);
                         }
                     } else if (annotation.type === 'note') {
-                        const wrapper = document.createElement('span');
-                        wrapper.className = 'note-indicator';
-                        wrapper.id = annotation.id;
+                        // 簡化結構：只使用單一span元素
+                        const noteSpan = document.createElement('span');
+                        noteSpan.className = 'note-indicator highlight yellow';
+                        noteSpan.id = annotation.id;
+                        noteSpan.style.position = 'relative';
+                        noteSpan.title = '點擊查看註解: ' + annotation.note.substring(0, 50) + (annotation.note.length > 50 ? '...' : '');
                         
-                        const span = document.createElement('span');
-                        span.className = 'highlight yellow';
-                        span.style.position = 'relative';
+                        // 添加點擊事件來顯示註解
+                        noteSpan.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Note span clicked for:', annotation.id, 'with text:', annotation.note);
+                            showNotePopup(e, annotation.note, annotation.id);
+                        });
                         
                         try {
-                            range.surroundContents(span);
-                            
-                            // 將span包裝在wrapper中
-                            span.parentNode.insertBefore(wrapper, span);
-                            wrapper.appendChild(span);
-                            
-                            // 創建註解按鈕
-                            const noteButton = createNoteButton(annotation.note, annotation.id);
-                            wrapper.appendChild(noteButton);
-                            
+                            range.surroundContents(noteSpan);
                             break; // 成功後跳出循環
                         } catch (error) {
                             console.warn('Could not restore note:', error);
@@ -2461,7 +2804,7 @@
             return textNodes;
         }
         
-        // 清除選取區域的標記
+        // 改進的清除選取區域標記功能
         function removeHighlightFromSelection() {
             if (!currentSelection) {
                 console.log('No current selection for removal');
@@ -2471,13 +2814,13 @@
             const range = currentSelection.range;
             const contentDiv = document.getElementById('article-content');
             
-            // 查找所有高亮元素（包括標記和註解）
+            // 查找所有高亮元素和註解元素
             const allHighlights = contentDiv.querySelectorAll('.highlight, .note-indicator');
             const toRemove = [];
             
-            console.log('Found', allHighlights.length, 'potential elements to check');
+            console.log('Found', allHighlights.length, 'highlight and note elements to check');
             
-            // 檢查每個高亮元素是否與選取範圍有重疊
+            // 檢查每個高亮元素是否與選取範圍有交集
             allHighlights.forEach(element => {
                 try {
                     // 檢查元素是否與選取範圍相交
@@ -2514,31 +2857,9 @@
                 // 從DOM中移除
                 const parent = element.parentNode;
                 if (parent) {
-                    // 檢查是否是註解指示器
-                    if (element.classList.contains('note-indicator')) {
-                        // 註解的特殊處理：移除高亮但保留文字
-                        const children = Array.from(element.childNodes);
-                        children.forEach(child => {
-                            if (child.nodeType === Node.ELEMENT_NODE) {
-                                if (child.classList && child.classList.contains('highlight')) {
-                                    // 提取高亮元素內的純文字
-                                    const textContent = child.textContent;
-                                    const textNode = document.createTextNode(textContent);
-                                    parent.insertBefore(textNode, element);
-                                } else if (!child.classList || !child.classList.contains('note-button')) {
-                                    // 非註解按鈕的元素直接移到父元素
-                                    parent.insertBefore(child, element);
-                                }
-                            } else {
-                                // 文字節點直接移到父元素
-                                parent.insertBefore(child, element);
-                            }
-                        });
-                    } else {
-                        // 普通高亮元素的處理：將內容移回父元素
-                        while (element.firstChild) {
-                            parent.insertBefore(element.firstChild, element);
-                        }
+                    // 簡化的刪除處理：不管是註解還是普通高亮，都直接將內容移回父元素
+                    while (element.firstChild) {
+                        parent.insertBefore(element.firstChild, element);
                     }
                     parent.removeChild(element);
                     console.log('Removed element:', elementId);
@@ -2751,26 +3072,10 @@
                 if (element) {
                     const parent = element.parentNode;
                     
-                    // 找到註解容器內的所有內容
-                    const children = Array.from(element.childNodes);
-                    
-                    // 將所有子元素的內容提取出來，移除高亮樣式
-                    children.forEach(child => {
-                        if (child.nodeType === Node.ELEMENT_NODE) {
-                            // 如果是高亮元素，提取其文字內容
-                            if (child.classList && child.classList.contains('highlight')) {
-                                const textContent = child.textContent;
-                                const textNode = document.createTextNode(textContent);
-                                parent.insertBefore(textNode, element);
-                            } else if (!child.classList || !child.classList.contains('note-button')) {
-                                // 如果不是註解按鈕，直接移到父元素
-                                parent.insertBefore(child, element);
-                            }
-                        } else {
-                            // 文字節點直接移到父元素
-                            parent.insertBefore(child, element);
-                        }
-                    });
+                    // 簡化的刪除處理：直接將所有子節點移回父元素
+                    while (element.firstChild) {
+                        parent.insertBefore(element.firstChild, element);
+                    }
                     
                     // 移除註解容器
                     parent.removeChild(element);
@@ -2821,16 +3126,11 @@
                     annotation.note = newNote;
                     saveAnnotations();
                     
-                    // 更新按鈕的事件處理器
+                    // 更新元素的tooltip和事件處理器
                     const element = document.getElementById(annotationId);
                     if (element) {
-                        const button = element.querySelector('.note-button');
-                        if (button) {
-                            button.onclick = (e) => {
-                                e.stopPropagation();
-                                showNotePopup(e, newNote, annotationId);
-                            };
-                        }
+                        element.title = '點擊查看註解: ' + newNote.substring(0, 50) + (newNote.length > 50 ? '...' : '');
+                        // 註解的點擊事件在創建時已經設置，會自動使用最新的annotation數據
                     }
                 }
             }
