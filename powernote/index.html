@@ -5447,7 +5447,7 @@
                     editorOptions.workDelay = 100; // 增加工作延遲，避免阻塞
                     editorOptions.pollInterval = 100; // 減少輪詢頻率
                     editorOptions.dragDrop = false; // 禁用拖拽以避免觸控衝突
-                    editorOptions.scrollbarStyle = "simple"; // 簡化滾動條
+                    // 移除不支援的 scrollbarStyle 設置
                 }
                 
                 editor = CodeMirror.fromTextArea(document.getElementById('editor'), editorOptions);
