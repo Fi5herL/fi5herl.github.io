@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.2, minimum-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>PowerNote Pro - 筆記、任務與時間追蹤</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✒️</text></svg>">
 
@@ -332,6 +332,15 @@
             .preview-container {
                 /* 移除固定字體大小，讓預覽也能隨設定變化 */
                 line-height: 1.4 !important;
+            }
+            
+            /* Remove all bottom padding on mobile */
+            .CodeMirror-code::after {
+                display: none !important; /* Completely remove bottom space on mobile */
+            }
+            
+            .preview-container {
+                padding-bottom: 0 !important; /* Remove all bottom padding on mobile */
             }
             
             /* Hide unnecessary buttons on mobile, but show timer, font, search and mobile jump */
@@ -4056,7 +4065,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.2, minimum-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>${title} - PowerNote 分享</title>
     <meta name="description" content="由 PowerNote 分享的文章">
     <meta property="og:title" content="${title}">
