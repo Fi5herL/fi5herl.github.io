@@ -5636,29 +5636,14 @@
                     autofocus: !isMobile, // Disable autofocus on mobile to prevent keyboard popup
                     foldGutter: false,
                     gutters: ["CodeMirror-linenumbers"],
-                    scrollbarStyle: isMobile ? 'null' : 'native', // Use custom scrollbar on mobile
+                    scrollbarStyle: 'native', // Use native scrollbar
                     extraKeys: {
                         "Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); },
                         "Ctrl-Shift-Q": function(cm){ cm.execCommand("unfoldAll"); }
                     }
                 });
 
-                // Mobile-specific editor configuration
-                if (isMobile) {
-                    // Disable automatic cursor scrolling behaviors
-                    editor.setOption('scrollMargin', 0);
-                    
-                    // Override default scrolling behavior
-                    const originalScrollIntoView = editor.scrollIntoView;
-                    editor.scrollIntoView = function(pos, margin) {
-                        // Only scroll if explicitly needed, not automatically
-                        if (arguments.length === 0) return;
-                        return originalScrollIntoView.call(this, pos, margin);
-                    };
-                    
-                    // Prevent automatic centering when cursor changes
-                    editor.off('cursorActivity');
-                }
+                // Keep mobile editor simple - no special overrides
                 
                 // Register custom markdown fold function
                 CodeMirror.registerHelper("fold", "markdown", markdownHeaderFold);
@@ -12732,160 +12717,20 @@ gantt
                 }
             }
 
-            // Enhanced mobile keyboard experience
+            // Simplified mobile keyboard experience
             function optimizeMobileKeyboardExperience() {
                 if (!isMobileDevice()) return;
 
-                let originalViewportHeight = window.innerHeight;
-                let isKeyboardActive = false;
-                let keyboardHeight = 0;
-                let savedScrollPosition = 0;
-                let cursorPosition = null;
-                
                 const viewport = document.querySelector('meta[name="viewport"]');
                 
                 // Set optimal viewport for editing
                 if (viewport) {
                     viewport.setAttribute('content', 
-                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
+                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
                     );
                 }
 
-                // Prevent automatic scrolling when editor gets focus
-                function preventAutoScroll() {
-                    if (editor) {
-                        // Disable CodeMirror's automatic cursor scrolling
-                        editor.setOption('scrollbarStyle', 'null');
-                        
-                        // Override scrollIntoView to prevent auto-scrolling
-                        const originalScrollIntoView = editor.scrollIntoView;
-                        editor.scrollIntoView = function(pos, margin) {
-                            if (isKeyboardActive) {
-                                // Don't auto-scroll when keyboard is active
-                                return;
-                            }
-                            return originalScrollIntoView.call(this, pos, margin);
-                        };
-                        
-                        // Disable automatic cursor centering
-                        editor.off('cursorActivity', editor.scrollIntoView);
-                    }
-                }
-
-                // Handle keyboard show/hide with better logic
-                function handleViewportChange() {
-                    const currentHeight = window.innerHeight;
-                    const heightDifference = originalViewportHeight - currentHeight;
-                    
-                    // Keyboard is shown if height reduces significantly
-                    if (heightDifference > 150 && !isKeyboardActive) {
-                        isKeyboardActive = true;
-                        keyboardHeight = heightDifference;
-                        
-                        // Save current scroll position
-                        if (editor) {
-                            savedScrollPosition = editor.getScrollInfo().top;
-                            cursorPosition = editor.getCursor();
-                        }
-                        
-                        // Add keyboard active class
-                        document.body.classList.add('keyboard-active');
-                        
-                        // Prevent any automatic scrolling
-                        setTimeout(preventAutoScroll, 50);
-                        
-                        console.log('Keyboard shown, height reduced by:', heightDifference);
-                        
-                    } else if (heightDifference <= 50 && isKeyboardActive) {
-                        // Keyboard is hidden
-                        isKeyboardActive = false;
-                        keyboardHeight = 0;
-                        
-                        document.body.classList.remove('keyboard-active');
-                        
-                        // Prevent zoom-out and unwanted scrolling
-                        setTimeout(() => {
-                            if (viewport) {
-                                viewport.setAttribute('content', 
-                                    'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
-                                );
-                            }
-                            
-                            // Restore reasonable scroll position
-                            if (editor && savedScrollPosition !== null) {
-                                editor.scrollTo(null, savedScrollPosition);
-                            }
-                        }, 100);
-                        
-                        console.log('Keyboard hidden');
-                    }
-                }
-
-                // Better resize handler with debouncing
-                let resizeTimeout;
-                window.addEventListener('resize', () => {
-                    clearTimeout(resizeTimeout);
-                    resizeTimeout = setTimeout(handleViewportChange, 100);
-                });
-
-                // Handle focus events to prevent unwanted scrolling
-                document.addEventListener('focusin', (e) => {
-                    if (e.target.closest('.CodeMirror')) {
-                        e.preventDefault();
-                        
-                        // Store current position before focus
-                        if (editor) {
-                            savedScrollPosition = editor.getScrollInfo().top;
-                        }
-                        
-                        // Prevent default focus scrolling behavior
-                        setTimeout(() => {
-                            if (editor && savedScrollPosition !== null) {
-                                editor.scrollTo(null, savedScrollPosition);
-                            }
-                        }, 50);
-                    }
-                });
-
-                // Handle text input to keep cursor in reasonable position
-                if (editor) {
-                    editor.on('change', () => {
-                        if (isKeyboardActive) {
-                            // Keep cursor visible but don't force it to top
-                            const cursor = editor.getCursor();
-                            const coords = editor.charCoords(cursor, "local");
-                            const scrollInfo = editor.getScrollInfo();
-                            const editorHeight = editor.getWrapperElement().clientHeight;
-                            
-                            // Only adjust if cursor is outside reasonable bounds
-                            const cursorTop = coords.top - scrollInfo.top;
-                            const keyboardZone = editorHeight - keyboardHeight;
-                            
-                            if (cursorTop > keyboardZone - 50 || cursorTop < 50) {
-                                // Position cursor at 1/3 from top, not at the very top
-                                const targetTop = scrollInfo.top + coords.top - (keyboardZone * 0.3);
-                                editor.scrollTo(null, Math.max(0, targetTop));
-                            }
-                        }
-                    });
-                }
-
-                // Handle orientation changes
-                window.addEventListener('orientationchange', () => {
-                    setTimeout(() => {
-                        originalViewportHeight = window.innerHeight;
-                        isKeyboardActive = false;
-                        document.body.classList.remove('keyboard-active');
-                        
-                        if (viewport) {
-                            viewport.setAttribute('content', 
-                                'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
-                            );
-                        }
-                    }, 500);
-                });
-
-                // Better touch handling
+                // Prevent double-tap zoom only
                 const editorElements = document.querySelectorAll('.CodeMirror, .preview-container');
                 editorElements.forEach(element => {
                     element.style.touchAction = 'manipulation';
@@ -12901,8 +12746,28 @@ gantt
                     }, false);
                 });
 
-                // Initialize
-                setTimeout(preventAutoScroll, 1000);
+                // Simple keyboard state tracking (only for CSS purposes)
+                let originalViewportHeight = window.innerHeight;
+                
+                window.addEventListener('resize', () => {
+                    const currentHeight = window.innerHeight;
+                    const heightDifference = originalViewportHeight - currentHeight;
+                    
+                    // Simple keyboard state for CSS only
+                    if (heightDifference > 150) {
+                        document.body.classList.add('keyboard-active');
+                    } else {
+                        document.body.classList.remove('keyboard-active');
+                    }
+                });
+
+                // Handle orientation changes
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(() => {
+                        originalViewportHeight = window.innerHeight;
+                        document.body.classList.remove('keyboard-active');
+                    }, 500);
+                });
             }
 
             // Start the application
