@@ -323,27 +323,58 @@
         
         /* Desktop mode for all devices - no mobile CSS */
         
-        /* iOS Safari specific fixes */
+        /* Enhanced iOS Safari specific fixes */
         @supports (-webkit-touch-callout: none) {
             /* iPhone/iPad only */
+            html, body {
+                height: 100%;
+                overflow-x: hidden;
+                position: relative;
+            }
+            
             .CodeMirror {
                 /* Prevent iOS Safari from auto-scrolling */
                 -webkit-overflow-scrolling: touch;
                 transform: translateZ(0);
+                position: relative;
             }
             
             /* Prevent iOS zoom on input */
-            input, textarea, .CodeMirror-code {
+            input, textarea, .CodeMirror-code, .CodeMirror textarea {
                 font-size: 16px !important;
                 transform: translateZ(0);
+                -webkit-user-select: text !important;
+                -webkit-appearance: none;
             }
             
-            /* Stable positioning during keyboard events */
+            /* Complete lockdown during keyboard active */
             body.ios-keyboard-active {
                 position: fixed !important;
                 width: 100% !important;
-                height: 100% !important;
+                height: 100vh !important;
                 overflow: hidden !important;
+                -webkit-overflow-scrolling: auto !important;
+            }
+            
+            body.ios-keyboard-active * {
+                -webkit-overflow-scrolling: auto !important;
+            }
+            
+            body.ios-keyboard-active .main-panel {
+                position: relative !important;
+                overflow: hidden !important;
+            }
+            
+            body.ios-keyboard-active .CodeMirror-scroll {
+                -webkit-overflow-scrolling: auto !important;
+                overflow-y: auto !important;
+                position: relative !important;
+            }
+            
+            /* Prevent any layout shifts */
+            body.ios-keyboard-active .container {
+                transform: none !important;
+                position: relative !important;
             }
         }
 
@@ -12516,20 +12547,40 @@ gantt
             }
             
             function initializeIOSFixes() {
-                console.log('Applying iOS Safari fixes');
+                console.log('Applying enhanced iOS Safari fixes');
                 
                 const viewport = document.querySelector('meta[name="viewport"]');
                 let isKeyboardActive = false;
                 let originalHeight = window.innerHeight;
+                let originalScrollTop = 0;
                 
-                // Prevent zoom on input focus - iOS specific
+                // Force disable zoom and scaling
                 if (viewport) {
                     viewport.setAttribute('content', 
-                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui, viewport-fit=cover'
                     );
                 }
                 
-                // Minimal keyboard detection for iOS
+                // Prevent all automatic scrolling behaviors
+                function lockScrollPosition() {
+                    originalScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    document.body.style.position = 'fixed';
+                    document.body.style.top = `-${originalScrollTop}px`;
+                    document.body.style.width = '100%';
+                    document.body.style.height = '100%';
+                    console.log('iOS: Position locked');
+                }
+                
+                function unlockScrollPosition() {
+                    document.body.style.position = '';
+                    document.body.style.top = '';
+                    document.body.style.width = '';
+                    document.body.style.height = '';
+                    window.scrollTo(0, originalScrollTop);
+                    console.log('iOS: Position unlocked');
+                }
+                
+                // Enhanced keyboard detection
                 let resizeTimer;
                 window.addEventListener('resize', () => {
                     clearTimeout(resizeTimer);
@@ -12537,51 +12588,95 @@ gantt
                         const currentHeight = window.innerHeight;
                         const heightDiff = originalHeight - currentHeight;
                         
-                        if (heightDiff > 150 && !isKeyboardActive) {
-                            // Keyboard appeared
+                        if (heightDiff > 100 && !isKeyboardActive) {
+                            // Keyboard appeared - lock everything
                             isKeyboardActive = true;
+                            lockScrollPosition();
                             document.body.classList.add('ios-keyboard-active');
-                            console.log('iOS keyboard detected');
+                            console.log('iOS keyboard detected, locked position');
                             
-                        } else if (heightDiff < 100 && isKeyboardActive) {
-                            // Keyboard dismissed
+                        } else if (heightDiff < 50 && isKeyboardActive) {
+                            // Keyboard dismissed - unlock carefully
                             isKeyboardActive = false;
                             document.body.classList.remove('ios-keyboard-active');
                             
-                            // Prevent auto-zoom after keyboard dismissal
                             setTimeout(() => {
+                                unlockScrollPosition();
+                                
+                                // Force viewport reset
                                 if (viewport) {
                                     viewport.setAttribute('content', 
                                         'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
                                     );
                                 }
-                                window.scrollTo(0, 0); // Reset any unwanted scroll
-                            }, 300);
+                            }, 100);
                             console.log('iOS keyboard dismissed');
                         }
-                    }, 150);
+                    }, 100);
                 });
+                
+                // Block all scroll events during keyboard active
+                let scrollBlocked = false;
+                function blockScroll(e) {
+                    if (isKeyboardActive && !scrollBlocked) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+                }
+                
+                // Add scroll blocking
+                document.addEventListener('scroll', blockScroll, { passive: false });
+                document.addEventListener('touchmove', blockScroll, { passive: false });
+                window.addEventListener('scroll', blockScroll, { passive: false });
                 
                 // Handle orientation change
                 window.addEventListener('orientationchange', () => {
                     setTimeout(() => {
                         originalHeight = window.innerHeight;
                         isKeyboardActive = false;
+                        unlockScrollPosition();
                         document.body.classList.remove('ios-keyboard-active');
+                        
+                        if (viewport) {
+                            viewport.setAttribute('content', 
+                                'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+                            );
+                        }
                     }, 600);
                 });
                 
-                // Allow normal clicking but prevent unwanted automatic focus
+                // Completely disable CodeMirror's automatic scrolling
                 if (editor) {
-                    const originalScrollIntoView = editor.scrollIntoView;
-                    editor.scrollIntoView = function(pos, margin) {
-                        // Allow scrollIntoView but only when keyboard is not active
+                    // Block scrollIntoView completely
+                    editor.scrollIntoView = function() {
+                        console.log('iOS: Blocked all scrollIntoView calls');
+                        return;
+                    };
+                    
+                    // Block other scroll methods
+                    const originalScrollTo = editor.scrollTo;
+                    editor.scrollTo = function() {
                         if (!isKeyboardActive) {
-                            return originalScrollIntoView.call(this, pos, margin);
+                            return originalScrollTo.apply(this, arguments);
                         }
-                        console.log('iOS: Blocked scrollIntoView during keyboard active');
+                        console.log('iOS: Blocked scrollTo during keyboard active');
+                    };
+                    
+                    // Disable cursor activity scrolling
+                    editor.off('cursorActivity');
+                    
+                    // Block refresh calls that might trigger scrolling
+                    const originalRefresh = editor.refresh;
+                    editor.refresh = function() {
+                        if (!isKeyboardActive) {
+                            return originalRefresh.call(this);
+                        }
+                        console.log('iOS: Blocked refresh during keyboard active');
                     };
                 }
+                
+                console.log('Enhanced iOS fixes applied');
             }
         });
     </script>
