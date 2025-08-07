@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
     <title>PowerNote Pro - 筆記、任務與時間追蹤</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✒️</text></svg>">
 
@@ -316,26 +316,15 @@
             overflow-x: hidden !important;
         }
         
-        /* Hide mobile view toggle on desktop */
+        /* Hide mobile view toggle on all devices - desktop mode only */
         #mobile-view-toggle {
-            display: none;
+            display: none !important;
         }
         
-        /* Simplified Mobile Scrollbar */
-        @media (max-width: 768px) {
-            /* Basic mobile scrollbar - no fancy animations */
-            ::-webkit-scrollbar {
-                width: 8px;
-            }
+        /* Desktop mode for all devices - no mobile CSS */
 
-            ::-webkit-scrollbar-thumb {
-                background: rgba(0, 123, 255, 0.5);
-                border-radius: 4px;
-            }
-        }
-
-        /* Mobile responsive design */
-        @media (max-width: 768px) {
+        /* All mobile CSS removed - using desktop layout for all screen sizes */
+        @media (max-width: 99999px) { /* Disable all mobile CSS by setting impossible screen size */
             /* Mobile smooth scrolling optimization */
             body {
                 -webkit-overflow-scrolling: touch;
@@ -398,10 +387,7 @@
                 font-size: 16px !important;
             }
             
-            /* Hide unnecessary buttons on mobile, but show timer, font, search and mobile jump */
-            .toolbar button:not(#sidebar-toggle):not(#mobile-view-toggle):not(#timer-btn):not(#font-settings-btn):not(#search-toggle-btn):not(#mobile-jump-btn) {
-                display: none !important;
-            }
+            /* Show all buttons on all devices - desktop mode for everyone */
             
             /* Show mobile view toggle only on mobile */
             #mobile-view-toggle {
@@ -4119,7 +4105,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
     <title>${title} - PowerNote 分享</title>
     <meta name="description" content="由 PowerNote 分享的文章">
     <meta property="og:title" content="${title}">
@@ -5413,9 +5399,9 @@
                 return inCodeBlock;
             }
 
-            // Detect mobile device
+            // Force desktop mode for all devices
             function isMobileDevice() {
-                return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                return false; // Always return false to use desktop version
             }
 
             function initEditor() {
@@ -12390,11 +12376,7 @@ gantt
             // Start the application
             initialize();
             
-            // Minimal mobile optimizations
-            setTimeout(() => {
-                initializeEnhancedMobileScrollbars();
-                optimizeMobileKeyboardExperience();
-            }, 100);
+            // Mobile optimizations disabled - using desktop version for all devices
         });
     </script>
 
