@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
     <title>PowerNote Pro - 筆記、任務與時間追蹤</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✒️</text></svg>">
 
@@ -316,83 +316,127 @@
             overflow-x: hidden !important;
         }
         
-        /* Hide mobile view toggle on desktop */
+        /* Hide mobile view toggle on all devices - desktop mode only */
         #mobile-view-toggle {
-            display: none;
+            display: none !important;
         }
         
-        /* Mobile responsive design */
-        @media (max-width: 768px) {
-            /* 手機版觸控優化 */
-            * {
-                -webkit-tap-highlight-color: transparent;
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
+        /* Desktop mode for all devices - no mobile CSS */
+        
+        /* Enhanced iOS Safari specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            /* 絕對靜止的iPhone/iPad視窗鎖定 */
+            html, body {
+                height: 100vh !important;
+                min-height: 100vh !important;
+                max-height: 100vh !important;
+                overflow: hidden !important;
+                position: fixed !important;
+                width: 100% !important;
+                top: 0 !important;
+                left: 0 !important;
+                bottom: 0 !important;
+                right: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-overflow-scrolling: auto;
+                overscroll-behavior: none;
+                -webkit-overscroll-behavior: none;
+                /* 完全防止任何移動 */
+                transform: translate3d(0, 0, 0) !important;
+                -webkit-transform: translate3d(0, 0, 0) !important;
             }
             
-            /* 允許編輯器區域選擇文字 */
-            .CodeMirror,
-            .CodeMirror-scroll,
-            .CodeMirror-sizer,
-            .CodeMirror-lines,
-            .CodeMirror-cursors,
-            .CodeMirror-selected,
-            input,
-            textarea {
-                -webkit-user-select: text !important;
-                -moz-user-select: text !important;
-                -ms-user-select: text !important;
-                user-select: text !important;
+            .container {
+                /* Ensure container doesn't cause viewport issues */
+                position: relative;
+                height: 100vh !important;
+                overflow: hidden;
+                -webkit-overflow-scrolling: auto;
+                transform: translateZ(0);
             }
             
-            /* 改善滑動性能 */
-            .CodeMirror-scroll {
+            .CodeMirror {
+                /* Enhanced iOS Safari scroll prevention */
                 -webkit-overflow-scrolling: touch;
-                transform: translate3d(0, 0, 0);
-                will-change: scroll-position;
+                transform: translateZ(0);
+                position: relative;
+                contain: layout style paint;
+                /* Prevent any scrolling behaviors that could affect viewport */
+                scroll-behavior: auto !important;
+            }
+            
+            .CodeMirror-scroll {
+                /* Enhanced scroll container for iOS stability */
+                position: relative;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: auto !important;
+                /* Prevent iOS from jumping to elements */
+                contain: layout;
+            }
+            
+            /* Prevent iOS zoom and viewport changes on input */
+            input, textarea, .CodeMirror-code, .CodeMirror textarea {
+                font-size: 16px !important;
+                transform: translateZ(0);
+                -webkit-user-select: text !important;
+                -webkit-appearance: none;
+                position: relative;
+                /* Prevent input focus from causing viewport shifts */
+                scroll-margin: 0;
+                scroll-snap-align: none;
+            }
+            
+            /* Global iOS scroll behavior override */
+            * {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: auto !important;
+                overscroll-behavior: none;
+                -webkit-overscroll-behavior: none;
+            }
+            
+            /* Disable any potential bounce effects */
+            body, html, .container, .main-panel {
+                overscroll-behavior-y: none;
+                overscroll-behavior-x: none;
+                -webkit-overscroll-behavior-y: none;
+                -webkit-overscroll-behavior-x: none;
+            }
+            
+            /* Ensure no elements can cause viewport jumping */
+            .main-panel, .editor-panel, .preview-panel {
+                position: relative;
+                contain: layout style;
+                transform: translateZ(0);
+            }
+        }
+
+        /* All mobile CSS removed - using desktop layout for all screen sizes */
+        @media (max-width: 99999px) { /* Disable all mobile CSS by setting impossible screen size */
+            /* Mobile smooth scrolling optimization */
+            body {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
+            
+            /* Enhanced smooth scrolling for editors */
+            .CodeMirror-scroll {
+                -webkit-overflow-scrolling: touch !important;
+                scroll-behavior: smooth !important;
+                overflow-y: auto !important;
             }
             
             .preview-container {
-                -webkit-overflow-scrolling: touch;
-                transform: translate3d(0, 0, 0);
-                will-change: scroll-position;
+                -webkit-overflow-scrolling: touch !important;
+                scroll-behavior: smooth !important;
+                overflow-y: auto !important;
             }
-            
+
             /* Enhanced mobile word wrap */
             .CodeMirror {
                 line-height: 1.3 !important;
                 /* 移除固定字體大小，讓用戶設定生效 */
-                /* 手機版優化 */
-                transform: translate3d(0, 0, 0);
-                backface-visibility: hidden;
-                perspective: 1000px;
-            }
-            
-            /* 手機版鍵盤打開時的優化 */
-            body.keyboard-open {
-                position: fixed;
-                width: 100%;
-                height: 100vh;
-                overflow: hidden;
-            }
-            
-            body.keyboard-open .main-container {
-                height: 100vh;
-                max-height: 100vh;
-                overflow: hidden;
-            }
-            
-            body.keyboard-open .CodeMirror-scroll {
-                /* 鍵盤打開時減少動畫以提升性能 */
-                transition: none !important;
-            }
-            
-            body.keyboard-open .preview-container {
-                /* 鍵盤打開時減少動畫以提升性能 */
-                transition: none !important;
             }
             
             /* Enhanced mobile preview word wrap */
@@ -401,10 +445,38 @@
                 line-height: 1.4 !important;
             }
             
-            /* Hide unnecessary buttons on mobile, but show timer, font, search and mobile jump */
-            .toolbar button:not(#sidebar-toggle):not(#mobile-view-toggle):not(#timer-btn):not(#font-settings-btn):not(#search-toggle-btn):not(#mobile-jump-btn) {
-                display: none !important;
+            /* Mobile keyboard optimization - prevent screen jumping */
+            .main-editor-content {
+                position: relative;
             }
+            
+            /* Fix viewport issues when keyboard appears */
+            .mobile-edit-only .CodeMirror-scroll,
+            .mobile-preview-only .preview-container {
+                /* Prevent automatic zoom when focusing input */
+                touch-action: manipulation;
+            }
+            
+            /* Smooth keyboard appearance handling */
+            @supports (-webkit-touch-callout: none) {
+                /* iOS specific optimizations */
+                .CodeMirror {
+                    transform: translateZ(0);
+                    -webkit-transform: translateZ(0);
+                }
+                
+                .preview-container {
+                    transform: translateZ(0);
+                    -webkit-transform: translateZ(0);
+                }
+            }
+            
+            /* Minimal keyboard state - no complex animations or positioning */
+            input, textarea, .CodeMirror-code {
+                font-size: 16px !important;
+            }
+            
+            /* Show all buttons on all devices - desktop mode for everyone */
             
             /* Show mobile view toggle only on mobile */
             #mobile-view-toggle {
@@ -1903,7 +1975,92 @@
             border-left: 1px solid var(--border-color);
         }
         
-        /* View Mode Toggle Buttons in Toolbar */
+        /* Three-Way View Mode Switch */
+        .view-mode-switch {
+            display: inline-flex;
+            background: var(--secondary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 25px;
+            padding: 3px;
+            position: relative;
+            margin: 0 8px;
+        }
+
+        .view-mode-switch input[type="radio"] {
+            display: none;
+        }
+
+        .switch-slider {
+            display: flex;
+            position: relative;
+            background: transparent;
+        }
+
+        .switch-option {
+            position: relative;
+            z-index: 2;
+        }
+
+        .switch-option label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 20px;
+            min-width: 60px;
+            font-size: 11px;
+            color: var(--text-color);
+        }
+
+        .switch-option label i {
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .switch-option label span {
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        /* Active state background slider */
+        .switch-slider::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 33.333%;
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: 20px;
+            transition: transform 0.3s ease;
+            z-index: 1;
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+        }
+
+        /* Move slider based on selection */
+        .view-mode-switch input[value="edit-only"]:checked ~ .switch-slider::before {
+            transform: translateX(0%);
+        }
+
+        .view-mode-switch input[value="split"]:checked ~ .switch-slider::before {
+            transform: translateX(100%);
+        }
+
+        .view-mode-switch input[value="preview-only"]:checked ~ .switch-slider::before {
+            transform: translateX(200%);
+        }
+
+        /* Active text color */
+        .view-mode-switch input[value="edit-only"]:checked ~ .switch-slider .switch-option:nth-child(1) label,
+        .view-mode-switch input[value="split"]:checked ~ .switch-slider .switch-option:nth-child(2) label,
+        .view-mode-switch input[value="preview-only"]:checked ~ .switch-slider .switch-option:nth-child(3) label {
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Keep original toolbar button style for drawing mode */
         .view-mode-toolbar-btn {
             background: var(--button-bg);
             color: white;
@@ -3125,15 +3282,39 @@
         <div class="main-panel">
             <div class="toolbar">
                 <button id="sidebar-toggle"><i class="fas fa-bars"></i> <span class="btn-text"></span></button>
-                <button id="mobile-view-toggle" title="切換檢視模式"><i class="fas fa-eye"></i></button>
                 <button id="timer-btn" class="timer-btn"><i class="fas fa-clock"></i> <span id="timer-display">00:00</span></button>
                 <button id="font-settings-btn"><i class="fas fa-text-height"></i> <span id="current-font-size">22px</span></button>
                 <button id="shortcuts-help-btn" title="快捷鍵說明"><i class="fas fa-keyboard"></i></button>
                 
-                <!-- View Mode Toggle Buttons -->
-                <button id="split-view-btn" class="view-mode-toolbar-btn active" title="編輯/渲染模式"><i class="fas fa-columns"></i></button>
-                <button id="edit-only-btn" class="view-mode-toolbar-btn" title="純編輯模式"><i class="fas fa-edit"></i></button>
-                <button id="preview-only-btn" class="view-mode-toolbar-btn" title="純渲染模式"><i class="fas fa-eye"></i></button>
+                <!-- Three-Way View Mode Switch -->
+                <div class="view-mode-switch" title="切換檢視模式">
+                    <input type="radio" id="edit-mode" name="viewMode" value="edit-only" />
+                    <input type="radio" id="split-mode" name="viewMode" value="split" checked />
+                    <input type="radio" id="preview-mode" name="viewMode" value="preview-only" />
+                    
+                    <div class="switch-slider">
+                        <div class="switch-option">
+                            <label for="edit-mode">
+                                <i class="fas fa-edit"></i>
+                                <span>編輯</span>
+                            </label>
+                        </div>
+                        <div class="switch-option">
+                            <label for="split-mode">
+                                <i class="fas fa-columns"></i>
+                                <span>雙視窗</span>
+                            </label>
+                        </div>
+                        <div class="switch-option">
+                            <label for="preview-mode">
+                                <i class="fas fa-eye"></i>
+                                <span>渲染</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Keep drawing mode as separate button -->
                 <button id="drawing-mode-btn" class="view-mode-toolbar-btn" title="繪圖模式"><i class="fas fa-draw-polygon"></i></button>
                 
                 <div style="margin-left: auto;"></div>
@@ -3716,7 +3897,7 @@
             const filePanel = document.getElementById('file-panel');
             const sidebarToggle = document.getElementById('sidebar-toggle');
             const viewModeToggle = document.getElementById('view-mode-toggle');
-            const mobileViewToggle = document.getElementById('mobile-view-toggle');
+            // Mobile view toggle removed - using desktop mode only
             
             // Separate states
             let sidebarVisible = false;
@@ -4122,7 +4303,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
     <title>${title} - PowerNote 分享</title>
     <meta name="description" content="由 PowerNote 分享的文章">
     <meta property="og:title" content="${title}">
@@ -5416,41 +5597,30 @@
                 return inCodeBlock;
             }
 
-            // Detect mobile device
+            // Force desktop mode for all devices
             function isMobileDevice() {
-                return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                return false; // Always return false to use desktop version
             }
 
             function initEditor() {
                 const isMobile = isMobileDevice();
                 
-                // 手機版優化配置
-                const editorOptions = {
+                editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
                     mode: 'markdown',
                     theme: 'default',
                     lineNumbers: true,
                     lineWrapping: true, // Always enable line wrapping
-                    autofocus: !isMobile, // Disable autofocus on mobile to prevent keyboard popup
+                    autofocus: false, // Always disable autofocus to prevent unwanted focus
                     foldGutter: false,
                     gutters: ["CodeMirror-linenumbers"],
+                    scrollbarStyle: 'native', // Use native scrollbar
                     extraKeys: {
                         "Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); },
                         "Ctrl-Shift-Q": function(cm){ cm.execCommand("unfoldAll"); }
                     }
-                };
-                
-                // 手機版特殊優化
-                if (isMobile) {
-                    editorOptions.viewportMargin = 10; // 減少渲染行數，提升性能
-                    editorOptions.cursorBlinkRate = 530; // 優化游標閃爍頻率
-                    editorOptions.workTime = 100; // 減少工作時間，提升響應性
-                    editorOptions.workDelay = 100; // 增加工作延遲，避免阻塞
-                    editorOptions.pollInterval = 100; // 減少輪詢頻率
-                    editorOptions.dragDrop = false; // 禁用拖拽以避免觸控衝突
-                    // 移除不支援的 scrollbarStyle 設置
-                }
-                
-                editor = CodeMirror.fromTextArea(document.getElementById('editor'), editorOptions);
+                });
+
+                // Keep mobile editor simple - no special overrides
                 
                 // Register custom markdown fold function
                 CodeMirror.registerHelper("fold", "markdown", markdownHeaderFold);
@@ -5524,41 +5694,9 @@
                     }, 100);
                 });
                 
-                // 手機版鍵盤和視窗處理變數
-                let initialViewportHeight = window.innerHeight;
-                let isKeyboardOpen = false;
-                let resizeTimer = null;
-                
                 // Handle window resize for orientation changes
                 window.addEventListener('resize', () => {
-                    if (resizeTimer) {
-                        clearTimeout(resizeTimer);
-                    }
-                    
-                    resizeTimer = setTimeout(() => {
-                        const currentHeight = window.innerHeight;
-                        const heightDiff = initialViewportHeight - currentHeight;
-                        
-                        // 檢測手機鍵盤狀態
-                        if (isMobileDevice()) {
-                            // 如果高度減少超過150px，可能是鍵盤打開
-                            if (heightDiff > 150 && !isKeyboardOpen) {
-                                isKeyboardOpen = true;
-                                document.body.classList.add('keyboard-open');
-                                // 禁用滾動同步以提升性能
-                                syncScrollEnabled = false;
-                            } 
-                            // 如果高度恢復，可能是鍵盤關閉
-                            else if (heightDiff < 50 && isKeyboardOpen) {
-                                isKeyboardOpen = false;
-                                document.body.classList.remove('keyboard-open');
-                                // 重新啟用滾動同步
-                                syncScrollEnabled = true;
-                                // 重新設定初始高度，防止縮放問題
-                                initialViewportHeight = currentHeight;
-                            }
-                        }
-                        
+                    setTimeout(() => {
                         if (editor) {
                             // Always keep line wrapping enabled for better UX
                             editor.setOption("lineWrapping", true);
@@ -5570,37 +5708,9 @@
                         } else {
                             // Remove mobile classes if no longer on mobile
                             mainContainer.classList.remove('mobile-edit-only', 'mobile-preview-only');
-                            // 重置鍵盤狀態
-                            isKeyboardOpen = false;
-                            document.body.classList.remove('keyboard-open');
                         }
                     }, 100);
                 });
-                
-                // 處理方向變更，進一步防止縮放問題
-                if (isMobileDevice()) {
-                    window.addEventListener('orientationchange', () => {
-                        // 延遲處理，等待方向變更完成
-                        setTimeout(() => {
-                            initialViewportHeight = window.innerHeight;
-                            isKeyboardOpen = false;
-                            document.body.classList.remove('keyboard-open');
-                            syncScrollEnabled = true;
-                            
-                            // 強制重新整理視窗以確保正確顯示
-                            if (editor) {
-                                editor.refresh();
-                            }
-                        }, 500);
-                    });
-                    
-                    // 添加視窗焦點事件處理
-                    window.addEventListener('focus', () => {
-                        setTimeout(() => {
-                            initialViewportHeight = window.innerHeight;
-                        }, 300);
-                    });
-                }
                 // 移除游標活動計時觸發，改用文字編輯觸發
                 // editor.on('cursorActivity', handleCursorTimerTracking);
 
@@ -6515,26 +6625,7 @@
                 return closestLine >= 0 ? lineToElementMap.get(closestLine) : null;
             }
 
-            // 手機版滾動節流
-            let scrollThrottleTimer = null;
             function syncPreviewScroll() {
-                if (isSyncing || !syncScrollEnabled) return;
-                
-                // 手機版節流處理，減少滾動同步頻率
-                if (isMobileDevice()) {
-                    if (scrollThrottleTimer) {
-                        clearTimeout(scrollThrottleTimer);
-                    }
-                    scrollThrottleTimer = setTimeout(() => {
-                        performSyncPreviewScroll();
-                    }, 100); // 100ms 節流
-                    return;
-                }
-                
-                performSyncPreviewScroll();
-            }
-            
-            function performSyncPreviewScroll() {
                 if (isSyncing || !syncScrollEnabled) return;
                 isSyncing = true;
                 
@@ -6589,26 +6680,7 @@
                 return null;
             }
             
-            // 手機版編輯器滾動節流
-            let editorScrollThrottleTimer = null;
             function syncEditorScroll() {
-                if (isSyncing || !syncScrollEnabled) return;
-                
-                // 手機版節流處理
-                if (isMobileDevice()) {
-                    if (editorScrollThrottleTimer) {
-                        clearTimeout(editorScrollThrottleTimer);
-                    }
-                    editorScrollThrottleTimer = setTimeout(() => {
-                        performSyncEditorScroll();
-                    }, 100); // 100ms 節流
-                    return;
-                }
-                
-                performSyncEditorScroll();
-            }
-            
-            function performSyncEditorScroll() {
                 if (isSyncing || !syncScrollEnabled) return;
                 isSyncing = true;
                 
@@ -6671,7 +6743,9 @@
 
             function navigateToTocLine(line) {
                 editor.setCursor({ line: parseInt(line), ch: 0 });
-                editor.focus();
+                if (!isMobileDevice()) {
+                    editor.focus();
+                }
                 
                 // Auto close sidebar on mobile after navigation
                 if (isMobileDevice() && sidebarVisible) {
@@ -6758,7 +6832,9 @@
                 if (task.section && task.section.line !== undefined) {
                     setTimeout(() => {
                         editor.setCursor({ line: task.section.line, ch: 0 });
-                        editor.focus();
+                        if (!isMobileDevice()) {
+                            editor.focus();
+                        }
                         timerModal.style.display = 'none';
                     }, 100);
                 } else {
@@ -7796,16 +7872,8 @@ gantt
                 
                 if (mobileViewMode === 'edit') {
                     mainContainer.classList.add('mobile-edit-only');
-                    if (mobileViewToggle) {
-                        mobileViewToggle.innerHTML = '<i class="fas fa-edit"></i>';
-                        mobileViewToggle.title = '純編輯模式 - 點擊切換到渲染';
-                    }
                 } else if (mobileViewMode === 'preview') {
                     mainContainer.classList.add('mobile-preview-only');
-                    if (mobileViewToggle) {
-                        mobileViewToggle.innerHTML = '<i class="fas fa-eye"></i>';
-                        mobileViewToggle.title = '純渲染模式 - 點擊切換到編輯';
-                    }
                 }
             }
 
@@ -9689,7 +9757,7 @@ gantt
                 // Sidebar controls
                 if (sidebarToggle) sidebarToggle.addEventListener('click', toggleSidebar);
                 if (viewModeToggle) viewModeToggle.addEventListener('click', toggleViewMode);
-                if (mobileViewToggle) mobileViewToggle.addEventListener('click', toggleMobileView);
+                // Mobile view toggle removed - using desktop mode only
                 if (closeFilePanelBtn) closeFilePanelBtn.addEventListener('click', closeSidebar);
                 if (tocListEl) tocListEl.addEventListener('click', (e) => { if (e.target.tagName === 'LI') navigateToTocLine(e.target.dataset.line); });
                 if (newFileBtn) newFileBtn.addEventListener('click', async () => await createNewFile());
@@ -9741,10 +9809,17 @@ gantt
                 const sortBtn = document.getElementById('sort-files-btn');
                 if (sortBtn) sortBtn.addEventListener('click', cycleSortMode);
                 
-                // View mode controls
-                safeAddEventListener('split-view-btn', 'click', () => setViewMode('split'));
-                safeAddEventListener('edit-only-btn', 'click', () => setViewMode('edit-only'));
-                safeAddEventListener('preview-only-btn', 'click', () => setViewMode('preview-only'));
+                // View mode controls - new three-way switch
+                const viewModeRadios = document.querySelectorAll('input[name="viewMode"]');
+                viewModeRadios.forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        if (e.target.checked) {
+                            setViewMode(e.target.value);
+                        }
+                    });
+                });
+                
+                // Keep drawing mode as separate button
                 safeAddEventListener('drawing-mode-btn', 'click', () => setViewMode('drawing'));
                 
                 // Fold all button
@@ -10038,7 +10113,9 @@ gantt
                     closeSearch();
                 } else {
                     searchBar.classList.add('active');
-                    searchInput.focus();
+                    if (!isMobileDevice()) {
+                        searchInput.focus();
+                    }
                     if (searchInput.value) {
                         performSearch(); // Re-run search if there's already a query
                     }
@@ -10148,7 +10225,9 @@ gantt
                 if (currentFile && match.fileId === currentFile.id) {
                     // Match in current open file, just jump
                     editor.setSelection(match.from, match.to);
-                    editor.scrollIntoView(match.from, 20); // scrollIntoView with padding
+                    if (!isMobileDevice()) {
+                        editor.scrollIntoView(match.from, 20); // scrollIntoView with padding
+                    }
                     highlightCurrentMatch();
                 } else {
                     // Match in another file, load it first
@@ -10156,7 +10235,9 @@ gantt
                     // Need a slight delay for editor to update its content before setting cursor/highlighting
                     setTimeout(() => {
                         editor.setSelection(match.from, match.to);
-                        editor.scrollIntoView(match.from, 20);
+                        if (!isMobileDevice()) {
+                            editor.scrollIntoView(match.from, 20);
+                        }
                         highlightAllSearchResults(); // Re-highlight all matches for the new file
                         highlightCurrentMatch();
                     }, 100);
@@ -10325,7 +10406,9 @@ gantt
                 allSearchResults = [];
                 currentSearchMatchIndex = -1;
                 searchInput.value = '';
-                editor.focus();
+                if (!isMobileDevice()) {
+                    editor.focus();
+                }
             }
 			// --- Search Functions End ---
 
@@ -10355,16 +10438,17 @@ gantt
                 const editorPanel = document.getElementById('editor-panel');
                 const previewPanel = document.getElementById('preview-panel');
                 const drawingPanel = document.getElementById('drawing-panel');
-                const splitBtn = document.getElementById('split-view-btn');
-                const editBtn = document.getElementById('edit-only-btn');
-                const previewBtn = document.getElementById('preview-only-btn');
                 const drawingBtn = document.getElementById('drawing-mode-btn');
                 const syncScrollToggle = document.getElementById('sync-scroll-toggle');
                 
-                // Reset button states
-                [splitBtn, editBtn, previewBtn, drawingBtn].forEach(btn => {
-                    if (btn) btn.classList.remove('active');
+                // Update radio button selection
+                const viewModeRadios = document.querySelectorAll('input[name="viewMode"]');
+                viewModeRadios.forEach(radio => {
+                    radio.checked = radio.value === mode;
                 });
+                
+                // Reset drawing button state
+                if (drawingBtn) drawingBtn.classList.remove('active');
                 
                 // Hide divider and remove drawing mode class for non-drawing modes
                 const divider = document.getElementById('panel-divider');
@@ -10387,7 +10471,6 @@ gantt
                         if (divider) divider.style.display = 'none';
                         if (mainContent) mainContent.classList.remove('drawing-mode');
                         if (syncScrollToggle) syncScrollToggle.style.display = 'block';
-                        splitBtn.classList.add('active');
                         break;
                     case 'edit-only':
                         editorPanel.style.display = 'flex';
@@ -10397,7 +10480,6 @@ gantt
                         if (divider) divider.style.display = 'none';
                         if (mainContent) mainContent.classList.remove('drawing-mode');
                         if (syncScrollToggle) syncScrollToggle.style.display = 'none';
-                        editBtn.classList.add('active');
                         break;
                     case 'preview-only':
                         editorPanel.style.display = 'none';
@@ -10407,7 +10489,6 @@ gantt
                         if (divider) divider.style.display = 'none';
                         if (mainContent) mainContent.classList.remove('drawing-mode');
                         if (syncScrollToggle) syncScrollToggle.style.display = 'none';
-                        previewBtn.classList.add('active');
                         break;
                     case 'drawing':
                         editorPanel.style.display = 'flex';
@@ -10446,7 +10527,9 @@ gantt
                     const match = line.match(/^#+\s+(.+)$/);
                     if (match && match[1].toLowerCase().includes(sectionName.toLowerCase())) {
                         editor.setCursor({ line: i, ch: 0 });
-                        editor.focus();
+                        if (!isMobileDevice()) {
+                            editor.focus();
+                        }
                         showNotification(`已跳轉到段落：${sectionName}`);
                         break;
                     }
@@ -10693,7 +10776,9 @@ gantt
                 }
                 
                 removeAutocompleteDropdown();
-                editor.focus();
+                if (!isMobileDevice()) {
+                    editor.focus();
+                }
             }
             
             function getAutocompleteItems(query) {
@@ -12443,9 +12528,235 @@ gantt
                 }
             }
 
+
+            // Minimal mobile scrollbar optimization
+            function initializeEnhancedMobileScrollbars() {
+                if (!isMobileDevice()) return;
+
+                // Just add basic touch scrolling, no custom drag logic
+                const editorScroll = document.querySelector('.CodeMirror-scroll');
+                const previewContainer = document.querySelector('.preview-container');
+
+                if (editorScroll) {
+                    editorScroll.style.webkitOverflowScrolling = 'touch';
+                    editorScroll.style.overflowY = 'auto';
+                }
+                
+                if (previewContainer) {
+                    previewContainer.style.webkitOverflowScrolling = 'touch';
+                    previewContainer.style.overflowY = 'auto';
+                }
+            }
+
+            // Minimal mobile optimization
+            function optimizeMobileKeyboardExperience() {
+                if (!isMobileDevice()) return;
+
+                const viewport = document.querySelector('meta[name="viewport"]');
+                
+                // Just set viewport, no event listeners
+                if (viewport) {
+                    viewport.setAttribute('content', 
+                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+                    );
+                }
+
+                // Only set touch-action, no event listeners
+                const editorElements = document.querySelectorAll('.CodeMirror, .preview-container');
+                editorElements.forEach(element => {
+                    element.style.touchAction = 'manipulation';
+                });
+            }
+
             // Start the application
             initialize();
+            
+            // Mobile optimizations disabled - using desktop version for all devices
+            
+            // iPhone Safari specific fixes - delayed to ensure editor is ready
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                setTimeout(() => {
+                    initializeIOSFixes();
+                }, 1000);
+            }
+            
+            function initializeIOSFixes() {
+                console.log('Applying comprehensive iOS Safari fixes for viewport stability');
+                
+                const viewport = document.querySelector('meta[name="viewport"]');
+                
+                // Set strict viewport to prevent zoom and scaling
+                if (viewport) {
+                    viewport.setAttribute('content', 
+                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover'
+                    );
+                }
+                
+                // Apply iOS-specific body fixes to prevent viewport jumping
+                const originalBodyStyle = {
+                    position: document.body.style.position,
+                    top: document.body.style.top,
+                    width: document.body.style.width,
+                    height: document.body.style.height,
+                    overflow: document.body.style.overflow
+                };
+                
+                document.body.style.position = 'fixed';
+                document.body.style.top = '0';
+                document.body.style.left = '0';
+                document.body.style.width = '100%';
+                document.body.style.height = '100vh';
+                document.body.style.overflow = 'hidden';
+                
+                // Store scroll position for keyboard handling
+                let savedScrollTop = 0;
+                let isKeyboardVisible = false;
+                
+                // 完全靜止的鍵盤檢測 - 不允許任何畫面移動
+                function detectKeyboard() {
+                    // 記錄初始狀態但不做任何位置調整
+                    const initialHeight = window.innerHeight;
+                    
+                    // 僅用於檢測鍵盤狀態，但不改變畫面位置
+                    if (window.visualViewport) {
+                        window.visualViewport.addEventListener('resize', () => {
+                            const heightDiff = initialHeight - window.visualViewport.height;
+                            isKeyboardVisible = heightDiff > 150;
+                            // 不執行任何位置調整 - 讓畫面保持完全靜止
+                            console.log('Keyboard state:', isKeyboardVisible ? 'visible' : 'hidden', '- maintaining static position');
+                        });
+                    }
+                    
+                    // 窗口resize檢測但不調整位置
+                    let resizeTimeout;
+                    window.addEventListener('resize', () => {
+                        clearTimeout(resizeTimeout);
+                        resizeTimeout = setTimeout(() => {
+                            const heightDiff = initialHeight - window.innerHeight;
+                            isKeyboardVisible = heightDiff > 150;
+                            // 不執行任何位置調整 - 保持畫面靜止
+                            console.log('Window resize detected - keyboard:', isKeyboardVisible ? 'visible' : 'hidden');
+                        }, 100);
+                    });
+                }
+                
+                detectKeyboard();
+                
+                // CodeMirror specific overrides
+                if (editor) {
+                    // Completely block all CodeMirror scrolling methods
+                    editor.scrollIntoView = function() { 
+                        console.log('iOS: Blocked scrollIntoView'); 
+                        return false;
+                    };
+                    
+                    editor.scrollTo = function() { 
+                        console.log('iOS: Blocked scrollTo'); 
+                        return false;
+                    };
+                    
+                    // Remove all scroll-related event listeners
+                    editor.off('cursorActivity');
+                    editor.off('scroll');
+                    editor.off('focus');
+                    
+                    // Handle editor interactions safely
+                    const editorWrapper = editor.getWrapperElement();
+                    const editorScroll = editorWrapper.querySelector('.CodeMirror-scroll');
+                    
+                    if (editorScroll) {
+                        // Prevent editor from causing viewport changes
+                        editorScroll.addEventListener('focus', (e) => {
+                            if (!isKeyboardVisible) {
+                                const currentTop = window.pageYOffset;
+                                setTimeout(() => {
+                                    if (window.pageYOffset !== currentTop) {
+                                        window.scrollTo(0, currentTop);
+                                    }
+                                }, 0);
+                            }
+                        }, true);
+                        
+                        // Handle touch events
+                        editorScroll.addEventListener('touchstart', (e) => {
+                            savedScrollTop = window.pageYOffset;
+                        }, { passive: true });
+                    }
+                }
+                
+                // 絕對靜止的滾動防護 - 無條件鎖定在頂部
+                let scrollLocked = false;
+                function lockScroll() {
+                    if (scrollLocked) return;
+                    
+                    scrollLocked = true;
+                    
+                    // 無論任何情況，都強制保持在頂部位置
+                    if (window.pageYOffset !== 0) {
+                        window.scrollTo(0, 0);
+                        console.log('Forced scroll to top - maintaining static position');
+                    }
+                    
+                    setTimeout(() => {
+                        scrollLocked = false;
+                    }, 16); // 減少延遲，更快響應
+                }
+                
+                // Multiple scroll event listeners for thorough prevention
+                window.addEventListener('scroll', lockScroll, { passive: true });
+                document.addEventListener('scroll', lockScroll, { passive: true });
+                
+                // Prevent iOS bounce scrolling on the entire page
+                document.addEventListener('touchmove', (e) => {
+                    // Allow scrolling only within CodeMirror editor
+                    if (e.target.closest('.CodeMirror-scroll') || e.target.closest('.CodeMirror-vscrollbar')) {
+                        return;
+                    }
+                    e.preventDefault();
+                }, { passive: false });
+                
+                // 強力的事件阻止機制 - 防止任何位置變化
+                document.addEventListener('touchstart', (e) => {
+                    // 立即記錄並鎖定當前位置
+                    const currentScrollTop = window.pageYOffset;
+                    if (currentScrollTop !== 0) {
+                        window.scrollTo(0, 0);
+                    }
+                }, { passive: true });
+                
+                // 阻止可能導致位置變化的事件
+                document.addEventListener('focusin', (e) => {
+                    // 防止focus導致的滾動
+                    const currentScrollTop = window.pageYOffset;
+                    setTimeout(() => {
+                        if (window.pageYOffset !== currentScrollTop || window.pageYOffset !== 0) {
+                            window.scrollTo(0, 0);
+                            console.log('Blocked focus-induced scroll');
+                        }
+                    }, 0);
+                }, { passive: true });
+                
+                // 監聽任何可能的滾動並立即阻止
+                let preventScrollTimeout;
+                function absoluteScrollPrevention() {
+                    clearTimeout(preventScrollTimeout);
+                    preventScrollTimeout = setTimeout(() => {
+                        if (window.pageYOffset !== 0) {
+                            window.scrollTo(0, 0);
+                            console.log('Absolute scroll prevention activated');
+                        }
+                    }, 0);
+                }
+                
+                // 多重滾動監聽
+                window.addEventListener('scroll', absoluteScrollPrevention, { passive: true });
+                document.addEventListener('scroll', absoluteScrollPrevention, { passive: true });
+                document.documentElement.addEventListener('scroll', absoluteScrollPrevention, { passive: true });
+                
+                console.log('絕對靜止模式已啟動 - 畫面將完全鎖定不動');
+            }
         });
     </script>
+
 </body>
 </html>
