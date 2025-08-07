@@ -544,29 +544,31 @@
             
             /* Enhanced keyboard active state */
             body.keyboard-active {
-                /* Prevent bouncing and maintain stable layout */
-                position: fixed;
-                width: 100%;
-                height: 100%;
+                /* Maintain stable layout without forcing position fixed */
                 overflow: hidden;
             }
             
             body.keyboard-active .main-panel {
                 /* Ensure content doesn't jump when keyboard appears */
-                height: 100vh;
-                overflow: hidden;
+                position: relative;
+                z-index: 1;
             }
             
             body.keyboard-active .CodeMirror-scroll {
-                /* Smooth scrolling during keyboard interaction */
-                scroll-behavior: smooth;
+                /* Disable automatic scrolling behaviors */
+                scroll-behavior: auto !important;
                 -webkit-overflow-scrolling: touch;
+            }
+            
+            body.keyboard-active .CodeMirror {
+                /* Prevent CodeMirror from auto-adjusting */
+                height: auto !important;
             }
             
             /* Improved text cursor positioning */
             body.keyboard-active .CodeMirror-cursor {
                 /* Make cursor more visible during typing */
-                border-left: 3px solid var(--accent-color);
+                border-left: 3px solid var(--accent-color) !important;
                 animation: cursor-blink 1.2s infinite;
             }
             
@@ -575,11 +577,32 @@
                 51%, 100% { opacity: 0; }
             }
             
-            /* Prevent viewport scaling on input focus */
+            /* Prevent viewport scaling and auto-focus behaviors */
             input, textarea, .CodeMirror-code {
                 font-size: 16px !important;
                 transform: translateZ(0);
                 -webkit-transform: translateZ(0);
+            }
+            
+            /* Prevent unwanted scrolling during keyboard active state */
+            body.keyboard-active .CodeMirror-scroll {
+                position: relative;
+                z-index: 2;
+            }
+            
+            /* Disable iOS bounce scrolling when keyboard is active */
+            @supports (-webkit-touch-callout: none) {
+                body.keyboard-active {
+                    position: fixed;
+                    width: 100%;
+                    height: 100vh;
+                    overflow: hidden;
+                }
+                
+                body.keyboard-active .main-panel {
+                    height: 100vh;
+                    overflow: hidden;
+                }
             }
             
             /* Hide unnecessary buttons on mobile, but show timer, font, search and mobile jump */
@@ -5613,11 +5636,29 @@
                     autofocus: !isMobile, // Disable autofocus on mobile to prevent keyboard popup
                     foldGutter: false,
                     gutters: ["CodeMirror-linenumbers"],
+                    scrollbarStyle: isMobile ? 'null' : 'native', // Use custom scrollbar on mobile
                     extraKeys: {
                         "Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); },
                         "Ctrl-Shift-Q": function(cm){ cm.execCommand("unfoldAll"); }
                     }
                 });
+
+                // Mobile-specific editor configuration
+                if (isMobile) {
+                    // Disable automatic cursor scrolling behaviors
+                    editor.setOption('scrollMargin', 0);
+                    
+                    // Override default scrolling behavior
+                    const originalScrollIntoView = editor.scrollIntoView;
+                    editor.scrollIntoView = function(pos, margin) {
+                        // Only scroll if explicitly needed, not automatically
+                        if (arguments.length === 0) return;
+                        return originalScrollIntoView.call(this, pos, margin);
+                    };
+                    
+                    // Prevent automatic centering when cursor changes
+                    editor.off('cursorActivity');
+                }
                 
                 // Register custom markdown fold function
                 CodeMirror.registerHelper("fold", "markdown", markdownHeaderFold);
@@ -12695,79 +12736,192 @@ gantt
             function optimizeMobileKeyboardExperience() {
                 if (!isMobileDevice()) return;
 
+                let originalViewportHeight = window.innerHeight;
+                let isKeyboardActive = false;
+                let keyboardHeight = 0;
+                let savedScrollPosition = 0;
+                let cursorPosition = null;
+                
                 const viewport = document.querySelector('meta[name="viewport"]');
+                
+                // Set optimal viewport for editing
                 if (viewport) {
-                    // Prevent zoom on input focus
                     viewport.setAttribute('content', 
-                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
                     );
                 }
 
-                // iOS specific keyboard optimizations
-                if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                    let originalViewportHeight = window.innerHeight;
-                    
-                    window.addEventListener('resize', () => {
-                        const currentHeight = window.innerHeight;
-                        const heightDifference = originalViewportHeight - currentHeight;
+                // Prevent automatic scrolling when editor gets focus
+                function preventAutoScroll() {
+                    if (editor) {
+                        // Disable CodeMirror's automatic cursor scrolling
+                        editor.setOption('scrollbarStyle', 'null');
                         
-                        // If keyboard is likely shown (significant height reduction)
-                        if (heightDifference > 150) {
-                            document.body.classList.add('keyboard-active');
-                            // Prevent content jumping by maintaining scroll position
-                            const activeElement = document.activeElement;
-                            if (activeElement && activeElement.closest('.CodeMirror')) {
-                                setTimeout(() => {
-                                    const cursor = editor.getCursor();
-                                    const coords = editor.charCoords(cursor, "local");
-                                    const scrollInfo = editor.getScrollInfo();
-                                    
-                                    // Keep cursor in middle third of screen instead of top
-                                    const targetTop = scrollInfo.top + coords.top - (currentHeight * 0.4);
-                                    editor.scrollTo(null, Math.max(0, targetTop));
-                                }, 100);
+                        // Override scrollIntoView to prevent auto-scrolling
+                        const originalScrollIntoView = editor.scrollIntoView;
+                        editor.scrollIntoView = function(pos, margin) {
+                            if (isKeyboardActive) {
+                                // Don't auto-scroll when keyboard is active
+                                return;
                             }
-                        } else {
-                            document.body.classList.remove('keyboard-active');
-                            // Restore original viewport height smoothly
-                            setTimeout(() => {
-                                if (viewport) {
-                                    viewport.setAttribute('content', 
-                                        'width=device-width, initial-scale=1.0'
-                                    );
-                                }
-                            }, 300);
-                        }
-                    });
+                            return originalScrollIntoView.call(this, pos, margin);
+                        };
+                        
+                        // Disable automatic cursor centering
+                        editor.off('cursorActivity', editor.scrollIntoView);
+                    }
+                }
 
-                    // Handle orientation change
-                    window.addEventListener('orientationchange', () => {
+                // Handle keyboard show/hide with better logic
+                function handleViewportChange() {
+                    const currentHeight = window.innerHeight;
+                    const heightDifference = originalViewportHeight - currentHeight;
+                    
+                    // Keyboard is shown if height reduces significantly
+                    if (heightDifference > 150 && !isKeyboardActive) {
+                        isKeyboardActive = true;
+                        keyboardHeight = heightDifference;
+                        
+                        // Save current scroll position
+                        if (editor) {
+                            savedScrollPosition = editor.getScrollInfo().top;
+                            cursorPosition = editor.getCursor();
+                        }
+                        
+                        // Add keyboard active class
+                        document.body.classList.add('keyboard-active');
+                        
+                        // Prevent any automatic scrolling
+                        setTimeout(preventAutoScroll, 50);
+                        
+                        console.log('Keyboard shown, height reduced by:', heightDifference);
+                        
+                    } else if (heightDifference <= 50 && isKeyboardActive) {
+                        // Keyboard is hidden
+                        isKeyboardActive = false;
+                        keyboardHeight = 0;
+                        
+                        document.body.classList.remove('keyboard-active');
+                        
+                        // Prevent zoom-out and unwanted scrolling
                         setTimeout(() => {
-                            originalViewportHeight = window.innerHeight;
                             if (viewport) {
                                 viewport.setAttribute('content', 
-                                    'width=device-width, initial-scale=1.0'
+                                    'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
                                 );
                             }
-                        }, 500);
+                            
+                            // Restore reasonable scroll position
+                            if (editor && savedScrollPosition !== null) {
+                                editor.scrollTo(null, savedScrollPosition);
+                            }
+                        }, 100);
+                        
+                        console.log('Keyboard hidden');
+                    }
+                }
+
+                // Better resize handler with debouncing
+                let resizeTimeout;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(handleViewportChange, 100);
+                });
+
+                // Handle focus events to prevent unwanted scrolling
+                document.addEventListener('focusin', (e) => {
+                    if (e.target.closest('.CodeMirror')) {
+                        e.preventDefault();
+                        
+                        // Store current position before focus
+                        if (editor) {
+                            savedScrollPosition = editor.getScrollInfo().top;
+                        }
+                        
+                        // Prevent default focus scrolling behavior
+                        setTimeout(() => {
+                            if (editor && savedScrollPosition !== null) {
+                                editor.scrollTo(null, savedScrollPosition);
+                            }
+                        }, 50);
+                    }
+                });
+
+                // Handle text input to keep cursor in reasonable position
+                if (editor) {
+                    editor.on('change', () => {
+                        if (isKeyboardActive) {
+                            // Keep cursor visible but don't force it to top
+                            const cursor = editor.getCursor();
+                            const coords = editor.charCoords(cursor, "local");
+                            const scrollInfo = editor.getScrollInfo();
+                            const editorHeight = editor.getWrapperElement().clientHeight;
+                            
+                            // Only adjust if cursor is outside reasonable bounds
+                            const cursorTop = coords.top - scrollInfo.top;
+                            const keyboardZone = editorHeight - keyboardHeight;
+                            
+                            if (cursorTop > keyboardZone - 50 || cursorTop < 50) {
+                                // Position cursor at 1/3 from top, not at the very top
+                                const targetTop = scrollInfo.top + coords.top - (keyboardZone * 0.3);
+                                editor.scrollTo(null, Math.max(0, targetTop));
+                            }
+                        }
                     });
                 }
 
-                // Add touch-action manipulation for better touch response
+                // Handle orientation changes
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(() => {
+                        originalViewportHeight = window.innerHeight;
+                        isKeyboardActive = false;
+                        document.body.classList.remove('keyboard-active');
+                        
+                        if (viewport) {
+                            viewport.setAttribute('content', 
+                                'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+                            );
+                        }
+                    }, 500);
+                });
+
+                // Better touch handling
                 const editorElements = document.querySelectorAll('.CodeMirror, .preview-container');
                 editorElements.forEach(element => {
                     element.style.touchAction = 'manipulation';
+                    
+                    // Prevent double-tap zoom
+                    let lastTouchEnd = 0;
+                    element.addEventListener('touchend', (e) => {
+                        const now = new Date().getTime();
+                        if (now - lastTouchEnd <= 300) {
+                            e.preventDefault();
+                        }
+                        lastTouchEnd = now;
+                    }, false);
                 });
+
+                // Initialize
+                setTimeout(preventAutoScroll, 1000);
             }
 
             // Start the application
             initialize();
             
-            // Initialize mobile optimizations after DOM is ready
+            // Initialize mobile optimizations after editor is ready
             setTimeout(() => {
                 initializeEnhancedMobileScrollbars();
-                optimizeMobileKeyboardExperience();
-            }, 1000);
+                
+                // Wait for editor to be fully initialized
+                if (editor) {
+                    optimizeMobileKeyboardExperience();
+                } else {
+                    // If editor not ready, wait a bit more
+                    setTimeout(() => {
+                        optimizeMobileKeyboardExperience();
+                    }, 2000);
+                }
+            }, 1500);
         });
     </script>
 
