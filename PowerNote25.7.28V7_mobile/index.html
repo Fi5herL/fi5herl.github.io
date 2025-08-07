@@ -322,6 +322,30 @@
         }
         
         /* Desktop mode for all devices - no mobile CSS */
+        
+        /* iOS Safari specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            /* iPhone/iPad only */
+            .CodeMirror {
+                /* Prevent iOS Safari from auto-scrolling */
+                -webkit-overflow-scrolling: touch;
+                transform: translateZ(0);
+            }
+            
+            /* Prevent iOS zoom on input */
+            input, textarea, .CodeMirror-code {
+                font-size: 16px !important;
+                transform: translateZ(0);
+            }
+            
+            /* Stable positioning during keyboard events */
+            body.ios-keyboard-active {
+                position: fixed !important;
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden !important;
+            }
+        }
 
         /* All mobile CSS removed - using desktop layout for all screen sizes */
         @media (max-width: 99999px) { /* Disable all mobile CSS by setting impossible screen size */
@@ -12377,6 +12401,79 @@ gantt
             initialize();
             
             // Mobile optimizations disabled - using desktop version for all devices
+            
+            // iPhone Safari specific fixes - delayed to ensure editor is ready
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                setTimeout(() => {
+                    initializeIOSFixes();
+                }, 1000);
+            }
+            
+            function initializeIOSFixes() {
+                console.log('Applying iOS Safari fixes');
+                
+                const viewport = document.querySelector('meta[name="viewport"]');
+                let isKeyboardActive = false;
+                let originalHeight = window.innerHeight;
+                
+                // Prevent zoom on input focus - iOS specific
+                if (viewport) {
+                    viewport.setAttribute('content', 
+                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+                    );
+                }
+                
+                // Minimal keyboard detection for iOS
+                let resizeTimer;
+                window.addEventListener('resize', () => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => {
+                        const currentHeight = window.innerHeight;
+                        const heightDiff = originalHeight - currentHeight;
+                        
+                        if (heightDiff > 150 && !isKeyboardActive) {
+                            // Keyboard appeared
+                            isKeyboardActive = true;
+                            document.body.classList.add('ios-keyboard-active');
+                            console.log('iOS keyboard detected');
+                            
+                        } else if (heightDiff < 100 && isKeyboardActive) {
+                            // Keyboard dismissed
+                            isKeyboardActive = false;
+                            document.body.classList.remove('ios-keyboard-active');
+                            
+                            // Prevent auto-zoom after keyboard dismissal
+                            setTimeout(() => {
+                                if (viewport) {
+                                    viewport.setAttribute('content', 
+                                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+                                    );
+                                }
+                                window.scrollTo(0, 0); // Reset any unwanted scroll
+                            }, 300);
+                            console.log('iOS keyboard dismissed');
+                        }
+                    }, 150);
+                });
+                
+                // Handle orientation change
+                window.addEventListener('orientationchange', () => {
+                    setTimeout(() => {
+                        originalHeight = window.innerHeight;
+                        isKeyboardActive = false;
+                        document.body.classList.remove('ios-keyboard-active');
+                    }, 600);
+                });
+                
+                // Disable automatic focus scrolling for iOS
+                if (editor) {
+                    const originalFocus = editor.focus;
+                    editor.focus = function() {
+                        // Don't call original focus on iOS to prevent scrolling
+                        console.log('iOS: Blocked editor focus to prevent scrolling');
+                    };
+                }
+            }
         });
     </script>
 
