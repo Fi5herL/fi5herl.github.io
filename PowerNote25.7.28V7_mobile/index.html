@@ -1910,7 +1910,92 @@
             border-left: 1px solid var(--border-color);
         }
         
-        /* View Mode Toggle Buttons in Toolbar */
+        /* Three-Way View Mode Switch */
+        .view-mode-switch {
+            display: inline-flex;
+            background: var(--secondary-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 25px;
+            padding: 3px;
+            position: relative;
+            margin: 0 8px;
+        }
+
+        .view-mode-switch input[type="radio"] {
+            display: none;
+        }
+
+        .switch-slider {
+            display: flex;
+            position: relative;
+            background: transparent;
+        }
+
+        .switch-option {
+            position: relative;
+            z-index: 2;
+        }
+
+        .switch-option label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 20px;
+            min-width: 60px;
+            font-size: 11px;
+            color: var(--text-color);
+        }
+
+        .switch-option label i {
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .switch-option label span {
+            font-size: 10px;
+            white-space: nowrap;
+        }
+
+        /* Active state background slider */
+        .switch-slider::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 33.333%;
+            height: 100%;
+            background: var(--accent-color);
+            border-radius: 20px;
+            transition: transform 0.3s ease;
+            z-index: 1;
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+        }
+
+        /* Move slider based on selection */
+        .view-mode-switch input[value="edit-only"]:checked ~ .switch-slider::before {
+            transform: translateX(0%);
+        }
+
+        .view-mode-switch input[value="split"]:checked ~ .switch-slider::before {
+            transform: translateX(100%);
+        }
+
+        .view-mode-switch input[value="preview-only"]:checked ~ .switch-slider::before {
+            transform: translateX(200%);
+        }
+
+        /* Active text color */
+        .view-mode-switch input[value="edit-only"]:checked ~ .switch-slider .switch-option:nth-child(1) label,
+        .view-mode-switch input[value="split"]:checked ~ .switch-slider .switch-option:nth-child(2) label,
+        .view-mode-switch input[value="preview-only"]:checked ~ .switch-slider .switch-option:nth-child(3) label {
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Keep original toolbar button style for drawing mode */
         .view-mode-toolbar-btn {
             background: var(--button-bg);
             color: white;
@@ -3132,15 +3217,39 @@
         <div class="main-panel">
             <div class="toolbar">
                 <button id="sidebar-toggle"><i class="fas fa-bars"></i> <span class="btn-text"></span></button>
-                <button id="mobile-view-toggle" title="切換檢視模式"><i class="fas fa-eye"></i></button>
                 <button id="timer-btn" class="timer-btn"><i class="fas fa-clock"></i> <span id="timer-display">00:00</span></button>
                 <button id="font-settings-btn"><i class="fas fa-text-height"></i> <span id="current-font-size">22px</span></button>
                 <button id="shortcuts-help-btn" title="快捷鍵說明"><i class="fas fa-keyboard"></i></button>
                 
-                <!-- View Mode Toggle Buttons -->
-                <button id="split-view-btn" class="view-mode-toolbar-btn active" title="編輯/渲染模式"><i class="fas fa-columns"></i></button>
-                <button id="edit-only-btn" class="view-mode-toolbar-btn" title="純編輯模式"><i class="fas fa-edit"></i></button>
-                <button id="preview-only-btn" class="view-mode-toolbar-btn" title="純渲染模式"><i class="fas fa-eye"></i></button>
+                <!-- Three-Way View Mode Switch -->
+                <div class="view-mode-switch" title="切換檢視模式">
+                    <input type="radio" id="edit-mode" name="viewMode" value="edit-only" />
+                    <input type="radio" id="split-mode" name="viewMode" value="split" checked />
+                    <input type="radio" id="preview-mode" name="viewMode" value="preview-only" />
+                    
+                    <div class="switch-slider">
+                        <div class="switch-option">
+                            <label for="edit-mode">
+                                <i class="fas fa-edit"></i>
+                                <span>編輯</span>
+                            </label>
+                        </div>
+                        <div class="switch-option">
+                            <label for="split-mode">
+                                <i class="fas fa-columns"></i>
+                                <span>雙視窗</span>
+                            </label>
+                        </div>
+                        <div class="switch-option">
+                            <label for="preview-mode">
+                                <i class="fas fa-eye"></i>
+                                <span>渲染</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Keep drawing mode as separate button -->
                 <button id="drawing-mode-btn" class="view-mode-toolbar-btn" title="繪圖模式"><i class="fas fa-draw-polygon"></i></button>
                 
                 <div style="margin-left: auto;"></div>
@@ -3723,7 +3832,7 @@
             const filePanel = document.getElementById('file-panel');
             const sidebarToggle = document.getElementById('sidebar-toggle');
             const viewModeToggle = document.getElementById('view-mode-toggle');
-            const mobileViewToggle = document.getElementById('mobile-view-toggle');
+            // Mobile view toggle removed - using desktop mode only
             
             // Separate states
             let sidebarVisible = false;
@@ -7698,16 +7807,8 @@ gantt
                 
                 if (mobileViewMode === 'edit') {
                     mainContainer.classList.add('mobile-edit-only');
-                    if (mobileViewToggle) {
-                        mobileViewToggle.innerHTML = '<i class="fas fa-edit"></i>';
-                        mobileViewToggle.title = '純編輯模式 - 點擊切換到渲染';
-                    }
                 } else if (mobileViewMode === 'preview') {
                     mainContainer.classList.add('mobile-preview-only');
-                    if (mobileViewToggle) {
-                        mobileViewToggle.innerHTML = '<i class="fas fa-eye"></i>';
-                        mobileViewToggle.title = '純渲染模式 - 點擊切換到編輯';
-                    }
                 }
             }
 
@@ -9591,7 +9692,7 @@ gantt
                 // Sidebar controls
                 if (sidebarToggle) sidebarToggle.addEventListener('click', toggleSidebar);
                 if (viewModeToggle) viewModeToggle.addEventListener('click', toggleViewMode);
-                if (mobileViewToggle) mobileViewToggle.addEventListener('click', toggleMobileView);
+                // Mobile view toggle removed - using desktop mode only
                 if (closeFilePanelBtn) closeFilePanelBtn.addEventListener('click', closeSidebar);
                 if (tocListEl) tocListEl.addEventListener('click', (e) => { if (e.target.tagName === 'LI') navigateToTocLine(e.target.dataset.line); });
                 if (newFileBtn) newFileBtn.addEventListener('click', async () => await createNewFile());
@@ -9643,10 +9744,17 @@ gantt
                 const sortBtn = document.getElementById('sort-files-btn');
                 if (sortBtn) sortBtn.addEventListener('click', cycleSortMode);
                 
-                // View mode controls
-                safeAddEventListener('split-view-btn', 'click', () => setViewMode('split'));
-                safeAddEventListener('edit-only-btn', 'click', () => setViewMode('edit-only'));
-                safeAddEventListener('preview-only-btn', 'click', () => setViewMode('preview-only'));
+                // View mode controls - new three-way switch
+                const viewModeRadios = document.querySelectorAll('input[name="viewMode"]');
+                viewModeRadios.forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        if (e.target.checked) {
+                            setViewMode(e.target.value);
+                        }
+                    });
+                });
+                
+                // Keep drawing mode as separate button
                 safeAddEventListener('drawing-mode-btn', 'click', () => setViewMode('drawing'));
                 
                 // Fold all button
@@ -10265,16 +10373,17 @@ gantt
                 const editorPanel = document.getElementById('editor-panel');
                 const previewPanel = document.getElementById('preview-panel');
                 const drawingPanel = document.getElementById('drawing-panel');
-                const splitBtn = document.getElementById('split-view-btn');
-                const editBtn = document.getElementById('edit-only-btn');
-                const previewBtn = document.getElementById('preview-only-btn');
                 const drawingBtn = document.getElementById('drawing-mode-btn');
                 const syncScrollToggle = document.getElementById('sync-scroll-toggle');
                 
-                // Reset button states
-                [splitBtn, editBtn, previewBtn, drawingBtn].forEach(btn => {
-                    if (btn) btn.classList.remove('active');
+                // Update radio button selection
+                const viewModeRadios = document.querySelectorAll('input[name="viewMode"]');
+                viewModeRadios.forEach(radio => {
+                    radio.checked = radio.value === mode;
                 });
+                
+                // Reset drawing button state
+                if (drawingBtn) drawingBtn.classList.remove('active');
                 
                 // Hide divider and remove drawing mode class for non-drawing modes
                 const divider = document.getElementById('panel-divider');
@@ -10297,7 +10406,6 @@ gantt
                         if (divider) divider.style.display = 'none';
                         if (mainContent) mainContent.classList.remove('drawing-mode');
                         if (syncScrollToggle) syncScrollToggle.style.display = 'block';
-                        splitBtn.classList.add('active');
                         break;
                     case 'edit-only':
                         editorPanel.style.display = 'flex';
@@ -10307,7 +10415,6 @@ gantt
                         if (divider) divider.style.display = 'none';
                         if (mainContent) mainContent.classList.remove('drawing-mode');
                         if (syncScrollToggle) syncScrollToggle.style.display = 'none';
-                        editBtn.classList.add('active');
                         break;
                     case 'preview-only':
                         editorPanel.style.display = 'none';
@@ -10317,7 +10424,6 @@ gantt
                         if (divider) divider.style.display = 'none';
                         if (mainContent) mainContent.classList.remove('drawing-mode');
                         if (syncScrollToggle) syncScrollToggle.style.display = 'none';
-                        previewBtn.classList.add('active');
                         break;
                     case 'drawing':
                         editorPanel.style.display = 'flex';
@@ -12465,12 +12571,15 @@ gantt
                     }, 600);
                 });
                 
-                // Disable automatic focus scrolling for iOS
+                // Allow normal clicking but prevent unwanted automatic focus
                 if (editor) {
-                    const originalFocus = editor.focus;
-                    editor.focus = function() {
-                        // Don't call original focus on iOS to prevent scrolling
-                        console.log('iOS: Blocked editor focus to prevent scrolling');
+                    const originalScrollIntoView = editor.scrollIntoView;
+                    editor.scrollIntoView = function(pos, margin) {
+                        // Allow scrollIntoView but only when keyboard is not active
+                        if (!isKeyboardActive) {
+                            return originalScrollIntoView.call(this, pos, margin);
+                        }
+                        console.log('iOS: Blocked scrollIntoView during keyboard active');
                     };
                 }
             }
