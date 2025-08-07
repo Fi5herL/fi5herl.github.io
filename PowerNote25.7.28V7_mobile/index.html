@@ -53,6 +53,10 @@
             color: var(--text-color);
             height: 100%;
             display: flex;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            -webkit-overflow-scrolling: touch;
         }
         
         .sidebar-toggle {
@@ -341,6 +345,18 @@
             
             .preview-container {
                 padding-bottom: 0 !important; /* Remove all bottom padding on mobile */
+            }
+            
+            /* Fix touch scrolling issues on mobile */
+            .editor-container, .preview-container {
+                -webkit-overflow-scrolling: touch !important;
+                overflow-y: auto !important;
+                touch-action: pan-y !important; /* Only allow vertical scrolling */
+            }
+            
+            .CodeMirror {
+                touch-action: pan-y !important;
+                -webkit-overflow-scrolling: touch !important;
             }
             
             /* Hide unnecessary buttons on mobile, but show timer, font, search and mobile jump */
@@ -6482,18 +6498,37 @@
 
             // --- Table of Contents ---
             function generateToc() {
+                if (!tocListEl) {
+                    console.log('TOC list element not found');
+                    return;
+                }
+                
                 tocListEl.innerHTML = '';
-                if (!editor) return;
-                editor.getValue().split('\n').forEach((line, index) => {
+                if (!editor) {
+                    console.log('Editor not available for TOC generation');
+                    return;
+                }
+                
+                const content = editor.getValue();
+                if (!content) {
+                    console.log('No content for TOC generation');
+                    return;
+                }
+                
+                content.split('\n').forEach((line, index) => {
                     const match = line.match(/^(#+)\s+(.*)/);
                     if (match) {
                         const li = document.createElement('li');
                         li.textContent = match[2];
                         li.className = `toc-h${match[1].length}`;
-                        li.dataset.line = index;
+                        li.dataset.line = index.toString(); // Ensure it's a string
+                        li.style.cursor = 'pointer'; // Make it clear it's clickable
                         tocListEl.appendChild(li);
+                        console.log('TOC item created:', match[2], 'line:', index); // Debug log
                     }
                 });
+                
+                console.log('TOC generated with', tocListEl.children.length, 'items'); // Debug log
             }
             
             function updateToc() {
@@ -6501,8 +6536,28 @@
             }
 
             function navigateToTocLine(line) {
-                editor.setCursor({ line: parseInt(line), ch: 0 });
-                editor.focus();
+                if (!editor) {
+                    console.log('Editor not available for TOC navigation');
+                    return;
+                }
+                
+                const lineNumber = parseInt(line);
+                console.log('Navigating to line:', lineNumber); // Debug log
+                
+                if (isNaN(lineNumber) || lineNumber < 0) {
+                    console.log('Invalid line number:', line);
+                    return;
+                }
+                
+                // Set cursor position
+                editor.setCursor({ line: lineNumber, ch: 0 });
+                
+                // Scroll to the line with margin
+                setTimeout(() => {
+                    editor.scrollIntoView({ line: lineNumber, ch: 0 }, 50);
+                    editor.focus();
+                    console.log('Scrolled to line:', lineNumber); // Debug log
+                }, 100);
                 
                 // Auto close sidebar on mobile after navigation
                 if (isMobileDevice() && sidebarVisible) {
@@ -9522,7 +9577,16 @@ gantt
                 if (viewModeToggle) viewModeToggle.addEventListener('click', toggleViewMode);
                 if (mobileViewToggle) mobileViewToggle.addEventListener('click', toggleMobileView);
                 if (closeFilePanelBtn) closeFilePanelBtn.addEventListener('click', closeSidebar);
-                if (tocListEl) tocListEl.addEventListener('click', (e) => { if (e.target.tagName === 'LI') navigateToTocLine(e.target.dataset.line); });
+                if (tocListEl) {
+                    tocListEl.addEventListener('click', (e) => { 
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (e.target.tagName === 'LI' && e.target.dataset.line !== undefined) {
+                            console.log('TOC clicked, line:', e.target.dataset.line); // Debug log
+                            navigateToTocLine(e.target.dataset.line);
+                        }
+                    });
+                }
                 if (newFileBtn) newFileBtn.addEventListener('click', async () => await createNewFile());
                 if (exportWorkspaceBtn) exportWorkspaceBtn.addEventListener('click', exportWorkspace);
                 if (importWorkspaceBtn) importWorkspaceBtn.addEventListener('click', () => workspaceInput.click());
