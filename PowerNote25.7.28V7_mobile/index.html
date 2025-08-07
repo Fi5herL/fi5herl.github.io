@@ -5633,7 +5633,7 @@
                     theme: 'default',
                     lineNumbers: true,
                     lineWrapping: true, // Always enable line wrapping
-                    autofocus: !isMobile, // Disable autofocus on mobile to prevent keyboard popup
+                    autofocus: false, // Always disable autofocus to prevent unwanted focus
                     foldGutter: false,
                     gutters: ["CodeMirror-linenumbers"],
                     scrollbarStyle: 'native', // Use native scrollbar
@@ -6766,7 +6766,9 @@
 
             function navigateToTocLine(line) {
                 editor.setCursor({ line: parseInt(line), ch: 0 });
-                editor.focus();
+                if (!isMobileDevice()) {
+                    editor.focus();
+                }
                 
                 // Auto close sidebar on mobile after navigation
                 if (isMobileDevice() && sidebarVisible) {
@@ -6853,7 +6855,9 @@
                 if (task.section && task.section.line !== undefined) {
                     setTimeout(() => {
                         editor.setCursor({ line: task.section.line, ch: 0 });
-                        editor.focus();
+                        if (!isMobileDevice()) {
+                            editor.focus();
+                        }
                         timerModal.style.display = 'none';
                     }, 100);
                 } else {
@@ -10133,7 +10137,9 @@ gantt
                     closeSearch();
                 } else {
                     searchBar.classList.add('active');
-                    searchInput.focus();
+                    if (!isMobileDevice()) {
+                        searchInput.focus();
+                    }
                     if (searchInput.value) {
                         performSearch(); // Re-run search if there's already a query
                     }
@@ -10243,7 +10249,9 @@ gantt
                 if (currentFile && match.fileId === currentFile.id) {
                     // Match in current open file, just jump
                     editor.setSelection(match.from, match.to);
-                    editor.scrollIntoView(match.from, 20); // scrollIntoView with padding
+                    if (!isMobileDevice()) {
+                        editor.scrollIntoView(match.from, 20); // scrollIntoView with padding
+                    }
                     highlightCurrentMatch();
                 } else {
                     // Match in another file, load it first
@@ -10251,7 +10259,9 @@ gantt
                     // Need a slight delay for editor to update its content before setting cursor/highlighting
                     setTimeout(() => {
                         editor.setSelection(match.from, match.to);
-                        editor.scrollIntoView(match.from, 20);
+                        if (!isMobileDevice()) {
+                            editor.scrollIntoView(match.from, 20);
+                        }
                         highlightAllSearchResults(); // Re-highlight all matches for the new file
                         highlightCurrentMatch();
                     }, 100);
@@ -10420,7 +10430,9 @@ gantt
                 allSearchResults = [];
                 currentSearchMatchIndex = -1;
                 searchInput.value = '';
-                editor.focus();
+                if (!isMobileDevice()) {
+                    editor.focus();
+                }
             }
 			// --- Search Functions End ---
 
@@ -10541,7 +10553,9 @@ gantt
                     const match = line.match(/^#+\s+(.+)$/);
                     if (match && match[1].toLowerCase().includes(sectionName.toLowerCase())) {
                         editor.setCursor({ line: i, ch: 0 });
-                        editor.focus();
+                        if (!isMobileDevice()) {
+                            editor.focus();
+                        }
                         showNotification(`已跳轉到段落：${sectionName}`);
                         break;
                     }
@@ -10788,7 +10802,9 @@ gantt
                 }
                 
                 removeAutocompleteDropdown();
-                editor.focus();
+                if (!isMobileDevice()) {
+                    editor.focus();
+                }
             }
             
             function getAutocompleteItems(query) {
@@ -12602,7 +12618,7 @@ gantt
                             const touch = e.touches[0];
                             const deltaY = touch.clientY - startY;
                             
-                            // Calculate scroll ratio
+                            // Calculate scroll ratio with throttling
                             const maxScrollDistance = containerHeight;
                             const maxScroll = scrollHeight - containerHeight;
                             
@@ -12613,7 +12629,10 @@ gantt
                                     maxScroll
                                 ));
                                 
-                                container.scrollTop = newScrollTop;
+                                // Throttle scrollTop updates to improve performance
+                                if (Math.abs(container.scrollTop - newScrollTop) > 5) {
+                                    container.scrollTop = newScrollTop;
+                                }
                             }
                         } else {
                             showScrollbars(container);
@@ -12667,7 +12686,10 @@ gantt
                                     maxScroll
                                 ));
                                 
-                                container.scrollTop = newScrollTop;
+                                // Throttle updates for performance
+                                if (Math.abs(container.scrollTop - newScrollTop) > 5) {
+                                    container.scrollTop = newScrollTop;
+                                }
                             }
                         }
                     });
