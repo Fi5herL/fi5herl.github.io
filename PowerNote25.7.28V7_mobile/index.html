@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PowerNote Pro - 筆記、任務與時間追蹤</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✒️</text></svg>">
 
@@ -321,182 +321,265 @@
             display: none;
         }
         
+        /* Enhanced Mobile Scrollbar */
+        @media (max-width: 768px) {
+            /* Mobile-friendly scrollbar styling */
+            ::-webkit-scrollbar {
+                width: 12px;
+                height: 12px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.1);
+                border-radius: 6px;
+                margin: 4px;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: var(--accent-color);
+                border-radius: 6px;
+                border: 2px solid transparent;
+                background-clip: content-box;
+                min-height: 30px;
+                transition: background-color 0.2s ease;
+            }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: rgba(0, 123, 255, 0.8);
+            }
+
+            ::-webkit-scrollbar-thumb:active {
+                background: rgba(0, 123, 255, 1);
+            }
+
+            /* Enhanced CodeMirror scrollbar */
+            .CodeMirror-scrollbar-filler {
+                background: transparent;
+            }
+
+            .CodeMirror-scroll {
+                --scrollbar-opacity: 0;
+            }
+
+            .CodeMirror-scroll::-webkit-scrollbar {
+                opacity: var(--scrollbar-opacity, 0);
+                transition: opacity 0.3s ease;
+            }
+
+            .CodeMirror-scroll:hover::-webkit-scrollbar,
+            .CodeMirror-scroll.scrolling::-webkit-scrollbar {
+                opacity: 1;
+            }
+
+            .CodeMirror-scroll::-webkit-scrollbar-thumb {
+                opacity: var(--scrollbar-opacity, 0);
+                transition: opacity 0.3s ease, background-color 0.2s ease;
+            }
+
+            .CodeMirror-scroll:hover::-webkit-scrollbar-thumb,
+            .CodeMirror-scroll.scrolling::-webkit-scrollbar-thumb {
+                opacity: 1;
+            }
+
+            /* Preview container scrollbar */
+            .preview-container {
+                scrollbar-width: thick;
+                scrollbar-color: var(--accent-color) rgba(0, 0, 0, 0.1);
+                --scrollbar-opacity: 0;
+            }
+
+            .preview-container::-webkit-scrollbar {
+                width: 12px;
+                opacity: var(--scrollbar-opacity, 0);
+                transition: opacity 0.3s ease;
+            }
+
+            .preview-container:hover::-webkit-scrollbar,
+            .preview-container.scrolling::-webkit-scrollbar {
+                opacity: 1;
+            }
+
+            .preview-container::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.1);
+                border-radius: 6px;
+                margin: 4px;
+            }
+
+            .preview-container::-webkit-scrollbar-thumb {
+                background: var(--accent-color);
+                border-radius: 6px;
+                border: 2px solid transparent;
+                background-clip: content-box;
+                min-height: 30px;
+                opacity: var(--scrollbar-opacity, 0);
+                transition: opacity 0.3s ease, background-color 0.2s ease;
+            }
+
+            .preview-container:hover::-webkit-scrollbar-thumb,
+            .preview-container.scrolling::-webkit-scrollbar-thumb {
+                opacity: 1;
+            }
+
+            .preview-container::-webkit-scrollbar-thumb:hover {
+                background: rgba(0, 123, 255, 0.8);
+            }
+
+            .preview-container::-webkit-scrollbar-thumb:active {
+                background: rgba(0, 123, 255, 1);
+            }
+
+            /* Show scrollbars on touch/scroll */
+            .CodeMirror-scroll,
+            .preview-container {
+                scrollbar-width: auto;
+                opacity: 1;
+            }
+
+            /* Auto-show scrollbar when content is scrollable */
+            .CodeMirror-scroll:hover,
+            .preview-container:hover,
+            .mobile-edit-only .CodeMirror-scroll,
+            .mobile-preview-only .preview-container {
+                scrollbar-color: var(--accent-color) rgba(0, 0, 0, 0.1);
+            }
+
+            /* Touch-friendly scrollbar dimensions */
+            .CodeMirror-scroll::-webkit-scrollbar,
+            .preview-container::-webkit-scrollbar {
+                width: 16px !important;
+            }
+
+            .CodeMirror-scroll::-webkit-scrollbar-thumb,
+            .preview-container::-webkit-scrollbar-thumb {
+                min-height: 50px !important;
+                border: 2px solid transparent !important;
+                background-clip: content-box !important;
+            }
+
+            /* Enhanced dragging states */
+            .CodeMirror-scroll.scrolling::-webkit-scrollbar-thumb,
+            .preview-container.scrolling::-webkit-scrollbar-thumb {
+                background: rgba(0, 123, 255, 0.9) !important;
+                box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3) !important;
+            }
+
+            /* Wider touch area for scrollbar */
+            .CodeMirror-scroll,
+            .preview-container {
+                position: relative;
+            }
+
+            .CodeMirror-scroll::after,
+            .preview-container::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 25px;
+                height: 100%;
+                background: transparent;
+                z-index: 10;
+                pointer-events: auto;
+            }
+        }
+
         /* Mobile responsive design */
         @media (max-width: 768px) {
-            /* 手機版觸控優化 */
-            * {
-                -webkit-tap-highlight-color: transparent;
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-            }
-            
-            /* 允許編輯器區域選擇文字 */
-            .CodeMirror,
-            .CodeMirror-scroll,
-            .CodeMirror-sizer,
-            .CodeMirror-lines,
-            .CodeMirror-cursors,
-            .CodeMirror-selected,
-            input,
-            textarea {
-                -webkit-user-select: text !important;
-                -moz-user-select: text !important;
-                -ms-user-select: text !important;
-                user-select: text !important;
-            }
-            
-            /* 改善滑動性能 */
-            .CodeMirror-scroll {
+            /* Mobile smooth scrolling optimization */
+            body {
                 -webkit-overflow-scrolling: touch;
-                transform: translate3d(0, 0, 0);
-                will-change: scroll-position;
+                scroll-behavior: smooth;
+            }
+            
+            /* Enhanced smooth scrolling for editors */
+            .CodeMirror-scroll {
+                -webkit-overflow-scrolling: touch !important;
+                scroll-behavior: smooth !important;
+                overflow-y: auto !important;
             }
             
             .preview-container {
-                -webkit-overflow-scrolling: touch;
-                transform: translate3d(0, 0, 0);
-                will-change: scroll-position;
+                -webkit-overflow-scrolling: touch !important;
+                scroll-behavior: smooth !important;
+                overflow-y: auto !important;
             }
-            
+
             /* Enhanced mobile word wrap */
             .CodeMirror {
                 line-height: 1.3 !important;
                 /* 移除固定字體大小，讓用戶設定生效 */
-                /* 手機版優化 */
-                transform: translate3d(0, 0, 0);
-                backface-visibility: hidden;
-                perspective: 1000px;
-            }
-            
-            /* 手機版鍵盤打開時的優化 */
-            body.keyboard-open {
-                position: fixed;
-                width: 100%;
-                height: 100vh;
-                overflow: hidden;
-            }
-            
-            body.keyboard-open .main-container {
-                height: 100vh;
-                max-height: 100vh;
-                overflow: hidden;
-            }
-            
-            body.keyboard-open .CodeMirror-scroll {
-                /* 鍵盤打開時減少動畫以提升性能 */
-                transition: none !important;
-            }
-            
-            body.keyboard-open .preview-container {
-                /* 鍵盤打開時減少動畫以提升性能 */
-                transition: none !important;
-            }
-            
-            /* 手機專用觸控優化 */
-            .mobile-mode * {
-                -webkit-tap-highlight-color: rgba(0,0,0,0.1);
-                -webkit-touch-callout: none;
-            }
-            
-            .mobile-mode .mobile-textarea {
-                -webkit-tap-highlight-color: transparent;
-                -webkit-touch-callout: default;
-                -webkit-user-select: text;
-            }
-            
-            /* 手機專用編輯器樣式 */
-            .mobile-editor-container {
-                display: flex;
-                flex-direction: column;
-                height: 100%;
-                background: white;
-            }
-            
-            .mobile-toolbar {
-                display: flex;
-                flex-wrap: wrap;
-                padding: 8px;
-                background: #f8f9fa;
-                border-bottom: 1px solid #e9ecef;
-                gap: 4px;
-                min-height: 48px;
-                align-items: center;
-            }
-            
-            .mobile-tool-btn {
-                width: 40px;
-                height: 40px;
-                border: none;
-                border-radius: 6px;
-                background: white;
-                color: #495057;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 16px;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            }
-            
-            .mobile-tool-btn:hover,
-            .mobile-tool-btn:active {
-                background: #e9ecef;
-                transform: scale(0.95);
-            }
-            
-            .mobile-textarea {
-                flex: 1;
-                border: none;
-                outline: none;
-                padding: 16px;
-                font-size: 16px;
-                line-height: 1.5;
-                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-                resize: none;
-                background: white;
-                color: #333;
-                -webkit-appearance: none;
-                border-radius: 0;
-            }
-            
-            .mobile-textarea::placeholder {
-                color: #adb5bd;
-                opacity: 1;
-            }
-            
-            .mobile-editor-status {
-                padding: 8px 16px;
-                background: #f8f9fa;
-                border-top: 1px solid #e9ecef;
-                font-size: 12px;
-                color: #6c757d;
-                display: flex;
-                justify-content: space-between;
-                min-height: 32px;
-                align-items: center;
-            }
-            
-            /* 隱藏桌面版編輯器 */
-            .mobile-mode .CodeMirror {
-                display: none !important;
-            }
-            
-            .mobile-mode #editor {
-                display: none !important;
-            }
-            
-            .mobile-mode .mobile-editor-container {
-                display: flex !important;
             }
             
             /* Enhanced mobile preview word wrap */
             .preview-container {
                 /* 移除固定字體大小，讓預覽也能隨設定變化 */
                 line-height: 1.4 !important;
+            }
+            
+            /* Mobile keyboard optimization - prevent screen jumping */
+            .main-editor-content {
+                position: relative;
+            }
+            
+            /* Fix viewport issues when keyboard appears */
+            .mobile-edit-only .CodeMirror-scroll,
+            .mobile-preview-only .preview-container {
+                /* Prevent automatic zoom when focusing input */
+                touch-action: manipulation;
+            }
+            
+            /* Smooth keyboard appearance handling */
+            @supports (-webkit-touch-callout: none) {
+                /* iOS specific optimizations */
+                .CodeMirror {
+                    transform: translateZ(0);
+                    -webkit-transform: translateZ(0);
+                }
+                
+                .preview-container {
+                    transform: translateZ(0);
+                    -webkit-transform: translateZ(0);
+                }
+            }
+            
+            /* Enhanced keyboard active state */
+            body.keyboard-active {
+                /* Prevent bouncing and maintain stable layout */
+                position: fixed;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+            
+            body.keyboard-active .main-panel {
+                /* Ensure content doesn't jump when keyboard appears */
+                height: 100vh;
+                overflow: hidden;
+            }
+            
+            body.keyboard-active .CodeMirror-scroll {
+                /* Smooth scrolling during keyboard interaction */
+                scroll-behavior: smooth;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Improved text cursor positioning */
+            body.keyboard-active .CodeMirror-cursor {
+                /* Make cursor more visible during typing */
+                border-left: 3px solid var(--accent-color);
+                animation: cursor-blink 1.2s infinite;
+            }
+            
+            @keyframes cursor-blink {
+                0%, 50% { opacity: 1; }
+                51%, 100% { opacity: 0; }
+            }
+            
+            /* Prevent viewport scaling on input focus */
+            input, textarea, .CodeMirror-code {
+                font-size: 16px !important;
+                transform: translateZ(0);
+                -webkit-transform: translateZ(0);
             }
             
             /* Hide unnecessary buttons on mobile, but show timer, font, search and mobile jump */
@@ -3281,43 +3364,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="editor-container">
-                        <textarea id="editor"></textarea>
-                        <!-- 手機專用編輯器 -->
-                        <div id="mobile-editor-container" class="mobile-editor-container" style="display: none;">
-                            <div class="mobile-toolbar">
-                                <button class="mobile-tool-btn" data-action="bold" title="粗體">
-                                    <i class="fas fa-bold"></i>
-                                </button>
-                                <button class="mobile-tool-btn" data-action="italic" title="斜體">
-                                    <i class="fas fa-italic"></i>
-                                </button>
-                                <button class="mobile-tool-btn" data-action="header" title="標題">
-                                    <i class="fas fa-heading"></i>
-                                </button>
-                                <button class="mobile-tool-btn" data-action="list" title="清單">
-                                    <i class="fas fa-list-ul"></i>
-                                </button>
-                                <button class="mobile-tool-btn" data-action="link" title="連結">
-                                    <i class="fas fa-link"></i>
-                                </button>
-                                <button class="mobile-tool-btn" data-action="code" title="程式碼">
-                                    <i class="fas fa-code"></i>
-                                </button>
-                                <button class="mobile-tool-btn" data-action="undo" title="復原">
-                                    <i class="fas fa-undo"></i>
-                                </button>
-                                <button class="mobile-tool-btn" data-action="redo" title="重做">
-                                    <i class="fas fa-redo"></i>
-                                </button>
-                            </div>
-                            <textarea id="mobile-editor" class="mobile-textarea" placeholder="開始輸入您的 Markdown 內容..."></textarea>
-                            <div class="mobile-editor-status">
-                                <span id="mobile-cursor-info">行 1, 列 1</span>
-                                <span id="mobile-word-count">0 字</span>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="editor-container"><textarea id="editor"></textarea></div>
                 </div>
                 <div class="preview-panel" id="preview-panel">
                     <div class="preview-header"><i class="fas fa-eye"></i> 預覽</div>
@@ -4256,7 +4303,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title} - PowerNote 分享</title>
     <meta name="description" content="由 PowerNote 分享的文章">
     <meta property="og:title" content="${title}">
@@ -4606,7 +4653,7 @@
 
             // --- Initialization ---
             async function initialize() {
-                await initEditor();
+                initEditor();
                 configureMarked();
                 mermaid.initialize({ startOnLoad: false, theme: 'default' });
 
@@ -4684,13 +4731,13 @@
                     if (files.length > 0) {
                         loadFile(files[0].id);
                     } else {
-                        safeSetEditorValue(getWelcomeMessage());
+                        editor.setValue(getWelcomeMessage());
                     }
                 } else {
                     // Configuration was loaded successfully
                     // If no file was loaded (empty workspace), show welcome message
                     if (files.length === 0) {
-                        safeSetEditorValue(getWelcomeMessage());
+                        editor.setValue(getWelcomeMessage());
                     }
                     // renderFileList() is already called in loadConfiguration()
                 }
@@ -4886,7 +4933,7 @@
             
             // Toggle fold all headers function
             function foldAllContent() {
-                if (!window.editor) return;
+                if (!editor) return;
                 
                 const btn = document.getElementById('fold-all-btn');
                 const icon = btn.querySelector('i');
@@ -5269,7 +5316,7 @@
             
             // Unfold all sections function (for Ctrl+Shift+Q)
             function unfoldAllSections() {
-                if (!window.editor) return;
+                if (!editor) return;
                 editor.execCommand("unfoldAll");
                 
                 // Reset all line number colors
@@ -5305,10 +5352,10 @@
             // --- Editor, Preview, and Scroll Sync ---
             function handleCursorTimerTracking() {
                 if (!autoTimerEnabled) return;
-                if (!window.editor) return;
+                if (!editor) return;
 
-                const cursor = window.editor.getCursor();
-                const lines = window.editor.getValue().split('\n');
+                const cursor = editor.getCursor();
+                const lines = editor.getValue().split('\n');
                 let currentHeading = null;
                 let currentHeadingLine = null;
 
@@ -5555,719 +5602,10 @@
                 return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             }
 
-            // 手機專用編輯器變數
-            let mobileEditor = null;
-            let mobileUndoStack = [];
-            let mobileRedoStack = [];
-            let mobileEditorContainer = null;
-
-            // 初始化手機專用編輯器
-            async function initMobileEditor() {
-                // 先啟用手機模式，這會顯示手機編輯器容器
-                document.body.classList.add('mobile-mode');
-                
-                // 確保手機編輯器容器可見
-                const mobileContainer = document.getElementById('mobile-editor-container');
-                if (mobileContainer) {
-                    mobileContainer.style.display = 'flex';
-                }
-                
-                // 確保DOM元素存在
-                mobileEditorContainer = document.getElementById('mobile-editor-container');
-                mobileEditor = document.getElementById('mobile-editor');
-                
-                if (!mobileEditor) {
-                    console.error('Mobile editor not found, DOM may not be ready');
-                    // 嘗試延遲初始化
-                    await new Promise((resolve) => {
-                        setTimeout(async () => {
-                            const retryContainer = document.getElementById('mobile-editor-container');
-                            if (retryContainer) {
-                                retryContainer.style.display = 'flex';
-                            }
-                            mobileEditor = document.getElementById('mobile-editor');
-                            if (mobileEditor) {
-                                console.log('Retrying mobile editor initialization...');
-                                await continueInitMobileEditor();
-                            } else {
-                                console.error('Mobile editor still not found after retry');
-                                // 最後一次嘗試，直接創建元素
-                                await createMobileEditorFallback();
-                            }
-                            resolve();
-                        }, 200);
-                    });
-                    return;
-                }
-                
-                console.log('Mobile editor element found:', mobileEditor);
-                await continueInitMobileEditor();
-            }
-            
-            // 繼續手機編輯器初始化
-            async function continueInitMobileEditor() {
-                if (!mobileEditor) {
-                    console.error('mobileEditor still not available in continueInitMobileEditor');
-                    return;
-                }
-                
-                console.log('continueInitMobileEditor: Starting, mobileEditor found');
-                console.log('Existing pendingEditorValue:', window.pendingEditorValue);
-                
-                // 首先創建 editor 對象，確保其他功能可以立即使用
-                window.editor = {
-                    getValue: function() {
-                        if (!mobileEditor) {
-                            return window.pendingEditorValue || '';
-                        }
-                        return mobileEditor.value || '';
-                    },
-                    setValue: function(value) {
-                        console.log('Mobile editor setValue called with:', value.substring(0, 50) + '...');
-                        if (!mobileEditor) {
-                            console.warn('mobileEditor not available in setValue, storing as pending');
-                            window.pendingEditorValue = value;
-                            return;
-                        }
-                        mobileEditor.value = value;
-                        console.log('Content successfully set to mobile editor');
-                        updateMobileStatusBar();
-                        triggerChange();
-                    },
-                    getSelection: function() {
-                        if (!mobileEditor) return '';
-                        const start = mobileEditor.selectionStart;
-                        const end = mobileEditor.selectionEnd;
-                        return mobileEditor.value.substring(start, end);
-                    },
-                    replaceSelection: function(text) {
-                        if (!mobileEditor) return;
-                        const start = mobileEditor.selectionStart;
-                        const end = mobileEditor.selectionEnd;
-                        const before = mobileEditor.value.substring(0, start);
-                        const after = mobileEditor.value.substring(end);
-                        mobileEditor.value = before + text + after;
-                        mobileEditor.selectionStart = mobileEditor.selectionEnd = start + text.length;
-                        updateMobileStatusBar();
-                        triggerChange();
-                    },
-                    focus: function() {
-                        if (mobileEditor) mobileEditor.focus();
-                    },
-                    refresh: function() {}, // 空函數，保持兼容性
-                    setCursor: function(pos) {
-                        if (mobileEditor) mobileEditor.selectionStart = mobileEditor.selectionEnd = pos;
-                    },
-                    getCursor: function() {
-                        if (!mobileEditor) return { ch: 0, line: 0 };
-                        return { ch: mobileEditor.selectionStart, line: 0 }; // 簡化實現
-                    },
-                    on: function(event, handler) {
-                        if (event === 'change' && mobileEditor) {
-                            mobileEditor.addEventListener('input', handler);
-                        }
-                    },
-                    clearHistory: function() {
-                        // 清除手機版的撤銷/重做堆疊
-                        mobileUndoStack = [];
-                        mobileRedoStack = [];
-                    }
-                };
-                
-                // 同時設置全域變數
-                globalThis.editor = window.editor;
-                
-                // 設置初始內容
-                const desktopEditor = document.getElementById('editor');
-                if (window.pendingEditorValue) {
-                    // 使用待處理的值
-                    console.log('Setting pending editor value:', window.pendingEditorValue.substring(0, 50) + '...');
-                    mobileEditor.value = window.pendingEditorValue;
-                    delete window.pendingEditorValue;
-                } else if (desktopEditor && desktopEditor.value) {
-                    console.log('Setting content from desktop editor');
-                    mobileEditor.value = desktopEditor.value;
-                }
-                
-                // 添加事件監聽器
-                setupMobileEditorEvents();
-                setupMobileToolbar();
-                setupMobileStatusBar();
-                
-                // 立即更新狀態和預覽
-                updateMobileStatusBar();
-                
-                // 確認 window.editor 對象存在
-                console.log('Final window.editor object:', window.editor);
-                console.log('setValue function exists:', typeof window.editor?.setValue);
-                
-                // 同時設置全域變數 editor 以保持兼容性
-                // 創建全域變數 editor 指向 window.editor
-                globalThis.editor = window.editor;
-                
-                triggerChange();
-                
-                console.log('Mobile editor initialized with content:', mobileEditor.value.substring(0, 50) + '...');
-            }
-            
-            // 創建手機編輯器的備用方案
-            async function createMobileEditorFallback() {
-                console.log('Creating mobile editor fallback...');
-                
-                // 找到編輯器容器
-                const editorContainer = document.querySelector('.editor-container');
-                if (!editorContainer) {
-                    console.error('Editor container not found');
-                    return;
-                }
-                
-                // 創建手機編輯器容器
-                const mobileContainer = document.createElement('div');
-                mobileContainer.id = 'mobile-editor-container';
-                mobileContainer.className = 'mobile-editor-container';
-                mobileContainer.style.display = 'flex';
-                
-                // 創建工具列
-                const toolbar = document.createElement('div');
-                toolbar.className = 'mobile-toolbar';
-                toolbar.innerHTML = `
-                    <button class="mobile-tool-btn" data-action="bold" title="粗體">
-                        <i class="fas fa-bold"></i>
-                    </button>
-                    <button class="mobile-tool-btn" data-action="italic" title="斜體">
-                        <i class="fas fa-italic"></i>
-                    </button>
-                    <button class="mobile-tool-btn" data-action="header" title="標題">
-                        <i class="fas fa-heading"></i>
-                    </button>
-                    <button class="mobile-tool-btn" data-action="list" title="清單">
-                        <i class="fas fa-list-ul"></i>
-                    </button>
-                    <button class="mobile-tool-btn" data-action="link" title="連結">
-                        <i class="fas fa-link"></i>
-                    </button>
-                    <button class="mobile-tool-btn" data-action="code" title="程式碼">
-                        <i class="fas fa-code"></i>
-                    </button>
-                    <button class="mobile-tool-btn" data-action="undo" title="復原">
-                        <i class="fas fa-undo"></i>
-                    </button>
-                    <button class="mobile-tool-btn" data-action="redo" title="重做">
-                        <i class="fas fa-redo"></i>
-                    </button>
-                `;
-                
-                // 創建textarea
-                const textarea = document.createElement('textarea');
-                textarea.id = 'mobile-editor';
-                textarea.className = 'mobile-textarea';
-                textarea.placeholder = '開始輸入您的 Markdown 內容...';
-                
-                // 創建狀態欄
-                const statusBar = document.createElement('div');
-                statusBar.className = 'mobile-editor-status';
-                statusBar.innerHTML = `
-                    <span id="mobile-cursor-info">行 1, 列 1</span>
-                    <span id="mobile-word-count">0 字</span>
-                `;
-                
-                // 組裝元素
-                mobileContainer.appendChild(toolbar);
-                mobileContainer.appendChild(textarea);
-                mobileContainer.appendChild(statusBar);
-                
-                // 添加到容器
-                editorContainer.appendChild(mobileContainer);
-                
-                // 更新引用
-                mobileEditorContainer = mobileContainer;
-                mobileEditor = textarea;
-                
-                console.log('Mobile editor fallback created successfully');
-                
-                // 繼續初始化
-                await continueInitMobileEditor();
-            }
-
-            // 設置手機編輯器事件
-            function setupMobileEditorEvents() {
-                let changeTimeout = null;
-                
-                // 輸入變更事件
-                mobileEditor.addEventListener('input', (e) => {
-                    updateMobileStatusBar();
-                    
-                    // 防抖處理變更事件
-                    if (changeTimeout) {
-                        clearTimeout(changeTimeout);
-                    }
-                    changeTimeout = setTimeout(() => {
-                        triggerChange();
-                    }, 300);
-                });
-                
-                // 選擇變更事件
-                mobileEditor.addEventListener('selectionchange', updateMobileStatusBar);
-                mobileEditor.addEventListener('keyup', updateMobileStatusBar);
-                mobileEditor.addEventListener('mouseup', updateMobileStatusBar);
-                
-                // 鍵盤快捷鍵
-                mobileEditor.addEventListener('keydown', handleMobileKeydown);
-            }
-
-            // 處理鍵盤快捷鍵
-            function handleMobileKeydown(e) {
-                // Ctrl+Z 復原
-                if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
-                    e.preventDefault();
-                    mobileUndo();
-                }
-                // Ctrl+Y 重做
-                else if (e.ctrlKey && e.key === 'y') {
-                    e.preventDefault();
-                    mobileRedo();
-                }
-                // Tab 插入
-                else if (e.key === 'Tab') {
-                    e.preventDefault();
-                    insertAtCursor('    '); // 4個空格
-                }
-                // 智能括號匹配
-                else if (e.key === '(' || e.key === '[' || e.key === '{') {
-                    e.preventDefault();
-                    const closingBracket = { '(': ')', '[': ']', '{': '}' }[e.key];
-                    const selection = getSelectedText();
-                    if (selection) {
-                        replaceSelection(e.key + selection + closingBracket);
-                    } else {
-                        insertAtCursor(e.key + closingBracket);
-                        // 將游標移到括號內
-                        mobileEditor.selectionStart = mobileEditor.selectionEnd - 1;
-                    }
-                }
-                // 智能引號
-                else if (e.key === '"' || e.key === "'") {
-                    const selection = getSelectedText();
-                    if (selection) {
-                        e.preventDefault();
-                        replaceSelection(e.key + selection + e.key);
-                    }
-                }
-                // Enter 時自動清單縮進
-                else if (e.key === 'Enter') {
-                    const cursorPos = mobileEditor.selectionStart;
-                    const textBefore = mobileEditor.value.substring(0, cursorPos);
-                    const currentLine = textBefore.split('\n').pop();
-                    
-                    // 檢查是否在清單項目中
-                    const listMatch = currentLine.match(/^(\s*)([-*+]|\d+\.)\s/);
-                    if (listMatch) {
-                        e.preventDefault();
-                        const indent = listMatch[1];
-                        const bullet = listMatch[2].match(/\d+\./) ? 
-                            (parseInt(listMatch[2]) + 1) + '.' : listMatch[2];
-                        insertAtCursor('\n' + indent + bullet + ' ');
-                    }
-                }
-            }
-
-            // 設置工具列
-            function setupMobileToolbar() {
-                const toolbar = document.querySelector('.mobile-toolbar');
-                if (!toolbar) return;
-                
-                toolbar.addEventListener('click', (e) => {
-                    const btn = e.target.closest('.mobile-tool-btn');
-                    if (!btn) return;
-                    
-                    const action = btn.dataset.action;
-                    handleMobileToolbarAction(action);
-                });
-            }
-
-            // 處理工具列動作
-            function handleMobileToolbarAction(action) {
-                saveUndoState();
-                
-                const selection = getSelectedText();
-                const hasSelection = selection.length > 0;
-                
-                switch(action) {
-                    case 'bold':
-                        if (hasSelection) {
-                            replaceSelection(`**${selection}**`);
-                        } else {
-                            insertAtCursor('**粗體文字**');
-                        }
-                        break;
-                        
-                    case 'italic':
-                        if (hasSelection) {
-                            replaceSelection(`*${selection}*`);
-                        } else {
-                            insertAtCursor('*斜體文字*');
-                        }
-                        break;
-                        
-                    case 'header':
-                        insertAtCursor('## 標題');
-                        break;
-                        
-                    case 'list':
-                        insertAtCursor('\n- 清單項目');
-                        break;
-                        
-                    case 'link':
-                        if (hasSelection) {
-                            replaceSelection(`[${selection}](url)`);
-                        } else {
-                            insertAtCursor('[連結文字](url)');
-                        }
-                        break;
-                        
-                    case 'code':
-                        if (hasSelection) {
-                            if (selection.includes('\n')) {
-                                replaceSelection(`\`\`\`\n${selection}\n\`\`\``);
-                            } else {
-                                replaceSelection(`\`${selection}\``);
-                            }
-                        } else {
-                            insertAtCursor('`程式碼`');
-                        }
-                        break;
-                        
-                    case 'undo':
-                        mobileUndo();
-                        break;
-                        
-                    case 'redo':
-                        mobileRedo();
-                        break;
-                }
-                
-                mobileEditor.focus();
-                updateMobileStatusBar();
-                triggerChange();
-            }
-
-            // 輔助函數
-            function getSelectedText() {
-                const start = mobileEditor.selectionStart;
-                const end = mobileEditor.selectionEnd;
-                return mobileEditor.value.substring(start, end);
-            }
-
-            function insertAtCursor(text) {
-                const start = mobileEditor.selectionStart;
-                const end = mobileEditor.selectionEnd;
-                const before = mobileEditor.value.substring(0, start);
-                const after = mobileEditor.value.substring(end);
-                
-                mobileEditor.value = before + text + after;
-                mobileEditor.selectionStart = mobileEditor.selectionEnd = start + text.length;
-            }
-
-            function replaceSelection(text) {
-                const start = mobileEditor.selectionStart;
-                const end = mobileEditor.selectionEnd;
-                const before = mobileEditor.value.substring(0, start);
-                const after = mobileEditor.value.substring(end);
-                
-                mobileEditor.value = before + text + after;
-                mobileEditor.selectionStart = mobileEditor.selectionEnd = start + text.length;
-            }
-
-            // 復原/重做功能
-            function saveUndoState() {
-                mobileUndoStack.push({
-                    value: mobileEditor.value,
-                    selectionStart: mobileEditor.selectionStart,
-                    selectionEnd: mobileEditor.selectionEnd
-                });
-                
-                // 限制撤銷堆疊大小
-                if (mobileUndoStack.length > 50) {
-                    mobileUndoStack.shift();
-                }
-                
-                // 清空重做堆疊
-                mobileRedoStack = [];
-            }
-
-            function mobileUndo() {
-                if (mobileUndoStack.length === 0) return;
-                
-                // 保存當前狀態到重做堆疊
-                mobileRedoStack.push({
-                    value: mobileEditor.value,
-                    selectionStart: mobileEditor.selectionStart,
-                    selectionEnd: mobileEditor.selectionEnd
-                });
-                
-                // 恢復前一個狀態
-                const state = mobileUndoStack.pop();
-                mobileEditor.value = state.value;
-                mobileEditor.selectionStart = state.selectionStart;
-                mobileEditor.selectionEnd = state.selectionEnd;
-                
-                updateMobileStatusBar();
-                triggerChange();
-            }
-
-            function mobileRedo() {
-                if (mobileRedoStack.length === 0) return;
-                
-                // 保存當前狀態到撤銷堆疊
-                mobileUndoStack.push({
-                    value: mobileEditor.value,
-                    selectionStart: mobileEditor.selectionStart,
-                    selectionEnd: mobileEditor.selectionEnd
-                });
-                
-                // 恢復重做狀態
-                const state = mobileRedoStack.pop();
-                mobileEditor.value = state.value;
-                mobileEditor.selectionStart = state.selectionStart;
-                mobileEditor.selectionEnd = state.selectionEnd;
-                
-                updateMobileStatusBar();
-                triggerChange();
-            }
-
-            // 設置狀態欄
-            function setupMobileStatusBar() {
-                updateMobileStatusBar();
-            }
-
-            function updateMobileStatusBar() {
-                const cursorInfo = document.getElementById('mobile-cursor-info');
-                const wordCount = document.getElementById('mobile-word-count');
-                
-                if (!cursorInfo || !wordCount || !mobileEditor) return;
-                
-                // 計算游標位置
-                const text = mobileEditor.value || '';
-                const cursorPos = mobileEditor.selectionStart || 0;
-                const lines = text.substring(0, cursorPos).split('\n');
-                const line = lines.length;
-                const column = lines[lines.length - 1].length + 1;
-                
-                cursorInfo.textContent = `行 ${line}, 列 ${column}`;
-                
-                // 計算字數
-                const wordCountValue = text.replace(/\s/g, '').length;
-                wordCount.textContent = `${wordCountValue} 字`;
-            }
-
-            // 觸發變更事件（保持與原系統的兼容性）
-            async function triggerChange() {
-                if (!mobileEditor) return;
-                
-                // 同步到桌面編輯器
-                const desktopEditor = document.getElementById('editor');
-                if (desktopEditor) {
-                    desktopEditor.value = mobileEditor.value;
-                }
-                
-                // 保存數據 - 模擬桌面編輯器的 change 事件邏輯
-                if (currentFile) {
-                    const oldContent = currentFile.content;
-                    currentFile.content = window.editor.getValue();
-                    currentFile.lastModified = Date.now();
-                    await saveFilesToStorage();
-                    
-                    // Check if UNSYNC status changed and update file list styling
-                    const oldHasUnsync = oldContent.includes('#UNSYNC');
-                    const newHasUnsync = currentFile.content.includes('#UNSYNC');
-                    if (oldHasUnsync !== newHasUnsync) {
-                        renderFileList(); // Re-render to update UNSYNC styling
-                    }
-                }
-                
-                // 觸發預覽更新
-                if (typeof updatePreview === 'function') {
-                    updatePreview();
-                }
-                
-                // 觸發其他變更相關的功能
-                if (typeof applyHashtagHighlighting === 'function') {
-                    applyHashtagHighlighting();
-                }
-            }
-            
-            // 手機版特殊處理：確保視窗大小變化時正確重新整理
-            function handleMobileResize() {
-                if (!isMobileDevice() || !mobileEditor) return;
-                
-                setTimeout(() => {
-                    // 確保textarea正確適應新的視窗大小
-                    mobileEditor.style.height = 'auto';
-                    requestAnimationFrame(() => {
-                        mobileEditor.style.height = mobileEditor.scrollHeight + 'px';
-                    });
-                }, 100);
-            }
-            
-            // 安全地設置編輯器內容的通用函數
-            function safeSetEditorValue(content) {
-                console.log('safeSetEditorValue called with content:', content.substring(0, 50) + '...');
-                console.log('Current window.editor:', window.editor);
-                console.log('Current global editor:', editor);
-                console.log('setValue function type:', typeof window.editor?.setValue);
-                
-                // 確保 editor 對象存在
-                if (!window.editor) {
-                    console.error('window.editor is null/undefined, this should not happen');
-                    
-                    // 嘗試恢復編輯器，如果手機編輯器存在的話
-                    const mobileTextarea = document.getElementById('mobile-editor');
-                    if (mobileTextarea && isMobileDevice()) {
-                        console.log('Attempting to recreate mobile editor object...');
-                        window.editor = {
-                            getValue: function() { return mobileTextarea.value || ''; },
-                            setValue: function(value) { 
-                                mobileTextarea.value = value;
-                                console.log('Emergency setValue successful');
-                            }
-                        };
-                        // 重試設置
-                        if (window.editor && window.editor.setValue) {
-                            window.editor.setValue(content);
-                            return true;
-                        }
-                    }
-                    
-                    return false;
-                }
-                
-                // 檢查 window.editor 是否有 setValue 方法
-                if (window.editor && typeof window.editor.setValue === 'function') {
-                    try {
-                        window.editor.setValue(content);
-                        console.log('safeSetEditorValue: Content set successfully via window.editor');
-                        return true;
-                    } catch (error) {
-                        console.error('Error setting editor value via window.editor:', error);
-                        return false;
-                    }
-                }
-                
-                // 如果 window.editor 沒有 setValue，檢查全域 editor
-                if (globalThis.editor && typeof globalThis.editor.setValue === 'function') {
-                    try {
-                        globalThis.editor.setValue(content);
-                        console.log('safeSetEditorValue: Content set successfully via global editor');
-                        return true;
-                    } catch (error) {
-                        console.error('Error setting editor value via global editor:', error);
-                        return false;
-                    }
-                }
-                
-                console.error('Editor or setValue function not available');
-                console.error('window.editor exists:', !!window.editor);
-                console.error('window.editor type:', typeof window.editor);
-                console.error('window.editor.setValue exists:', !!(window.editor && window.editor.setValue));
-                console.error('typeof window.editor.setValue:', typeof window.editor?.setValue);
-                console.error('globalThis.editor exists:', !!globalThis.editor);
-                console.error('typeof globalThis.editor.setValue:', typeof globalThis.editor?.setValue);
-                return false;
-            }
-
-            async function initEditor() {
+            function initEditor() {
                 const isMobile = isMobileDevice();
                 
-                // 手機版使用專用編輯器
-                if (isMobile) {
-                    console.log('Initializing mobile editor...');
-                    
-                    // 立即創建一個臨時的 editor 對象，防止其他功能報錯
-                    function createTempSetValue() {
-                        return function(value) {
-                            console.log('Temporary editor setValue called with:', value.substring(0, 50) + '...');
-                            // 存儲值，等待真正的編輯器初始化
-                            window.pendingEditorValue = value;
-                            
-                            // 如果手機編輯器已經存在，立即設置
-                            const mobileTextarea = document.getElementById('mobile-editor');
-                            if (mobileTextarea) {
-                                mobileTextarea.value = value;
-                                console.log('Content set to existing mobile editor');
-                            }
-                        };
-                    }
-                    
-                    window.editor = {
-                        getValue: function() { return window.pendingEditorValue || ''; },
-                        setValue: createTempSetValue(),
-                        getSelection: function() { return ''; },
-                        replaceSelection: function() {},
-                        focus: function() {},
-                        refresh: function() {},
-                        setCursor: function() {},
-                        getCursor: function() { return { ch: 0, line: 0 }; },
-                        on: function() {},
-                        clearHistory: function() {}
-                    };
-                    
-                    // 也設置全域變數
-                    globalThis.editor = window.editor;
-                    
-                    // 等待手機編輯器初始化完成
-                    await new Promise((resolve) => {
-                        if (document.readyState === 'loading') {
-                            document.addEventListener('DOMContentLoaded', async () => {
-                                try {
-                                    await initMobileEditor();
-                                } catch (error) {
-                                    console.error('Error initializing mobile editor:', error);
-                                }
-                                resolve();
-                            });
-                        } else {
-                            // DOM已經準備就緒，立即初始化
-                            setTimeout(async () => {
-                                try {
-                                    await initMobileEditor();
-                                } catch (error) {
-                                    console.error('Error initializing mobile editor:', error);
-                                }
-                                resolve();
-                            }, 0);
-                        }
-                    });
-                    
-                    console.log('Mobile editor initialization completed');
-                    
-                    // 防護機制：確保 editor 對象不會被意外覆蓋
-                    const protectedEditor = window.editor;
-                    Object.defineProperty(window, 'editor', {
-                        get: function() {
-                            return protectedEditor;
-                        },
-                        set: function(newValue) {
-                            if (newValue === undefined || newValue === null) {
-                                console.error('Attempt to set window.editor to null/undefined blocked!');
-                                console.trace();
-                                return;
-                            }
-                            console.log('window.editor is being changed:', newValue);
-                            Object.defineProperty(window, 'editor', {
-                                value: newValue,
-                                configurable: true,
-                                writable: true
-                            });
-                        },
-                        configurable: true
-                    });
-                    
-                    return;
-                }
-                
-                // 桌面版使用 CodeMirror
-                // 手機版優化配置
-                const editorOptions = {
+                editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
                     mode: 'markdown',
                     theme: 'default',
                     lineNumbers: true,
@@ -6279,30 +5617,13 @@
                         "Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); },
                         "Ctrl-Shift-Q": function(cm){ cm.execCommand("unfoldAll"); }
                     }
-                };
-                
-                // 手機版特殊優化
-                if (isMobile) {
-                    editorOptions.viewportMargin = 10; // 減少渲染行數，提升性能
-                    editorOptions.cursorBlinkRate = 530; // 優化游標閃爍頻率
-                    editorOptions.workTime = 100; // 減少工作時間，提升響應性
-                    editorOptions.workDelay = 100; // 增加工作延遲，避免阻塞
-                    editorOptions.pollInterval = 100; // 減少輪詢頻率
-                    editorOptions.dragDrop = false; // 禁用拖拽以避免觸控衝突
-                    // 移除不支援的 scrollbarStyle 設置
-                }
-                
-                editor = CodeMirror.fromTextArea(document.getElementById('editor'), editorOptions);
-                
-                // 確保 window.editor 指向 CodeMirror 編輯器而不是原始的 textarea
-                window.editor = editor;
-                globalThis.editor = editor;
+                });
                 
                 // Register custom markdown fold function
                 CodeMirror.registerHelper("fold", "markdown", markdownHeaderFold);
                 
                 // Add click handler for line numbers to fold/unfold
-                window.editor.on("gutterClick", function(cm, line, gutter, clickEvent) {
+                editor.on("gutterClick", function(cm, line, gutter, clickEvent) {
                     if (gutter === "CodeMirror-linenumbers") {
                         const lineText = cm.getLine(line);
                         if (isFoldableLine(lineText, cm, line)) {
@@ -6320,7 +5641,7 @@
                 
                 // Force word wrapping for all devices
                 editor.setOption("lineWrapping", true);
-                window.editor.refresh();
+                editor.refresh();
                 
                 // Initialize line number colors for foldable lines
                 setTimeout(() => {
@@ -6334,7 +5655,7 @@
                 }, 200);
                 
                 // Re-initialize line numbers when content changes
-                window.editor.on('change', function(cm) {
+                editor.on('change', function(cm) {
                     setTimeout(() => {
                         initLineNumberColors(cm);
                         // Reset button state when content changes
@@ -6364,95 +5685,33 @@
                         hashtagSyncTimer = setTimeout(() => {
                             if (currentFile && currentFile.name !== 'NoteTag.md') {
                                 console.log(`⏰ Auto-syncing hashtags for ${currentFile.name}`);
-                                syncHashtagChanges(currentFile.id, window.editor.getValue());
+                                syncHashtagChanges(currentFile.id, editor.getValue());
                             }
                         }, 2000);
                     }, 100);
                 });
                 
-                // 手機版鍵盤和視窗處理變數
-                let initialViewportHeight = window.innerHeight;
-                let isKeyboardOpen = false;
-                let resizeTimer = null;
-                
                 // Handle window resize for orientation changes
                 window.addEventListener('resize', () => {
-                    if (resizeTimer) {
-                        clearTimeout(resizeTimer);
-                    }
-                    
-                    resizeTimer = setTimeout(() => {
-                        const currentHeight = window.innerHeight;
-                        const heightDiff = initialViewportHeight - currentHeight;
-                        
-                        // 檢測手機鍵盤狀態
-                        if (isMobileDevice()) {
-                            // 如果高度減少超過150px，可能是鍵盤打開
-                            if (heightDiff > 150 && !isKeyboardOpen) {
-                                isKeyboardOpen = true;
-                                document.body.classList.add('keyboard-open');
-                                // 禁用滾動同步以提升性能
-                                syncScrollEnabled = false;
-                            } 
-                            // 如果高度恢復，可能是鍵盤關閉
-                            else if (heightDiff < 50 && isKeyboardOpen) {
-                                isKeyboardOpen = false;
-                                document.body.classList.remove('keyboard-open');
-                                // 重新啟用滾動同步
-                                syncScrollEnabled = true;
-                                // 重新設定初始高度，防止縮放問題
-                                initialViewportHeight = currentHeight;
-                            }
-                        }
-                        
-                        if (window.editor) {
+                    setTimeout(() => {
+                        if (editor) {
                             // Always keep line wrapping enabled for better UX
                             editor.setOption("lineWrapping", true);
-                            window.editor.refresh();
+                            editor.refresh();
                         }
                         // Update mobile UI when device orientation changes
                         if (isMobileDevice()) {
                             updateMobileViewUI();
-                            handleMobileResize(); // 添加手機版resize處理
                         } else {
                             // Remove mobile classes if no longer on mobile
                             mainContainer.classList.remove('mobile-edit-only', 'mobile-preview-only');
-                            // 重置鍵盤狀態
-                            isKeyboardOpen = false;
-                            document.body.classList.remove('keyboard-open');
-                            document.body.classList.remove('mobile-mode');
                         }
                     }, 100);
                 });
-                
-                // 處理方向變更，進一步防止縮放問題
-                if (isMobileDevice()) {
-                    window.addEventListener('orientationchange', () => {
-                        // 延遲處理，等待方向變更完成
-                        setTimeout(() => {
-                            initialViewportHeight = window.innerHeight;
-                            isKeyboardOpen = false;
-                            document.body.classList.remove('keyboard-open');
-                            syncScrollEnabled = true;
-                            
-                            // 強制重新整理視窗以確保正確顯示
-                            if (window.editor) {
-                                window.editor.refresh();
-                            }
-                        }, 500);
-                    });
-                    
-                    // 添加視窗焦點事件處理
-                    window.addEventListener('focus', () => {
-                        setTimeout(() => {
-                            initialViewportHeight = window.innerHeight;
-                        }, 300);
-                    });
-                }
                 // 移除游標活動計時觸發，改用文字編輯觸發
-                // window.editor.on('cursorActivity', handleCursorTimerTracking);
+                // editor.on('cursorActivity', handleCursorTimerTracking);
 
-                window.editor.on('change', async (instance, changeObj) => {
+                editor.on('change', async (instance, changeObj) => {
                     console.log('編輯器change事件觸發:', {
                         origin: changeObj.origin,
                         text: changeObj.text,
@@ -6464,7 +5723,7 @@
                     
                     if (currentFile) {
                         const oldContent = currentFile.content;
-                        currentFile.content = window.editor.getValue();
+                        currentFile.content = editor.getValue();
                         currentFile.lastModified = Date.now(); // Update modification timestamp
                         await saveFilesToStorage();
                         
@@ -6498,7 +5757,7 @@
                     
                     // Handle autocomplete (wiki links and hashtags)
                     if (changeObj.origin === '+input' && changeObj.text.length === 1) {
-                        const cursor = window.editor.getCursor();
+                        const cursor = editor.getCursor();
                         const line = editor.getLine(cursor.line);
                         const beforeCursor = line.substring(0, cursor.ch);
                         
@@ -6556,7 +5815,7 @@
                 });
                 
                 // Handle keyboard navigation for autocomplete and auto list
-                window.editor.on('keydown', (instance, e) => {
+                editor.on('keydown', (instance, e) => {
                     if (handleAutocompleteNavigation(e)) {
                         return;
                     }
@@ -6587,7 +5846,7 @@
                 });
                 
                 // Smart hiding for HTML and markdown links
-                window.editor.on('cursorActivity', function(cm) {
+                editor.on('cursorActivity', function(cm) {
                     handleSmartHiding(cm);
                     // 更新結構符號加粗（當游標移動時）
                     applyStructuralBold(cm);
@@ -6601,7 +5860,7 @@
                 });
                 
                 // Add click handler for Ctrl+Click navigation
-                window.editor.on('mousedown', function(cm, event) {
+                editor.on('mousedown', function(cm, event) {
                     // 電腦版：檢查 Ctrl/Cmd + 點擊
                     if (!isMobileDevice() && (event.ctrlKey || event.metaKey)) {
                         const pos = cm.coordsChar({left: event.clientX, top: event.clientY});
@@ -6616,7 +5875,7 @@
                 });
                 
                 // Scroll Sync Listener
-                window.editor.on('scroll', syncPreviewScroll);
+                editor.on('scroll', syncPreviewScroll);
                 
                 // Setup drag and drop for images
                 setupImageDragDrop();
@@ -6671,7 +5930,7 @@
                 }
                 
                 function insertImageReference(file) {
-                    const cursor = window.editor.getCursor();
+                    const cursor = editor.getCursor();
                     const filePath = file.path || file.name;
                     
                     // Try to create a relative path if possible
@@ -6694,7 +5953,7 @@
                         line: cursor.line,
                         ch: cursor.ch + imageMarkdown.length
                     };
-                    window.editor.setCursor(newCursor);
+                    editor.setCursor(newCursor);
                     
                     // Trigger preview update
                     updatePreview();
@@ -7131,11 +6390,7 @@
             }
 
             async function updatePreview() {
-                if (!window.editor) {
-                    console.warn('Editor not initialized, skipping preview update');
-                    return;
-                }
-                let markdown = window.window.editor.getValue();
+                let markdown = editor.getValue();
                 
                 // Process hashtags before markdown parsing
                 markdown = processHashtags(markdown);
@@ -7267,7 +6522,7 @@
                     const previewContainer = document.getElementById('preview');
                     if (!previewContainer) return;
                     
-                    const markdownText = window.window.editor.getValue();
+                    const markdownText = editor.getValue();
                     const lines = markdownText.split('\n');
                     
                     // Get all significant elements from preview
@@ -7367,26 +6622,7 @@
                 return closestLine >= 0 ? lineToElementMap.get(closestLine) : null;
             }
 
-            // 手機版滾動節流
-            let scrollThrottleTimer = null;
             function syncPreviewScroll() {
-                if (isSyncing || !syncScrollEnabled) return;
-                
-                // 手機版節流處理，減少滾動同步頻率
-                if (isMobileDevice()) {
-                    if (scrollThrottleTimer) {
-                        clearTimeout(scrollThrottleTimer);
-                    }
-                    scrollThrottleTimer = setTimeout(() => {
-                        performSyncPreviewScroll();
-                    }, 100); // 100ms 節流
-                    return;
-                }
-                
-                performSyncPreviewScroll();
-            }
-            
-            function performSyncPreviewScroll() {
                 if (isSyncing || !syncScrollEnabled) return;
                 isSyncing = true;
                 
@@ -7441,26 +6677,7 @@
                 return null;
             }
             
-            // 手機版編輯器滾動節流
-            let editorScrollThrottleTimer = null;
             function syncEditorScroll() {
-                if (isSyncing || !syncScrollEnabled) return;
-                
-                // 手機版節流處理
-                if (isMobileDevice()) {
-                    if (editorScrollThrottleTimer) {
-                        clearTimeout(editorScrollThrottleTimer);
-                    }
-                    editorScrollThrottleTimer = setTimeout(() => {
-                        performSyncEditorScroll();
-                    }, 100); // 100ms 節流
-                    return;
-                }
-                
-                performSyncEditorScroll();
-            }
-            
-            function performSyncEditorScroll() {
                 if (isSyncing || !syncScrollEnabled) return;
                 isSyncing = true;
                 
@@ -7504,8 +6721,8 @@
             // --- Table of Contents ---
             function generateToc() {
                 tocListEl.innerHTML = '';
-                if (!window.editor) return;
-                window.editor.getValue().split('\n').forEach((line, index) => {
+                if (!editor) return;
+                editor.getValue().split('\n').forEach((line, index) => {
                     const match = line.match(/^(#+)\s+(.*)/);
                     if (match) {
                         const li = document.createElement('li');
@@ -7522,8 +6739,8 @@
             }
 
             function navigateToTocLine(line) {
-                window.editor.setCursor({ line: parseInt(line), ch: 0 });
-                window.editor.focus();
+                editor.setCursor({ line: parseInt(line), ch: 0 });
+                editor.focus();
                 
                 // Auto close sidebar on mobile after navigation
                 if (isMobileDevice() && sidebarVisible) {
@@ -7578,10 +6795,10 @@
             }
             
             function getCurrentSection() {
-                if (!window.editor) return null;
+                if (!editor) return null;
                 
-                const cursor = window.editor.getCursor();
-                const lines = window.editor.getValue().split('\n');
+                const cursor = editor.getCursor();
+                const lines = editor.getValue().split('\n');
                 let currentSection = null;
                 
                 // Find the most recent heading before current cursor position
@@ -7609,8 +6826,8 @@
                 // Navigate to section if available
                 if (task.section && task.section.line !== undefined) {
                     setTimeout(() => {
-                        window.editor.setCursor({ line: task.section.line, ch: 0 });
-                        window.editor.focus();
+                        editor.setCursor({ line: task.section.line, ch: 0 });
+                        editor.focus();
                         timerModal.style.display = 'none';
                     }, 100);
                 } else {
@@ -7693,7 +6910,7 @@
 
             // 獲取標題的完整層級路徑（只包含直系祖先）
             function getHeadingHierarchy(lineNumber) {
-                const lines = window.editor.getValue().split('\n');
+                const lines = editor.getValue().split('\n');
                 const currentLine = lines[lineNumber];
                 const currentMatch = currentLine.match(/^(#+)\s+(.+)$/);
                 
@@ -7741,7 +6958,7 @@
             
             // 找到指定行號所屬的標題章節
             function findCurrentSection(lineNumber) {
-                const lines = window.editor.getValue().split('\n');
+                const lines = editor.getValue().split('\n');
                 
                 console.log(`findCurrentSection: 從第${lineNumber + 1}行往上查找標題`);
                 
@@ -7989,7 +7206,7 @@ gantt
                 });
                 
                 gantt += '```';
-                window.editor.replaceSelection(gantt);
+                editor.replaceSelection(gantt);
                 showNotification(`已插入包含 ${completedTasks.length} 個任務的小時制甘特圖`);
             }
 
@@ -8332,7 +7549,7 @@ gantt
                     
                     // If this is the currently displayed file, update the editor
                     if (updated && currentFile && currentFile.id === file.id) {
-                        safeSetEditorValue(file.content);
+                        editor.setValue(file.content);
                     }
                 }
                 
@@ -8361,7 +7578,7 @@ gantt
                 // Sync hashtag changes for the previous file before switching
                 if (previousFile && previousFile.name !== 'NoteTag.md' && editor) {
                     console.log(`🔄 Syncing hashtags before switching from ${previousFile.name}`);
-                    syncHashtagChanges(previousFile.id, window.editor.getValue());
+                    syncHashtagChanges(previousFile.id, editor.getValue());
                 }
                 
                 // Check if we're switching away from NoteTag.md and need to trigger hashtag update
@@ -8393,30 +7610,13 @@ gantt
                 // Initialize hashtag snapshot for the current file
                 initializeHashtagSnapshot(currentFile.id);
                 
-                // 安全地設置編輯器內容
-                if (safeSetEditorValue(currentFile.content)) {
-                    // 編輯器已成功設置，立即應用高亮
-                    setTimeout(() => {
-                        applyHashtagHighlighting();
-                    }, 100);
-                    
-                    // 清除歷史記錄
-                    if (editor && typeof editor.clearHistory === 'function') {
-                        editor.clearHistory();
-                    }
-                } else {
-                    // 編輯器未初始化，延遲應用高亮
-                    setTimeout(() => {
-                        if (window.editor) {
-                            setTimeout(() => {
-                                applyHashtagHighlighting();
-                            }, 100);
-                            if (typeof editor.clearHistory === 'function') {
-                                editor.clearHistory();
-                            }
-                        }
-                    }, 600);
-                }
+                editor.setValue(currentFile.content);
+                
+                // Apply hashtag highlighting after content is loaded
+                setTimeout(() => {
+                    applyHashtagHighlighting();
+                }, 100);
+                editor.clearHistory();
                 currentFileNameEl.textContent = currentFile.name;
                 renderFileList();
                 generateToc(); // 刷新目錄
@@ -8943,7 +8143,7 @@ gantt
                 if (!currentFile) return;
                 
                 const oldContent = currentFile.content;
-                const newContent = window.editor.getValue();
+                const newContent = editor.getValue();
                 currentFile.content = newContent;
                 currentFile.lastModified = Date.now();
                 await saveFilesToStorage();
@@ -9283,7 +8483,7 @@ gantt
                     // Apply theme settings without triggering save
                     if (config.fontSettings.theme !== currentEditorTheme) {
                         currentEditorTheme = config.fontSettings.theme;
-                        if (window.editor) {
+                        if (editor) {
                             editor.setOption('theme', currentEditorTheme);
                         }
                         // Apply theme classes to preview
@@ -10081,7 +9281,7 @@ gantt
 
             // --- Exporting ---
             function exportToMd() {
-                const content = window.editor.getValue();
+                const content = editor.getValue();
                 const title = currentFile ? currentFile.name.replace(/\.[^/.]+$/, "") : "document";
                 downloadBlob(new Blob([content], { type: 'text/markdown' }), `${title}.md`);
                 showNotification(`已匯出 ${title}.md 檔案`);
@@ -10211,7 +9411,7 @@ gantt
             }
 
             async function enterPresentationMode() {
-                const markdown = window.editor.getValue();
+                const markdown = editor.getValue();
                 const slides = createSlidesFromMarkdown(markdown);
                 
                 presentationSlides.innerHTML = slides;
@@ -10899,7 +10099,7 @@ gantt
 
             // 移除失去焦點時的計時觸發，改用文字編輯觸發
             // window.addEventListener('blur', () => { handleCursorTimerTracking(); });
-            // if (editor) window.editor.on('blur', handleCursorTimerTracking);
+            // if (editor) editor.on('blur', handleCursorTimerTracking);
 
 			// --- Search Functions ---
             function toggleSearchBar() {
@@ -10986,7 +10186,7 @@ gantt
                 if (allSearchResults.length > 0) {
                     jumpToSearchMatch(0);
                 } else {
-                    window.editor.setSelection(window.editor.getCursor()); // Clear previous selection
+                    editor.setSelection(editor.getCursor()); // Clear previous selection
                 }
             }
 
@@ -11016,7 +10216,7 @@ gantt
                 
                 if (currentFile && match.fileId === currentFile.id) {
                     // Match in current open file, just jump
-                    window.editor.setSelection(match.from, match.to);
+                    editor.setSelection(match.from, match.to);
                     editor.scrollIntoView(match.from, 20); // scrollIntoView with padding
                     highlightCurrentMatch();
                 } else {
@@ -11024,7 +10224,7 @@ gantt
                     loadFile(match.fileId); 
                     // Need a slight delay for editor to update its content before setting cursor/highlighting
                     setTimeout(() => {
-                        window.editor.setSelection(match.from, match.to);
+                        editor.setSelection(match.from, match.to);
                         editor.scrollIntoView(match.from, 20);
                         highlightAllSearchResults(); // Re-highlight all matches for the new file
                         highlightCurrentMatch();
@@ -11194,7 +10394,7 @@ gantt
                 allSearchResults = [];
                 currentSearchMatchIndex = -1;
                 searchInput.value = '';
-                window.editor.focus();
+                editor.focus();
             }
 			// --- Search Functions End ---
 
@@ -11296,7 +10496,7 @@ gantt
                 
                 // Refresh editor if switching back to edit mode
                 if (mode !== 'preview-only') {
-                    setTimeout(() => window.editor.refresh(), 100);
+                    setTimeout(() => editor.refresh(), 100);
                 }
                 
                 // Only save configuration if not currently loading configuration
@@ -11309,13 +10509,13 @@ gantt
             function navigateToSection(sectionName) {
                 if (!editor || !sectionName) return;
                 
-                const lines = window.editor.getValue().split('\n');
+                const lines = editor.getValue().split('\n');
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i];
                     const match = line.match(/^#+\s+(.+)$/);
                     if (match && match[1].toLowerCase().includes(sectionName.toLowerCase())) {
-                        window.editor.setCursor({ line: i, ch: 0 });
-                        window.editor.focus();
+                        editor.setCursor({ line: i, ch: 0 });
+                        editor.focus();
                         showNotification(`已跳轉到段落：${sectionName}`);
                         break;
                     }
@@ -11549,7 +10749,7 @@ gantt
             }
             
             function insertAutocompleteItem(text) {
-                const cursor = window.editor.getCursor();
+                const cursor = editor.getCursor();
                 const line = editor.getLine(cursor.line);
                 const start = line.lastIndexOf('[[', cursor.ch);
                 
@@ -11562,7 +10762,7 @@ gantt
                 }
                 
                 removeAutocompleteDropdown();
-                window.editor.focus();
+                editor.focus();
             }
             
             function getAutocompleteItems(query) {
@@ -11727,7 +10927,7 @@ gantt
                 currentEditorTheme = theme;
                 
                 // Update editor theme
-                if (window.editor) {
+                if (editor) {
                     editor.setOption('theme', theme);
                 }
                 
@@ -11845,7 +11045,7 @@ gantt
                     if (savedTheme) {
                         // Set theme without triggering save during initialization
                         currentEditorTheme = savedTheme;
-                        if (window.editor) {
+                        if (editor) {
                             editor.setOption('theme', savedTheme);
                         }
                         
@@ -12074,7 +11274,7 @@ gantt
             
             // Markdown formatting toggle function
             function toggleMarkdownFormat(startMarker, endMarker, defaultText) {
-                if (!window.editor) return;
+                if (!editor) return;
                 
                 const selections = editor.listSelections();
                 const doc = editor.getDoc();
@@ -12135,9 +11335,9 @@ gantt
             
             // Toggle line prefix for headers, lists, quotes, etc.
             function toggleLinePrefix(prefix, defaultText) {
-                if (!window.editor) return;
+                if (!editor) return;
                 
-                const cursor = window.editor.getCursor();
+                const cursor = editor.getCursor();
                 const line = cursor.line;
                 const currentLine = editor.getLine(line);
                 
@@ -12146,7 +11346,7 @@ gantt
                     // Remove prefix
                     const newText = currentLine.substring(prefix.length);
                     editor.replaceRange(newText, { line: line, ch: 0 }, { line: line, ch: currentLine.length });
-                    window.editor.setCursor({ line: line, ch: Math.max(0, cursor.ch - prefix.length) });
+                    editor.setCursor({ line: line, ch: Math.max(0, cursor.ch - prefix.length) });
                 } else {
                     // Check if line has any other header prefix and remove it
                     const headerMatch = currentLine.match(/^#+\s*/);
@@ -12171,14 +11371,14 @@ gantt
                     // Position cursor appropriately
                     if (baseText.trim() === '') {
                         // Select the default text
-                        window.editor.setSelection(
+                        editor.setSelection(
                             { line: line, ch: prefix.length },
                             { line: line, ch: prefix.length + defaultText.length }
                         );
                     } else {
                         // Maintain relative cursor position
                         const newCursorPos = Math.max(prefix.length, cursor.ch - prefixOffset + prefix.length);
-                        window.editor.setCursor({ line: line, ch: newCursorPos });
+                        editor.setCursor({ line: line, ch: newCursorPos });
                     }
                 }
                 
@@ -12187,7 +11387,7 @@ gantt
             
             // Auto list continuation functionality
             function handleAutoListContinuation(editor, e) {
-                const cursor = window.editor.getCursor();
+                const cursor = editor.getCursor();
                 const currentLine = editor.getLine(cursor.line);
                 
                 // Check for different list patterns, more specific ones first
@@ -12212,7 +11412,7 @@ gantt
                                 { line: cursor.line, ch: 0 }, 
                                 { line: cursor.line, ch: currentLine.length }
                             );
-                            window.editor.setCursor({ line: cursor.line, ch: 0 });
+                            editor.setCursor({ line: cursor.line, ch: 0 });
                             return true;
                         }
                         
@@ -12238,7 +11438,7 @@ gantt
                         }
                         
                         editor.replaceRange(`\n${newMarker}`, cursor);
-                        window.editor.setCursor({ 
+                        editor.setCursor({ 
                             line: cursor.line + 1, 
                             ch: newMarker.length 
                         });
@@ -12340,7 +11540,7 @@ gantt
                             const imageMarkdown = `![Excalidraw繪圖](${base64Data})\n\n`;
                             
                             // Insert at cursor position
-                            const cursor = window.editor.getCursor();
+                            const cursor = editor.getCursor();
                             editor.replaceRange(imageMarkdown, cursor);
                             
                             // 繪圖已保存到編輯器
@@ -12479,7 +11679,7 @@ gantt
                     }
                     
                     if (mermaidCode) {
-                        const cursor = window.editor.getCursor();
+                        const cursor = editor.getCursor();
                         editor.replaceRange(`\`\`\`mermaid\n${mermaidCode}\`\`\`\n\n`, cursor);
                         // Mermaid 代碼已生成到編輯器
                     } else {
@@ -12562,7 +11762,7 @@ gantt
                     
                     // Refresh editor layout
                     setTimeout(() => {
-                        if (window.editor) window.editor.refresh();
+                        if (editor) editor.refresh();
                     }, 10);
                 }
             }
@@ -12590,7 +11790,7 @@ gantt
                 
                 // Final editor refresh
                 setTimeout(() => {
-                    if (window.editor) window.editor.refresh();
+                    if (editor) editor.refresh();
                 }, 100);
             }
 
@@ -12598,7 +11798,7 @@ gantt
             window.addEventListener('resize', () => {
                 if (currentViewMode === 'drawing') {
                     setTimeout(() => {
-                        if (window.editor) window.editor.refresh();
+                        if (editor) editor.refresh();
                     }, 100);
                 }
             });
@@ -13192,7 +12392,7 @@ gantt
                 if (existingHashtags.size === 0) return;
                 
                 // Find and mark hashtags in current file
-                const content = window.editor.getValue();
+                const content = editor.getValue();
                 const lines = content.split('\n');
                 let inCodeBlock = false;
                 
@@ -13312,9 +12512,264 @@ gantt
                 }
             }
 
+
+            // Enhanced mobile scrollbar experience
+            function initializeEnhancedMobileScrollbars() {
+                if (!isMobileDevice()) return;
+
+                let scrollTimeout;
+                
+                function showScrollbars(container) {
+                    if (container) {
+                        container.classList.add('scrolling');
+                        clearTimeout(scrollTimeout);
+                        scrollTimeout = setTimeout(() => {
+                            container.classList.remove('scrolling');
+                        }, 600);
+                    }
+                }
+
+                function addScrollbarEnhancements(container) {
+                    if (!container) return;
+
+                    let isDragging = false;
+                    let startY = 0;
+                    let startScrollTop = 0;
+                    let containerHeight = 0;
+                    let scrollHeight = 0;
+
+                    // Show scrollbar when scrolling starts
+                    container.addEventListener('scroll', () => {
+                        showScrollbars(container);
+                    });
+
+                    // Enhanced touch handling for scrollbar dragging
+                    container.addEventListener('touchstart', (e) => {
+                        showScrollbars(container);
+                        
+                        const touch = e.touches[0];
+                        const rect = container.getBoundingClientRect();
+                        const touchX = touch.clientX - rect.left;
+                        const isNearScrollbar = touchX > rect.width - 25; // Scrollbar detection zone
+                        
+                        if (isNearScrollbar) {
+                            e.preventDefault(); // Prevent default scrolling
+                            isDragging = true;
+                            startY = touch.clientY;
+                            startScrollTop = container.scrollTop;
+                            containerHeight = container.clientHeight;
+                            scrollHeight = container.scrollHeight;
+                            
+                            // Force scrollbar to be visible during drag
+                            container.style.setProperty('--scrollbar-opacity', '1');
+                            container.classList.add('scrolling');
+                            
+                            // Add visual feedback for dragging
+                            container.style.cursor = 'grabbing';
+                        }
+                    }, { passive: false });
+
+                    container.addEventListener('touchmove', (e) => {
+                        if (isDragging) {
+                            e.preventDefault();
+                            
+                            const touch = e.touches[0];
+                            const deltaY = touch.clientY - startY;
+                            
+                            // Calculate scroll ratio
+                            const maxScrollDistance = containerHeight;
+                            const maxScroll = scrollHeight - containerHeight;
+                            
+                            if (maxScroll > 0) {
+                                const scrollRatio = deltaY / maxScrollDistance;
+                                const newScrollTop = Math.max(0, Math.min(
+                                    startScrollTop + (scrollRatio * maxScroll),
+                                    maxScroll
+                                ));
+                                
+                                container.scrollTop = newScrollTop;
+                            }
+                        } else {
+                            showScrollbars(container);
+                        }
+                    }, { passive: false });
+
+                    container.addEventListener('touchend', (e) => {
+                        if (isDragging) {
+                            isDragging = false;
+                            container.style.cursor = '';
+                            
+                            // Keep scrollbar visible briefly after drag
+                            setTimeout(() => {
+                                container.style.removeProperty('--scrollbar-opacity');
+                            }, 600);
+                        }
+                    });
+
+                    // Handle mouse events for desktop testing
+                    container.addEventListener('mousedown', (e) => {
+                        const rect = container.getBoundingClientRect();
+                        const mouseX = e.clientX - rect.left;
+                        const isNearScrollbar = mouseX > rect.width - 25;
+                        
+                        if (isNearScrollbar) {
+                            e.preventDefault();
+                            isDragging = true;
+                            startY = e.clientY;
+                            startScrollTop = container.scrollTop;
+                            containerHeight = container.clientHeight;
+                            scrollHeight = container.scrollHeight;
+                            
+                            container.style.setProperty('--scrollbar-opacity', '1');
+                            container.classList.add('scrolling');
+                            container.style.cursor = 'grabbing';
+                        }
+                    });
+
+                    document.addEventListener('mousemove', (e) => {
+                        if (isDragging) {
+                            e.preventDefault();
+                            
+                            const deltaY = e.clientY - startY;
+                            const maxScrollDistance = containerHeight;
+                            const maxScroll = scrollHeight - containerHeight;
+                            
+                            if (maxScroll > 0) {
+                                const scrollRatio = deltaY / maxScrollDistance;
+                                const newScrollTop = Math.max(0, Math.min(
+                                    startScrollTop + (scrollRatio * maxScroll),
+                                    maxScroll
+                                ));
+                                
+                                container.scrollTop = newScrollTop;
+                            }
+                        }
+                    });
+
+                    document.addEventListener('mouseup', () => {
+                        if (isDragging) {
+                            isDragging = false;
+                            container.style.cursor = '';
+                            
+                            setTimeout(() => {
+                                container.style.removeProperty('--scrollbar-opacity');
+                            }, 600);
+                        }
+                    });
+                }
+
+                // Apply enhancements to editor and preview containers
+                const editorScroll = document.querySelector('.CodeMirror-scroll');
+                const previewContainer = document.querySelector('.preview-container');
+                
+                addScrollbarEnhancements(editorScroll);
+                addScrollbarEnhancements(previewContainer);
+
+                // Add momentum scrolling for better touch experience
+                if (editorScroll) {
+                    editorScroll.style.webkitOverflowScrolling = 'touch';
+                    editorScroll.style.overflowY = 'auto';
+                }
+                
+                if (previewContainer) {
+                    previewContainer.style.webkitOverflowScrolling = 'touch';
+                    previewContainer.style.overflowY = 'auto';
+                }
+
+                // Monitor view mode changes to reapply enhancements
+                const originalToggleMobileView = window.toggleMobileView;
+                if (typeof originalToggleMobileView === 'function') {
+                    window.toggleMobileView = function() {
+                        originalToggleMobileView();
+                        setTimeout(() => {
+                            const currentEditorScroll = document.querySelector('.CodeMirror-scroll');
+                            const currentPreviewContainer = document.querySelector('.preview-container');
+                            addScrollbarEnhancements(currentEditorScroll);
+                            addScrollbarEnhancements(currentPreviewContainer);
+                        }, 100);
+                    };
+                }
+            }
+
+            // Enhanced mobile keyboard experience
+            function optimizeMobileKeyboardExperience() {
+                if (!isMobileDevice()) return;
+
+                const viewport = document.querySelector('meta[name="viewport"]');
+                if (viewport) {
+                    // Prevent zoom on input focus
+                    viewport.setAttribute('content', 
+                        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+                    );
+                }
+
+                // iOS specific keyboard optimizations
+                if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                    let originalViewportHeight = window.innerHeight;
+                    
+                    window.addEventListener('resize', () => {
+                        const currentHeight = window.innerHeight;
+                        const heightDifference = originalViewportHeight - currentHeight;
+                        
+                        // If keyboard is likely shown (significant height reduction)
+                        if (heightDifference > 150) {
+                            document.body.classList.add('keyboard-active');
+                            // Prevent content jumping by maintaining scroll position
+                            const activeElement = document.activeElement;
+                            if (activeElement && activeElement.closest('.CodeMirror')) {
+                                setTimeout(() => {
+                                    const cursor = editor.getCursor();
+                                    const coords = editor.charCoords(cursor, "local");
+                                    const scrollInfo = editor.getScrollInfo();
+                                    
+                                    // Keep cursor in middle third of screen instead of top
+                                    const targetTop = scrollInfo.top + coords.top - (currentHeight * 0.4);
+                                    editor.scrollTo(null, Math.max(0, targetTop));
+                                }, 100);
+                            }
+                        } else {
+                            document.body.classList.remove('keyboard-active');
+                            // Restore original viewport height smoothly
+                            setTimeout(() => {
+                                if (viewport) {
+                                    viewport.setAttribute('content', 
+                                        'width=device-width, initial-scale=1.0'
+                                    );
+                                }
+                            }, 300);
+                        }
+                    });
+
+                    // Handle orientation change
+                    window.addEventListener('orientationchange', () => {
+                        setTimeout(() => {
+                            originalViewportHeight = window.innerHeight;
+                            if (viewport) {
+                                viewport.setAttribute('content', 
+                                    'width=device-width, initial-scale=1.0'
+                                );
+                            }
+                        }, 500);
+                    });
+                }
+
+                // Add touch-action manipulation for better touch response
+                const editorElements = document.querySelectorAll('.CodeMirror, .preview-container');
+                editorElements.forEach(element => {
+                    element.style.touchAction = 'manipulation';
+                });
+            }
+
             // Start the application
             initialize();
+            
+            // Initialize mobile optimizations after DOM is ready
+            setTimeout(() => {
+                initializeEnhancedMobileScrollbars();
+                optimizeMobileKeyboardExperience();
+            }, 1000);
         });
     </script>
+
 </body>
 </html>
