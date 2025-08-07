@@ -321,165 +321,16 @@
             display: none;
         }
         
-        /* Enhanced Mobile Scrollbar */
+        /* Simplified Mobile Scrollbar */
         @media (max-width: 768px) {
-            /* Mobile-friendly scrollbar styling */
+            /* Basic mobile scrollbar - no fancy animations */
             ::-webkit-scrollbar {
-                width: 12px;
-                height: 12px;
-            }
-
-            ::-webkit-scrollbar-track {
-                background: rgba(0, 0, 0, 0.1);
-                border-radius: 6px;
-                margin: 4px;
+                width: 8px;
             }
 
             ::-webkit-scrollbar-thumb {
-                background: var(--accent-color);
-                border-radius: 6px;
-                border: 2px solid transparent;
-                background-clip: content-box;
-                min-height: 30px;
-                transition: background-color 0.2s ease;
-            }
-
-            ::-webkit-scrollbar-thumb:hover {
-                background: rgba(0, 123, 255, 0.8);
-            }
-
-            ::-webkit-scrollbar-thumb:active {
-                background: rgba(0, 123, 255, 1);
-            }
-
-            /* Enhanced CodeMirror scrollbar */
-            .CodeMirror-scrollbar-filler {
-                background: transparent;
-            }
-
-            .CodeMirror-scroll {
-                --scrollbar-opacity: 0;
-            }
-
-            .CodeMirror-scroll::-webkit-scrollbar {
-                opacity: var(--scrollbar-opacity, 0);
-                transition: opacity 0.3s ease;
-            }
-
-            .CodeMirror-scroll:hover::-webkit-scrollbar,
-            .CodeMirror-scroll.scrolling::-webkit-scrollbar {
-                opacity: 1;
-            }
-
-            .CodeMirror-scroll::-webkit-scrollbar-thumb {
-                opacity: var(--scrollbar-opacity, 0);
-                transition: opacity 0.3s ease, background-color 0.2s ease;
-            }
-
-            .CodeMirror-scroll:hover::-webkit-scrollbar-thumb,
-            .CodeMirror-scroll.scrolling::-webkit-scrollbar-thumb {
-                opacity: 1;
-            }
-
-            /* Preview container scrollbar */
-            .preview-container {
-                scrollbar-width: thick;
-                scrollbar-color: var(--accent-color) rgba(0, 0, 0, 0.1);
-                --scrollbar-opacity: 0;
-            }
-
-            .preview-container::-webkit-scrollbar {
-                width: 12px;
-                opacity: var(--scrollbar-opacity, 0);
-                transition: opacity 0.3s ease;
-            }
-
-            .preview-container:hover::-webkit-scrollbar,
-            .preview-container.scrolling::-webkit-scrollbar {
-                opacity: 1;
-            }
-
-            .preview-container::-webkit-scrollbar-track {
-                background: rgba(0, 0, 0, 0.1);
-                border-radius: 6px;
-                margin: 4px;
-            }
-
-            .preview-container::-webkit-scrollbar-thumb {
-                background: var(--accent-color);
-                border-radius: 6px;
-                border: 2px solid transparent;
-                background-clip: content-box;
-                min-height: 30px;
-                opacity: var(--scrollbar-opacity, 0);
-                transition: opacity 0.3s ease, background-color 0.2s ease;
-            }
-
-            .preview-container:hover::-webkit-scrollbar-thumb,
-            .preview-container.scrolling::-webkit-scrollbar-thumb {
-                opacity: 1;
-            }
-
-            .preview-container::-webkit-scrollbar-thumb:hover {
-                background: rgba(0, 123, 255, 0.8);
-            }
-
-            .preview-container::-webkit-scrollbar-thumb:active {
-                background: rgba(0, 123, 255, 1);
-            }
-
-            /* Show scrollbars on touch/scroll */
-            .CodeMirror-scroll,
-            .preview-container {
-                scrollbar-width: auto;
-                opacity: 1;
-            }
-
-            /* Auto-show scrollbar when content is scrollable */
-            .CodeMirror-scroll:hover,
-            .preview-container:hover,
-            .mobile-edit-only .CodeMirror-scroll,
-            .mobile-preview-only .preview-container {
-                scrollbar-color: var(--accent-color) rgba(0, 0, 0, 0.1);
-            }
-
-            /* Touch-friendly scrollbar dimensions */
-            .CodeMirror-scroll::-webkit-scrollbar,
-            .preview-container::-webkit-scrollbar {
-                width: 16px !important;
-            }
-
-            .CodeMirror-scroll::-webkit-scrollbar-thumb,
-            .preview-container::-webkit-scrollbar-thumb {
-                min-height: 50px !important;
-                border: 2px solid transparent !important;
-                background-clip: content-box !important;
-            }
-
-            /* Enhanced dragging states */
-            .CodeMirror-scroll.scrolling::-webkit-scrollbar-thumb,
-            .preview-container.scrolling::-webkit-scrollbar-thumb {
-                background: rgba(0, 123, 255, 0.9) !important;
-                box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3) !important;
-            }
-
-            /* Wider touch area for scrollbar */
-            .CodeMirror-scroll,
-            .preview-container {
-                position: relative;
-            }
-
-            .CodeMirror-scroll::after,
-            .preview-container::after {
-                content: '';
-                position: absolute;
-                top: 0;
-                right: 0;
-                width: 25px;
-                height: 100%;
-                background: transparent;
-                z-index: 10;
-                pointer-events: auto;
+                background: rgba(0, 123, 255, 0.5);
+                border-radius: 4px;
             }
         }
 
@@ -542,67 +393,9 @@
                 }
             }
             
-            /* Enhanced keyboard active state */
-            body.keyboard-active {
-                /* Maintain stable layout without forcing position fixed */
-                overflow: hidden;
-            }
-            
-            body.keyboard-active .main-panel {
-                /* Ensure content doesn't jump when keyboard appears */
-                position: relative;
-                z-index: 1;
-            }
-            
-            body.keyboard-active .CodeMirror-scroll {
-                /* Disable automatic scrolling behaviors */
-                scroll-behavior: auto !important;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            body.keyboard-active .CodeMirror {
-                /* Prevent CodeMirror from auto-adjusting */
-                height: auto !important;
-            }
-            
-            /* Improved text cursor positioning */
-            body.keyboard-active .CodeMirror-cursor {
-                /* Make cursor more visible during typing */
-                border-left: 3px solid var(--accent-color) !important;
-                animation: cursor-blink 1.2s infinite;
-            }
-            
-            @keyframes cursor-blink {
-                0%, 50% { opacity: 1; }
-                51%, 100% { opacity: 0; }
-            }
-            
-            /* Prevent viewport scaling and auto-focus behaviors */
+            /* Minimal keyboard state - no complex animations or positioning */
             input, textarea, .CodeMirror-code {
                 font-size: 16px !important;
-                transform: translateZ(0);
-                -webkit-transform: translateZ(0);
-            }
-            
-            /* Prevent unwanted scrolling during keyboard active state */
-            body.keyboard-active .CodeMirror-scroll {
-                position: relative;
-                z-index: 2;
-            }
-            
-            /* Disable iOS bounce scrolling when keyboard is active */
-            @supports (-webkit-touch-callout: none) {
-                body.keyboard-active {
-                    position: fixed;
-                    width: 100%;
-                    height: 100vh;
-                    overflow: hidden;
-                }
-                
-                body.keyboard-active .main-panel {
-                    height: 100vh;
-                    overflow: hidden;
-                }
             }
             
             /* Hide unnecessary buttons on mobile, but show timer, font, search and mobile jump */
@@ -12555,165 +12348,14 @@ gantt
             }
 
 
-            // Enhanced mobile scrollbar experience
+            // Minimal mobile scrollbar optimization
             function initializeEnhancedMobileScrollbars() {
                 if (!isMobileDevice()) return;
 
-                let scrollTimeout;
-                
-                function showScrollbars(container) {
-                    if (container) {
-                        container.classList.add('scrolling');
-                        clearTimeout(scrollTimeout);
-                        scrollTimeout = setTimeout(() => {
-                            container.classList.remove('scrolling');
-                        }, 600);
-                    }
-                }
-
-                function addScrollbarEnhancements(container) {
-                    if (!container) return;
-
-                    let isDragging = false;
-                    let startY = 0;
-                    let startScrollTop = 0;
-                    let containerHeight = 0;
-                    let scrollHeight = 0;
-
-                    // Show scrollbar when scrolling starts
-                    container.addEventListener('scroll', () => {
-                        showScrollbars(container);
-                    });
-
-                    // Enhanced touch handling for scrollbar dragging
-                    container.addEventListener('touchstart', (e) => {
-                        showScrollbars(container);
-                        
-                        const touch = e.touches[0];
-                        const rect = container.getBoundingClientRect();
-                        const touchX = touch.clientX - rect.left;
-                        const isNearScrollbar = touchX > rect.width - 25; // Scrollbar detection zone
-                        
-                        if (isNearScrollbar) {
-                            e.preventDefault(); // Prevent default scrolling
-                            isDragging = true;
-                            startY = touch.clientY;
-                            startScrollTop = container.scrollTop;
-                            containerHeight = container.clientHeight;
-                            scrollHeight = container.scrollHeight;
-                            
-                            // Force scrollbar to be visible during drag
-                            container.style.setProperty('--scrollbar-opacity', '1');
-                            container.classList.add('scrolling');
-                            
-                            // Add visual feedback for dragging
-                            container.style.cursor = 'grabbing';
-                        }
-                    }, { passive: false });
-
-                    container.addEventListener('touchmove', (e) => {
-                        if (isDragging) {
-                            e.preventDefault();
-                            
-                            const touch = e.touches[0];
-                            const deltaY = touch.clientY - startY;
-                            
-                            // Calculate scroll ratio with throttling
-                            const maxScrollDistance = containerHeight;
-                            const maxScroll = scrollHeight - containerHeight;
-                            
-                            if (maxScroll > 0) {
-                                const scrollRatio = deltaY / maxScrollDistance;
-                                const newScrollTop = Math.max(0, Math.min(
-                                    startScrollTop + (scrollRatio * maxScroll),
-                                    maxScroll
-                                ));
-                                
-                                // Throttle scrollTop updates to improve performance
-                                if (Math.abs(container.scrollTop - newScrollTop) > 5) {
-                                    container.scrollTop = newScrollTop;
-                                }
-                            }
-                        } else {
-                            showScrollbars(container);
-                        }
-                    }, { passive: false });
-
-                    container.addEventListener('touchend', (e) => {
-                        if (isDragging) {
-                            isDragging = false;
-                            container.style.cursor = '';
-                            
-                            // Keep scrollbar visible briefly after drag
-                            setTimeout(() => {
-                                container.style.removeProperty('--scrollbar-opacity');
-                            }, 600);
-                        }
-                    });
-
-                    // Handle mouse events for desktop testing
-                    container.addEventListener('mousedown', (e) => {
-                        const rect = container.getBoundingClientRect();
-                        const mouseX = e.clientX - rect.left;
-                        const isNearScrollbar = mouseX > rect.width - 25;
-                        
-                        if (isNearScrollbar) {
-                            e.preventDefault();
-                            isDragging = true;
-                            startY = e.clientY;
-                            startScrollTop = container.scrollTop;
-                            containerHeight = container.clientHeight;
-                            scrollHeight = container.scrollHeight;
-                            
-                            container.style.setProperty('--scrollbar-opacity', '1');
-                            container.classList.add('scrolling');
-                            container.style.cursor = 'grabbing';
-                        }
-                    });
-
-                    document.addEventListener('mousemove', (e) => {
-                        if (isDragging) {
-                            e.preventDefault();
-                            
-                            const deltaY = e.clientY - startY;
-                            const maxScrollDistance = containerHeight;
-                            const maxScroll = scrollHeight - containerHeight;
-                            
-                            if (maxScroll > 0) {
-                                const scrollRatio = deltaY / maxScrollDistance;
-                                const newScrollTop = Math.max(0, Math.min(
-                                    startScrollTop + (scrollRatio * maxScroll),
-                                    maxScroll
-                                ));
-                                
-                                // Throttle updates for performance
-                                if (Math.abs(container.scrollTop - newScrollTop) > 5) {
-                                    container.scrollTop = newScrollTop;
-                                }
-                            }
-                        }
-                    });
-
-                    document.addEventListener('mouseup', () => {
-                        if (isDragging) {
-                            isDragging = false;
-                            container.style.cursor = '';
-                            
-                            setTimeout(() => {
-                                container.style.removeProperty('--scrollbar-opacity');
-                            }, 600);
-                        }
-                    });
-                }
-
-                // Apply enhancements to editor and preview containers
+                // Just add basic touch scrolling, no custom drag logic
                 const editorScroll = document.querySelector('.CodeMirror-scroll');
                 const previewContainer = document.querySelector('.preview-container');
-                
-                addScrollbarEnhancements(editorScroll);
-                addScrollbarEnhancements(previewContainer);
 
-                // Add momentum scrolling for better touch experience
                 if (editorScroll) {
                     editorScroll.style.webkitOverflowScrolling = 'touch';
                     editorScroll.style.overflowY = 'auto';
@@ -12723,92 +12365,36 @@ gantt
                     previewContainer.style.webkitOverflowScrolling = 'touch';
                     previewContainer.style.overflowY = 'auto';
                 }
-
-                // Monitor view mode changes to reapply enhancements
-                const originalToggleMobileView = window.toggleMobileView;
-                if (typeof originalToggleMobileView === 'function') {
-                    window.toggleMobileView = function() {
-                        originalToggleMobileView();
-                        setTimeout(() => {
-                            const currentEditorScroll = document.querySelector('.CodeMirror-scroll');
-                            const currentPreviewContainer = document.querySelector('.preview-container');
-                            addScrollbarEnhancements(currentEditorScroll);
-                            addScrollbarEnhancements(currentPreviewContainer);
-                        }, 100);
-                    };
-                }
             }
 
-            // Simplified mobile keyboard experience
+            // Minimal mobile optimization
             function optimizeMobileKeyboardExperience() {
                 if (!isMobileDevice()) return;
 
                 const viewport = document.querySelector('meta[name="viewport"]');
                 
-                // Set optimal viewport for editing
+                // Just set viewport, no event listeners
                 if (viewport) {
                     viewport.setAttribute('content', 
                         'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
                     );
                 }
 
-                // Prevent double-tap zoom only
+                // Only set touch-action, no event listeners
                 const editorElements = document.querySelectorAll('.CodeMirror, .preview-container');
                 editorElements.forEach(element => {
                     element.style.touchAction = 'manipulation';
-                    
-                    // Prevent double-tap zoom
-                    let lastTouchEnd = 0;
-                    element.addEventListener('touchend', (e) => {
-                        const now = new Date().getTime();
-                        if (now - lastTouchEnd <= 300) {
-                            e.preventDefault();
-                        }
-                        lastTouchEnd = now;
-                    }, false);
-                });
-
-                // Simple keyboard state tracking (only for CSS purposes)
-                let originalViewportHeight = window.innerHeight;
-                
-                window.addEventListener('resize', () => {
-                    const currentHeight = window.innerHeight;
-                    const heightDifference = originalViewportHeight - currentHeight;
-                    
-                    // Simple keyboard state for CSS only
-                    if (heightDifference > 150) {
-                        document.body.classList.add('keyboard-active');
-                    } else {
-                        document.body.classList.remove('keyboard-active');
-                    }
-                });
-
-                // Handle orientation changes
-                window.addEventListener('orientationchange', () => {
-                    setTimeout(() => {
-                        originalViewportHeight = window.innerHeight;
-                        document.body.classList.remove('keyboard-active');
-                    }, 500);
                 });
             }
 
             // Start the application
             initialize();
             
-            // Initialize mobile optimizations after editor is ready
+            // Minimal mobile optimizations
             setTimeout(() => {
                 initializeEnhancedMobileScrollbars();
-                
-                // Wait for editor to be fully initialized
-                if (editor) {
-                    optimizeMobileKeyboardExperience();
-                } else {
-                    // If editor not ready, wait a bit more
-                    setTimeout(() => {
-                        optimizeMobileKeyboardExperience();
-                    }, 2000);
-                }
-            }, 1500);
+                optimizeMobileKeyboardExperience();
+            }, 100);
         });
     </script>
 
