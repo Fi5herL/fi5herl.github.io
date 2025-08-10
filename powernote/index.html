@@ -332,14 +332,14 @@
                 line-height: 1.4 !important;
             }
             
-            /* Hide unnecessary buttons on mobile, but show view mode controls, timer, font, search and mobile jump */
-            .toolbar button:not(#sidebar-toggle):not(#mobile-view-toggle):not(#timer-btn):not(#font-settings-btn):not(#search-toggle-btn):not(#mobile-jump-btn):not(#single-split-view-btn):not(#single-edit-only-btn):not(#single-preview-only-btn) {
+            /* Hide unnecessary buttons on mobile, but show timer, font, search and mobile jump */
+            .toolbar button:not(#sidebar-toggle):not(#mobile-view-toggle):not(#timer-btn):not(#font-settings-btn):not(#search-toggle-btn):not(#mobile-jump-btn) {
                 display: none !important;
             }
             
-            /* Always show view mode controls */
+            /* Hide view mode controls on mobile */
             .single-editor-view-controls {
-                display: flex !important;
+                display: none !important;
             }
             
             /* Dual Editor Controls in Toolbar */
@@ -5209,6 +5209,7 @@
                 // Initialize mobile view if on mobile device
                 if (isMobileDevice()) {
                     updateMobileViewUI();
+                    syncMobileViewWithHeaderButtons();
                 }
                 console.log('=== 配置載入完成 ===', configLoaded);
                 
@@ -6244,6 +6245,7 @@
                         // Update mobile UI when device orientation changes
                         if (isMobileDevice()) {
                             updateMobileViewUI();
+                            syncMobileViewWithHeaderButtons();
                         } else {
                             // Remove mobile classes if no longer on mobile
                             mainContainer.classList.remove('mobile-edit-only', 'mobile-preview-only');
@@ -7505,12 +7507,26 @@
                     }
                 } else {
                     // In single editor mode, navigate in editor
-                    if (currentViewMode === 'split' || currentViewMode === 'edit-only') {
+                    const shouldNavigateInEditor = isMobileDevice() 
+                        ? mobileViewMode === 'edit' 
+                        : (currentViewMode === 'split' || currentViewMode === 'edit-only');
+                    
+                    console.log('TOC Navigation Debug:', {
+                        isMobile: isMobileDevice(),
+                        mobileViewMode,
+                        currentViewMode,
+                        shouldNavigateInEditor,
+                        editorExists: !!editor
+                    });
+                        
+                    if (shouldNavigateInEditor) {
                         if (editor) {
                             editor.setCursor({ line: lineNumber, ch: 0 });
                             editor.focus();
                             // Scroll the line into view
                             editor.scrollIntoView({ line: lineNumber, ch: 0 }, 20);
+                        } else {
+                            console.warn('TOC: Editor not found for navigation');
                         }
                     }
                 }
@@ -7524,7 +7540,11 @@
                     }
                 } else {
                     // In single editor mode
-                    if (currentViewMode === 'preview-only' || currentViewMode === 'split') {
+                    const shouldScrollToPreview = isMobileDevice() 
+                        ? mobileViewMode === 'preview' 
+                        : (currentViewMode === 'preview-only' || currentViewMode === 'split');
+                        
+                    if (shouldScrollToPreview) {
                         scrollToPreviewHeading(lineNumber);
                     }
                 }
@@ -8991,13 +9011,16 @@ gantt
                 
                 mobileViewMode = mobileViewMode === 'edit' ? 'preview' : 'edit';
                 updateMobileViewUI();
+                
+                // Sync with header buttons
+                syncMobileViewWithHeaderButtons();
             }
             
             function updateMobileViewUI() {
                 if (!isMobileDevice()) return;
                 
-                // Remove previous mobile view classes
-                mainContainer.classList.remove('mobile-edit-only', 'mobile-preview-only');
+                // Remove previous mobile view classes and conflicting desktop classes
+                mainContainer.classList.remove('mobile-edit-only', 'mobile-preview-only', 'desktop-edit-only', 'desktop-preview-only', 'desktop-drawing');
                 
                 if (mobileViewMode === 'edit') {
                     mainContainer.classList.add('mobile-edit-only');
@@ -9011,6 +9034,30 @@ gantt
                         mobileViewToggle.innerHTML = '<i class="fas fa-eye"></i>';
                         mobileViewToggle.title = '純渲染模式 - 點擊切換到編輯';
                     }
+                }
+            }
+            
+            // Sync mobile view with header buttons
+            function syncMobileViewWithHeaderButtons() {
+                if (!isMobileDevice()) return;
+                
+                const editBtn = document.getElementById('single-edit-only-btn');
+                const previewBtn = document.getElementById('single-preview-only-btn');
+                const splitBtn = document.getElementById('single-split-view-btn');
+                
+                // Clear all active states
+                [splitBtn, editBtn, previewBtn].forEach(btn => {
+                    if (btn) btn.classList.remove('active');
+                });
+                
+                // Set active state based on mobile view mode
+                if (mobileViewMode === 'edit' && editBtn) {
+                    editBtn.classList.add('active');
+                    // Also update currentViewMode to keep consistency
+                    currentViewMode = 'edit-only';
+                } else if (mobileViewMode === 'preview' && previewBtn) {
+                    previewBtn.classList.add('active');
+                    currentViewMode = 'preview-only';
                 }
             }
 
@@ -12472,8 +12519,9 @@ gantt
                         if (isDualEditorMode) {
                             setDualPaneViewMode(0, 'split');
                             updatePaneViewModeButtons(0, 'split');
-                        } else {
-                            // In single editor mode, use normal setViewMode
+                        } else if (!isMobileDevice()) {
+                            // In desktop single editor mode, use normal setViewMode
+                            // Skip on mobile as split view is not available
                             setViewMode('split');
                         }
                     });
@@ -12487,8 +12535,12 @@ gantt
                         if (isDualEditorMode) {
                             setDualPaneViewMode(0, 'edit');
                             updatePaneViewModeButtons(0, 'edit');
+                        } else if (isMobileDevice()) {
+                            // In mobile mode, only update mobile view
+                            mobileViewMode = 'edit';
+                            updateMobileViewUI();
                         } else {
-                            // In single editor mode, use normal setViewMode
+                            // In desktop single editor mode, use normal setViewMode
                             setViewMode('edit-only');
                         }
                     });
@@ -12502,8 +12554,12 @@ gantt
                         if (isDualEditorMode) {
                             setDualPaneViewMode(0, 'preview');
                             updatePaneViewModeButtons(0, 'preview');
+                        } else if (isMobileDevice()) {
+                            // In mobile mode, only update mobile view
+                            mobileViewMode = 'preview';
+                            updateMobileViewUI();
                         } else {
-                            // In single editor mode, use normal setViewMode
+                            // In desktop single editor mode, use normal setViewMode
                             setViewMode('preview-only');
                         }
                     });
