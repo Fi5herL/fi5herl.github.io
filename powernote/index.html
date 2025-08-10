@@ -332,9 +332,72 @@
                 line-height: 1.4 !important;
             }
             
-            /* Hide unnecessary buttons on mobile, but show timer, font, search and mobile jump */
-            .toolbar button:not(#sidebar-toggle):not(#mobile-view-toggle):not(#timer-btn):not(#font-settings-btn):not(#search-toggle-btn):not(#mobile-jump-btn) {
+            /* Hide unnecessary buttons on mobile, but show view mode controls, timer, font, search and mobile jump */
+            .toolbar button:not(#sidebar-toggle):not(#mobile-view-toggle):not(#timer-btn):not(#font-settings-btn):not(#search-toggle-btn):not(#mobile-jump-btn):not(#single-split-view-btn):not(#single-edit-only-btn):not(#single-preview-only-btn) {
                 display: none !important;
+            }
+            
+            /* Always show view mode controls */
+            .single-editor-view-controls {
+                display: flex !important;
+            }
+            
+            /* Dual Editor Controls in Toolbar */
+            .dual-editor-controls-toolbar {
+                display: flex;
+                gap: 4px;
+                align-items: center;
+            }
+            
+            .toolbar-dual-btn {
+                background: var(--button-bg);
+                color: white;
+                border: 2px solid #007acc; /* Blue border */
+                border-radius: 6px;
+                padding: 4px 8px;
+                font-size: 12px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+            
+            .toolbar-dual-btn:hover {
+                background: var(--button-hover-bg);
+                border-color: #0099ff;
+            }
+            
+            /* Hide single editor view controls in dual mode, show dual controls */
+            .dual-mode .single-editor-view-controls {
+                display: none !important;
+            }
+            
+            .dual-mode .dual-editor-controls-toolbar {
+                display: flex !important;
+            }
+            
+            /* Hide editor and preview headers in dual mode since dual-pane-header shows files */
+            .dual-mode .editor-header,
+            .dual-mode .preview-header {
+                display: none !important;
+            }
+            
+            /* Dual Editor File Highlighting - Higher specificity to override default styles */
+            .file-item.active-pane-1 {
+                border-left: 3px solid #007acc !important; /* Blue for left pane */
+                background-color: rgba(0, 122, 204, 0.1) !important;
+            }
+            
+            .file-item.active-pane-2 {
+                border-left: 3px solid #28a745 !important; /* Green for right pane */
+                background-color: rgba(40, 167, 69, 0.1) !important;
+            }
+            
+            .file-item.current-active {
+                background-color: var(--accent-color) !important;
+                color: white !important;
+                font-weight: bold !important;
             }
             
             /* Show mobile view toggle only on mobile */
@@ -1247,8 +1310,9 @@
             min-width: 0;
         }
         
-        /* Desktop single view modes - 視覺隱藏但保持功能性 */
-        .desktop-edit-only .preview-panel {
+        /* Desktop single view modes - 視覺隱藏但保持功能性 - ONLY affect single editor content */
+        body:not(.dual-mode) .desktop-edit-only .preview-panel,
+        .desktop-edit-only:not(.dual-mode) #single-editor-content .preview-panel {
             width: 0 !important;
             min-width: 0 !important;
             flex: 0 !important;
@@ -1257,7 +1321,8 @@
             pointer-events: none !important;
         }
         
-        .desktop-preview-only .editor-panel {
+        body:not(.dual-mode) .desktop-preview-only .editor-panel,
+        .desktop-preview-only:not(.dual-mode) #single-editor-content .editor-panel {
             width: 0 !important;
             min-width: 0 !important;
             flex: 0 !important;
@@ -1266,8 +1331,9 @@
             pointer-events: none !important;
         }
         
-        /* Desktop drawing mode */
-        .desktop-drawing .preview-panel {
+        /* Desktop drawing mode - Only affect single editor */
+        body:not(.dual-mode) .desktop-drawing .preview-panel,
+        .desktop-drawing:not(.dual-mode) #single-editor-content .preview-panel {
             width: 0 !important;
             min-width: 0 !important;
             flex: 0 !important;
@@ -1277,22 +1343,41 @@
         }
 
         /* 雙編輯器 pane 模式強化 - 視覺隱藏但保持功能性 */
-        .dual-pane.dual-pane-edit-only .dual-editor-main-content .preview-panel {
+        .dual-pane.dual-pane-edit-only .dual-editor-main-content .preview-panel,
+        .dual-pane.dual-pane-edit-only .preview-panel {
             width: 0 !important;
             min-width: 0 !important;
-            flex: 0 !important;
+            flex: 0 0 0 !important;
             overflow: hidden !important;
             opacity: 0 !important;
             pointer-events: none !important;
+            display: block !important; /* Ensure element exists but is hidden */
         }
         
-        .dual-pane.dual-pane-preview-only .dual-editor-main-content .editor-panel {
+        .dual-pane.dual-pane-preview-only .dual-editor-main-content .editor-panel,
+        .dual-pane.dual-pane-preview-only .editor-panel {
             width: 0 !important;
             min-width: 0 !important;
-            flex: 0 !important;
+            flex: 0 0 0 !important;
             overflow: hidden !important;
             opacity: 0 !important;
             pointer-events: none !important;
+            display: block !important; /* Ensure element exists but is hidden */
+        }
+        
+        /* Ensure visible panels take full width */
+        .dual-pane.dual-pane-edit-only .dual-editor-main-content .editor-panel,
+        .dual-pane.dual-pane-edit-only .editor-panel {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            opacity: 1 !important;
+        }
+        
+        .dual-pane.dual-pane-preview-only .dual-editor-main-content .preview-panel,
+        .dual-pane.dual-pane-preview-only .preview-panel {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            opacity: 1 !important;
         }
         .editor-header, .preview-header {
             background: var(--header-bg);
@@ -1310,6 +1395,34 @@
         .editor-header i, .preview-header i {
             margin-right: 8px;
             color: var(--accent-color);
+        }
+        
+        /* Single Editor View Controls in Header */
+        .single-editor-view-controls {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .header-view-mode-btn {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .header-view-mode-btn:hover {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        .header-view-mode-btn.active {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         /* Drawing Modal Full-Screen Styles */
@@ -1470,34 +1583,6 @@
         }
         
         /* Dual Editor Styles */
-        .dual-editor-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            padding: 8px 16px;
-            background: var(--header-bg);
-            border-bottom: 1px solid var(--border-color);
-            flex-wrap: wrap;
-        }
-
-        .dual-editor-controls button {
-            background: var(--button-bg);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 6px 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .dual-editor-controls button:hover {
-            background: var(--button-hover-bg);
-            transform: translateY(-1px);
-        }
 
         .dual-editor-content {
             flex: 1;
@@ -1680,9 +1765,6 @@
             display: flex !important;
         }
 
-        .dual-mode #dual-editor-controls {
-            display: flex !important;
-        }
 
         /* Responsive handling for dual editor */
         @media (max-width: 768px) {
@@ -3511,6 +3593,7 @@
             <div class="file-panel-header">
                 <div class="sidebar-controls">
                     <button id="view-mode-toggle" title="切換檢視模式">F</button>
+                    <button id="sort-files-btn" title="檔案排序"><i class="fas fa-sort"></i></button>
                     <!-- Moved buttons from editor header -->
                     <button id="editor-new-file-btn" class="fold-toggle-btn" title="新增檔案">
                         <i class="fas fa-plus"></i>
@@ -3518,7 +3601,6 @@
                     <button id="editor-open-files-btn" class="fold-toggle-btn" title="開啟新檔">
                         <i class="fas fa-folder-open"></i>
                     </button>
-                    <button id="sort-files-btn" title="檔案排序"><i class="fas fa-sort"></i></button>
                     
                     <!-- 同步分享下拉選單 -->
                     <div class="dropdown-container">
@@ -3571,16 +3653,36 @@
         
         <div class="main-panel">
             <div class="toolbar">
+                <!-- View Mode Controls - Always Visible -->
                 <button id="sidebar-toggle"><i class="fas fa-bars"></i> <span class="btn-text"></span></button>
+                <div class="single-editor-view-controls">
+                    <button id="single-split-view-btn" class="header-view-mode-btn active" title="雙顯示">
+                        <i class="fas fa-columns"></i>
+                    </button>
+                    <button id="single-edit-only-btn" class="header-view-mode-btn" title="純編輯">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button id="single-preview-only-btn" class="header-view-mode-btn" title="純預覽">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                
+                <!-- Dual Editor Controls - Only visible in dual mode -->
+                <div class="dual-editor-controls-toolbar" id="dual-editor-controls-toolbar" style="display: none;">
+                    <button id="dual-layout-toggle" class="toolbar-dual-btn" title="切換上下/左右佈局">
+                        <i class="fas fa-arrows-alt-h"></i>
+                    </button>
+                    <button id="dual-editor-close" class="toolbar-dual-btn" title="關閉雙編輯器模式">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
                 <button id="mobile-view-toggle" title="切換檢視模式"><i class="fas fa-eye"></i></button>
                 <button id="timer-btn" class="timer-btn"><i class="fas fa-clock"></i> <span id="timer-display">00:00</span></button>
                 <button id="font-settings-btn"><i class="fas fa-text-height"></i> <span id="current-font-size">22px</span></button>
                 <button id="shortcuts-help-btn" title="快捷鍵說明"><i class="fas fa-keyboard"></i></button>
                 
-                <!-- View Mode Toggle Buttons -->
-                <button id="split-view-btn" class="view-mode-toolbar-btn active" title="編輯/渲染模式"><i class="fas fa-columns"></i></button>
-                <button id="edit-only-btn" class="view-mode-toolbar-btn" title="純編輯模式"><i class="fas fa-edit"></i></button>
-                <button id="preview-only-btn" class="view-mode-toolbar-btn" title="純渲染模式"><i class="fas fa-eye"></i></button>
+                <!-- View Mode Toggle Buttons moved to file header -->
                 <button id="dual-editor-btn" class="view-mode-toolbar-btn" title="雙編輯器模式"><i class="fas fa-clone"></i></button>
                 <button id="drawing-mode-btn" class="view-mode-toolbar-btn" title="繪圖模式"><i class="fas fa-draw-polygon"></i></button>
                 
@@ -3618,21 +3720,12 @@
             </div>
             <!-- End Search Bar -->
 
-            <!-- Dual Editor Toggle Controls -->
-            <div class="dual-editor-controls" id="dual-editor-controls" style="display: none;">
-                <button id="dual-layout-toggle" title="切換上下/左右佈局">
-                    <i class="fas fa-arrows-alt-h"></i> 佈局
-                </button>
-                <button id="dual-editor-close" title="關閉雙編輯器模式">
-                    <i class="fas fa-times"></i> 單編輯器
-                </button>
-            </div>
 
             <!-- Single Editor Content (Original) -->
             <div class="main-editor-content" id="single-editor-content">
                 <div class="editor-panel" id="editor-panel">
                     <div class="editor-header">
-                        <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div><i class="fas fa-edit"></i> <span id="current-file-name">新筆記</span></div>
                         </div>
                     </div>
@@ -7362,8 +7455,27 @@
             // --- Table of Contents ---
             function generateToc() {
                 tocListEl.innerHTML = '';
-                if (!editor) return;
-                editor.getValue().split('\n').forEach((line, index) => {
+                
+                let sourceEditor = null;
+                let content = '';
+                
+                if (isDualEditorMode) {
+                    // In dual editor mode, use the active pane's editor
+                    sourceEditor = dualEditorInstances[activePaneIndex];
+                    if (sourceEditor) {
+                        content = sourceEditor.getValue();
+                    }
+                } else {
+                    // In single editor mode, use the main editor
+                    sourceEditor = editor;
+                    if (sourceEditor) {
+                        content = sourceEditor.getValue();
+                    }
+                }
+                
+                if (!content) return;
+                
+                content.split('\n').forEach((line, index) => {
                     const match = line.match(/^(#+)\s+(.*)/);
                     if (match) {
                         const li = document.createElement('li');
@@ -7382,17 +7494,39 @@
             function navigateToTocLine(line) {
                 const lineNumber = parseInt(line);
                 
-                // In edit modes (split, edit-only), navigate in editor
-                if (currentViewMode === 'split' || currentViewMode === 'edit-only') {
-                    if (editor) {
-                        editor.setCursor({ line: lineNumber, ch: 0 });
-                        editor.focus();
+                if (isDualEditorMode) {
+                    // In dual editor mode, navigate in the active pane
+                    const activeEditor = dualEditorInstances[activePaneIndex];
+                    if (activeEditor) {
+                        activeEditor.setCursor({ line: lineNumber, ch: 0 });
+                        activeEditor.focus();
+                        // Scroll the line into view
+                        activeEditor.scrollIntoView({ line: lineNumber, ch: 0 }, 20);
+                    }
+                } else {
+                    // In single editor mode, navigate in editor
+                    if (currentViewMode === 'split' || currentViewMode === 'edit-only') {
+                        if (editor) {
+                            editor.setCursor({ line: lineNumber, ch: 0 });
+                            editor.focus();
+                            // Scroll the line into view
+                            editor.scrollIntoView({ line: lineNumber, ch: 0 }, 20);
+                        }
                     }
                 }
                 
                 // In preview-only mode or always for preview, scroll to the corresponding heading
-                if (currentViewMode === 'preview-only' || currentViewMode === 'split') {
-                    scrollToPreviewHeading(lineNumber);
+                if (isDualEditorMode) {
+                    // In dual editor mode, scroll to preview of active pane if it has preview visible
+                    const paneMode = window.dualPaneModes ? window.dualPaneModes[activePaneIndex] : 'split';
+                    if (paneMode === 'preview' || paneMode === 'split') {
+                        scrollToPreviewHeading(lineNumber, activePaneIndex);
+                    }
+                } else {
+                    // In single editor mode
+                    if (currentViewMode === 'preview-only' || currentViewMode === 'split') {
+                        scrollToPreviewHeading(lineNumber);
+                    }
                 }
                 
                 // Auto close sidebar on mobile after navigation
@@ -7401,16 +7535,27 @@
                 }
             }
             
-            function scrollToPreviewHeading(editorLine) {
-                const previewContainer = document.getElementById('preview');
-                if (!previewContainer) return;
+            function scrollToPreviewHeading(editorLine, paneIndex = null) {
+                let previewContainer;
+                let sourceEditor;
+                
+                if (paneIndex !== null) {
+                    // Dual editor mode - use specific pane preview
+                    previewContainer = document.getElementById(`preview-${paneIndex + 1}`);
+                    sourceEditor = dualEditorInstances[paneIndex];
+                } else {
+                    // Single editor mode
+                    previewContainer = document.getElementById('preview');
+                    sourceEditor = editor;
+                }
+                
+                if (!previewContainer || !sourceEditor) return;
                 
                 // Find all headings in preview
                 const headings = previewContainer.querySelectorAll('h1, h2, h3, h4, h5, h6');
                 
                 // Get editor content and find the heading text at the specified line
-                if (!editor) return;
-                const editorContent = editor.getValue();
+                const editorContent = sourceEditor.getValue();
                 const lines = editorContent.split('\n');
                 const targetLine = lines[editorLine];
                 
@@ -8622,7 +8767,32 @@ gantt
                     const item = document.createElement('div');
                     item.className = 'file-item';
                     item.dataset.fileId = file.id;
-                    if (currentFile && currentFile.id === file.id) item.classList.add('active');
+                    
+                    // Enhanced file highlighting for dual editor mode
+                    let isActiveFile = false;
+                    if (isDualEditorMode) {
+                        // In dual editor mode, highlight files in both panes with different styles
+                        if (dualEditorFiles[0] && dualEditorFiles[0].id === file.id) {
+                            item.classList.add('active-pane-1');
+                            if (activePaneIndex === 0) {
+                                item.classList.add('current-active');
+                                isActiveFile = true;
+                            }
+                        }
+                        if (dualEditorFiles[1] && dualEditorFiles[1].id === file.id) {
+                            item.classList.add('active-pane-2');
+                            if (activePaneIndex === 1) {
+                                item.classList.add('current-active');
+                                isActiveFile = true;
+                            }
+                        }
+                    } else {
+                        // In single editor mode, use original logic
+                        if (currentFile && currentFile.id === file.id) {
+                            item.classList.add('active');
+                            isActiveFile = true;
+                        }
+                    }
                     
                     // Add system file class for styling if needed
                     if (isSystemFile(file.name)) {
@@ -10788,10 +10958,10 @@ gantt
                 const sortBtn = document.getElementById('sort-files-btn');
                 if (sortBtn) sortBtn.addEventListener('click', cycleSortMode);
                 
-                // View mode controls
-                safeAddEventListener('split-view-btn', 'click', () => setViewMode('split'));
-                safeAddEventListener('edit-only-btn', 'click', () => setViewMode('edit-only'));
-                safeAddEventListener('preview-only-btn', 'click', () => setViewMode('preview-only'));
+                // View mode controls in single editor header
+                safeAddEventListener('single-split-view-btn', 'click', () => setUniversalViewMode('split'));
+                safeAddEventListener('single-edit-only-btn', 'click', () => setUniversalViewMode('edit-only'));
+                safeAddEventListener('single-preview-only-btn', 'click', () => setUniversalViewMode('preview-only'));
                 safeAddEventListener('dual-editor-btn', 'click', () => toggleDualEditor());
                 safeAddEventListener('drawing-mode-btn', 'click', () => openDrawingModal());
                 
@@ -11481,14 +11651,65 @@ gantt
             }
 
             // --- View Mode Functions ---
+            
+            // Universal view mode handler - works for both single and dual editor modes
+            function setUniversalViewMode(mode) {
+                if (isDualEditorMode) {
+                    // In dual editor mode: control left pane and sync button states
+                    const modeMapping = {
+                        'split': 'split',
+                        'edit-only': 'edit', 
+                        'preview-only': 'preview'
+                    };
+                    
+                    const dualMode = modeMapping[mode] || 'split';
+                    setDualPaneViewMode(0, dualMode); // Control left pane
+                    updatePaneViewModeButtons(0, dualMode);
+                    
+                    // Update header button states to match left pane
+                    const splitBtn = document.getElementById('single-split-view-btn');
+                    const editBtn = document.getElementById('single-edit-only-btn');
+                    const previewBtn = document.getElementById('single-preview-only-btn');
+                    
+                    [splitBtn, editBtn, previewBtn].forEach(btn => {
+                        if (btn) btn.classList.remove('active');
+                    });
+                    
+                    switch(mode) {
+                        case 'split':
+                            if (splitBtn) splitBtn.classList.add('active');
+                            break;
+                        case 'edit-only':
+                            if (editBtn) editBtn.classList.add('active');
+                            break;
+                        case 'preview-only':
+                            if (previewBtn) previewBtn.classList.add('active');
+                            break;
+                    }
+                    
+                    // Save the mode for when switching back to single editor
+                    currentViewMode = mode;
+                } else {
+                    // In single editor mode: use original logic
+                    setViewMode(mode);
+                }
+            }
+            
+            // Original single editor view mode function (renamed for clarity)
             function setViewMode(mode) {
+                // Don't apply single editor view modes when in dual editor mode
+                if (isDualEditorMode) {
+                    console.log('setViewMode blocked in dual editor mode');
+                    return;
+                }
+                
                 const previousViewMode = currentViewMode;
                 currentViewMode = mode;
                 const editorPanel = document.getElementById('editor-panel');
                 const previewPanel = document.getElementById('preview-panel');
-                const splitBtn = document.getElementById('split-view-btn');
-                const editBtn = document.getElementById('edit-only-btn');
-                const previewBtn = document.getElementById('preview-only-btn');
+                const splitBtn = document.getElementById('single-split-view-btn');
+                const editBtn = document.getElementById('single-edit-only-btn');
+                const previewBtn = document.getElementById('single-preview-only-btn');
                 const drawingBtn = document.getElementById('drawing-mode-btn');
                 const syncScrollToggle = document.getElementById('sync-scroll-toggle');
                 const mainContainer = document.getElementById('main-container');
@@ -11595,18 +11816,72 @@ gantt
             let dualEditorFiles = [null, null]; // File references for each pane
             let activePaneIndex = 0; // 0 for left/top pane, 1 for right/bottom pane
             
+            // Sync header buttons with dual pane left panel for consistency
+            function syncHeaderButtonsWithDualPane(dualMode) {
+                const singleMode = getDualModeAsSingleEditor(dualMode);
+                currentViewMode = singleMode; // Update stored mode
+                
+                const splitBtn = document.getElementById('single-split-view-btn');
+                const editBtn = document.getElementById('single-edit-only-btn');
+                const previewBtn = document.getElementById('single-preview-only-btn');
+                
+                // Clear all active states
+                [splitBtn, editBtn, previewBtn].forEach(btn => {
+                    if (btn) btn.classList.remove('active');
+                });
+                
+                // Set active state based on mode
+                switch(singleMode) {
+                    case 'split':
+                        if (splitBtn) splitBtn.classList.add('active');
+                        break;
+                    case 'edit-only':
+                        if (editBtn) editBtn.classList.add('active');
+                        break;
+                    case 'preview-only':
+                        if (previewBtn) previewBtn.classList.add('active');
+                        break;
+                }
+            }
+            
+            // Helper functions for seamless mode transitions
+            function getSingleEditorAsDualMode(singleMode) {
+                const mapping = {
+                    'split': 'split',
+                    'edit-only': 'edit',
+                    'preview-only': 'preview',
+                    'drawing': 'split' // Default to split for drawing mode
+                };
+                return mapping[singleMode] || 'split';
+            }
+            
+            function getDualModeAsSingleEditor(dualMode) {
+                const mapping = {
+                    'split': 'split',
+                    'edit': 'edit-only',
+                    'preview': 'preview-only'
+                };
+                return mapping[dualMode] || 'split';
+            }
+            
             function toggleDualEditor() {
                 isDualEditorMode = !isDualEditorMode;
                 const bodyElement = document.body;
                 const singleContent = document.getElementById('single-editor-content');
                 const dualContent = document.getElementById('dual-editor-content');
-                const dualControls = document.getElementById('dual-editor-controls');
+                const dualControls = document.getElementById('dual-editor-controls-toolbar');
                 const dualBtn = document.getElementById('dual-editor-btn');
                 
                 if (isDualEditorMode) {
                     // Enter dual editor mode
                     bodyElement.classList.add('dual-mode');
                     dualBtn.classList.add('active');
+                    
+                    // Clear single editor CSS classes that might interfere
+                    const mainContainer = document.getElementById('main-container');
+                    if (mainContainer) {
+                        mainContainer.classList.remove('desktop-edit-only', 'desktop-preview-only', 'desktop-drawing');
+                    }
                     
                     // Initialize dual editor if not already done
                     if (!dualEditorInstances[0]) {
@@ -11622,21 +11897,31 @@ gantt
                     // Initialize splitter
                     initializeDualEditorSplitter();
                     
-                    // Initialize both panes to split mode by default
-                    setDualPaneViewMode(0, 'split');
-                    setDualPaneViewMode(1, 'split');
-                    updatePaneViewModeButtons(0, 'split');
+                    // Initialize panes based on single editor state for seamless transition
+                    const leftPaneMode = getSingleEditorAsDualMode(currentViewMode);
+                    setDualPaneViewMode(0, leftPaneMode); // Left pane inherits single editor mode
+                    setDualPaneViewMode(1, 'split'); // Right pane defaults to split
+                    updatePaneViewModeButtons(0, leftPaneMode);
                     updatePaneViewModeButtons(1, 'split');
                     
                     // Auto-load current file into the first pane if available
                     if (currentFile) {
                         console.log('Auto-loading current file into pane 0:', currentFile.name);
-                        setActiveDualPane(0);
-                        loadFileIntoDualPane(currentFile.id);
+                        // First load the file, then set active pane to avoid empty dualEditorFiles
+                        dualEditorFiles[0] = currentFile; // Set file reference directly
+                        if (dualEditorInstances[0]) {
+                            dualEditorInstances[0].setValue(currentFile.content || '');
+                        }
+                        updateDualFileNameDisplay(0, currentFile.name);
+                        updateDualPreview(0);
+                        setActiveDualPane(0); // Now set active pane after file is loaded
                     }
                     
                 } else {
-                    // Exit dual editor mode
+                    // Exit dual editor mode - sync left pane state to single editor
+                    const leftPaneMode = window.dualPaneModes?.[0] || 'split';
+                    const singleEditorMode = getDualModeAsSingleEditor(leftPaneMode);
+                    
                     bodyElement.classList.remove('dual-mode');
                     dualBtn.classList.remove('active');
                     
@@ -11649,6 +11934,12 @@ gantt
                     if (pane2) {
                         pane2.classList.remove('dual-pane-edit-only', 'dual-pane-preview-only');
                     }
+                    
+                    // Apply inherited mode to single editor for seamless transition
+                    setViewMode(singleEditorMode);
+                    
+                    // Update file list highlighting when exiting dual mode
+                    renderFileList();
                 }
             }
             
@@ -12113,34 +12404,46 @@ gantt
                     });
                 }
                 
-                // Pane selection (click to activate pane)
-                const pane1Header = document.querySelector('#dual-pane-1 .pane-title-bar');
-                const pane2Header = document.querySelector('#dual-pane-2 .pane-title-bar');
+                // Pane selection (click anywhere in pane to activate)
+                const pane1 = document.getElementById('dual-pane-1');
+                const pane2 = document.getElementById('dual-pane-2');
                 
-                if (pane1Header) {
-                    pane1Header.addEventListener('click', () => {
-                        setActiveDualPane(0);
+                if (pane1) {
+                    pane1.addEventListener('click', () => {
+                        // Only switch if not already active (prevent unnecessary switching)
+                        if (activePaneIndex !== 0) {
+                            setActiveDualPane(0);
+                        }
                     });
                 }
                 
-                if (pane2Header) {
-                    pane2Header.addEventListener('click', () => {
-                        setActiveDualPane(1);
+                if (pane2) {
+                    pane2.addEventListener('click', () => {
+                        // Only switch if not already active (prevent unnecessary switching)
+                        if (activePaneIndex !== 1) {
+                            setActiveDualPane(1);
+                        }
                     });
                 }
                 
                 // View mode controls for each pane
                 setupPaneViewModeControls();
+                
+                // Setup header button event listeners for bidirectional sync
+                setupSingleEditorHeaderButtons();
             }
             
             function setupPaneViewModeControls() {
-                // Pane 1 view mode controls
+                // Pane 1 view mode controls with header sync
                 document.querySelectorAll('[data-pane="1"]').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const mode = btn.dataset.mode;
                         console.log(`Button clicked: Pane 1, Mode ${mode}`);
                         setDualPaneViewMode(0, mode);
                         updatePaneViewModeButtons(0, mode);
+                        
+                        // Sync with header buttons for seamless experience
+                        syncHeaderButtonsWithDualPane(mode);
                     });
                 });
                 
@@ -12153,6 +12456,58 @@ gantt
                         updatePaneViewModeButtons(1, mode);
                     });
                 });
+            }
+            
+            // Setup single editor header button event listeners for bidirectional sync
+            function setupSingleEditorHeaderButtons() {
+                const splitBtn = document.getElementById('single-split-view-btn');
+                const editBtn = document.getElementById('single-edit-only-btn');
+                const previewBtn = document.getElementById('single-preview-only-btn');
+                
+                if (splitBtn) {
+                    splitBtn.addEventListener('click', () => {
+                        console.log('Header button clicked: Split view');
+                        
+                        // In dual editor mode, only control left pane
+                        if (isDualEditorMode) {
+                            setDualPaneViewMode(0, 'split');
+                            updatePaneViewModeButtons(0, 'split');
+                        } else {
+                            // In single editor mode, use normal setViewMode
+                            setViewMode('split');
+                        }
+                    });
+                }
+                
+                if (editBtn) {
+                    editBtn.addEventListener('click', () => {
+                        console.log('Header button clicked: Edit only');
+                        
+                        // In dual editor mode, only control left pane
+                        if (isDualEditorMode) {
+                            setDualPaneViewMode(0, 'edit');
+                            updatePaneViewModeButtons(0, 'edit');
+                        } else {
+                            // In single editor mode, use normal setViewMode
+                            setViewMode('edit-only');
+                        }
+                    });
+                }
+                
+                if (previewBtn) {
+                    previewBtn.addEventListener('click', () => {
+                        console.log('Header button clicked: Preview only');
+                        
+                        // In dual editor mode, only control left pane
+                        if (isDualEditorMode) {
+                            setDualPaneViewMode(0, 'preview');
+                            updatePaneViewModeButtons(0, 'preview');
+                        } else {
+                            // In single editor mode, use normal setViewMode
+                            setViewMode('preview-only');
+                        }
+                    });
+                }
             }
             
             function setDualLayout(layout) {
@@ -12190,6 +12545,14 @@ gantt
                         dualEditorInstances[paneIndex].focus();
                     }, 100);
                 }
+                
+                // Update TOC for the newly active pane if TOC is visible
+                if (sidebarVisible && (viewMode === 'toc' || viewMode === 'dual')) {
+                    updateToc();
+                }
+                
+                // Update file list highlighting to reflect active pane change
+                renderFileList();
             }
             
             function loadFileIntoDualPane(fileId) {
@@ -12216,6 +12579,9 @@ gantt
                 // Show notification
                 const paneLabel = paneIndex === 0 ? '左側' : '右側';
                 showNotification(`檔案 "${file.name}" 已載入到${paneLabel}視窗`);
+                
+                // Update file list highlighting to show new loaded file
+                renderFileList();
             }
             
             function updateDualFileNameDisplay(paneIndex, fileName) {
@@ -12348,6 +12714,8 @@ gantt
                 previewPanel.style.minWidth = '';
                 editorPanel.style.flex = '';
                 previewPanel.style.flex = '';
+                editorPanel.style.opacity = '';
+                previewPanel.style.opacity = '';
                 
                 switch (mode) {
                     case 'split':
@@ -12368,8 +12736,10 @@ gantt
                 
                 console.log(`Final pane classes:`, dualPane.className);
                 
-                // Optimize pane width distribution
-                optimizeDualPaneWidths();
+                // Optimize pane width distribution (skip for edit/preview only modes to let CSS handle it)
+                if (mode === 'split') {
+                    optimizeDualPaneWidths();
+                }
                 
                 // Refresh CodeMirror
                 if (dualEditorInstances[paneIndex]) {

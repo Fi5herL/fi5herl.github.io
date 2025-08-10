@@ -25,9 +25,9 @@
 .fa-table::before { content: "⊞"; }
 .fa-project-diagram::before { content: "📊"; }
 .fa-text-height::before { content: "🔤"; }
-.fa-columns::before { content: "✍️👀"; }
-.fa-edit::before { content: "✍️"; }
-.fa-eye::before { content: "👀"; }
+.fa-columns::before { content: "EV"; }
+.fa-edit::before { content: "E"; }
+.fa-eye::before { content: "V"; }
 .fa-file-text::before { content: "📄"; }
 .fa-file-code::before { content: "📄"; }
 .fa-file-pdf::before { content: "📋"; }
@@ -37,8 +37,8 @@
 .fa-chevron-down::before { content: "▼"; }
 .fa-chevron-left::before { content: "◀"; }
 .fa-chevron-right::before { content: "▶"; }
-.fa-compress::before { content: "⊟"; }
-.fa-expand::before { content: "⊞"; }
+.fa-compress::before { content: "■"; }
+.fa-expand::before { content: "◻"; }
 .fa-trash::before { content: "🗑️"; }
 .fa-play::before { content: "▶"; }
 .fa-stop::before { content: "⏹"; }
@@ -53,10 +53,11 @@
 .fa-globe::before { content: "🌐"; }
 .fa-sort-alpha-down::before { content: "A"; }
 .fa-sort-alpha-up::before { content: "Z"; }
-.fa-sort-numeric-down::before { content: "👴"; }
-.fa-sort-numeric-up::before { content: "🐣"; }
+.fa-plus-circle::before { content: "C"; }
+.fa-sort-numeric-up::before { content: "E"; }
 .fa-external-link-alt::before { content: "🔗"; }
 .fa-cloud::before { content: "☁️"; }
+.fa-clone::before { content: "◫"; }
 
 /* Margin for icons */
 .fa + *:not(:empty), * + .fa:not(:empty) {
