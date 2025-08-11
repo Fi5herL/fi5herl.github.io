@@ -4634,7 +4634,9 @@
                 }
                 
                 async exportCurrentWorkspace() {
+                    // 導出前確保系統檔案都是最新的
                     await updateNoteTaskFile();
+                    createOrUpdateNoteConfig(); // 確保 NoteConfig.md 也是最新的
                     const workspace = {
                         version: '2.0',
                         exportDate: new Date().toISOString(),
@@ -4744,7 +4746,9 @@
                 
                 // 導出所有檔案，但排除包含 #UNSYNC 標籤的檔案
                 async exportSyncFilteredWorkspace() {
+                    // 同步前確保系統檔案都是最新的
                     await updateNoteTaskFile();
+                    createOrUpdateNoteConfig(); // 確保 NoteConfig.md 也是最新的
                     
                     // 過濾檔案：排除含有 #UNSYNC 標籤的檔案
                     const filteredFiles = files.filter(file => 
@@ -14439,8 +14443,9 @@ gantt
             // --- Workspace Import/Export Functions ---
             function exportWorkspace() {
                 try {
-                    // Ensure NoteTask.md is up to date before export
+                    // 導出前確保系統檔案都是最新的
                     updateNoteTaskFile();
+                    createOrUpdateNoteConfig(); // 確保 NoteConfig.md 也是最新的
                     
                     const workspace = {
                         version: '2.5.0',
@@ -16011,6 +16016,39 @@ gantt
                 console.log('💻 桌面版初始化');
             }
         });
+    </script>
+    <!-- EasyMDE for mobile editor -->
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <script>
+    // 僅手機版啟用 EasyMDE，桌面維持 CodeMirror
+    let easyMDE = null;
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
+    function setupMobileEditor() {
+        const textarea = document.getElementById('editor');
+        if (isMobile()) {
+            if (!easyMDE) {
+                easyMDE = new EasyMDE({
+                    element: textarea,
+                    spellChecker: false,
+                    status: false,
+                    toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|", "link", "image", "table", "|", "preview", "side-by-side", "fullscreen"]
+                });
+                // 你可以在這裡加上 hashtag、toc、timer 等事件
+                easyMDE.codemirror.on('change', function(){
+                    // 觸發自訂功能
+                });
+            }
+        } else {
+            if (easyMDE) {
+                easyMDE.toTextArea();
+                easyMDE = null;
+            }
+        }
+    }
+    window.addEventListener('resize', setupMobileEditor);
+    window.addEventListener('DOMContentLoaded', setupMobileEditor);
     </script>
 </body>
 </html>
