@@ -6186,9 +6186,9 @@
                 const pasteSize = new Blob([pasteContent]).size; // Get size in bytes
                 const pasteLines = changeObj.text.length;
                 
-                // Set limits: 1MB or 2500 lines
+                // Set limits: 1MB or 3500 lines
                 const maxPasteSize = 1048576; // 1MB
-                const maxPasteLines = 2500;
+                const maxPasteLines = 3500;
                 
                 if (pasteSize > maxPasteSize) {
                     changeObj.cancel();
@@ -16356,39 +16356,6 @@ gantt
                 console.log('💻 桌面版初始化');
             }
         });
-    </script>
-    <!-- EasyMDE for mobile editor -->
-    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
-    <script>
-    // 僅手機版啟用 EasyMDE，桌面維持 CodeMirror
-    let easyMDE = null;
-    function isMobile() {
-        return window.innerWidth <= 768;
-    }
-    function setupMobileEditor() {
-        const textarea = document.getElementById('editor');
-        if (isMobile()) {
-            if (!easyMDE) {
-                easyMDE = new EasyMDE({
-                    element: textarea,
-                    spellChecker: false,
-                    status: false,
-                    toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|", "link", "image", "table", "|", "preview", "side-by-side", "fullscreen"]
-                });
-                // 你可以在這裡加上 hashtag、toc、timer 等事件
-                easyMDE.codemirror.on('change', function(){
-                    // 觸發自訂功能
-                });
-            }
-        } else {
-            if (easyMDE) {
-                easyMDE.toTextArea();
-                easyMDE = null;
-            }
-        }
-    }
-    window.addEventListener('resize', setupMobileEditor);
-    window.addEventListener('DOMContentLoaded', setupMobileEditor);
     </script>
 </body>
 </html>
