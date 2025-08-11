@@ -320,6 +320,74 @@
         
         /* Mobile responsive design */
         @media (max-width: 768px) {
+            /* 手機版側邊欄 - 抽屜式覆蓋層 */
+            body div.container #file-panel {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 280px !important;
+                height: 100vh !important;
+                z-index: 1000 !important;
+                background: var(--secondary-bg) !important;
+                border-right: 1px solid var(--border-color) !important;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.2) !important;
+                transition: transform 0.3s ease !important;
+                opacity: 1 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important;
+                
+                /* 預設隱藏 */
+                transform: translateX(-280px) !important;
+                pointer-events: none !important;
+            }
+            
+            /* 開啟狀態：顯示 */
+            body div.container #file-panel:not(.collapsed) {
+                transform: translateX(0px) !important;
+                pointer-events: auto !important;
+            }
+            
+            /* 關閉狀態：隱藏 */
+            body div.container #file-panel.collapsed {
+                transform: translateX(-280px) !important;
+                pointer-events: none !important;
+            }
+            
+            /* 移除CSS遮罩，改用JavaScript動態創建 */
+            
+            /* 確保主要內容區域不被推移 */
+            body div.container #main-content {
+                transform: none !important;
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+            
+            /* 主要內容區域調整 */
+            .main-editor-content {
+                width: 100%;
+                margin-left: 0; /* 移除左邊距 */
+                transition: margin-left 0.3s ease;
+            }
+            
+            /* 當側邊欄展開時，主要內容稍微右移（可選） */
+            .file-panel:not(.collapsed) ~ .main-editor-content {
+                margin-left: 0; /* 不推動主要內容，讓側邊欄覆蓋在上方 */
+            }
+            
+            /* 側邊欄展開時的背景遮罩（輕微） */
+            .file-panel:not(.collapsed)::after {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 280px; /* 側邊欄寬度 */
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.1);
+                z-index: -1;
+                pointer-events: auto;
+            }
+            
             /* Enhanced mobile word wrap */
             .CodeMirror {
                 line-height: 1.3 !important;
@@ -7494,6 +7562,12 @@
             }
 
             function navigateToTocLine(line) {
+                // 手機版：點擊目錄時自動關閉側邊欄
+                if (isMobileDevice() && sidebarVisible) {
+                    console.log('📱 點擊目錄項目，自動關閉手機版側邊欄');
+                    closeSidebar();
+                }
+                
                 const lineNumber = parseInt(line);
                 
                 if (isDualEditorMode) {
@@ -7508,7 +7582,7 @@
                 } else {
                     // In single editor mode, navigate in editor
                     const shouldNavigateInEditor = isMobileDevice() 
-                        ? mobileViewMode === 'edit' 
+                        ? true  // 手機版總是導航到編輯器
                         : (currentViewMode === 'split' || currentViewMode === 'edit-only');
                     
                     console.log('TOC Navigation Debug:', {
@@ -7521,10 +7595,61 @@
                         
                     if (shouldNavigateInEditor) {
                         if (editor) {
-                            editor.setCursor({ line: lineNumber, ch: 0 });
-                            editor.focus();
-                            // Scroll the line into view
-                            editor.scrollIntoView({ line: lineNumber, ch: 0 }, 20);
+                            console.log('TOC: Attempting to navigate to line:', lineNumber);
+                            
+                            // Check editor container visibility
+                            const editorPanel = document.getElementById('editor-panel');
+                            const editorContainer = document.querySelector('.CodeMirror');
+                            console.log('TOC: Container visibility:', {
+                                editorPanel: editorPanel ? {
+                                    display: getComputedStyle(editorPanel).display,
+                                    visibility: getComputedStyle(editorPanel).visibility,
+                                    offsetWidth: editorPanel.offsetWidth,
+                                    offsetHeight: editorPanel.offsetHeight
+                                } : 'not found',
+                                editorContainer: editorContainer ? {
+                                    display: getComputedStyle(editorContainer).display,
+                                    visibility: getComputedStyle(editorContainer).visibility,
+                                    offsetWidth: editorContainer.offsetWidth,
+                                    offsetHeight: editorContainer.offsetHeight
+                                } : 'not found'
+                            });
+                            
+                            console.log('TOC: Editor state:', {
+                                editorType: typeof editor,
+                                hasCursor: typeof editor.setCursor === 'function',
+                                hasFocus: typeof editor.focus === 'function',
+                                hasScrollIntoView: typeof editor.scrollIntoView === 'function',
+                                currentLine: editor.getCursor ? editor.getCursor().line : 'getCursor not available'
+                            });
+                            
+                            try {
+                                // Ensure editor is refreshed first
+                                if (editor.refresh) {
+                                    editor.refresh();
+                                    console.log('TOC: editor.refresh completed');
+                                }
+                                
+                                // Set cursor position
+                                editor.setCursor({ line: lineNumber, ch: 0 });
+                                console.log('TOC: setCursor completed');
+                                
+                                // Focus the editor
+                                editor.focus();
+                                console.log('TOC: focus completed');
+                                
+                                // Scroll the line into view with a slight delay to ensure focus is complete
+                                setTimeout(() => {
+                                    editor.scrollIntoView({ line: lineNumber, ch: 0 }, 20);
+                                    console.log('TOC: scrollIntoView completed');
+                                    
+                                    console.log('TOC: Navigation completed, final cursor position:', 
+                                        editor.getCursor ? editor.getCursor() : 'getCursor not available');
+                                }, 50);
+                                
+                            } catch (error) {
+                                console.error('TOC: Error during navigation:', error);
+                            }
                         } else {
                             console.warn('TOC: Editor not found for navigation');
                         }
@@ -7541,21 +7666,33 @@
                 } else {
                     // In single editor mode
                     const shouldScrollToPreview = isMobileDevice() 
-                        ? mobileViewMode === 'preview' 
+                        ? false  // 手機版優先導航編輯器，不滾動預覽
                         : (currentViewMode === 'preview-only' || currentViewMode === 'split');
                         
+                    console.log('TOC Preview Debug:', {
+                        shouldScrollToPreview,
+                        lineNumber,
+                        isMobile: isMobileDevice(),
+                        mobileViewMode,
+                        currentViewMode
+                    });
+                    
                     if (shouldScrollToPreview) {
                         scrollToPreviewHeading(lineNumber);
                     }
                 }
                 
-                // Auto close sidebar on mobile after navigation
-                if (isMobileDevice() && sidebarVisible) {
-                    closeSidebar();
+                // Auto close sidebar on mobile after navigation (暫時禁用以測試)
+                if (false && isMobileDevice() && sidebarVisible) {
+                    setTimeout(() => {
+                        closeSidebar();
+                    }, 500); // 延遲0.5秒關閉，適合抽屜式側邊欄
                 }
             }
             
             function scrollToPreviewHeading(editorLine, paneIndex = null) {
+                console.log('scrollToPreviewHeading called:', { editorLine, paneIndex });
+                
                 let previewContainer;
                 let sourceEditor;
                 
@@ -7569,7 +7706,22 @@
                     sourceEditor = editor;
                 }
                 
-                if (!previewContainer || !sourceEditor) return;
+                console.log('Preview containers found:', {
+                    previewContainer: !!previewContainer,
+                    sourceEditor: !!sourceEditor,
+                    previewContainerId: previewContainer ? previewContainer.id : 'null',
+                    previewContainerVisible: previewContainer ? {
+                        display: getComputedStyle(previewContainer).display,
+                        visibility: getComputedStyle(previewContainer).visibility,
+                        offsetWidth: previewContainer.offsetWidth,
+                        offsetHeight: previewContainer.offsetHeight
+                    } : 'null'
+                });
+                
+                if (!previewContainer || !sourceEditor) {
+                    console.warn('scrollToPreviewHeading: Missing container or editor');
+                    return;
+                }
                 
                 // Find all headings in preview
                 const headings = previewContainer.querySelectorAll('h1, h2, h3, h4, h5, h6');
@@ -7579,22 +7731,205 @@
                 const lines = editorContent.split('\n');
                 const targetLine = lines[editorLine];
                 
-                if (!targetLine) return;
+                console.log('Heading search:', {
+                    totalHeadingsFound: headings.length,
+                    targetLine: targetLine,
+                    editorLine: editorLine,
+                    totalLines: lines.length
+                });
+                
+                if (!targetLine) {
+                    console.warn('scrollToPreviewHeading: No target line found');
+                    return;
+                }
                 
                 // Extract heading text from markdown
                 const headingMatch = targetLine.match(/^#+\s+(.*)/);
-                if (!headingMatch) return;
+                if (!headingMatch) {
+                    console.warn('scrollToPreviewHeading: Target line is not a heading:', targetLine);
+                    return;
+                }
                 
                 const headingText = headingMatch[1].trim();
+                console.log('Looking for heading text:', headingText);
+                
+                // Log all available headings in preview
+                const availableHeadings = Array.from(headings).map(h => h.textContent.trim());
+                console.log('Available headings in preview:', availableHeadings);
                 
                 // Find matching heading in preview
+                let headingFound = false;
                 for (let heading of headings) {
-                    if (heading.textContent.trim() === headingText) {
-                        // Scroll to the heading
-                        heading.scrollIntoView({ 
-                            behavior: 'smooth', 
-                            block: 'start' 
+                    const previewHeadingText = heading.textContent.trim();
+                    console.log('Comparing:', { target: headingText, preview: previewHeadingText, match: previewHeadingText === headingText });
+                    
+                    if (previewHeadingText === headingText) {
+                        console.log('Match found! Scrolling to heading:', heading);
+                        
+                        // Check scroll properties of containers
+                        console.log('Scroll container analysis:', {
+                            previewContainer: {
+                                scrollTop: previewContainer.scrollTop,
+                                scrollHeight: previewContainer.scrollHeight,
+                                clientHeight: previewContainer.clientHeight,
+                                overflow: getComputedStyle(previewContainer).overflow,
+                                overflowY: getComputedStyle(previewContainer).overflowY
+                            },
+                            heading: {
+                                offsetTop: heading.offsetTop,
+                                offsetParent: heading.offsetParent ? heading.offsetParent.tagName : 'null'
+                            }
                         });
+                        
+                        // Try multiple scroll approaches
+                        console.log('Attempting scrollIntoView...');
+                        
+                        // For mobile, try scrolling the window/document instead of the container
+                        if (isMobileDevice()) {
+                            console.log('Mobile mode: trying window scroll...');
+                            // Get heading's position relative to the document
+                            const rect = heading.getBoundingClientRect();
+                            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                            const targetY = rect.top + scrollTop - 50; // 50px offset from top
+                            
+                            console.log('Position calculation:', {
+                                rect: {
+                                    top: rect.top,
+                                    bottom: rect.bottom,
+                                    left: rect.left,
+                                    right: rect.right,
+                                    width: rect.width,
+                                    height: rect.height
+                                },
+                                scrollTop,
+                                targetY,
+                                currentWindowScrollY: window.scrollY
+                            });
+                            
+                            if (rect.height === 0 || rect.top === 0) {
+                                console.warn('Heading position invalid, trying desktop approach...');
+                                
+                                // Use desktop approach: find scrollable preview container
+                                const previewContainer = document.getElementById('preview');
+                                if (previewContainer) {
+                                    // Find the heading's offset within the preview container
+                                    const headingOffsetTop = heading.offsetTop;
+                                    console.log('Desktop approach: heading offset in preview:', headingOffsetTop);
+                                    
+                                    // Check all possible containers that might be scrollable
+                                    const possibleContainers = [
+                                        { name: 'preview-panel', element: document.getElementById('preview-panel') },
+                                        { name: 'main-editor-content', element: document.getElementById('main-editor-content') },
+                                        { name: 'main-container', element: document.getElementById('main-container') },
+                                        { name: 'preview-container', element: document.querySelector('.preview-container') },
+                                        { name: 'document.body', element: document.body },
+                                        { name: 'document.documentElement', element: document.documentElement }
+                                    ];
+                                    
+                                    console.log('Checking all possible scroll containers:');
+                                    possibleContainers.forEach(container => {
+                                        if (container.element) {
+                                            const styles = getComputedStyle(container.element);
+                                            const isScrollable = container.element.scrollHeight > container.element.clientHeight;
+                                            console.log(`${container.name}:`, {
+                                                scrollHeight: container.element.scrollHeight,
+                                                clientHeight: container.element.clientHeight,
+                                                scrollable: isScrollable,
+                                                overflow: styles.overflow,
+                                                overflowY: styles.overflowY,
+                                                currentScrollTop: container.element.scrollTop
+                                            });
+                                        }
+                                    });
+                                    
+                                    // Try scrolling each container that might work
+                                    let scrollAttempted = false;
+                                    
+                                    for (const container of possibleContainers) {
+                                        if (container.element && container.element.scrollHeight > container.element.clientHeight) {
+                                            console.log(`Attempting scroll on ${container.name}...`);
+                                            const targetScrollTop = Math.max(0, headingOffsetTop - 50);
+                                            container.element.scrollTop = targetScrollTop;
+                                            
+                                            // Check if scroll actually happened
+                                            setTimeout(() => {
+                                                console.log(`${container.name} scroll result: ${container.element.scrollTop} (target: ${targetScrollTop})`);
+                                            }, 100);
+                                            
+                                            scrollAttempted = true;
+                                        }
+                                    }
+                                    
+                                    if (!scrollAttempted) {
+                                        console.warn('No scrollable containers found, checking if heading is already visible...');
+                                        
+                                        // Check if the heading is actually visible in the viewport
+                                        const rect = heading.getBoundingClientRect();
+                                        const isVisible = (
+                                            rect.top >= 0 &&
+                                            rect.left >= 0 &&
+                                            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                                            rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+                                        );
+                                        
+                                        console.log('Heading visibility check:', {
+                                            rect: {
+                                                top: rect.top,
+                                                bottom: rect.bottom,
+                                                left: rect.left,
+                                                right: rect.right,
+                                                width: rect.width,
+                                                height: rect.height
+                                            },
+                                            viewport: {
+                                                width: window.innerWidth,
+                                                height: window.innerHeight
+                                            },
+                                            isVisible: isVisible,
+                                            isInViewport: rect.top >= 0 && rect.top <= window.innerHeight
+                                        });
+                                        
+                                        if (isVisible || rect.top < window.innerHeight) {
+                                            console.log('✅ Heading is already visible or near viewport - no scroll needed!');
+                                            // Just highlight the heading (which we already do)
+                                        } else {
+                                            console.log('❌ Heading is not visible, need to find another scroll solution...');
+                                            
+                                            // Try some alternative approaches
+                                            if (rect.height > 0) {
+                                                // Heading has dimensions, try scrollIntoView with more options
+                                                heading.scrollIntoView({ 
+                                                    behavior: 'smooth', 
+                                                    block: 'center',
+                                                    inline: 'nearest'
+                                                });
+                                                console.log('Tried scrollIntoView with center block');
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                window.scrollTo({
+                                    top: targetY,
+                                    behavior: 'smooth'
+                                });
+                                console.log('Normal scroll to calculated position:', targetY);
+                            }
+                        } else {
+                            // Desktop: use normal scrollIntoView
+                            heading.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'start' 
+                            });
+                        }
+                        
+                        // Also try scrolling the preview container directly as fallback
+                        setTimeout(() => {
+                            console.log('Attempting container scroll fallback...');
+                            if (previewContainer.scrollHeight > previewContainer.clientHeight) {
+                                previewContainer.scrollTop = heading.offsetTop - 50;
+                            }
+                        }, 100);
                         
                         // Optional: highlight the heading temporarily
                         heading.style.backgroundColor = '#fff3cd';
@@ -7602,8 +7937,14 @@
                             heading.style.backgroundColor = '';
                         }, 2000);
                         
+                        console.log('Scroll completed for heading:', headingText);
+                        headingFound = true;
                         break;
                     }
+                }
+                
+                if (!headingFound) {
+                    console.warn('scrollToPreviewHeading: No matching heading found for:', headingText);
                 }
             }
 
@@ -8696,7 +9037,17 @@ gantt
                 }
             }
             
+            // 儲存截斷的內容和狀態
+            const truncatedContent = new Map();
+            const loadingTimeouts = new Map();
+            
             function loadFile(fileId) {
+                // 手機版：載入檔案時自動關閉側邊欄
+                if (isMobileDevice() && sidebarVisible) {
+                    console.log('📱 載入檔案，自動關閉手機版側邊欄');
+                    closeSidebar();
+                }
+                
                 // If in dual editor mode, load into active pane instead
                 if (isDualEditorMode) {
                     loadFileIntoDualPane(fileId);
@@ -8704,6 +9055,9 @@ gantt
                 }
                 
                 const previousFile = currentFile;
+                
+                // 清除之前檔案的延遲載入監聽器
+                clearLazyLoadingForCurrentFile();
                 
                 // Sync hashtag changes for the previous file before switching
                 if (previousFile && previousFile.name !== 'NoteTag.md' && editor) {
@@ -8740,30 +9094,330 @@ gantt
                 // Initialize hashtag snapshot for the current file
                 initializeHashtagSnapshot(currentFile.id);
                 
-                editor.setValue(currentFile.content);
+                // 載入時間監控和內容截斷
+                const loadStartTime = Date.now();
+                const fileContent = currentFile.content;
                 
-                // Apply hashtag highlighting after content is loaded
+                // 預防性截斷：對於大檔案直接進行截斷載入，避免當機
+                let isLargeFile = false;
+                
+                if (fileContent.length > 100000) { // 100KB以上直接截斷
+                    console.log(`📄 檔案 ${currentFile.name} 過大 (${Math.round(fileContent.length/1024)}KB)，直接進行截斷載入`);
+                    handleLargeFileLoading(fileId, fileContent);
+                    isLargeFile = true;
+                } else if (fileContent.length > 50000) { // 50-100KB使用非同步載入檢測
+                    console.log(`⏳ 檔案 ${currentFile.name} 較大 (${Math.round(fileContent.length/1024)}KB)，使用安全載入模式`);
+                    // 使用非同步載入避免阻塞UI
+                    setTimeout(() => {
+                        const asyncLoadStart = Date.now();
+                        try {
+                            editor.setValue(fileContent);
+                            const loadTime = Date.now() - asyncLoadStart;
+                            console.log(`✅ 檔案載入成功，耗時：${loadTime}ms`);
+                            
+                            if (loadTime > 2000) {
+                                console.log(`⚠️ 載入時間較長，建議對此檔案使用截斷模式`);
+                            }
+                            
+                            // 異步載入完成後執行後續操作
+                            executePostLoadOperations();
+                            
+                        } catch (error) {
+                            console.error('安全載入失敗，切換到截斷模式:', error);
+                            handleLargeFileLoading(fileId, fileContent);
+                            executePostLoadOperations(); // 截斷載入後也要執行後續操作
+                        }
+                    }, 10); // 短暫延遲讓UI有時間響應
+                    return; // 異步處理，不執行下面的同步後續操作
+                } else {
+                    // 小檔案正常載入
+                    try {
+                        editor.setValue(fileContent);
+                        const loadTime = Date.now() - loadStartTime;
+                        if (loadTime > 500) {
+                            console.log(`📊 檔案載入時間：${loadTime}ms`);
+                        }
+                    } catch (error) {
+                        console.error('載入檔案時發生錯誤:', error);
+                        handleLargeFileLoading(fileId, fileContent);
+                        isLargeFile = true;
+                    }
+                }
+                
+                // 執行後續操作（同步載入或大檔案截斷載入完成後）
+                if (isLargeFile) {
+                    // 大檔案截斷載入後延遲執行
+                    setTimeout(() => {
+                        executePostLoadOperations();
+                    }, 50);
+                } else {
+                    // 小檔案立即執行
+                    executePostLoadOperations();
+                }
+                
+                // 後續操作函數
+                function executePostLoadOperations() {
+                    // Apply hashtag highlighting after content is loaded
+                    setTimeout(() => {
+                        applyHashtagHighlighting();
+                    }, 100);
+                    editor.clearHistory();
+                    currentFileNameEl.textContent = currentFile.name;
+                    renderFileList();
+                    generateToc(); // 刷新目錄
+                    
+                    // Re-highlight search results for the newly loaded file
+                    if (searchBar.classList.contains('active')) { // Only if search bar is active
+                        highlightAllSearchResults();
+                        highlightCurrentMatch(); // Ensure the current match is highlighted if it's in this file
+                    }
+                    
+                    // Auto close sidebar on mobile after loading file (暫時禁用)
+                    if (false && isMobileDevice() && sidebarVisible) {
+                        closeSidebar();
+                    }
+                    
+                    // Only save configuration if not currently loading configuration
+                    if (!isLoadingConfiguration) {
+                        saveConfiguration(); // Auto-save configuration
+                    }
+                }
+            }
+
+            // 處理大檔案載入的函數
+            function handleLargeFileLoading(fileId, fullContent) {
+                const file = files.find(f => f.id === fileId);
+                if (!file) return;
+                
+                // 根據檔案大小動態調整初始載入量
+                let maxInitialLoad;
+                if (fullContent.length > 1000000) { // 1MB以上
+                    maxInitialLoad = 10000; // 10KB
+                } else if (fullContent.length > 500000) { // 500KB以上
+                    maxInitialLoad = 15000; // 15KB
+                } else {
+                    maxInitialLoad = 20000; // 20KB
+                }
+                
+                // 截斷內容：保留前面部分
+                const truncatedText = fullContent.substring(0, maxInitialLoad);
+                
+                // 儲存完整內容和狀態
+                truncatedContent.set(fileId, {
+                    fullContent: fullContent,
+                    loadedContent: truncatedText,
+                    isFullyLoaded: false,
+                    loadedChunks: 1,
+                    totalChunks: Math.ceil(fullContent.length / maxInitialLoad),
+                    chunkSize: maxInitialLoad
+                });
+                
+                // 創建載入提示
+                const loadingInfo = `\n\n⚠️ 大檔案已截斷載入 (${Math.round(truncatedText.length/1024)}KB / ${Math.round(fullContent.length/1024)}KB)\n📋 滾動到底部載入更多內容\n🔍 搜尋時會自動載入完整內容\n💡 點擊此處可手動載入全部內容`;
+                
+                // 使用非同步載入避免阻塞
                 setTimeout(() => {
-                    applyHashtagHighlighting();
-                }, 100);
-                editor.clearHistory();
-                currentFileNameEl.textContent = currentFile.name;
-                renderFileList();
-                generateToc(); // 刷新目錄
-				// Re-highlight search results for the newly loaded file
-                if (searchBar.classList.contains('active')) { // Only if search bar is active
-                    highlightAllSearchResults();
-                    highlightCurrentMatch(); // Ensure the current match is highlighted if it's in this file
+                    try {
+                        editor.setValue(truncatedText + loadingInfo);
+                        console.log(`📄 大檔案 ${file.name} 已截斷載入：${Math.round(truncatedText.length/1024)}KB/${Math.round(fullContent.length/1024)}KB`);
+                        
+                        // 監聽滾動事件
+                        setupLazyLoadingForFile(fileId);
+                        
+                        // 添加手動載入全部內容的點擊事件
+                        addManualLoadHandler(fileId);
+                        
+                    } catch (error) {
+                        console.error('截斷載入失敗:', error);
+                        // 如果連截斷載入都失敗，嘗試更小的塊
+                        handleEmergencyLoad(fileId, fullContent);
+                    }
+                }, 5);
+            }
+            
+            // 緊急載入模式：使用極小的塊
+            function handleEmergencyLoad(fileId, fullContent) {
+                const emergencySize = 5000; // 5KB
+                const emergencyText = fullContent.substring(0, emergencySize);
+                
+                truncatedContent.set(fileId, {
+                    fullContent: fullContent,
+                    loadedContent: emergencyText,
+                    isFullyLoaded: false,
+                    loadedChunks: 1,
+                    totalChunks: Math.ceil(fullContent.length / emergencySize),
+                    chunkSize: emergencySize
+                });
+                
+                const warningInfo = `\n\n🚨 超大檔案緊急截斷載入 (${Math.round(emergencyText.length/1024)}KB / ${Math.round(fullContent.length/1024)}KB)\n⚠️ 僅載入前 ${Math.round(emergencySize/1024)}KB 內容\n🔍 使用搜尋功能可載入完整內容`;
+                
+                editor.setValue(emergencyText + warningInfo);
+                console.log(`🚨 緊急模式：${files.find(f => f.id === fileId)?.name} 載入 ${Math.round(emergencySize/1024)}KB`);
+                
+                setupLazyLoadingForFile(fileId);
+            }
+            
+            // 添加手動載入處理器
+            function addManualLoadHandler(fileId) {
+                // 添加點擊事件來手動載入全部內容
+                const cm = editor;
+                const clickHandler = function(cm, event) {
+                    const pos = cm.coordsChar({left: event.clientX, top: event.clientY});
+                    const line = cm.getLine(pos.line);
+                    
+                    if (line && line.includes('點擊此處可手動載入全部內容')) {
+                        event.preventDefault();
+                        loadAllContent(fileId, '手動載入完整內容');
+                        cm.off('mousedown', clickHandler);
+                    }
+                };
+                
+                cm.on('mousedown', clickHandler);
+            }
+            
+            // 全域滾動處理器
+            let currentScrollHandler = null;
+            
+            // 設置延遲載入監聽器
+            function setupLazyLoadingForFile(fileId) {
+                if (!editor || !truncatedContent.has(fileId)) return;
+                
+                const cm = editor;
+                
+                // 清除舊的滾動處理器
+                if (currentScrollHandler) {
+                    cm.off('scroll', currentScrollHandler);
+                    currentScrollHandler = null;
                 }
                 
-                // Auto close sidebar on mobile after loading file
-                if (isMobileDevice() && sidebarVisible) {
-                    closeSidebar();
+                // 創建新的滾動處理器，只處理當前檔案
+                const scrollHandler = function() {
+                    // 重要：只有當前檔案是截斷檔案時才處理滾動
+                    if (!currentFile || currentFile.id !== fileId) return;
+                    
+                    const fileData = truncatedContent.get(fileId);
+                    if (!fileData || fileData.isFullyLoaded) return;
+                    
+                    const scrollInfo = cm.getScrollInfo();
+                    const isNearBottom = scrollInfo.top + scrollInfo.clientHeight >= scrollInfo.height - 200;
+                    
+                    if (isNearBottom) {
+                        console.log(`📋 檢測到滾動到底部，載入檔案 ${currentFile.name} 的下一塊內容`);
+                        loadNextChunk(fileId);
+                    }
+                };
+                
+                // 設置新的滾動處理器
+                currentScrollHandler = scrollHandler;
+                cm.on('scroll', scrollHandler);
+                
+                console.log(`🔧 為檔案 ${files.find(f => f.id === fileId)?.name} 設置了延遲載入監聽器`);
+                
+                // 也監聽搜尋事件
+                const searchHandler = function(query) {
+                    if (query && currentFile && currentFile.id === fileId) {
+                        const fileData = truncatedContent.get(fileId);
+                        if (!fileData || fileData.isFullyLoaded) return;
+                        
+                        // 如果搜尋內容不在已載入部分，載入更多內容
+                        if (!fileData.loadedContent.toLowerCase().includes(query.toLowerCase())) {
+                            loadAllContent(fileId, '搜尋需要載入完整內容');
+                        }
+                    }
+                };
+                
+                // 儲存搜尋處理器以便後續使用
+                if (!window.fileSearchHandlers) {
+                    window.fileSearchHandlers = new Map();
+                }
+                window.fileSearchHandlers.set(fileId, searchHandler);
+            }
+            
+            // 清除當前檔案的延遲載入監聽器
+            function clearLazyLoadingForCurrentFile() {
+                if (currentScrollHandler && editor) {
+                    editor.off('scroll', currentScrollHandler);
+                    currentScrollHandler = null;
+                }
+            }
+            
+            // 載入下一塊內容
+            function loadNextChunk(fileId) {
+                const fileData = truncatedContent.get(fileId);
+                if (!fileData || fileData.isFullyLoaded) return;
+                
+                const chunkSize = fileData.chunkSize || 20000; // 使用動態塊大小
+                const startPos = fileData.loadedContent.length;
+                const endPos = Math.min(startPos + chunkSize, fileData.fullContent.length);
+                const nextChunk = fileData.fullContent.substring(startPos, endPos);
+                
+                if (nextChunk.length === 0) {
+                    fileData.isFullyLoaded = true;
+                    return;
                 }
                 
-                // Only save configuration if not currently loading configuration
-                if (!isLoadingConfiguration) {
-                    saveConfiguration(); // Auto-save configuration
+                // 使用非同步載入避免阻塞UI
+                setTimeout(() => {
+                    try {
+                        fileData.loadedContent += nextChunk;
+                        fileData.loadedChunks++;
+                        
+                        // 更新編輯器內容
+                        const currentPos = editor.getCursor();
+                        
+                        if (endPos >= fileData.fullContent.length) {
+                            // 載入完成
+                            editor.setValue(fileData.fullContent);
+                            fileData.isFullyLoaded = true;
+                            console.log(`✅ 檔案 ${currentFile.name} 已完全載入`);
+                        } else {
+                            // 創建新的載入提示
+                            const progressInfo = `\n\n📋 載入中... (${Math.round(fileData.loadedContent.length/1024)}KB / ${Math.round(fileData.fullContent.length/1024)}KB)\n⬇️ 繼續滾動載入更多內容\n🔍 搜尋時會自動載入完整內容\n💡 點擊此處可手動載入全部內容`;
+                            editor.setValue(fileData.loadedContent + progressInfo);
+                            console.log(`📄 載入進度：${fileData.loadedChunks}/${fileData.totalChunks} 塊 (${Math.round(fileData.loadedContent.length/1024)}KB)`);
+                        }
+                        
+                        editor.setCursor(currentPos);
+                    } catch (error) {
+                        console.error('載入下一塊內容時發生錯誤:', error);
+                        // 錯誤時停止載入
+                        fileData.isFullyLoaded = true;
+                    }
+                }, 10);
+            }
+            
+            // 載入全部內容
+            function loadAllContent(fileId, reason = '') {
+                const fileData = truncatedContent.get(fileId);
+                if (!fileData || fileData.isFullyLoaded) return;
+                
+                console.log(`🔄 正在載入完整內容${reason ? ': ' + reason : ''}...`);
+                
+                // 顯示載入中狀態
+                const currentPos = editor.getCursor();
+                const loadingStatus = `\n\n⏳ 正在載入完整內容... (${Math.round(fileData.fullContent.length/1024)}KB)\n請稍候...`;
+                
+                try {
+                    // 先顯示載入狀態
+                    const tempContent = fileData.loadedContent + loadingStatus;
+                    editor.setValue(tempContent);
+                    
+                    // 使用較長的延遲來分段載入大檔案
+                    setTimeout(() => {
+                        try {
+                            editor.setValue(fileData.fullContent);
+                            fileData.isFullyLoaded = true;
+                            editor.setCursor(currentPos);
+                            console.log(`✅ 檔案 ${currentFile?.name} 已完全載入 (${Math.round(fileData.fullContent.length/1024)}KB)`);
+                        } catch (error) {
+                            console.error('完整載入失敗:', error);
+                            // 回退到部分載入
+                            editor.setValue(fileData.loadedContent + '\n\n❌ 完整載入失敗，顯示部分內容');
+                        }
+                    }, fileData.fullContent.length > 500000 ? 100 : 20); // 大檔案用更長延遲
+                    
+                } catch (error) {
+                    console.error('載入全部內容時發生錯誤:', error);
                 }
             }
 
@@ -8924,19 +9578,140 @@ gantt
             }
             
             // Sidebar control functions
+            // 手機版遮罩元素
+            let mobileOverlay = null;
+            
             function toggleSidebar() {
+                console.log('🔄 toggleSidebar 被調用', {
+                    當前狀態: sidebarVisible,
+                    是否手機版: isMobileDevice(),
+                    filePanel存在: !!filePanel
+                });
+                
                 sidebarVisible = !sidebarVisible;
+                
+                console.log('📱 切換側邊欄狀態:', {
+                    新狀態: sidebarVisible,
+                    filePanelClasses: filePanel ? filePanel.className : '無filePanel'
+                });
+                
                 if (sidebarVisible) {
+                    // 移除 collapsed class，讓CSS處理顯示
                     filePanel.classList.remove('collapsed');
                     updateSidebarContent();
+                    
+                    // 手機版創建背景遮罩
+                    if (isMobileDevice()) {
+                        createMobileOverlay();
+                        console.log('🎭 手機版遮罩已創建');
+                    }
+                    
+                    console.log('✅ 側邊欄已開啟，classes:', filePanel.className);
+                    
+                    // 調試CSS樣式
+                    setTimeout(() => {
+                        const computedStyle = window.getComputedStyle(filePanel);
+                        console.log('🎨 開啟狀態CSS檢查:', {
+                            transform: computedStyle.transform,
+                            width: computedStyle.width,
+                            opacity: computedStyle.opacity,
+                            display: computedStyle.display
+                        });
+                    }, 50);
+                    
                 } else {
+                    // 添加 collapsed class，讓CSS處理隱藏
                     filePanel.classList.add('collapsed');
+                    removeMobileOverlay();
+                    cleanupMobileSidebarClosing();
+                    
+                    console.log('❌ 側邊欄已關閉，classes:', filePanel.className);
                 }
             }
             
             function closeSidebar() {
                 sidebarVisible = false;
                 filePanel.classList.add('collapsed');
+                removeMobileOverlay();
+                cleanupMobileSidebarClosing();
+                console.log('🔒 側邊欄關閉（closeSidebar）');
+            }
+            
+            // 創建手機版半透明遮罩
+            function createMobileOverlay() {
+                if (mobileOverlay) return; // 避免重複創建
+                
+                mobileOverlay = document.createElement('div');
+                mobileOverlay.id = 'mobile-sidebar-overlay';
+                mobileOverlay.style.cssText = `
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    background: rgba(0, 0, 0, 0.5) !important;
+                    z-index: 999 !important;
+                    opacity: 0 !important;
+                    transition: opacity 0.3s ease !important;
+                `;
+                
+                // 點擊遮罩關閉側邊欄
+                mobileOverlay.addEventListener('click', function() {
+                    console.log('🎭 點擊遮罩，關閉側邊欄');
+                    closeSidebar();
+                });
+                
+                document.body.appendChild(mobileOverlay);
+                
+                // 延遲顯示遮罩以確保過渡效果
+                setTimeout(() => {
+                    if (mobileOverlay) {
+                        mobileOverlay.style.opacity = '1';
+                    }
+                }, 10);
+            }
+            
+            // 移除手機版遮罩
+            function removeMobileOverlay() {
+                if (mobileOverlay) {
+                    mobileOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        if (mobileOverlay && mobileOverlay.parentNode) {
+                            mobileOverlay.parentNode.removeChild(mobileOverlay);
+                            mobileOverlay = null;
+                        }
+                    }, 300); // 等待過渡動畫完成
+                }
+            }
+            
+            // 手機版側邊欄關閉處理（簡化版）
+            let mobileSidebarClickHandler = null;
+            
+            function setupMobileSidebarClosing() {
+                if (!isMobileDevice()) return;
+                
+                // 移除舊的事件監聽器
+                cleanupMobileSidebarClosing();
+                
+                // 點擊背景遮罩關閉側邊欄
+                mobileSidebarClickHandler = function(event) {
+                    // 檢查是否點擊在遮罩區域（側邊欄右側的背景）
+                    const sidebarRect = filePanel.getBoundingClientRect();
+                    if (event.clientX > sidebarRect.right) {
+                        event.preventDefault();
+                        closeSidebar();
+                    }
+                };
+                
+                // 監聽整個文檔的點擊事件
+                document.addEventListener('click', mobileSidebarClickHandler);
+            }
+            
+            function cleanupMobileSidebarClosing() {
+                if (mobileSidebarClickHandler) {
+                    document.removeEventListener('click', mobileSidebarClickHandler);
+                    mobileSidebarClickHandler = null;
+                }
             }
             
             function toggleViewMode() {
@@ -10951,7 +11726,19 @@ gantt
                 safeAddEventListener('create-backup-btn', 'click', createBackup);
                 
                 // Sidebar controls
-                if (sidebarToggle) sidebarToggle.addEventListener('click', toggleSidebar);
+                console.log('🔍 檢查側邊欄按鈕:', {
+                    sidebarToggle: sidebarToggle,
+                    sidebarToggleId: sidebarToggle ? sidebarToggle.id : '無',
+                    filePanel: filePanel,
+                    filePanelId: filePanel ? filePanel.id : '無'
+                });
+                
+                if (sidebarToggle) {
+                    sidebarToggle.addEventListener('click', toggleSidebar);
+                    console.log('✅ 側邊欄按鈕事件監聽器已設置');
+                } else {
+                    console.error('❌ 無法找到側邊欄按鈕元素');
+                }
                 if (viewModeToggle) viewModeToggle.addEventListener('click', toggleViewMode);
                 if (mobileViewToggle) mobileViewToggle.addEventListener('click', toggleMobileView);
                 if (closeFilePanelBtn) closeFilePanelBtn.addEventListener('click', closeSidebar);
@@ -11372,6 +12159,27 @@ gantt
                 }
 
                 filesToSearch.forEach(file => {
+                    // 檢查是否為截斷的檔案，如果是且搜尋內容可能在未載入部分，則載入完整內容
+                    if (truncatedContent.has(file.id)) {
+                        const fileData = truncatedContent.get(file.id);
+                        if (!fileData.isFullyLoaded) {
+                            // 檢查搜尋關鍵字是否在已載入內容中
+                            const hasMatchInLoaded = searchKeywords.some(keyword => 
+                                fileData.loadedContent.toLowerCase().includes(keyword.toLowerCase())
+                            );
+                            
+                            if (!hasMatchInLoaded) {
+                                // 搜尋內容可能在未載入部分，載入完整內容
+                                loadAllContent(file.id, '搜尋需要載入完整內容');
+                                
+                                // 如果這是當前檔案，更新編輯器
+                                if (currentFile && currentFile.id === file.id) {
+                                    file.content = fileData.fullContent;
+                                }
+                            }
+                        }
+                    }
+                    
                     const content = file.content;
                     const lines = content.split('\n');
                     
@@ -12612,6 +13420,12 @@ gantt
             }
             
             function loadFileIntoDualPane(fileId) {
+                // 手機版：載入檔案時自動關閉側邊欄
+                if (isMobileDevice() && sidebarVisible) {
+                    console.log('📱 雙面板載入檔案，自動關閉手機版側邊欄');
+                    closeSidebar();
+                }
+                
                 if (!isDualEditorMode) return;
                 
                 const file = files.find(f => f.id === fileId);
@@ -15178,6 +15992,24 @@ gantt
 
             // Start the application
             initialize();
+            
+            // 手機版側邊欄初始化
+            if (isMobileDevice()) {
+                // 確保手機版啟動時側邊欄是關閉的
+                sidebarVisible = false;
+                if (filePanel) {
+                    filePanel.classList.add('collapsed');
+                    console.log('📱 手機版初始化：側邊欄已設為關閉狀態', {
+                        sidebarVisible: sidebarVisible,
+                        filePanelClasses: filePanel.className,
+                        computedTransform: window.getComputedStyle(filePanel).transform
+                    });
+                } else {
+                    console.error('❌ 手機版初始化失敗：無法找到 filePanel');
+                }
+            } else {
+                console.log('💻 桌面版初始化');
+            }
         });
     </script>
 </body>
