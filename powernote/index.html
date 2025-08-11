@@ -4717,6 +4717,12 @@
                 hasUnsyncTag(file, filesList = null) {
                     if (!file.name) return false;
                     
+                    // 系統檔案永遠不被標記為 UNSYNC，確保它們總是會被同步
+                    if (this.isSystemFile(file)) {
+                        console.log('🔧 系統檔案永遠同步:', file.name);
+                        return false;
+                    }
+                    
                     // 優先檢查NoteTag.md中的標記
                     const unsyncFiles = this.getUnsyncFilesFromNoteTag(filesList);
                     if (unsyncFiles.has(file.name)) {
@@ -4748,7 +4754,14 @@
                 async exportSyncFilteredWorkspace() {
                     // 同步前確保系統檔案都是最新的
                     await updateNoteTaskFile();
-                    createOrUpdateNoteConfig(); // 確保 NoteConfig.md 也是最新的
+                    
+                    // 強制更新 NoteConfig.md，暫時忽略 isLoadingConfiguration 狀態
+                    console.log('🔧 同步前強制更新 NoteConfig.md，當前 isLoadingConfiguration:', isLoadingConfiguration);
+                    const wasLoadingConfig = isLoadingConfiguration;
+                    isLoadingConfiguration = false; // 暫時設為 false
+                    const configResult = createOrUpdateNoteConfig();
+                    isLoadingConfiguration = wasLoadingConfig; // 恢復原狀態
+                    console.log('🔧 NoteConfig.md 更新結果:', configResult ? '成功' : '失敗');
                     
                     // 過濾檔案：排除含有 #UNSYNC 標籤的檔案
                     const filteredFiles = files.filter(file => 
@@ -15288,6 +15301,11 @@ gantt
                     const normalFiles = files.filter(file => 
                         !syncManager.isSystemFile(file) && !syncManager.hasUnsyncTag(file, files)
                     );
+                    
+                    // 調試信息：列出系統檔案
+                    console.log('🔧 系統檔案列表:', systemFiles.map(f => f.name));
+                    console.log('🔧 將同步的檔案總數:', syncFiles.length);
+                    console.log('🔧 跳過的檔案總數:', unsyncFiles.length);
                     
                     showNotification(`正在同步到雲端...\n• 系統檔案: ${systemFiles.length} 個\n• 一般檔案: ${normalFiles.length} 個\n• 跳過檔案: ${unsyncFiles.length} 個 (#UNSYNC)`, 'info');
                     const result = await syncManager.syncToGist();
