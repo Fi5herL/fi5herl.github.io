@@ -88,33 +88,50 @@
             flex-direction: column;
             height: 100vh;
             /* transition: width 0.3s ease, opacity 0.3s ease; */ /* 關閉動畫 */
-            overflow: hidden;
+            overflow-x: visible;
+            overflow-y: hidden;
             order: -1; /* 確保在左側 */
         }
         .file-panel.collapsed {
             width: 0;
             opacity: 0;
             border: none;
+            pointer-events: none;
         }
         .file-panel-header {
             background: var(--header-bg);
-            padding: 10px 15px;
+            padding: 4px 8px;
             border-bottom: 1px solid var(--border-color);
+            overflow: visible;
         }
         .sidebar-controls {
             display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow: visible;
+            border: 1px solid var(--border-color);
+            background: var(--sidebar-bg);
         }
         .sidebar-controls button {
-            background: var(--accent-color);
-            color: white;
+            background: transparent;
+            color: var(--text-color);
             border: none;
-            border-radius: 4px;
-            padding: 6px 8px;
+            border-right: 1px solid var(--border-color);
+            padding: 2px 4px;
             cursor: pointer;
             font-size: 12px;
             transition: background-color 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar-controls button:first-child {
+            border-left: none;
+        }
+        .sidebar-controls button:last-child {
+            border-right: none;
         }
         .sidebar-controls button:hover {
             background: var(--button-hover-bg);
@@ -124,6 +141,7 @@
         .dropdown-container {
             position: relative;
             display: inline-block;
+            overflow: visible;
         }
 
         .dropdown-btn {
@@ -145,16 +163,14 @@
         }
 
         .dropdown-menu {
-            position: absolute;
-            top: 100%;
-            left: 0;
+            position: fixed;
             background: var(--primary-bg);
             border: 1px solid var(--border-color);
             border-radius: 4px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             min-width: 180px;
             display: none;
-            z-index: 1002;
+            z-index: 99999;
             margin-top: 2px;
         }
 
@@ -335,7 +351,8 @@
                 opacity: 1 !important;
                 display: flex !important;
                 flex-direction: column !important;
-                overflow: hidden !important;
+                overflow-y: auto !important;
+                overflow-x: visible !important;
                 
                 /* 預設隱藏 */
                 transform: translateX(-280px) !important;
@@ -413,22 +430,36 @@
             /* Dual Editor Controls in Toolbar */
             .dual-editor-controls-toolbar {
                 display: flex;
-                gap: 4px;
+                flex-direction: row;
                 align-items: center;
+                border: 1px solid var(--border-color);
+                background: var(--header-bg);
+                overflow-x: auto;
             }
             
             .toolbar-dual-btn {
-                background: var(--button-bg);
-                color: white;
-                border: 2px solid #007acc; /* Blue border */
-                border-radius: 6px;
-                padding: 4px 8px;
+                background: transparent;
+                color: var(--text-color);
+                border: none;
+                border-right: 1px solid var(--border-color);
+                padding: 2px 4px;
                 font-size: 12px;
                 cursor: pointer;
                 transition: all 0.2s ease;
                 display: flex;
                 align-items: center;
-                gap: 4px;
+                justify-content: center;
+                white-space: nowrap;
+                flex-shrink: 0;
+                min-height: 28px;
+            }
+            
+            .toolbar-dual-btn:first-child {
+                border-left: none;
+            }
+            
+            .toolbar-dual-btn:last-child {
+                border-right: none;
             }
             
             .toolbar-dual-btn:hover {
@@ -475,16 +506,25 @@
             
             /* Mobile toolbar buttons */
             .toolbar button {
-                padding: 10px 12px !important;
+                padding: 2px 4px !important;
                 font-size: 14px !important;
                 min-width: 44px; /* Touch friendly size */
-                margin: 0 2px;
+                margin: 0;
+                background: transparent !important;
+                border-right: 1px solid var(--border-color) !important;
             }
             
             /* Mobile specific styling for new buttons */
             #timer-btn, #font-settings-btn, #search-toggle-btn, #mobile-jump-btn {
                 display: block !important;
                 /* height: 44px; */
+            }
+            
+            
+            /* Mobile file panel header - compact padding */
+            .file-panel-header {
+                padding: 4px 8px !important;
+                overflow: visible !important;
             }
             
             /* Mobile jump button specific styling */
@@ -530,16 +570,24 @@
             
             /* Mobile sidebar controls */
             .sidebar-controls {
-                flex-wrap: wrap !important;
-                justify-content: center;
-                gap: 8px !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                overflow-y: visible !important;
+                gap: 0 !important;
             }
             
             .sidebar-controls button {
-                padding: 10px 12px !important;
+                padding: 2px 4px !important;
                 font-size: 12px !important;
                 min-width: 40px !important;
-                margin: 2px;
+                margin: 0 !important;
+                background: transparent !important;
+                border-right: 1px solid var(--border-color) !important;
+            }
+            
+            /* Mobile dropdown container */
+            .dropdown-container {
+                overflow: visible !important;
             }
             
             /* Single view modes on mobile - pure edit or pure preview */
@@ -988,31 +1036,75 @@
         .toolbar {
             display: flex;
             align-items: center;
-            gap: 4px;
             padding: 4px 10px;
             background: var(--header-bg);
             border-bottom: 1px solid var(--border-color);
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            overflow-x: auto;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
         }
         .toolbar button {
-            background: var(--button-bg);
-            color: white;
+            background: transparent;
+            color: var(--text-color);
             border: none;
-            border-radius: 6px;
-            padding: 4px 8px;
+            border-right: 1px solid var(--border-color);
+            padding: 2px 4px;
             cursor: pointer;
             transition: all 0.2s;
             font-size: 13px;
             white-space: nowrap;
+            flex-shrink: 0;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .toolbar button:first-child {
+            border-left: none;
+        }
+        .toolbar button:last-child {
+            border-right: none;
         }
         .toolbar button:hover {
             background: var(--button-hover-bg);
             transform: translateY(-1px);
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
+        
+        /* 橫向滾動條樣式 */
+        .toolbar::-webkit-scrollbar,
+        .sidebar-controls::-webkit-scrollbar,
+        .dual-editor-controls-toolbar::-webkit-scrollbar {
+            height: 6px;
+        }
+        .toolbar::-webkit-scrollbar-track,
+        .sidebar-controls::-webkit-scrollbar-track,
+        .dual-editor-controls-toolbar::-webkit-scrollbar-track {
+            background: var(--bg-color);
+            border-radius: 3px;
+        }
+        .toolbar::-webkit-scrollbar-thumb,
+        .sidebar-controls::-webkit-scrollbar-thumb,
+        .dual-editor-controls-toolbar::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+        .toolbar::-webkit-scrollbar-thumb:hover,
+        .sidebar-controls::-webkit-scrollbar-thumb:hover,
+        .dual-editor-controls-toolbar::-webkit-scrollbar-thumb:hover {
+            background: var(--text-color);
+        }
         .toolbar button i {
-            margin-right: 5px;
+            margin-right: 2px;
+        }
+        
+        .sidebar-controls button i {
+            margin-right: 2px;
+        }
+        
+        .toolbar-dual-btn i {
+            margin-right: 2px;
         }
 
         /* Timer Button Styles */
@@ -1468,18 +1560,33 @@
         /* Single Editor View Controls in Header */
         .single-editor-view-controls {
             display: flex;
-            gap: 4px;
+            border: 1px solid var(--border-color);
+            background: var(--secondary-bg);
         }
         
         .header-view-mode-btn {
-            background: var(--secondary-bg);
-            border: 1px solid var(--border-color);
+            background: transparent;
+            border: none;
+            border-right: 1px solid var(--border-color);
             color: var(--text-color);
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 2px 4px;
             cursor: pointer;
             font-size: 12px;
             transition: all 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header-view-mode-btn:first-child {
+            border-left: none;
+        }
+        
+        .header-view-mode-btn:last-child {
+            border-right: none;
         }
         
         .header-view-mode-btn:hover {
@@ -2351,13 +2458,11 @@
         /* Autocomplete Suggestions */
         .autocomplete-dropdown {
             position: absolute;
-            z-index: 1000;
+            z-index: 9999;
             background: white;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            max-height: 200px;
-            overflow-y: auto;
             min-width: 200px;
         }
         .autocomplete-item {
@@ -3660,7 +3765,7 @@
         <div id="file-panel" class="file-panel collapsed">
             <div class="file-panel-header">
                 <div class="sidebar-controls">
-                    <button id="view-mode-toggle" title="切換檢視模式">F</button>
+                    <button id="view-mode-toggle" title="切換檢視模式"><i class="fas fa-list"></i></button>
                     <button id="sort-files-btn" title="檔案排序"><i class="fas fa-sort"></i></button>
                     <!-- Moved buttons from editor header -->
                     <button id="editor-new-file-btn" class="fold-toggle-btn" title="新增檔案">
@@ -3671,7 +3776,7 @@
                     </button>
                     
                     <!-- 同步分享下拉選單 -->
-                    <div class="dropdown-container">
+                    <div class="dropdown-container" id="sync-share-container">
                         <button class="dropdown-btn" id="sync-share-dropdown" title="同步與分享功能">
                             <i class="fas fa-cloud"></i> <i class="fas fa-chevron-down"></i>
                         </button>
@@ -3692,7 +3797,7 @@
                     </div>
                     
                     <!-- 工作區管理下拉選單 -->
-                    <div class="dropdown-container">
+                    <div class="dropdown-container" id="workspace-container">
                         <button class="dropdown-btn" id="workspace-dropdown" title="工作區管理功能">
                             <i class="fas fa-folder"></i> <i class="fas fa-chevron-down"></i>
                         </button>
@@ -3735,29 +3840,18 @@
                     </button>
                 </div>
                 
+				<button id="dual-editor-btn" class="toolbar-dual-btn" title="雙編輯器模式"><i class="fas fa-clone"></i></button>
                 <!-- Dual Editor Controls - Only visible in dual mode -->
-                <div class="dual-editor-controls-toolbar" id="dual-editor-controls-toolbar" style="display: none;">
+                <div class="dual-editor-controls-toolbar" id="dual-editor-controls-toolbar">
                     <button id="dual-layout-toggle" class="toolbar-dual-btn" title="切換上下/左右佈局">
                         <i class="fas fa-arrows-alt-h"></i>
                     </button>
-                    <button id="dual-editor-close" class="toolbar-dual-btn" title="關閉雙編輯器模式">
-                        <i class="fas fa-times"></i>
-                    </button>
                 </div>
-                
-                <button id="mobile-view-toggle" title="切換檢視模式"><i class="fas fa-eye"></i></button>
-                <button id="timer-btn" class="timer-btn"><i class="fas fa-clock"></i> <span id="timer-display">00:00</span></button>
-                <button id="font-settings-btn"><i class="fas fa-text-height"></i> <span id="current-font-size">22px</span></button>
-                <button id="shortcuts-help-btn" title="快捷鍵說明"><i class="fas fa-keyboard"></i></button>
-                
+
+
                 <!-- View Mode Toggle Buttons moved to file header -->
-                <button id="dual-editor-btn" class="view-mode-toolbar-btn" title="雙編輯器模式"><i class="fas fa-clone"></i></button>
                 <button id="drawing-mode-btn" class="view-mode-toolbar-btn" title="繪圖模式"><i class="fas fa-draw-polygon"></i></button>
-                
-                <!-- Moved buttons from editor header -->
-                <button id="share-file-btn" class="fold-toggle-btn" title="分享此檔案">
-                    <i class="fas fa-share-alt"></i>
-                </button>
+
                 <button id="sync-scroll-toggle" class="fold-toggle-btn" title="同步滾動" style="display: none;">
                     <i class="fas fa-sync"></i>
                 </button>
@@ -3765,10 +3859,20 @@
                     <i class="fas fa-compress"></i>
                 </button>
                 
+                <button id="mobile-view-toggle" title="切換檢視模式"><i class="fas fa-eye"></i></button>
+                <button id="timer-btn" class="timer-btn"><i class="fas fa-clock"></i> <span id="timer-display">00:00</span></button>
+                <button id="font-settings-btn"><i class="fas fa-text-height"></i> <span id="current-font-size">22px</span></button>
+                <button id="shortcuts-help-btn" title="快捷鍵說明"><i class="fas fa-keyboard"></i></button>
+                
+                <!-- Moved buttons from editor header -->
+                <button id="share-file-btn" class="fold-toggle-btn" title="分享此檔案">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+                
                 <div style="margin-left: auto;"></div>
                 <button id="export-md-btn"><i class="fas fa-file-text"></i>MD</button>
                 <button id="export-html-btn"><i class="fas fa-file-code"></i>HTML</button>
-                <button id="presentation-toggle-btn"><i class="fas fa-presentation-screen"></i>PPT</button>
+                <button id="presentation-toggle-btn"><i class="fas fa-chalkboard"></i>PPT</button>
 				<button id="search-toggle-btn"><i class="fas fa-search"></i></button>
             </div>
 
@@ -7041,9 +7145,7 @@
                 const dropdown = document.createElement('div');
                 dropdown.className = 'autocomplete-dropdown hashtag-dropdown';
                 dropdown.style.position = 'absolute';
-                dropdown.style.zIndex = '1000';
-                dropdown.style.maxHeight = '200px';
-                dropdown.style.overflowY = 'auto';
+                dropdown.style.zIndex = '9999';
                 
                 items.forEach((item, index) => {
                     const option = document.createElement('div');
@@ -10012,16 +10114,16 @@ gantt
                 // Remove all mode classes
                 viewModeToggle.classList.remove('files-mode', 'toc-mode');
                 
-                // Update button appearance and text
+                // Update button appearance and icon
                 switch (viewMode) {
                     case 'files':
                         viewModeToggle.classList.add('files-mode');
-                        viewModeToggle.textContent = 'F';
+                        viewModeToggle.innerHTML = '<i class="fas fa-file"></i>';
                         viewModeToggle.title = '單檔案模式';
                         break;
                     case 'toc':
                         viewModeToggle.classList.add('toc-mode');
-                        viewModeToggle.textContent = 'T';
+                        viewModeToggle.innerHTML = '<i class="fas fa-list"></i>';
                         viewModeToggle.title = '單目錄模式';
                         break;
                     // Removed dual mode support
@@ -11784,7 +11886,7 @@ gantt
                     presentationToggleBtn.innerHTML = '<i class="fas fa-times"></i> 退出簡報';
                     presentationToggleBtn.style.background = '#dc3545';
                 } else {
-                    presentationToggleBtn.innerHTML = '<i class="fas fa-presentation-screen"></i> 簡報模式';
+                    presentationToggleBtn.innerHTML = '<i class="fas fa-chalkboard"></i> 簡報模式';
                     presentationToggleBtn.style.background = '';
                 }
             }
@@ -12087,16 +12189,47 @@ gantt
                         const menu = dropdownContainer.querySelector('.dropdown-menu');
                         const isOpen = menu.classList.contains('show');
                         
-                        // Close all other dropdowns
-                        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+                        // Close all other dropdowns and move them back
+                        document.querySelectorAll('.dropdown-menu').forEach(m => {
+                            m.classList.remove('show');
+                            // Move back to original container if it's in body
+                            if (m.parentNode === document.body && m.dataset.originalContainer) {
+                                const originalContainer = document.getElementById(m.dataset.originalContainer);
+                                if (originalContainer) {
+                                    originalContainer.appendChild(m);
+                                }
+                            }
+                        });
                         
                         // Toggle current dropdown
                         if (!isOpen) {
+                            // Calculate position for fixed dropdown
+                            const btnRect = dropdownBtn.getBoundingClientRect();
+                            menu.style.top = (btnRect.bottom + 2) + 'px';
+                            menu.style.left = btnRect.left + 'px';
+                            
+                            // Move dropdown to body to avoid clipping
+                            if (menu.parentNode !== document.body) {
+                                // Remember original container
+                                menu.dataset.originalContainer = dropdownContainer.id || 
+                                    (dropdownContainer.id = 'dropdown-container-' + Date.now());
+                                document.body.appendChild(menu);
+                            }
+                            
                             menu.classList.add('show');
                         }
                     } else if (!dropdownContainer) {
-                        // Close all dropdowns when clicking outside
-                        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+                        // Close all dropdowns when clicking outside and move them back
+                        document.querySelectorAll('.dropdown-menu').forEach(m => {
+                            m.classList.remove('show');
+                            // Move back to original container if it's in body
+                            if (m.parentNode === document.body && m.dataset.originalContainer) {
+                                const originalContainer = document.getElementById(m.dataset.originalContainer);
+                                if (originalContainer) {
+                                    originalContainer.appendChild(m);
+                                }
+                            }
+                        });
                     }
                 });
                 
@@ -13462,9 +13595,7 @@ gantt
                 const dropdown = document.createElement('div');
                 dropdown.className = 'autocomplete-dropdown';
                 dropdown.style.position = 'absolute';
-                dropdown.style.zIndex = '1000';
-                dropdown.style.maxHeight = '200px';
-                dropdown.style.overflowY = 'auto';
+                dropdown.style.zIndex = '9999';
                 
                 items.forEach((item, index) => {
                     const option = document.createElement('div');
@@ -13499,9 +13630,7 @@ gantt
                 const dropdown = document.createElement('div');
                 dropdown.className = 'autocomplete-dropdown hashtag-dropdown';
                 dropdown.style.position = 'absolute';
-                dropdown.style.zIndex = '1000';
-                dropdown.style.maxHeight = '200px';
-                dropdown.style.overflowY = 'auto';
+                dropdown.style.zIndex = '9999';
                 
                 items.forEach((item, index) => {
                     const option = document.createElement('div');
@@ -13577,13 +13706,7 @@ gantt
                     });
                 }
                 
-                // Close dual editor button
-                const closeBtn = document.getElementById('dual-editor-close');
-                if (closeBtn) {
-                    closeBtn.addEventListener('click', () => {
-                        toggleDualEditor();
-                    });
-                }
+                // dual-editor-btn already handles toggling dual editor mode
                 
                 // Pane selection (click anywhere in pane to activate)
                 const pane1 = document.getElementById('dual-pane-1');
