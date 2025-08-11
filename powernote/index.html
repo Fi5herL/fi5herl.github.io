@@ -4817,6 +4817,17 @@
                             
                             // 更新files陣列
                             files = Array.from(existingFileMap.values());
+                            
+                            // 設置同步載入時間戳記，防止立即覆蓋
+                            window.lastSyncTime = Date.now();
+                            console.log('🔧 同步載入完成，設置保護時間戳:', window.lastSyncTime);
+                            
+                            // 重新載入並套用 NoteConfig.md 設定
+                            console.log('🔧 合併模式載入後，重新套用配置設定');
+                            setTimeout(async () => {
+                                const configLoaded = await loadConfiguration();
+                                console.log('🔧 同步後配置重新載入結果:', configLoaded);
+                            }, 100); // 短暫延遲確保檔案更新完成
                         } else {
                             // 原有的覆蓋模式
                             files = workspace.files.map(file => ({
@@ -4826,6 +4837,17 @@
                                 content: file.content || '',
                                 lastModified: new Date(file.lastModified || Date.now())
                             }));
+                            
+                            // 設置同步載入時間戳記，防止立即覆蓋
+                            window.lastSyncTime = Date.now();
+                            console.log('🔧 覆蓋模式載入完成，設置保護時間戳:', window.lastSyncTime);
+                            
+                            // 重新載入並套用 NoteConfig.md 設定
+                            console.log('🔧 覆蓋模式載入後，重新套用配置設定');
+                            setTimeout(async () => {
+                                const configLoaded = await loadConfiguration();
+                                console.log('🔧 同步後配置重新載入結果:', configLoaded);
+                            }, 100); // 短暫延遲確保檔案更新完成
                         }
                     }
                     
@@ -5972,11 +5994,22 @@
                 const line = cursor.line;
                 const ch = cursor.ch;
                 
-                // Clear all existing marks
+                // 優化：立即清除游標附近的標記，延遲處理其他標記
                 const marks = cm.getAllMarks();
+                const cursorLineMarks = [];
+                const otherMarks = [];
+                
                 marks.forEach(mark => {
                     if (mark.className && mark.className.includes('smart-hide')) {
-                        mark.clear();
+                        const range = mark.find();
+                        if (range && (line >= range.from.line - 2 && line <= range.to.line + 2)) {
+                            // 游標附近的標記立即清除
+                            cursorLineMarks.push(mark);
+                            mark.clear();
+                        } else {
+                            // 其他標記保留，稍後處理
+                            otherMarks.push(mark);
+                        }
                     }
                 });
                 
@@ -5985,8 +6018,22 @@
                 // Handle HTML blocks (independent processing)
                 handleHtmlBlocks(cm, cursor, totalLines);
                 
-                // Handle markdown links (independent processing)
+                // Handle markdown links (independent processing)  
                 handleMarkdownLinks(cm, cursor, totalLines);
+                
+                // 延遲清理遠離游標的其他標記，避免影響即時回應
+                setTimeout(() => {
+                    otherMarks.forEach(mark => {
+                        try {
+                            const range = mark.find();
+                            if (range && (cursor.line < range.from.line - 5 || cursor.line > range.to.line + 5)) {
+                                mark.clear();
+                            }
+                        } catch (e) {
+                            // 標記可能已被清除，忽略錯誤
+                        }
+                    });
+                }, 200); // 200ms後清理遠端標記
             }
             
             // Handle HTML blocks - identify and hide multi-line HTML regions (optimized)
@@ -6133,6 +6180,34 @@
                 }
             }
             
+            // Handle paste limit to prevent editor freezing
+            function handlePasteLimit(cm, changeObj) {
+                const pasteContent = changeObj.text.join('\n');
+                const pasteSize = new Blob([pasteContent]).size; // Get size in bytes
+                const pasteLines = changeObj.text.length;
+                
+                // Set limits: 1MB or 2500 lines
+                const maxPasteSize = 1048576; // 1MB
+                const maxPasteLines = 2500;
+                
+                if (pasteSize > maxPasteSize) {
+                    changeObj.cancel();
+                    showNotification(`❌ 貼上內容過大 (${(pasteSize / 1048576).toFixed(1)}MB)，請限制在1MB以內`);
+                    return;
+                }
+                
+                if (pasteLines > maxPasteLines) {
+                    changeObj.cancel();
+                    showNotification(`❌ 貼上內容行數過多 (${pasteLines}行)，請限制在${maxPasteLines}行以內`);
+                    return;
+                }
+                
+                // Log successful paste for monitoring
+                if (pasteSize > 10240 || pasteLines > 50) { // Log if > 10KB or > 50 lines
+                    console.log(`📋 大量貼上: ${(pasteSize / 1024).toFixed(1)}KB, ${pasteLines}行`);
+                }
+            }
+            
             // Handle markdown links independently (optimized)
             function handleMarkdownLinks(cm, cursor, totalLines) {
                 // Early exit: Quick check if document even contains markdown links
@@ -6268,6 +6343,13 @@
                 // Force word wrapping for all devices
                 editor.setOption("lineWrapping", true);
                 editor.refresh();
+                
+                // Add paste limit functionality
+                editor.on("beforeChange", function(cm, changeObj) {
+                    if (changeObj.origin === "paste") {
+                        handlePasteLimit(cm, changeObj);
+                    }
+                });
                 
                 // Initialize line number colors for foldable lines
                 setTimeout(() => {
@@ -6498,10 +6580,10 @@
                     clearTimeout(singleEditorCursorTimer);
                     clearTimeout(singleEditorSmartHidingTimer);
                     
-                    // Throttle smart hiding separately with longer delay
+                    // 減少智能隱藏的延遲，提供更即時的回應
                     singleEditorSmartHidingTimer = setTimeout(() => {
                         handleSmartHiding(cm);
-                    }, 500); // Heavy throttling for expensive operations
+                    }, 50); // 從500ms大幅減少到50ms，提供即時回應
                     
                     // Throttle other visual effect updates
                     singleEditorCursorTimer = setTimeout(() => {
@@ -9115,14 +9197,22 @@ gantt
                 const loadStartTime = Date.now();
                 const fileContent = currentFile.content;
                 
-                // 預防性截斷：對於大檔案直接進行截斷載入，避免當機
+                // 新的載入策略：檢查檔案大小和行數
                 let isLargeFile = false;
                 
-                if (fileContent.length > 100000) { // 100KB以上直接截斷
-                    console.log(`📄 檔案 ${currentFile.name} 過大 (${Math.round(fileContent.length/1024)}KB)，直接進行截斷載入`);
+                // 檢查行數
+                const lineCount = fileContent.split('\n').length;
+                console.log(`📊 檔案 ${currentFile.name} 分析：大小 ${Math.round(fileContent.length/1024)}KB，行數 ${lineCount}`);
+                
+                if (fileContent.length > 3145728) { // 3MB以上進行大小分段載入
+                    console.log(`📄 檔案 ${currentFile.name} 過大，使用大小分段載入`);
                     handleLargeFileLoading(fileId, fileContent);
                     isLargeFile = true;
-                } else if (fileContent.length > 50000) { // 50-100KB使用非同步載入檢測
+                } else if (lineCount > 3000) { // 3000行以上進行行數分段載入
+                    console.log(`📋 檔案 ${currentFile.name} 行數過多 (${lineCount}行)，使用行數分段載入`);
+                    handleLargeLineLoading(fileId, fileContent, lineCount);
+                    isLargeFile = true;
+                } else if (fileContent.length > 2097152) { // 2MB-3MB使用非同步載入檢測
                     console.log(`⏳ 檔案 ${currentFile.name} 較大 (${Math.round(fileContent.length/1024)}KB)，使用安全載入模式`);
                     // 使用非同步載入避免阻塞UI
                     setTimeout(() => {
@@ -9206,15 +9296,8 @@ gantt
                 const file = files.find(f => f.id === fileId);
                 if (!file) return;
                 
-                // 根據檔案大小動態調整初始載入量
-                let maxInitialLoad;
-                if (fullContent.length > 1000000) { // 1MB以上
-                    maxInitialLoad = 10000; // 10KB
-                } else if (fullContent.length > 500000) { // 500KB以上
-                    maxInitialLoad = 15000; // 15KB
-                } else {
-                    maxInitialLoad = 20000; // 20KB
-                }
+                // 新策略：先載入3MB，之後每500KB分段載入
+                let maxInitialLoad = 3145728; // 初始載入3MB
                 
                 // 截斷內容：保留前面部分
                 const truncatedText = fullContent.substring(0, maxInitialLoad);
@@ -9223,20 +9306,21 @@ gantt
                 truncatedContent.set(fileId, {
                     fullContent: fullContent,
                     loadedContent: truncatedText,
-                    isFullyLoaded: false,
+                    isFullyLoaded: truncatedText.length >= fullContent.length,
                     loadedChunks: 1,
-                    totalChunks: Math.ceil(fullContent.length / maxInitialLoad),
-                    chunkSize: maxInitialLoad
+                    totalChunks: Math.ceil((fullContent.length - maxInitialLoad) / 512000) + 1, // 3MB + N個500KB塊
+                    chunkSize: 512000, // 後續每次載入500KB
+                    initialLoadSize: maxInitialLoad
                 });
                 
-                // 創建載入提示
-                const loadingInfo = `\n\n⚠️ 大檔案已截斷載入 (${Math.round(truncatedText.length/1024)}KB / ${Math.round(fullContent.length/1024)}KB)\n📋 滾動到底部載入更多內容\n🔍 搜尋時會自動載入完整內容\n💡 點擊此處可手動載入全部內容`;
-                
-                // 使用非同步載入避免阻塞
+                // 使用非同步載入避免阻塞，不在MD內容中添加提示
                 setTimeout(() => {
                     try {
-                        editor.setValue(truncatedText + loadingInfo);
-                        console.log(`📄 大檔案 ${file.name} 已截斷載入：${Math.round(truncatedText.length/1024)}KB/${Math.round(fullContent.length/1024)}KB`);
+                        editor.setValue(truncatedText); // 只載入純內容，無提示字
+                        console.log(`📄 大檔案 ${file.name} 已分段載入：${Math.round(truncatedText.length/1024)}KB/${Math.round(fullContent.length/1024)}KB`);
+                        
+                        // 顯示界面通知而不是在MD內容中添加提示
+                        showLargeFileNotification(fileId, truncatedText.length, fullContent.length);
                         
                         // 監聽滾動事件
                         setupLazyLoadingForFile(fileId);
@@ -9358,15 +9442,166 @@ gantt
                 }
             }
             
+            // 處理行數過多的檔案載入
+            function handleLargeLineLoading(fileId, fullContent, totalLines) {
+                const file = files.find(f => f.id === fileId);
+                if (!file) return;
+                
+                const lines = fullContent.split('\n');
+                const maxInitialLines = 3000; // 初始載入3000行
+                const chunkLines = 1000; // 後續每次載入1000行
+                
+                // 載入前3000行
+                const initialLines = lines.slice(0, maxInitialLines);
+                const truncatedText = initialLines.join('\n');
+                
+                // 儲存完整內容和狀態
+                truncatedContent.set(fileId, {
+                    fullContent: fullContent,
+                    loadedContent: truncatedText,
+                    isFullyLoaded: initialLines.length >= lines.length,
+                    loadedChunks: 1,
+                    totalChunks: Math.ceil(lines.length / chunkLines),
+                    chunkLines: chunkLines, // 每次載入的行數
+                    totalLines: totalLines,
+                    loadedLines: initialLines.length,
+                    loadingType: 'lines' // 標記為行數載入模式
+                });
+                
+                // 使用非同步載入避免阻塞，不在MD內容中添加提示
+                setTimeout(() => {
+                    try {
+                        editor.setValue(truncatedText); // 只載入純內容，無提示字
+                        console.log(`📋 多行檔案 ${file.name} 已分段載入：${initialLines.length}/${totalLines}行`);
+                        
+                        // 顯示界面通知而不是在MD內容中添加提示
+                        showLargeLineNotification(fileId, initialLines.length, totalLines);
+                        
+                        // 監聽滾動事件
+                        setupLazyLoadingForFile(fileId);
+                        
+                        // 添加手動載入全部內容的點擊事件
+                        addManualLoadHandler(fileId);
+                        
+                    } catch (error) {
+                        console.error('行數分段載入發生錯誤:', error);
+                        // 回退到緊急載入
+                        const emergencyLines = 1000; // 1000行
+                        const emergencyText = lines.slice(0, emergencyLines).join('\n');
+                        
+                        truncatedContent.set(fileId, {
+                            fullContent: fullContent,
+                            loadedContent: emergencyText,
+                            isFullyLoaded: false,
+                            loadedLines: emergencyLines,
+                            totalLines: totalLines,
+                            loadingType: 'lines'
+                        });
+                        
+                        editor.setValue(emergencyText);
+                        showNotification('行數載入發生問題，已載入部分內容');
+                    }
+                }, 10); // 很短的延遲避免阻塞
+            }
+            
+            // 顯示大檔案載入通知（界面通知，不影響MD內容）
+            function showLargeFileNotification(fileId, loadedSize, totalSize) {
+                const loadedMB = Math.round(loadedSize / 1024 / 1024 * 100) / 100;
+                const totalMB = Math.round(totalSize / 1024 / 1024 * 100) / 100;
+                const percentage = Math.round(loadedSize / totalSize * 100);
+                
+                // 使用系統通知，不影響MD內容
+                showNotification(
+                    `大檔案分段載入中：${loadedMB}MB / ${totalMB}MB (${percentage}%)\n滾動到底部載入更多內容`, 
+                    'info', 
+                    5000 // 5秒後自動消失
+                );
+                
+                // 在編輯器頂部顯示進度條（可選）
+                showFileLoadingProgress(fileId, percentage);
+            }
+            
+            // 顯示多行檔案載入通知（界面通知，不影響MD內容）
+            function showLargeLineNotification(fileId, loadedLines, totalLines) {
+                const percentage = Math.round(loadedLines / totalLines * 100);
+                
+                // 使用系統通知，不影響MD內容
+                showNotification(
+                    `多行檔案分段載入中：${loadedLines} / ${totalLines} 行 (${percentage}%)\n滾動到底部載入更多行數`, 
+                    'info', 
+                    5000 // 5秒後自動消失
+                );
+                
+                // 在編輯器頂部顯示進度條
+                showFileLoadingProgress(fileId, percentage);
+            }
+            
+            // 顯示檔案載入進度條
+            function showFileLoadingProgress(fileId, percentage) {
+                // 創建或更新進度條
+                let progressBar = document.getElementById('file-loading-progress');
+                if (!progressBar) {
+                    progressBar = document.createElement('div');
+                    progressBar.id = 'file-loading-progress';
+                    progressBar.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 3px;
+                        background: rgba(0,123,255,0.2);
+                        z-index: 10000;
+                        transition: width 0.3s ease;
+                    `;
+                    document.body.appendChild(progressBar);
+                }
+                
+                progressBar.style.width = percentage + '%';
+                progressBar.style.background = percentage >= 100 ? 'rgba(40,167,69,0.8)' : 'rgba(0,123,255,0.8)';
+                
+                // 載入完成後自動隱藏
+                if (percentage >= 100) {
+                    setTimeout(() => {
+                        if (progressBar.parentNode) {
+                            progressBar.parentNode.removeChild(progressBar);
+                        }
+                    }, 2000);
+                }
+            }
+            
             // 載入下一塊內容
             function loadNextChunk(fileId) {
                 const fileData = truncatedContent.get(fileId);
                 if (!fileData || fileData.isFullyLoaded) return;
                 
-                const chunkSize = fileData.chunkSize || 20000; // 使用動態塊大小
-                const startPos = fileData.loadedContent.length;
-                const endPos = Math.min(startPos + chunkSize, fileData.fullContent.length);
-                const nextChunk = fileData.fullContent.substring(startPos, endPos);
+                let nextChunk;
+                let endPos;
+                
+                if (fileData.loadingType === 'lines') {
+                    // 行數模式：按行載入
+                    const allLines = fileData.fullContent.split('\n');
+                    const currentLines = fileData.loadedLines || 0;
+                    const chunkLines = fileData.chunkLines || 3000;
+                    const nextLines = allLines.slice(currentLines, currentLines + chunkLines);
+                    nextChunk = nextLines.join('\n');
+                    endPos = currentLines + nextLines.length;
+                    
+                    if (nextLines.length === 0) {
+                        fileData.isFullyLoaded = true;
+                        return;
+                    }
+                } else {
+                    // 大小模式：按字節載入
+                    const chunkSize = fileData.chunkSize || 512000; // 使用500KB塊大小
+                    const startPos = fileData.loadedContent.length;
+                    endPos = Math.min(startPos + chunkSize, fileData.fullContent.length);
+                    nextChunk = fileData.fullContent.substring(startPos, endPos);
+                    
+                    if (nextChunk.length === 0) {
+                        fileData.isFullyLoaded = true;
+                        return;
+                    }
+                }
                 
                 if (nextChunk.length === 0) {
                     fileData.isFullyLoaded = true;
@@ -9376,22 +9611,46 @@ gantt
                 // 使用非同步載入避免阻塞UI
                 setTimeout(() => {
                     try {
-                        fileData.loadedContent += nextChunk;
+                        fileData.loadedContent += (fileData.loadedContent ? '\n' : '') + nextChunk;
                         fileData.loadedChunks++;
+                        
+                        // 更新行數（如果是行數模式）
+                        if (fileData.loadingType === 'lines') {
+                            fileData.loadedLines = endPos;
+                        }
                         
                         // 更新編輯器內容
                         const currentPos = editor.getCursor();
                         
-                        if (endPos >= fileData.fullContent.length) {
-                            // 載入完成
-                            editor.setValue(fileData.fullContent);
-                            fileData.isFullyLoaded = true;
-                            console.log(`✅ 檔案 ${currentFile.name} 已完全載入`);
+                        if (fileData.loadingType === 'lines') {
+                            const allLines = fileData.fullContent.split('\n');
+                            if (endPos >= allLines.length) {
+                                // 行數載入完成
+                                editor.setValue(fileData.fullContent);
+                                fileData.isFullyLoaded = true;
+                                showFileLoadingProgress(fileId, 100);
+                                console.log(`✅ 檔案 ${currentFile.name} 已完全載入 (${allLines.length}行)`);
+                            } else {
+                                // 部分載入，只顯示純內容，無提示字
+                                editor.setValue(fileData.loadedContent);
+                                const percentage = Math.round(endPos / allLines.length * 100);
+                                showFileLoadingProgress(fileId, percentage);
+                                console.log(`📋 載入進度：${endPos}/${allLines.length} 行 (${percentage}%)`);
+                            }
                         } else {
-                            // 創建新的載入提示
-                            const progressInfo = `\n\n📋 載入中... (${Math.round(fileData.loadedContent.length/1024)}KB / ${Math.round(fileData.fullContent.length/1024)}KB)\n⬇️ 繼續滾動載入更多內容\n🔍 搜尋時會自動載入完整內容\n💡 點擊此處可手動載入全部內容`;
-                            editor.setValue(fileData.loadedContent + progressInfo);
-                            console.log(`📄 載入進度：${fileData.loadedChunks}/${fileData.totalChunks} 塊 (${Math.round(fileData.loadedContent.length/1024)}KB)`);
+                            if (endPos >= fileData.fullContent.length) {
+                                // 大小載入完成
+                                editor.setValue(fileData.fullContent);
+                                fileData.isFullyLoaded = true;
+                                showFileLoadingProgress(fileId, 100); // 載入完成
+                                console.log(`✅ 檔案 ${currentFile.name} 已完全載入`);
+                            } else {
+                                // 部分載入，只顯示純內容，無提示字
+                                editor.setValue(fileData.loadedContent);
+                                const percentage = Math.round(fileData.loadedContent.length / fileData.fullContent.length * 100);
+                                showFileLoadingProgress(fileId, percentage); // 更新進度條
+                                console.log(`📄 載入進度：${fileData.loadedChunks}/${fileData.totalChunks} 塊 (${percentage}%)`);
+                            }
                         }
                         
                         editor.setCursor(currentPos);
@@ -10379,21 +10638,53 @@ gantt
             }
             
             async function saveConfiguration() {
-                console.log('saveConfiguration: called, isLoadingConfiguration:', isLoadingConfiguration);
-                console.trace('saveConfiguration: call stack'); // 顯示調用堆疊
-                // Don't save configuration while loading configuration to avoid conflicts
+                console.log('🔧 saveConfiguration: called, isLoadingConfiguration:', isLoadingConfiguration);
+                
+                // 增強保護：檢查是否正在載入配置
                 if (isLoadingConfiguration) {
-                    console.log('saveConfiguration: skipped due to loading flag');
+                    console.log('🔧 saveConfiguration: 跳過 - 正在載入配置中，避免覆蓋');
                     return;
                 }
                 
-                console.log('saveConfiguration: proceeding with save');
+                // 額外保護：檢查是否剛完成同步載入
+                const timeSinceLastSync = Date.now() - (window.lastSyncTime || 0);
+                if (timeSinceLastSync < 3000) { // 3秒內
+                    console.log('🔧 saveConfiguration: 跳過 - 剛完成同步載入，避免立即覆蓋');
+                    return;
+                }
+                
+                console.log('🔧 saveConfiguration: 開始儲存配置');
                 const result = createOrUpdateNoteConfig();
                 if (result !== null) {
                     await saveFilesToStorage();
                     renderFileList();
+                    console.log('🔧 saveConfiguration: 配置儲存完成');
                 } else {
-                    console.log('saveConfiguration: createOrUpdateNoteConfig returned null, skipping save');
+                    console.log('🔧 saveConfiguration: createOrUpdateNoteConfig 返回 null，跳過儲存');
+                }
+            }
+            
+            // 輔助函數：載入配置中指定的檔案
+            function loadConfiguredFile(config) {
+                let fileLoaded = false;
+                if (config.currentFile.id && config.currentFile.id !== 'null') {
+                    console.log('loadConfiguredFile: Trying to load configured file:', config.currentFile.id);
+                    const fileToLoad = files.find(f => f.id === config.currentFile.id);
+                    if (fileToLoad) {
+                        console.log('loadConfiguredFile: Found configured file, loading:', fileToLoad.name);
+                        loadFile(fileToLoad.id);
+                        fileLoaded = true;
+                    } else {
+                        console.log('loadConfiguredFile: Configured file not found');
+                    }
+                } else {
+                    console.log('loadConfiguredFile: No valid file ID in config, will load first available');
+                }
+                
+                // If the configured file wasn't found, load the first available file
+                if (!fileLoaded && files.length > 0) {
+                    console.log('loadConfiguredFile: Loading first available file:', files[0].name);
+                    loadFile(files[0].id);
                 }
             }
             
@@ -10407,7 +10698,11 @@ gantt
                 let noteConfigFile = files.find(f => f.name === 'NoteConfig.md');
                 if (!noteConfigFile) {
                     console.log('loadConfiguration: No NoteConfig.md found, will return false to use defaults');
-                    isLoadingConfiguration = false;
+                    // 延遲重置，即使沒找到配置檔案
+                    setTimeout(() => {
+                        isLoadingConfiguration = false;
+                        console.log('🔧 沒找到配置檔案，延遲重置 isLoadingConfiguration');
+                    }, 1000);
                     return false;
                 } else {
                     console.log('loadConfiguration: Found existing NoteConfig.md');
@@ -10417,7 +10712,11 @@ gantt
                 const config = parseNoteConfig();
                 if (!config) {
                     console.log('loadConfiguration: Failed to parse configuration, returning false');
-                    isLoadingConfiguration = false; // Reset flag on failure
+                    // 延遲重置，即使解析失敗
+                    setTimeout(() => {
+                        isLoadingConfiguration = false;
+                        console.log('🔧 配置解析失敗，延遲重置 isLoadingConfiguration');
+                    }, 1000);
                     return false;
                 }
                 console.log('loadConfiguration: Configuration parsed:', config);
@@ -10566,26 +10865,18 @@ gantt
                         sortBtn.innerHTML = `<i class="${currentConfig.icon}"></i>`;
                     }
                     
-                    // Load the previously open file, or load first available file
-                    let fileLoaded = false;
-                    if (config.currentFile.id && config.currentFile.id !== 'null') {
-                        console.log('loadConfiguration: Trying to load configured file:', config.currentFile.id);
-                        const fileToLoad = files.find(f => f.id === config.currentFile.id);
-                        if (fileToLoad) {
-                            console.log('loadConfiguration: Found configured file, loading:', fileToLoad.name);
-                            loadFile(fileToLoad.id);
-                            fileLoaded = true;
-                        } else {
-                            console.log('loadConfiguration: Configured file not found');
-                        }
-                    } else {
-                        console.log('loadConfiguration: No valid file ID in config, will load first available');
-                    }
+                    // 檢查是否剛完成同步載入，如果是就延遲檔案載入以避免觸發保存
+                    const timeSinceLastSync = Date.now() - (window.lastSyncTime || 0);
+                    const isRecentSync = timeSinceLastSync < 1000; // 1秒內
                     
-                    // If the configured file wasn't found, load the first available file
-                    if (!fileLoaded && files.length > 0) {
-                        console.log('loadConfiguration: Loading first available file:', files[0].name);
-                        loadFile(files[0].id);
+                    if (isRecentSync) {
+                        console.log('🔧 loadConfiguration: 剛完成同步載入，延遲檔案載入以避免觸發保存');
+                        setTimeout(() => {
+                            loadConfiguredFile(config);
+                        }, 2000); // 延遲載入檔案
+                    } else {
+                        console.log('🔧 loadConfiguration: 正常載入檔案');
+                        loadConfiguredFile(config);
                     }
                     
                     console.log('Configuration loaded successfully:', config);
@@ -10594,8 +10885,12 @@ gantt
                     console.warn('Failed to apply loaded configuration:', e);
                     return false;
                 } finally {
-                    // Reset the flag after loading is complete
-                    isLoadingConfiguration = false;
+                    // 延遲重置標記，給UI更新充足的緩衝時間
+                    console.log('🔧 配置載入完成，延遲重置 isLoadingConfiguration 標記');
+                    setTimeout(() => {
+                        isLoadingConfiguration = false;
+                        console.log('🔧 isLoadingConfiguration 標記已重置為 false');
+                    }, 2000); // 2秒緩衝期，確保所有UI更新完成
                 }
             }
             
@@ -12845,6 +13140,13 @@ gantt
                             saveFilesToStorage();
                         }
                     });
+                    
+                    // Add paste limit functionality for pane 1
+                    dualEditorInstances[0].on("beforeChange", function(cm, changeObj) {
+                        if (changeObj.origin === "paste") {
+                            handlePasteLimit(cm, changeObj);
+                        }
+                    });
                 }
                 
                 // Initialize CodeMirror for pane 2
@@ -12874,6 +13176,13 @@ gantt
                             dualEditorFiles[1].content = dualEditorInstances[1].getValue();
                             updateDualPreviewThrottled(1); // Use throttled version
                             saveFilesToStorage();
+                        }
+                    });
+                    
+                    // Add paste limit functionality for pane 2
+                    dualEditorInstances[1].on("beforeChange", function(cm, changeObj) {
+                        if (changeObj.origin === "paste") {
+                            handlePasteLimit(cm, changeObj);
                         }
                     });
                 }
@@ -13030,10 +13339,10 @@ gantt
                     clearTimeout(dualEditorCursorTimer);
                     clearTimeout(dualEditorSmartHidingTimer);
                     
-                    // Throttle smart hiding separately with longer delay
+                    // 減少智能隱藏的延遲，提供更即時的回應  
                     dualEditorSmartHidingTimer = setTimeout(() => {
                         handleSmartHiding(cm);
-                    }, 500); // Heavy throttling for expensive operations
+                    }, 50); // 從500ms大幅減少到50ms，提供即時回應
                     
                     // Throttle other visual effect updates
                     dualEditorCursorTimer = setTimeout(() => {
@@ -14628,11 +14937,24 @@ gantt
                             }
                         }
 
+                        // 設置工作區載入時間戳記，防止立即覆蓋
+                        window.lastSyncTime = Date.now();
+                        console.log('🔧 工作區載入完成，設置保護時間戳:', window.lastSyncTime);
+                        
                         // Save imported data to storage
                         await saveDataToStorage();
                         
-                        // Refresh UI
-                        renderFileList();
+                        // 重新載入並套用 NoteConfig.md 設定
+                        console.log('🔧 工作區載入後，重新套用配置設定');
+                        setTimeout(async () => {
+                            const configLoaded = await loadConfiguration();
+                            console.log('🔧 工作區載入後配置重新載入結果:', configLoaded);
+                            // 配置載入後再更新UI
+                            renderFileList();
+                        }, 100);
+                        
+                        // 暫時移除直接的 renderFileList 調用，改在配置載入後執行
+                        // renderFileList();
                         
                         // Load first file if available
                         if (files.length > 0) {
