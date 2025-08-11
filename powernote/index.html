@@ -9448,8 +9448,8 @@ gantt
                 if (!file) return;
                 
                 const lines = fullContent.split('\n');
-                const maxInitialLines = 3000; // 初始載入3000行
-                const chunkLines = 1000; // 後續每次載入1000行
+                const maxInitialLines = 4000; // 初始載入3000行
+                const chunkLines = 1500; // 後續每次載入1000行
                 
                 // 載入前3000行
                 const initialLines = lines.slice(0, maxInitialLines);
