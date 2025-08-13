@@ -214,6 +214,13 @@
         #view-mode-toggle.toc-mode {
             background: #28a745;
         }
+        
+        /* 確保fa-file icon在所有設備上正確顯示 */
+        .fa-file:before {
+            content: "\f15b";
+            font-family: "Font Awesome 7 Free";
+            font-weight: 900;
+        }
         .sidebar-content-panel {
             flex: 1;
             overflow-y: auto;
@@ -588,6 +595,13 @@
             /* Mobile dropdown container */
             .dropdown-container {
                 overflow: visible !important;
+            }
+            
+            /* 確保手機版本的fa-file icon正確顯示 */
+            .fa-file:before {
+                content: "\f15b" !important;
+                font-family: "Font Awesome 7 Free" !important;
+                font-weight: 900 !important;
             }
             
             /* Single view modes on mobile - pure edit or pure preview */
