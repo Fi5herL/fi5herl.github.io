@@ -7154,11 +7154,6 @@
                     option.dataset.insertText = item.value; // Store value for keyboard selection
                     option.onclick = () => selectHashtag(item, cursor);
                     
-                    // Set initial selection
-                    if (index === 0) {
-                        option.classList.add('selected');
-                    }
-                    
                     dropdown.appendChild(option);
                 });
                 
@@ -7174,6 +7169,9 @@
                 
                 // Store cursor position for keyboard selection
                 autocompleteDropdown.cursorPosition = cursor;
+                
+                // 確保第一個項目被正確高亮（統一調用）
+                updateAutocompleteSelection();
             }
             
             // Select hashtag from dropdown
@@ -13537,6 +13535,39 @@ gantt
                     }
                 });
                 
+                // Add keydown handler for dual editor (same as single editor)
+                editorInstance.on('keydown', (instance, e) => {
+                    if (handleAutocompleteNavigation(e)) {
+                        return;
+                    }
+                    
+                    // Handle Enter key for auto list continuation and auto timer
+                    if (e.key === 'Enter') {
+                        console.log(`Dual editor pane ${paneIndex}: keydown Enter detected`);
+                        
+                        // 先觸發自動計時（在auto list處理之前）
+                        if (autoTimerEnabled) {
+                            console.log(`Dual editor pane ${paneIndex}: triggering auto timer on keydown`);
+                            // 使用setTimeout確保在DOM更新後執行
+                            setTimeout(async () => {
+                                const cursor = instance.getCursor();
+                                await handleDualEditorAutoTimerOnEnter({
+                                    origin: '+input',
+                                    text: ['\n'],
+                                    from: cursor,
+                                    to: cursor,
+                                    paneIndex: paneIndex
+                                });
+                            }, 0);
+                        }
+                        
+                        // 然後處理自動列表繼續（與單編輯器相同的邏輯）
+                        if (handleAutoListContinuation(instance, e)) {
+                            return;
+                        }
+                    }
+                });
+
                 // Add scroll sync for dual editor
                 editorInstance.on('scroll', function(cm) {
                     syncDualPreviewScroll(paneIndex);
@@ -13564,7 +13595,11 @@ gantt
                     
                     const query = match[1].toLowerCase();
                     const suggestions = files
-                        .filter(f => f.name.toLowerCase().includes(query) && f.name !== (dualEditorFiles[paneIndex]?.name || ''))
+                        .filter(f => 
+                            f.name.toLowerCase().includes(query) && 
+                            f.name !== (dualEditorFiles[paneIndex]?.name || '') &&
+                            !isSystemFile(f.name)  // 排除系統文件
+                        )
                         .slice(0, 10)
                         .map(f => ({
                             label: f.name,
@@ -13622,6 +13657,9 @@ gantt
                 autocompleteDropdown.editorInstance = cm;
                 autocompleteDropdown.autocompleteType = type;
                 autocompleteDropdown.paneIndex = paneIndex;
+                
+                // 初次顯示時高亮第一個項目
+                updateAutocompleteSelection();
             }
             
             function createDualEditorHashtagAutocompleteDropdown(items, cursor, cm, paneIndex) {
@@ -13658,6 +13696,9 @@ gantt
                 autocompleteDropdown.editorInstance = cm;
                 autocompleteDropdown.autocompleteType = 'hashtag';
                 autocompleteDropdown.paneIndex = paneIndex;
+                
+                // 初次顯示時高亮第一個項目
+                updateAutocompleteSelection();
             }
             
             function selectDualEditorAutocomplete(item, cursor, cm, type, paneIndex) {
@@ -14475,7 +14516,7 @@ gantt
                 
                 autocompleteDropdown = document.createElement('div');
                 autocompleteDropdown.className = 'autocomplete-dropdown';
-                autocompleteSelectedIndex = -1;
+                autocompleteSelectedIndex = 0;
                 
                 items.forEach((item, index) => {
                     const div = document.createElement('div');
@@ -14506,6 +14547,9 @@ gantt
                 autocompleteDropdown.style.top = (coords.bottom + 5) + 'px';
                 
                 document.body.appendChild(autocompleteDropdown);
+                
+                // 初次顯示時高亮第一個項目
+                updateAutocompleteSelection();
             }
             
             function removeAutocompleteDropdown() {
@@ -14537,6 +14581,11 @@ gantt
                 const items = [];
                 
                 files.forEach(file => {
+                    // 排除系統文件
+                    if (isSystemFile(file.name)) {
+                        return;
+                    }
+                    
                     const fileName = file.name.replace(/\.[^/.]+$/, "");
                     
                     // Add file name match
@@ -14571,12 +14620,22 @@ gantt
                 
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    autocompleteSelectedIndex = Math.min(autocompleteSelectedIndex + 1, items.length - 1);
+                    // 輪尋功能：如果到達最後一個項目，回到第一個
+                    if (autocompleteSelectedIndex >= items.length - 1) {
+                        autocompleteSelectedIndex = 0;
+                    } else {
+                        autocompleteSelectedIndex = autocompleteSelectedIndex + 1;
+                    }
                     updateAutocompleteSelection();
                     return true;
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    autocompleteSelectedIndex = Math.max(autocompleteSelectedIndex - 1, -1);
+                    // 輪尋功能：如果在第一個項目(0)，跳到最後一個；如果未選擇(-1)，也跳到最後一個
+                    if (autocompleteSelectedIndex <= 0) {
+                        autocompleteSelectedIndex = items.length - 1;
+                    } else {
+                        autocompleteSelectedIndex = autocompleteSelectedIndex - 1;
+                    }
                     updateAutocompleteSelection();
                     return true;
                 } else if (e.key === 'Enter' && autocompleteSelectedIndex >= 0) {
@@ -15239,11 +15298,11 @@ gantt
                     if (match) {
                         const [, indent, marker, separator, content] = match;
                         
-                        // If the line has no content (just marker), remove the marker
+                        // If the line has no content (just marker), remove the marker only
                         if (!content || content.trim() === '') {
                             e.preventDefault();
-                            // Remove the current list marker and create a plain new line
-                            editor.replaceRange('\n', 
+                            // Only clear the current line content, don't add new line
+                            editor.replaceRange('', 
                                 { line: cursor.line, ch: 0 }, 
                                 { line: cursor.line, ch: currentLine.length }
                             );
