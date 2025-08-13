@@ -1,0 +1,134 @@
+/* Simplified Font Awesome - Using Unicode symbols as fallback */
+.fa, .fas, .far, .fab, .fal, .fad, .fat, .fass {
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    display: inline-block;
+}
+
+/* Common icons using Unicode alternatives */
+.fa-bars::before { content: "☰"; }
+.fa-folder::before, .fa-folder-open::before { content: "📁"; }
+.fa-minus::before { content: "-"; }
+.fa-plus::before { content: "+"; }
+.fa-download::before { content: "💾"; }
+.fa-save::before { content: "⬇️"; }
+.fa-upload::before { content: "📤"; }
+.fa-times::before { content: "✖"; }
+.fa-list-ul::before { content: "☰"; }
+.fa-clock::before { content: "🕐"; }
+.fa-heading::before { content: "H"; }
+.fa-bold::before { content: "B"; }
+.fa-italic::before { content: "I"; }
+.fa-code::before { content: "<>"; }
+.fa-link::before { content: "🔗"; }
+.fa-table::before { content: "⊞"; }
+.fa-project-diagram::before { content: "📊"; }
+.fa-text-height::before { content: "🔤"; }
+.fa-columns::before { content: "EV"; }
+.fa-edit::before { content: "E"; }
+.fa-eye::before { content: "V"; }
+.fa-file::before { content: "📄"; }
+.fa-file-text::before { content: "📄"; }
+.fa-file-code::before { content: "📄"; }
+.fa-file-pdf::before { content: "📋"; }
+.fa-presentation-screen::before { content: "🖥"; }
+.fa-search::before { content: "🔍"; }
+.fa-chevron-up::before { content: "▲"; }
+.fa-chevron-down::before { content: "▼"; }
+.fa-chevron-left::before { content: "◀"; }
+.fa-chevron-right::before { content: "▶"; }
+.fa-compress::before { content: "■"; }
+.fa-expand::before { content: "◻"; }
+.fa-trash::before { content: "🗑️"; }
+.fa-play::before { content: "▶"; }
+.fa-stop::before { content: "⏹"; }
+.fa-keyboard::before { content: "🎹"; }
+.fa-draw-polygon::before { content: "🖼️"; }
+/*.fa-sort::before { content: "🗃️"; }*/
+.fa-sync::before { content: "🟰"; }
+.fa-cloud-upload-alt::before { content: "上"; }
+.fa-cloud-download-alt::before { content: "️下"; }
+.fa-cog::before { content: "設"; }
+.fa-share-alt::before { content: "享"; }
+.fa-globe::before { content: "🌐"; }
+.fa-sort-alpha-down::before { content: "A"; }
+.fa-sort-alpha-up::before { content: "Z"; }
+.fa-plus-circle::before { content: "C"; }
+.fa-sort-numeric-up::before { content: "E"; }
+.fa-external-link-alt::before { content: "🔗"; }
+.fa-cloud::before { content: "☁️"; }
+.fa-clone::before { content: "◫"; }
+
+/* Margin for icons */
+.fa + *:not(:empty), * + .fa:not(:empty) {
+    margin-left: 0.3em;
+}
+
+/* Hide empty content */
+.fa:empty::before {
+    margin-right: 0;
+}
+
+/* Sizing */
+.fa-xs { font-size: 0.75em; }
+.fa-sm { font-size: 0.875em; }
+.fa-lg { font-size: 1.33em; }
+.fa-xl { font-size: 1.5em; }
+.fa-2x { font-size: 2em; }
+.fa-3x { font-size: 3em; }
+
+/* Rotation and flipping */
+.fa-rotate-90 { transform: rotate(90deg); }
+.fa-rotate-180 { transform: rotate(180deg); }
+.fa-rotate-270 { transform: rotate(270deg); }
+.fa-flip-horizontal { transform: scaleX(-1); }
+.fa-flip-vertical { transform: scaleY(-1); }
+
+/* Animation */
+.fa-spin {
+    animation: fa-spin 2s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Fixed width */
+.fa-fw {
+    width: 1.25em;
+    text-align: center;
+}
+
+/* List icons */
+.fa-ul {
+    list-style-type: none;
+    margin-left: 2.5em;
+    padding-left: 0;
+}
+
+.fa-li {
+    position: absolute;
+    left: -2em;
+    width: 2em;
+    top: 0.14em;
+    text-align: center;
+}
+
+/* Bordered and pulled */
+.fa-border {
+    border: solid 0.08em #eee;
+    border-radius: 0.1em;
+    padding: 0.2em 0.25em 0.15em;
+}
+
+.fa-pull-left {
+    float: left;
+    margin-right: 0.3em;
+}
+
+.fa-pull-right {
+    float: right;
+    margin-left: 0.3em;
+}
