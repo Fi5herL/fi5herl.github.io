@@ -3,702 +3,3233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="一個分享生活、專注於內容的部落格。">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎣</text></svg>">
-    <title>Fi5her Blog</title>
+    <title>A3Note</title>
+    <link rel="stylesheet" href="lib/font-awesome/all.min.css">
+    <link rel="stylesheet" href="lib/excalidraw/excalidraw.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' style='stop-color:%23ff6b35'/><stop offset='100%' style='stop-color:%23f7931e'/></linearGradient></defs><g fill='url(%23grad)' stroke='url(%23grad)' stroke-width='4' stroke-linecap='round'><circle cx='32' cy='12' r='6' fill='url(%23grad)'/><line x1='32' y1='18' x2='32' y2='40'/><line x1='32' y1='28' x2='20' y2='22'/><line x1='32' y1='28' x2='44' y2='34'/><line x1='32' y1='40' x2='22' y2='56'/><line x1='32' y1='40' x2='42' y2='56'/></g></svg>" type="image/svg+xml">
     <style>
-        /* --- Minimalist White Theme --- */
-        :root {
-            --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-
-            --color-bg: #ffffff;
-            --color-text: #000000;
-            --color-text-secondary: #555555;
-            --color-border: #eeeeee;
-            --color-accent: #000000; /* Black accent */
-            --color-accent-hover: #555555; /* Grayish hover */
-            --color-tag-bg: #f5f5f5;
-            --color-shadow: rgba(0, 0, 0, 0.08);
-
-            --border-radius: 6px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
-
-        /* --- Reset and Base Styles --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
         body {
-            font-family: 'Noto Sans TC', var(--font-body);
-            background: var(--color-bg);
-            color: var(--color-text);
-            line-height: 1.7;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
         }
-        main {
-            max-width: 800px;
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: #000;
+        }
+
+        /* Instagram-style Sidebar */
+        .sidebar {
+            width: 350px;
+            background: #000;
+            border-right: 1px solid #262626;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, width 0.3s ease;
+            position: relative;
+            z-index: 10;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed .sidebar-header .logo span,
+        .sidebar.collapsed .search-container,
+        .sidebar.collapsed .note-info,
+        .sidebar.collapsed .note-actions,
+        .sidebar.collapsed .storage-info .storage-text,
+        .sidebar.collapsed .storage-bar {
+            display: none;
+        }
+
+        .sidebar.collapsed .add-note-btn span {
+            display: none;
+        }
+
+        .sidebar.collapsed .add-note-btn {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            justify-content: center;
             margin: 0 auto;
-            padding: 2rem 1.5rem;
         }
 
-        /* --- Loading Overlay --- */
-        #loadingOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--color-bg);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 9999;
-            color: var(--color-text);
-            font-size: 1.2rem;
-            transition: opacity 0.5s ease-out; opacity: 1;
+        .sidebar.collapsed .sidebar-header {
+            padding: 20px 10px;
+            flex-direction: column;
+            gap: 15px;
         }
-        #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
-        
-        /* --- Site Header & Navigation --- */
-        .site-header {
-            padding: 1.5rem 0;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid var(--color-border);
+
+        .sidebar.collapsed .logo {
+            justify-content: center;
+        }
+
+        .sidebar.collapsed .note-thumbnail {
+            margin: 0 auto;
+        }
+
+        .sidebar.collapsed .note-preview {
+            justify-content: center;
+        }
+
+        .sidebar.collapsed .note-item {
+            padding: 8px;
+        }
+
+        .sidebar-toggle {
+            position: fixed;
+            top: 15px;
+            left: 335px;
+            width: 30px;
+            height: 30px;
+            background: #262626;
+            border: 1px solid #404040;
+            color: #fff;
+            border-radius: 50%;
+            cursor: pointer;
             display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            z-index: 1000;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: #404040;
+            transform: scale(1.1);
+        }
+
+        .sidebar.collapsed .sidebar-toggle {
+            left: 65px;
+            background: #404040;
+            border-color: #666;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .sidebar.collapsed .sidebar-toggle:hover {
+            background: #555;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #262626;
+            display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
         }
-        .site-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            text-decoration: none;
-            color: var(--color-text);
-        }
-        .site-nav { list-style: none; display: flex; gap: 1rem; align-items: center; }
-        .nav-link {
-            display: flex; align-items: center; gap: 0.4rem;
-            color: var(--color-text-secondary);
-            text-decoration: none;
-            font-weight: 500;
-            padding: 0.5rem;
-            border-radius: var(--border-radius);
-            transition: color 0.2s, background-color 0.2s;
-        }
-        .nav-link:hover { color: var(--color-text); }
-        .nav-link.active { color: var(--color-text); font-weight: 700; }
-        .nav-icon { width: 20px; height: 20px; fill: currentColor; }
-        .nav-text { display: none; }
-        @media (min-width: 600px) { .nav-text { display: inline; } }
 
-        /* --- Page Sections --- */
-        .page-section { display: none; }
-        .page-header { margin-bottom: 2rem; }
-        .page-header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
-        .page-header p { font-size: 1.1rem; color: var(--color-text-secondary); }
-        
-        /* --- Controls: Sort, Filter, Search --- */
-        .controls-container {
-            background: #fafafa;
-            padding: 1rem;
-            border: 1px solid var(--color-border);
-            border-radius: var(--border-radius);
-            margin-bottom: 2rem;
+        .logo {
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
             display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
             align-items: center;
+            gap: 10px;
         }
-        .control-group { display: flex; align-items: center; gap: 0.5rem; }
-        .control-group label { font-weight: 500; font-size: 0.9rem; }
-        .controls-container input[type="text"], .controls-container select, .controls-container button {
-            font-family: inherit; font-size: 0.9rem;
-            padding: 0.5rem 0.8rem;
-            border: 1px solid var(--color-border);
-            border-radius: var(--border-radius);
-            background: var(--color-bg);
-            transition: border-color 0.2s, box-shadow 0.2s;
+
+        .logo i {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .controls-container input[type="text"]:focus, .controls-container select:focus {
-            outline: none;
-            border-color: var(--color-accent);
-            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-        }
-        .controls-container button {
+
+        .add-note-btn {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
             cursor: pointer;
-            background: var(--color-tag-bg);
-            color: var(--color-text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            transition: transform 0.2s ease;
         }
-        .controls-container button:hover { background: #eee; color: var(--color-text); }
-        .hashtag-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-        .hashtag-btn {
-            background: var(--color-tag-bg);
-            color: var(--color-text-secondary);
-            border: 1px solid transparent;
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
+
+        .add-note-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .search-container {
+            padding: 15px 20px;
+            border-bottom: 1px solid #262626;
+        }
+
+        .search-box {
+            width: 100%;
+            background: #262626;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .search-box::placeholder {
+            color: #8e8e8e;
+        }
+
+        /* 檢視切換按鈕 */
+        .view-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: #333;
+            color: #ffffff;
+            border: 1px solid #444;
+            border-radius: 6px;
+            font-size: 13px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
-        .hashtag-btn:hover { border-color: var(--color-text); color: var(--color-text); }
-        .hashtag-btn.active {
-            background: var(--color-accent);
-            color: var(--color-bg);
-            border-color: var(--color-accent);
-            font-weight: 500;
+
+        .view-btn:hover {
+            background: #444;
+            border-color: #555;
         }
-        
-        /* --- Articles List --- */
-        .articles-list { display: flex; flex-direction: column; gap: 2.5rem; }
-        .article-card {
-            border-bottom: 1px solid var(--color-border);
-            padding-bottom: 1.5rem;
+
+        .view-btn.active {
+            background: #007AFF;
+            border-color: #007AFF;
+            color: white;
         }
-        .article-card:last-child { border-bottom: none; }
-        .article-title {
-            font-size: 1.6rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+
+        /* 圖片檢視區域 */
+        .images-grid {
+            display: none;
+            padding: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            overflow-x: hidden; /* 隱藏水平滾動條 */
         }
-        .article-title a { text-decoration: none; color: var(--color-text); transition: color 0.2s; }
-        .article-title a:hover { color: var(--color-accent-hover); }
-        .article-meta { color: var(--color-text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem; }
-        .article-preview { color: var(--color-text); margin-bottom: 1rem; }
-        .article-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-        .tag {
-            background: var(--color-tag-bg); color: var(--color-text-secondary);
-            padding: 0.2rem 0.6rem; border-radius: var(--border-radius); font-size: 0.8rem;
+
+        .image-card {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #333;
+            transition: all 0.2s ease;
         }
-        
-        /* --- Pagination --- */
-        .pagination-controls {
-            display: flex; justify-content: center; align-items: center;
-            gap: 1rem; margin-top: 3rem;
+
+        .image-card:hover {
+            border-color: #007AFF;
+            transform: translateY(-2px);
         }
-        .pagination-controls button {
-            padding: 0.5rem 1.2rem;
-            border: 1px solid var(--color-border);
-            background: transparent; color: var(--color-text);
-            cursor: pointer; transition: all 0.2s;
+
+        .image-thumbnail {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
         }
-        .pagination-controls button:hover:not(:disabled) { background: var(--color-text); color: var(--color-bg); }
-        .pagination-controls button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .pagination-controls span { color: var(--color-text-secondary); }
-        
-        /* --- Article Detail & Markdown Content --- */
-        .article-detail-header { text-align: center; margin-bottom: 3rem; }
-        .article-detail-header h1 { font-size: 2.8rem; line-height: 1.3; margin-bottom: 1rem; }
-        .article-detail-header .article-meta { margin-bottom: 1.5rem; }
-        .back-to-home {
+
+        .image-info {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .image-id {
+            font-family: monospace;
+            word-break: break-all;
+            margin: 4px 0;
+            color: #007AFF;
+        }
+
+        .image-refs {
+            margin-top: 8px;
+        }
+
+        .ref-tag {
             display: inline-block;
-            margin-bottom: 2rem;
-            color: var(--color-text-secondary); text-decoration: none;
-            transition: color 0.2s;
+            background: #007AFF;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin: 2px;
         }
-        .back-to-home:hover { color: var(--color-text); }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        /* 側邊欄收縮時的樣式 */
+        .sidebar.collapsed .btn-text {
+            display: none;
+        }
+
+        .sidebar.collapsed .view-btn {
+            padding: 8px;
+            min-width: 36px;
+            justify-content: center;
+        }
+
+        /* 收縮時的切換按鈕 */
+        .sidebar.collapsed .view-toggle {
+            justify-content: center;
+        }
+
+        .sidebar.collapsed .view-toggle .view-btn:not(.single-toggle) {
+            display: none;
+        }
+
+        .sidebar.collapsed .view-toggle .single-toggle {
+            display: flex !important;
+        }
+
+        .single-toggle {
+            display: none;
+        }
+
+        .sidebar.collapsed .upload-header {
+            display: none;
+        }
+
+        .sidebar.collapsed .upload-controls {
+            flex-direction: column;
+            gap: 6px; /* 更小的間距 */
+            align-items: center !important; /* 強制置中 */
+            justify-content: center !important; /* 強制置中 */
+            width: 100%; /* 佔滿寬度 */
+            padding: 0 !important; /* 移除所有內邊距 */
+            margin: 0 !important; /* 移除所有外邊距 */
+            box-sizing: border-box;
+            display: flex !important;
+        }
+
+        .sidebar.collapsed .upload-control-btn {
+            padding: 0 !important; /* 移除所有內邊距 */
+            margin: 0 !important; /* 移除所有外邊距 */
+            min-width: 36px;
+            width: 36px; /* 固定寬度 */
+            height: 36px; /* 固定高度 */
+            justify-content: center !important;
+            align-items: center !important;
+            display: flex !important;
+            border: none !important;
+            border-radius: 6px;
+            position: relative;
+        }
         
-        .markdown-content { font-size: 1.1rem; }
-        .markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4, .markdown-content h5, .markdown-content h6 {
-            margin: 2rem 0 1rem 0; font-weight: 700; line-height: 1.4;
+        /* 縮小模式下隱藏按鈕文字 */
+        .sidebar.collapsed .upload-control-btn .btn-text {
+            display: none;
         }
-        .markdown-content h1 { font-size: 2.2em; }
-        .markdown-content h2 { font-size: 1.8em; border-bottom: 2px solid var(--color-border); padding-bottom: 0.4rem; }
-        .markdown-content h3 { font-size: 1.5em; }
-        .markdown-content h4 { font-size: 1.2em; }
-        .markdown-content p { margin-bottom: 1.2rem; }
-        .markdown-content ul, .markdown-content ol { padding-left: 1.5rem; margin-bottom: 1.2rem; }
-        .markdown-content li { margin-bottom: 0.5rem; }
-        .markdown-content a { color: var(--color-text); text-decoration: underline; text-decoration-color: var(--color-border); transition: all 0.2s; }
-        .markdown-content a:hover { text-decoration-color: var(--color-text); }
-        .markdown-content code:not(pre > code) {
-            background: var(--color-tag-bg); padding: 0.2em 0.4em; border-radius: var(--border-radius);
-            font-family: var(--font-mono); font-size: 0.9em;
-        }
-        .code-block-container { position: relative; margin: 1.5rem 0; }
-        .code-block-container pre {
-            background: #fdfdfd; border: 1px solid var(--color-border);
-            border-radius: var(--border-radius); padding: 1rem; overflow-x: auto;
-        }
-        /* Using a light theme for Prism to match the blog style */
-        .code-block-container pre code { font-family: var(--font-mono); font-size: 0.9em; }
-        .copy-code-button {
-            position: absolute; top: 0.5rem; right: 0.5rem; padding: 0.4rem 0.6rem;
-            background: #eee; color: var(--color-text-secondary); 
-            border: 1px solid var(--color-border); border-radius: var(--border-radius);
-            cursor: pointer; font-size: 0.8em; opacity: 0; 
-            transition: all 0.2s ease-in-out;
-        }
-        .code-block-container:hover .copy-code-button { opacity: 1; }
-        .copy-code-button:hover { background: #ddd; color: var(--color-text); }
-        .copy-code-button.copied { background-color: var(--color-text); color: var(--color-bg); }
 
-        .markdown-content blockquote {
-            border-left: 4px solid var(--color-border); padding: 0.5rem 1.5rem; margin: 1.5rem 0;
-            color: var(--color-text-secondary);
+        .sidebar.collapsed .upload-status {
+            display: none;
         }
-        .markdown-content hr { border: none; height: 2px; background: var(--color-border); margin: 3rem 0; }
-        .markdown-content img {
-            max-width: 100%; height: auto; border-radius: var(--border-radius); margin: 1.5rem 0;
-            border: 1px solid var(--color-border);
+
+        .sidebar.collapsed .preview-title {
+            display: none;
         }
-        .markdown-content table {
-            width: 100%; border-collapse: collapse; margin: 1.5rem 0; border: 1px solid var(--color-border);
-        }
-        .markdown-content th, .markdown-content td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--color-border); }
-        .markdown-content th { background: #fafafa; font-weight: 700; }
         
-        .mermaid {
-            background: #fafafa; border: 1px solid var(--color-border); border-radius: var(--border-radius);
-            padding: 1rem; margin: 1.5rem 0; text-align: center; overflow-x: auto;
+        /* 縮小模式下隱藏預覽區域 */
+        .sidebar.collapsed #previewArea {
+            display: none !important;
         }
-        .mermaid svg { max-width: 100%; height: auto; }
-
-        /* --- Archive Page --- */
-        .archive-list { list-style: none; }
-        .archive-year { font-size: 1.8rem; font-weight: 700; margin: 2rem 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid var(--color-border); }
-        .archive-item { display: flex; align-items: baseline; margin-bottom: 0.8rem; }
-        .archive-date { color: var(--color-text-secondary); font-size: 0.9rem; width: 60px; flex-shrink: 0; }
-        .archive-link { color: var(--color-text); text-decoration: none; font-weight: 500; }
-        .archive-link:hover { text-decoration: underline; }
-
-        /* --- Password Prompt --- */
-        .password-prompt-container {
-            border: 1px solid var(--color-border); border-radius: var(--border-radius);
-            padding: 2rem; text-align: center; margin: 2rem auto; max-width: 400px;
-        }
-        .password-prompt-container h3 { margin-top: 0; margin-bottom: 1rem; }
-        .password-prompt-container p { color: var(--color-text-secondary); margin-bottom: 1.5rem; }
-        .password-prompt-container input[type="password"] {
-            width: 100%; padding: 0.8rem; border: 1px solid var(--color-border);
-            border-radius: var(--border-radius); margin-bottom: 1rem; font-size: 1rem;
-        }
-        .password-prompt-container input[type="password"]:focus {
-            outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-        }
-        .password-prompt-container button {
-            width: 100%; padding: 0.8rem; background-color: var(--color-accent);
-            color: var(--color-bg); border: none; border-radius: var(--border-radius);
-            font-size: 1rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s;
-        }
-        .password-prompt-container button:hover { background-color: var(--color-accent-hover); }
-        .decrypt-message { margin-top: 1rem; color: #d9534f; min-height: 1.2em; }
-
-        /* --- Site Footer --- */
-        .site-footer {
+        
+        /* 縮小側邊欄時置中storage info */
+        .sidebar.collapsed .storage-info {
             text-align: center;
-            margin-top: 4rem;
-            padding: 2rem 0;
-            border-top: 1px solid var(--color-border);
-            color: var(--color-text-secondary);
-            font-size: 0.9rem;
+            padding: 8px;
         }
+
+        .sidebar.collapsed .upload-area {
+            padding: 8px 0 !important; /* 只保留上下內邊距 */
+            margin: 0 !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* 收縮時的圖片網格 - 小縮圖模式 */
+        .sidebar.collapsed .images-grid {
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 8px;
+            padding: 10px;
+            /* 更小的滾動條樣式 */
+            scrollbar-width: thin;
+            scrollbar-color: #444 transparent;
+            overflow-x: hidden; /* 完全隱藏水平滾動 */
+        }
+        
+        /* 自定義縮小側邊欄的滾動條樣式 */
+        .sidebar.collapsed .images-grid::-webkit-scrollbar {
+            width: 4px; /* 更細的滾動條 */
+        }
+        
+        .sidebar.collapsed .images-grid::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .sidebar.collapsed .images-grid::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 2px;
+        }
+        
+        .sidebar.collapsed .images-grid::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .sidebar.collapsed .image-card {
+            padding: 4px;
+            border-radius: 6px;
+        }
+
+        .sidebar.collapsed .image-thumbnail {
+            height: 50px;
+            margin-bottom: 0;
+        }
+
+        .sidebar.collapsed .image-info {
+            display: none;
+        }
+
+        .notes-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .note-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #1a1a1a;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
+        }
+
+        .note-item:hover {
+            background: #1a1a1a;
+        }
+
+        .note-item.active {
+            background: #262626;
+            border-left: 3px solid #e91e63;
+        }
+
+        .note-preview {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* 減少圖示與內容間的間距 */
+        }
+
+        .note-thumbnail {
+            width: 45px; /* 增大圖示 */
+            height: 45px; /* 增大圖示 */
+            background: #262626;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8e8e8e;
+            flex-shrink: 0;
+            font-size: 14px;
+            margin-right: 10px; /* 減少與內容的間距 */
+        }
+
+        .note-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .note-title {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .note-meta {
+            color: #8e8e8e;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .note-item:hover .note-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #8e8e8e;
+            padding: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .action-btn:hover {
+            color: #fff;
+        }
+
+        .action-btn.delete:hover {
+            color: #ed4956;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            position: relative;
+            z-index: 1;
+        }
+
+        .canvas-header {
+            background: #fff;
+            padding: 4px 16px;
+            border-bottom: 1px solid #dbdbdb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 40px;
+            min-height: 40px;
+        }
+
+        .canvas-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #262626;
+            margin-left: 12px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .canvas-title:hover {
+            color: #0095f6;
+        }
+
+        .canvas-title.editing {
+            background: #f8f9fa;
+            border: 1px solid #dbdbdb;
+            border-radius: 4px;
+            padding: 2px 8px;
+            outline: none;
+        }
+
+        .canvas-tools {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 1px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+            height: 34px;
+        }
+
+        .save-status {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: #f0f8f0;
+            border: 1px solid #e0f0e0;
+            transition: opacity 0.3s ease;
+            margin-right: 6px;
+            height: 32px;
+            font-size: 11px;
+        }
+
+        .tool-btn {
+            background: transparent;
+            border: none;
+            color: #262626;
+            padding: 6px 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            position: relative;
+            height: 32px;
+            line-height: 1;
+        }
+
+        .tool-btn:hover {
+            background: #e9ecef;
+            color: #000;
+        }
+
+        .tool-btn:active {
+            background: #dee2e6;
+            transform: scale(0.98);
+        }
+
+        .tool-btn + .tool-btn {
+            margin-left: 0;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .excalidraw-wrapper {
+            width: 100%;
+            height: 100%;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #8e8e8e;
+            text-align: center;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #262626;
+        }
+
+        .storage-info {
+            padding: 15px 20px;
+            background: #1a1a1a;
+            border-top: 1px solid #262626;
+            text-align: center;
+        }
+
+        .storage-text {
+            color: #8e8e8e;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .storage-bar {
+            height: 4px;
+            background: #262626;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .storage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #FFC107, #FF5722);
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                z-index: 1000;
+                height: 100%;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                width: 100%;
+            }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #262626;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dbdbdb;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            color: white;
+        }
+
+        .modal-btn.secondary {
+            background: #fff;
+            color: #262626;
+            border: 1px solid #dbdbdb;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        /* 簡化的預覽提示框 */
+        .note-preview-tooltip {
+            position: fixed;
+            left: 90px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: white;
+            z-index: 2000;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            pointer-events: none;
+            transform: translateX(10px);
+        }
+
+        .note-preview-tooltip::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 6px 6px 6px 0;
+            border-color: transparent rgba(0, 0, 0, 0.9) transparent transparent;
+        }
+
+        .note-preview-tooltip.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0px);
+        }
+
     </style>
-    <!-- Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.0/dist/mermaid.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
 </head>
-
 <body>
-    <div id="loadingOverlay">載入中...</div>
-
-    <main>
-        <header class="site-header">
-            <a href="#" data-page="home" class="site-title">Fi5her Blog</a>
-            <nav>
-                <ul class="site-nav">
-                    <li><a href="#" class="nav-link" data-page="home">
-                        <svg class="nav-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3L2 12h3v8h5z"/></svg>
-                        <span class="nav-text">首頁</span>
-                    </a></li>
-                    <li><a href="#" class="nav-link" data-page="archive">
-                        <svg class="nav-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h18v18H3V3m2 2v14h14V5H5m2 2h10v2H7V7m0 4h10v2H7v-2m0 4h7v2H7v-2z"/></svg>
-                        <span class="nav-text">歸檔</span>
-                    </a></li>
-                    <li><a href="#" class="nav-link" data-page="about">
-                        <svg class="nav-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3s-3-1.34-3-3s1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22c.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08c-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                        <span class="nav-text">關於</span>
-                    </a></li>
-                </ul>
-            </nav>
-        </header>
-
-        <!-- Home Page -->
-        <div id="home-page" class="page-section">
-            <div class="controls-container">
-                <div class="control-group">
-                    <label for="sortSelect">排序:</label>
-                    <select id="sortSelect">
-                        <option value="newest">最新</option>
-                        <option value="oldest">最舊</option>
-                    </select>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" onclick="toggleSidebarCollapse()" title="Toggle Sidebar">
+                <i class="fas fa-chevron-left" id="toggleIcon"></i>
+            </button>
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-draw-polygon"></i>
+                    <span>A3Note</span>
                 </div>
-                <div class="control-group">
-                    <input type="text" id="keywordSearchInput" placeholder="搜尋關鍵字...">
-                    <button id="keywordSearchButton" type="button">搜尋</button>
-                    <button id="keywordClearButton" type="button">清除</button>
-                </div>
-                <div id="hashtagFilters" class="hashtag-filters"></div>
+                <button class="add-note-btn" onclick="showNewNoteModal()">
+                    <i class="fas fa-plus"></i>
+                    <span>New</span>
+                </button>
             </div>
-            <div class="articles-list" id="articlesList"></div>
-            <div id="paginationControls" class="pagination-controls"></div>
+
+            <div class="search-container">
+                <input type="text" class="search-box" placeholder="Search notes..." oninput="searchNotes(this.value)">
+            </div>
+            
+            <!-- 檢視模式切換 -->
+            <div class="view-toggle" style="margin: 15px 20px; display: flex; gap: 8px;">
+                <!-- 展開時的雙按鈕 -->
+                <button id="notesViewBtn" class="view-btn active" onclick="app.switchToNotesView()" title="筆記檢視">
+                    <i class="fas fa-sticky-note"></i> 
+                    <span class="btn-text">筆記</span>
+                </button>
+                <button id="imagesViewBtn" class="view-btn" onclick="app.switchToImagesView()" title="圖片檢視庫">
+                    <i class="fas fa-images"></i> 
+                    <span class="btn-text">圖片庫</span>
+                </button>
+                
+                <!-- 收縮時的單一切換按鈕 -->
+                <button id="toggleViewBtn" class="view-btn single-toggle" onclick="app.toggleView()" title="切換檢視模式">
+                    <i id="toggleViewIcon" class="fas fa-sticky-note"></i>
+                </button>
+            </div>
+
+            <div class="notes-list" id="notesList">
+                <!-- Notes will be dynamically loaded here -->
+            </div>
+            
+            <!-- 圖片檢視區域 -->
+            <div class="images-grid" id="imagesGrid">
+                <!-- Images will be dynamically loaded here -->
+            </div>
+            
+            <!-- 圖片上傳區域 -->
+            <div class="upload-area" id="uploadArea" style="display: none; padding: 20px; border-top: 1px solid #333;">
+                <div class="upload-header" style="text-align: center; margin-bottom: 15px;">
+                    <h3 style="color: #fff; margin: 0 0 10px 0;">上傳圖片到全域資料庫</h3>
+                    <p style="color: #999; font-size: 13px; margin: 0;">上傳圖片後，任何筆記中有對應 SHA1 ID 的圖片元素都會自動顯示</p>
+                </div>
+                
+                <div class="upload-controls" style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                    <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;">
+                    <button onclick="document.getElementById('imageUpload').click()" class="upload-control-btn" style="background: #007AFF; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;" title="選擇圖片">
+                        <i class="fas fa-upload"></i> 
+                        <span class="btn-text">選擇圖片</span>
+                    </button>
+                    <button onclick="app.uploadSelectedImages()" id="uploadBtn" class="upload-control-btn" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;" title="上傳到資料庫" disabled>
+                        <i class="fas fa-cloud-upload-alt"></i> 
+                        <span class="btn-text">上傳到資料庫</span>
+                    </button>
+                    <span id="uploadStatus" class="upload-status" style="color: #999; font-size: 13px;"></span>
+                </div>
+                
+                <div id="previewArea" style="margin-top: 15px; display: none;">
+                    <div class="preview-title" style="color: #fff; font-size: 14px; margin-bottom: 10px;">預覽：</div>
+                    <div id="previewImages" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                </div>
+            </div>
+
+            <div class="storage-info">
+                <div class="storage-text" id="storageText">Storage: 0 MB / ~5000 MB</div>
+                <div class="storage-bar">
+                    <div class="storage-fill" id="storageFill" style="width: 0%"></div>
+                </div>
+            </div>
         </div>
 
-        <!-- Article Detail Page -->
-        <div id="article-detail-page" class="page-section"></div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="canvas-header">
+                <div class="canvas-title" id="canvasTitle" onclick="editNoteName()" title="Click to edit note name">Select a note to start drawing</div>
+                <div class="canvas-tools">
+                    <div class="save-status" id="saveStatus" style="display: none;">
+                        <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
+                        <span style="font-size: 12px; color: #4CAF50;">Saved</span>
+                    </div>
+                    <button class="tool-btn" onclick="exportNote()" title="Export">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                    <button class="tool-btn" onclick="app.debugFiles()" title="Debug Files">
+                        <i class="fas fa-bug"></i>
+                        Debug
+                    </button>
+                    <button class="tool-btn" onclick="app.cleanupOrphanedImages()" title="Clean Images">
+                        <i class="fas fa-broom"></i>
+                        Clean
+                    </button>
+                    <button class="tool-btn" onclick="app.testFileId()" title="Test FileID">
+                        <i class="fas fa-fingerprint"></i>
+                        FileID
+                    </button>
+                    <button class="tool-btn" onclick="app.migrateOldFiles()" title="Migrate Old Files">
+                        <i class="fas fa-database"></i>
+                        Migrate
+                    </button>
+                    <button class="tool-btn" onclick="shareNote()" title="Share">
+                        <i class="fas fa-share"></i>
+                        Share
+                    </button>
+                    <button class="tool-btn" onclick="fullscreenCanvas()" title="Fullscreen">
+                        <i class="fas fa-expand"></i>
+                        Fullscreen
+                    </button>
+                    <button class="tool-btn" onclick="debugCurrentNote()" title="Debug">
+                        <i class="fas fa-bug"></i>
+                        Debug
+                    </button>
+                </div>
+            </div>
 
-        <!-- Archive Page -->
-        <div id="archive-page" class="page-section">
-            <div class="page-header"><h1>文章歸檔</h1></div>
-            <div id="archive-content"></div>
+            <div class="canvas-container" id="canvasContainer">
+                <div class="empty-state">
+                    <i class="fas fa-draw-polygon"></i>
+                    <h3>Start Creating</h3>
+                    <p>Create a new note to begin drawing your visual ideas</p>
+                </div>
+            </div>
         </div>
-        
-        <!-- About Page -->
-        <div id="about-page" class="page-section">
-            <div class="page-header"><h1>關於我</h1></div>
-            <div class="markdown-content" id="about-content"></div>
+    </div>
+
+    <!-- New Note Modal -->
+    <div class="modal" id="newNoteModal">
+        <div class="modal-content">
+            <div class="modal-title">Create New Note</div>
+            <input type="text" class="modal-input" id="noteNameInput" placeholder="Enter note name..." maxlength="50">
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="hideNewNoteModal()">Cancel</button>
+                <button class="modal-btn primary" onclick="createNewNote()">Create</button>
+            </div>
         </div>
-        
-        <footer class="site-footer">
-            <p>© <span id="copyright-year"></span> Fi5herL. All rights reserved.</p>
-        </footer>
-    </main>
+    </div>
+
+    <!-- Include React and Excalidraw -->
+    <script src="lib/excalidraw/react.production.min.js"></script>
+    <script src="lib/excalidraw/react-dom.production.min.js"></script>
+    <script src="lib/excalidraw/excalidraw.production.min.js"></script>
 
     <script>
-    // --- 【重要】GitHub 資訊設定 ---
-    const GITHUB_USERNAME = "Fi5herL";
-    const GITHUB_REPO = "fi5herl.github.io";
-    // ------------------------------------
-
-    const ARTICLES_PATH = "articles";
-    const ABOUT_PAGE_FILENAME = "about.md";
-
-    // --- Global State ---
-    let allArticles = [];
-    let filteredArticles = [];
-    let aboutContent = "### 關於我\n\n請在你的 `articles` 資料夾中建立一個 `about.md` 檔案來介紹自己。";
-    let activePageId = 'home';
-    let currentPage = 1;
-    const articlesPerPage = 10;
-    
-    // --- DOM Elements ---
-    const loadingOverlay = document.getElementById('loadingOverlay');
-
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('copyright-year').textContent = new Date().getFullYear();
-        if (typeof mermaid !== 'undefined') {
-            mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
-        }
-        loadData();
-        setupEventListeners();
-    });
-
-    // --- 【最終版】資料讀取方法 ---
-    async function loadData() {
-        loadingOverlay.classList.remove('hidden');
-        try {
-            // 1. 使用 API 獲取資料夾內容
-            const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${ARTICLES_PATH}`;
-            const apiResponse = await fetch(apiUrl);
-            if (!apiResponse.ok) {
-                throw new Error(`無法從 GitHub API 讀取文章列表。請檢查您的 GITHUB_USERNAME ('${GITHUB_USERNAME}') 和 GITHUB_REPO ('${GITHUB_REPO}') 設定是否正確，以及 '${ARTICLES_PATH}' 資料夾是否存在。`);
-            }
-            const contents = await apiResponse.json();
-            if (!Array.isArray(contents)) {
-                throw new Error('GitHub API 回應格式錯誤，無法找到檔案列表。');
+        // IndexedDB Database Management
+        class NotesDB {
+            constructor() {
+                this.dbName = 'A3NoteDB';
+                this.version = 2; // Updated version for files support
+                this.db = null;
             }
 
-            // 2. 篩選出 .md 檔案，並取得它們的檔名和官方下載 URL
-            const mdFiles = contents
-                .filter(item => item.type === 'file' && item.name.endsWith('.md'))
-                .map(file => ({ name: file.name, url: file.download_url }));
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.version);
+                    
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve();
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        const oldVersion = event.oldVersion;
+                        
+                        // Create notes store if it doesn't exist (version 1)
+                        if (oldVersion < 1) {
+                            const notesStore = db.createObjectStore('notes', { keyPath: 'id' });
+                            notesStore.createIndex('title', 'title', { unique: false });
+                            notesStore.createIndex('createdAt', 'createdAt', { unique: false });
+                            notesStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+                            
+                            // Canvas data object store (separate for large data)
+                            const canvasStore = db.createObjectStore('canvasData', { keyPath: 'noteId' });
+                        }
+                        
+                        // Add global files store for version 2
+                        if (oldVersion < 2) {
+                            const filesStore = db.createObjectStore('files', { keyPath: 'id' });
+                            // 移除 noteId index，改為全域檔案儲存
+                            console.log('Global files object store created for version 2');
+                        }
+                    };
+                });
+            }
 
-            // 3. 使用官方 download_url 併行下載所有文章內容
-            const fetchPromises = mdFiles.map(file => 
-                fetch(file.url) // 直接使用 API 提供的 URL
-                    .then(res => {
-                        if (!res.ok) throw new Error(`無法載入文章: ${file.name}`);
-                        return res.text();
-                    })
-                    .then(text => ({ filename: file.name, content: text }))
-            );
+            async saveNote(note) {
+                const transaction = this.db.transaction(['notes'], 'readwrite');
+                const store = transaction.objectStore('notes');
+                return store.put(note);
+            }
 
-            const fileContents = await Promise.all(fetchPromises);
-            
-            // 4. 解析文章內容 (此部分不變)
-            allArticles = [];
-            const allTags = new Set();
-            fileContents.forEach(({ filename, content }) => {
-                if (!content) return;
+            async saveCanvasData(noteId, canvasData) {
+                return new Promise(async (resolve, reject) => {
+                    try {
+                        console.log(`Saving canvas data for noteId: ${noteId}`, canvasData);
+                        
+                        // Compress canvas data
+                        const compressedData = await this.compressData(canvasData);
+                        
+                        const transaction = this.db.transaction(['canvasData'], 'readwrite');
+                        const store = transaction.objectStore('canvasData');
+                        
+                        const saveData = { 
+                            noteId, 
+                            data: compressedData, 
+                            timestamp: Date.now() 
+                        };
+                        
+                        const request = store.put(saveData);
+                        
+                        request.onsuccess = () => {
+                            console.log(`Canvas data saved to IndexedDB for note ${noteId}`);
+                            resolve();
+                        };
+                        
+                        request.onerror = () => {
+                            console.error(`Failed to save canvas data for note ${noteId}:`, request.error);
+                            reject(request.error);
+                        };
+                        
+                    } catch (error) {
+                        console.error('Error in saveCanvasData:', error);
+                        reject(error);
+                    }
+                });
+            }
+
+            async getAllNotes() {
+                const transaction = this.db.transaction(['notes'], 'readonly');
+                const store = transaction.objectStore('notes');
+                return new Promise((resolve, reject) => {
+                    const request = store.getAll();
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async getCanvasData(noteId) {
+                return new Promise(async (resolve, reject) => {
+                    try {
+                        console.log(`Loading canvas data for noteId: ${noteId}`);
+                        
+                        const transaction = this.db.transaction(['canvasData'], 'readonly');
+                        const store = transaction.objectStore('canvasData');
+                        const request = store.get(noteId);
+                        
+                        request.onsuccess = async () => {
+                            if (request.result && request.result.data) {
+                                console.log(`Found canvas data for note ${noteId}`);
+                                try {
+                                    const decompressedData = await this.decompressData(request.result.data);
+                                    console.log(`Decompressed data:`, decompressedData);
+                                    resolve(decompressedData);
+                                } catch (decompressError) {
+                                    console.error('Failed to decompress data:', decompressError);
+                                    resolve({ elements: [], appState: {} });
+                                }
+                            } else {
+                                console.log(`No canvas data found for note ${noteId}, returning empty canvas`);
+                                resolve({ elements: [], appState: {} });
+                            }
+                        };
+                        
+                        request.onerror = () => {
+                            console.error(`Failed to load canvas data for note ${noteId}:`, request.error);
+                            reject(request.error);
+                        };
+                        
+                    } catch (error) {
+                        console.error('Error in getCanvasData:', error);
+                        reject(error);
+                    }
+                });
+            }
+
+            async saveFile(fileId, fileData) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        console.log(`Checking global file store for: ${fileId}`);
+                        
+                        const transaction = this.db.transaction(['files'], 'readwrite');
+                        const store = transaction.objectStore('files');
+                        
+                        // Validate file data before saving
+                        if (!fileData) {
+                            console.warn(`No file data for ${fileId}`);
+                            resolve(); // Don't reject, just skip
+                            return;
+                        }
+                        
+                        console.log(`Validating file ${fileId}:`, {
+                            hasDataURL: !!fileData.dataURL,
+                            type: fileData.mimeType || fileData.type,
+                            keys: Object.keys(fileData)
+                        });
+                        
+                        // 🎯 核心改變：先檢查檔案是否已存在於全域檔案庫
+                        const checkRequest = store.get(fileId);
+                        
+                        checkRequest.onsuccess = () => {
+                            if (checkRequest.result) {
+                                // 檔案已存在，只更新最後使用時間
+                                console.log(`File ${fileId} already exists in global store, updating lastUsed`);
+                                const existingData = checkRequest.result;
+                                existingData.lastUsed = Date.now();
+                                
+                                const updateRequest = store.put(existingData);
+                                updateRequest.onsuccess = () => resolve();
+                                updateRequest.onerror = () => reject(updateRequest.error);
+                            } else {
+                                // 檔案不存在，新增到全域檔案庫
+                                console.log(`New file ${fileId}, adding to global file store`);
+                                const saveData = {
+                                    id: fileId,                    // SHA1 作為主鍵
+                                    data: fileData,               // 檔案資料
+                                    createdAt: Date.now(),        // 建立時間
+                                    lastUsed: Date.now(),         // 最後使用時間
+                                    size: fileData.dataURL?.length || 0  // 檔案大小
+                                };
+                                
+                                const saveRequest = store.put(saveData);
+                                saveRequest.onsuccess = () => {
+                                    console.log(`New file ${fileId} saved to global store, size: ${saveData.size} bytes`);
+                                    resolve();
+                                };
+                                saveRequest.onerror = () => reject(saveRequest.error);
+                            }
+                        };
+                        
+                        checkRequest.onerror = () => reject(checkRequest.error);
+                        
+                    } catch (error) {
+                        console.error('Error in saveFile:', error);
+                        reject(error);
+                    }
+                });
+            }
+
+            async getFile(fileId) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        console.log(`Loading file: ${fileId}`);
+                        
+                        const transaction = this.db.transaction(['files'], 'readonly');
+                        const store = transaction.objectStore('files');
+                        const request = store.get(fileId);
+                        
+                        request.onsuccess = () => {
+                            if (request.result && request.result.data) {
+                                console.log(`File ${fileId} found`);
+                                resolve(request.result.data);
+                            } else {
+                                console.log(`File ${fileId} not found`);
+                                resolve(null);
+                            }
+                        };
+                        
+                        request.onerror = () => {
+                            console.error(`Failed to load file ${fileId}:`, request.error);
+                            reject(request.error);
+                        };
+                        
+                    } catch (error) {
+                        console.error('Error in getFile:', error);
+                        reject(error);
+                    }
+                });
+            }
+
+            async getNoteFiles(noteId) {
+                return new Promise(async (resolve, reject) => {
+                    try {
+                        console.log(`Loading files for note: ${noteId}`);
+                        
+                        // 🎯 新邏輯：先取得筆記的canvas資料，找出需要的fileId
+                        const canvasData = await this.getCanvasData(noteId);
+                        const elements = canvasData?.elements || [];
+                        
+                        // 找出所有圖片元素的 fileId
+                        const requiredFileIds = elements
+                            .filter(el => el.type === 'image' && el.fileId)
+                            .map(el => el.fileId);
+                        
+                        console.log(`Note ${noteId} requires files:`, requiredFileIds);
+                        
+                        if (requiredFileIds.length === 0) {
+                            resolve({});
+                            return;
+                        }
+                        
+                        // 從全域檔案庫載入需要的檔案
+                        const transaction = this.db.transaction(['files'], 'readonly');
+                        const store = transaction.objectStore('files');
+                        const files = {};
+                        
+                        const loadPromises = requiredFileIds.map(fileId => {
+                            return new Promise((resolveFile) => {
+                                const request = store.get(fileId);
+                                request.onsuccess = () => {
+                                    if (request.result && request.result.data) {
+                                        files[fileId] = request.result.data;
+                                        console.log(`Loaded file ${fileId} from global store`);
+                                    } else {
+                                        console.warn(`File ${fileId} not found in global store`);
+                                    }
+                                    resolveFile();
+                                };
+                                request.onerror = () => {
+                                    console.error(`Error loading file ${fileId}:`, request.error);
+                                    resolveFile();
+                                };
+                            });
+                        });
+                        
+                        Promise.all(loadPromises).then(() => {
+                            console.log(`Loaded ${Object.keys(files).length}/${requiredFileIds.length} files for note ${noteId}`);
+                            resolve(files);
+                        });
+                        
+                    } catch (error) {
+                        console.error('Error in getNoteFiles:', error);
+                        reject(error);
+                    }
+                });
+            }
+
+            async deleteNote(noteId) {
+                const transaction = this.db.transaction(['notes', 'canvasData', 'files'], 'readwrite');
+                const notesStore = transaction.objectStore('notes');
+                const canvasStore = transaction.objectStore('canvasData');
+                const filesStore = transaction.objectStore('files');
                 
-                if (filename === ABOUT_PAGE_FILENAME) {
-                    aboutContent = content;
-                    return;
-                }
-                const { frontMatter, body } = parseFrontMatter(content);
-                if (!frontMatter.title || !frontMatter.date) {
-                    console.warn(`文章 ${filename} 缺少 title 或 date，已略過。`);
-                    return;
-                }
-                const article = {
-                    id: filename.replace(/\.md$/, ''),
-                    ...frontMatter,
-                    content: body,
-                    date: new Date(frontMatter.date),
-                    tags: frontMatter.tags || []
+                // Delete note
+                await notesStore.delete(noteId);
+                
+                // Delete canvas data
+                await canvasStore.delete(noteId);
+                
+                // Delete all files for this note
+                const filesIndex = filesStore.index('noteId');
+                const filesRequest = filesIndex.getAllKeys(noteId);
+                filesRequest.onsuccess = () => {
+                    filesRequest.result.forEach(fileId => {
+                        filesStore.delete(fileId);
+                    });
                 };
-                allArticles.push(article);
-                (article.tags || []).forEach(tag => allTags.add(tag));
-            });
+            }
 
-            generateHashtagFilters(allTags);
-            loadStateFromURL();
-        } catch (error) {
-            console.error('資料載入失敗:', error);
-            const listEl = document.getElementById('articlesList') || document.body;
-            listEl.innerHTML = `<p style="color: red; font-weight: bold;"><b>錯誤:</b> ${error.message}</p>`;
-        } finally {
-            loadingOverlay.classList.add('hidden');
-        }
-    }
-    
-    function parseFrontMatter(content) {
-        const frontMatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
-        const match = content.match(frontMatterRegex);
-        if (!match) return { frontMatter: {}, body: content };
-        const frontMatterText = match[1];
-        const body = content.substring(match[0].length);
-        const frontMatter = {};
-        frontMatterText.split('\n').forEach(line => {
-            const parts = line.match(/^([^:]+):\s*(.*)$/);
-            if (parts) {
-                const key = parts[1].trim();
-                let value = parts[2].trim();
-                if (key === 'tags' && value.startsWith('[') && value.endsWith(']')) {
-                    value = value.substring(1, value.length - 1).split(',').map(tag => tag.trim()).filter(Boolean);
+            async getStorageUsage() {
+                if ('storage' in navigator && 'estimate' in navigator.storage) {
+                    const estimate = await navigator.storage.estimate();
+                    return {
+                        used: estimate.usage || 0,
+                        quota: estimate.quota || 5000000000 // 5GB default
+                    };
                 }
-                frontMatter[key] = value;
+                return { used: 0, quota: 5000000000 };
+            }
+
+            // Simple compression using built-in methods
+            async compressData(data) {
+                try {
+                    const jsonString = JSON.stringify(data);
+                    const compressed = new TextEncoder().encode(jsonString);
+                    console.log(`Compressed data size: ${compressed.length} bytes`);
+                    return compressed;
+                } catch (error) {
+                    console.error('Compression failed:', error);
+                    return new TextEncoder().encode(JSON.stringify({ elements: [], appState: {} }));
+                }
+            }
+
+            async decompressData(compressedData) {
+                try {
+                    const jsonString = new TextDecoder().decode(compressedData);
+                    const data = JSON.parse(jsonString);
+                    console.log(`Decompressed data with ${data.elements?.length || 0} elements`);
+                    return data;
+                } catch (error) {
+                    console.error('Decompression failed:', error);
+                    return { elements: [], appState: {} };
+                }
+            }
+        }
+
+        // App State Management
+        class NotesApp {
+            constructor() {
+                this.db = new NotesDB();
+                this.currentNote = null;
+                this.excalidrawAPI = null;
+                this.notes = [];
+                this.searchTerm = '';
+                this.renderTimeout = null;
+                this.autoSaveTimeout = null;
+                this.isInitializing = false;
+                this.lastSaveTime = 0;
+                this.fileCache = new Map(); // 檔案快取
+                this.currentView = 'notes'; // 'notes' or 'images'
+                
+            }
+
+            async init() {
+                try {
+                    console.log('Initializing NotesApp...');
+                    await this.db.init();
+                    console.log('Database initialized');
+                    
+                    await this.loadNotes();
+                    console.log('Notes loaded');
+                    
+                    this.updateStorageInfo();
+                    console.log('Storage info updated');
+                    
+                    // Don't auto-setup Excalidraw - wait for first note selection
+                    console.log('NotesApp initialization complete');
+                    
+                    // Auto-save every 30 seconds
+                    setInterval(() => this.autoSave(), 30000);
+                } catch (error) {
+                    console.error('Failed to initialize NotesApp:', error);
+                }
+            }
+
+            async loadNotes() {
+                this.notes = await this.db.getAllNotes();
+                this.notes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                this.renderNotesList();
+            }
+
+            // 計算筆記中的總字元數量
+            async getTextCharacterCount(noteId) {
+                try {
+                    const canvasData = await this.db.getCanvasData(noteId);
+                    if (!canvasData || !canvasData.elements) return 0;
+                    
+                    let totalCharacters = 0;
+                    
+                    canvasData.elements.forEach(element => {
+                        if (element.type === 'text' && element.text) {
+                            totalCharacters += element.text.length;
+                        }
+                    });
+                    
+                    return totalCharacters;
+                } catch (error) {
+                    console.warn(`Failed to get character count for note ${noteId}:`, error);
+                    return 0;
+                }
+            }
+
+            // Generate 4096-level Instagram-style gradient based on character count
+            getNoteGradient(noteId) {
+                // 將筆記ID拆成兩段來生成兩個獨立顏色
+                const midPoint = Math.floor(noteId.length / 2);
+                const firstHalf = noteId.substring(0, midPoint);
+                const secondHalf = noteId.substring(midPoint);
+                
+                // 前半段算左下角顏色
+                const hash1 = this.stringToHash(firstHalf);
+                const color1 = this.hashToColor(hash1);
+                
+                // 後半段算右上角顏色
+                const hash2 = this.stringToHash(secondHalf);
+                const color2 = this.hashToColor(hash2);
+                
+                // 徑向漸層：color1從左下角擴散，color2從右上角擴散，中間越來越亮
+                return `
+                    radial-gradient(circle at 20% 80%, ${color1} 0%, rgba(255,255,255,0.3) 70%, transparent 100%), 
+                    radial-gradient(circle at 80% 20%, ${color2} 0%, rgba(255,255,255,0.3) 70%, transparent 100%),
+                    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4) 0%, transparent 60%)
+                `;
+            }
+            
+            stringToHash(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // 轉換為32位整數
+                }
+                return Math.abs(hash);
+            }
+            
+            hashToColor(hash) {
+                // 將hash轉換為RGB顏色 (0x000000 到 0xFFFFFF)
+                const r = (hash & 0xFF0000) >> 16;
+                const g = (hash & 0x00FF00) >> 8;
+                const b = hash & 0x0000FF;
+                
+                // 確保顏色不會太暗，至少保持一定亮度
+                const minBrightness = 60;
+                const adjustedR = Math.max(r, minBrightness);
+                const adjustedG = Math.max(g, minBrightness);
+                const adjustedB = Math.max(b, minBrightness);
+                
+                return `rgb(${adjustedR}, ${adjustedG}, ${adjustedB})`;
+            }
+
+            clearExcalidrawHistory() {
+                if (!this.excalidrawAPI) {
+                    console.log('⚠️ Cannot clear history - Excalidraw API not available');
+                    return;
+                }
+                
+                try {
+                    console.log('🧹 Clearing Excalidraw history using official API...');
+                    
+                    // ✅ 使用官方API清除歷史記錄
+                    if (this.excalidrawAPI.history && typeof this.excalidrawAPI.history.clear === 'function') {
+                        this.excalidrawAPI.history.clear();
+                        console.log('✅ History cleared successfully using excalidrawAPI.history.clear()');
+                    } else {
+                        console.warn('⚠️ history.clear() method not available, trying alternative...');
+                        
+                        // 備用方法：嘗試直接更新appState
+                        const currentAppState = this.excalidrawAPI.getAppState();
+                        this.excalidrawAPI.updateScene({
+                            appState: {
+                                ...currentAppState,
+                                history: {
+                                    undoStack: [],
+                                    redoStack: []
+                                }
+                            }
+                        });
+                        console.log('✅ History cleared using updateScene fallback');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Failed to clear history:', error);
+                }
+            }
+
+            scrollToContentCenter() {
+                if (!this.excalidrawAPI) {
+                    console.log('Excalidraw API not available for scrollToContent');
+                    return;
+                }
+                
+                try {
+                    const elements = this.excalidrawAPI.getSceneElements();
+                    if (elements.length === 0) {
+                        console.log('No elements to center');
+                        return;
+                    }
+                    
+                    // 計算所有元素的邊界框
+                    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                    
+                    elements.forEach(element => {
+                        if (element.x < minX) minX = element.x;
+                        if (element.y < minY) minY = element.y;
+                        if (element.x + element.width > maxX) maxX = element.x + element.width;
+                        if (element.y + element.height > maxY) maxY = element.y + element.height;
+                    });
+                    
+                    // 計算內容中心點
+                    const contentCenterX = (minX + maxX) / 2;
+                    const contentCenterY = (minY + maxY) / 2;
+                    
+                    // 獲取畫布尺寸
+                    const canvasElement = document.querySelector('.excalidraw__canvas');
+                    if (!canvasElement) return;
+                    
+                    const canvasWidth = canvasElement.clientWidth;
+                    const canvasHeight = canvasElement.clientHeight;
+                    
+                    // 計算需要的滾動位置讓內容居中
+                    const scrollX = -(contentCenterX - canvasWidth / 2);
+                    const scrollY = -(contentCenterY - canvasHeight / 2);
+                    
+                    // 更新應用狀態來居中內容
+                    this.excalidrawAPI.updateScene({
+                        appState: {
+                            scrollX: scrollX,
+                            scrollY: scrollY,
+                            activeTool: { type: "selection" } // 確保使用hand模式
+                        }
+                    });
+                    
+                    console.log(`Content centered at: scrollX=${scrollX}, scrollY=${scrollY}`);
+                    
+                } catch (error) {
+                    console.error('Error centering content:', error);
+                }
+            }
+
+            // 緊急debug功能：檢查所有筆記內容
+            async debugCheckAllNotesContent() {
+                console.log('🚨 EMERGENCY DEBUG: Checking all notes content...');
+                
+                for (const note of this.notes) {
+                    try {
+                        const canvasData = await this.db.getCanvasData(note.id);
+                        const elementCount = canvasData?.elements?.length || 0;
+                        
+                        console.log(`📝 Note: ${note.title} (${note.id})`);
+                        console.log(`   - Elements: ${elementCount}`);
+                        console.log(`   - First element:`, canvasData?.elements?.[0]);
+                        console.log('---');
+                        
+                    } catch (error) {
+                        console.error(`❌ Failed to load note ${note.id}:`, error);
+                    }
+                }
+                
+                console.log('🚨 DEBUG COMPLETE');
+            }
+
+            // 計算ISO 8601週數的函數 (正確處理閏年)
+            getWeekNumber(date) {
+                const d = new Date(date);
+                
+                // 設定為該週的週四 (ISO 8601標準)
+                d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+                
+                // 計算年初
+                const yearStart = new Date(d.getUTCFullYear(), 0, 1);
+                
+                // 計算週數
+                const weekNumber = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                
+                // ISO 8601: 一年可能有52或53週
+                return Math.min(Math.max(weekNumber, 1), 53);
+            }
+            
+            // 獲取年份、月份和週數顯示文字
+            getDateDisplay(createdAt) {
+                const date = new Date(createdAt);
+                const year = date.getFullYear().toString().slice(-2); // 後兩位年份
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const month = monthNames[date.getMonth()]; // 月份英文縮寫
+                const week = this.getWeekNumber(date);
+                const weekStr = `W${week.toString().padStart(2, '0')}`; // W01, W02...
+                
+                return {
+                    yearMonth: `${year}${month}`, // 25Jan, 25Dec...
+                    week: weekStr
+                };
+            }
+
+            renderNotesList() {
+                const container = document.getElementById('notesList');
+                const filteredNotes = this.notes.filter(note => 
+                    note.title.toLowerCase().includes(this.searchTerm.toLowerCase())
+                );
+
+                if (filteredNotes.length === 0) {
+                    container.innerHTML = `
+                        <div style="padding: 40px 20px; text-align: center; color: #8e8e8e;">
+                            <i class="fas fa-sticky-note" style="font-size: 48px; margin-bottom: 15px; opacity: 0.3;"></i>
+                            <p>No notes found</p>
+                            <p style="font-size: 12px;">Create your first visual note!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = filteredNotes.map(note => {
+                    const characterCount = note.characterCount || 0;
+                    const iconGradient = this.getNoteGradient(note.id);
+                    const isCurrentNote = note.id === this.currentNote?.id;
+                    const dateDisplay = this.getDateDisplay(note.createdAt);
+                    
+                    return `
+                    <div class="note-item ${isCurrentNote ? 'active' : ''}" 
+                         onclick="app.selectNote('${note.id}')">
+                        <div class="note-preview">
+                            <div class="note-thumbnail" style="background: ${iconGradient}; color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: 'Segoe UI', sans-serif; font-weight: bold;">
+                                <div style="font-size: 14px; line-height: 1; margin-bottom: 1px; text-shadow: 0 1px 3px rgba(0,0,0,0.4);">${dateDisplay.yearMonth}</div>
+                                <div style="font-size: 12px; line-height: 1; text-shadow: 0 1px 3px rgba(0,0,0,0.4);">${dateDisplay.week}</div>
+                            </div>
+                            <div class="note-info">
+                                <div class="note-title">${this.escapeHtml(note.title)}</div>
+                                <div class="note-meta">
+                                    <span><i class="fas fa-clock"></i> ${this.formatDate(note.updatedAt)}</span>
+                                    <span><i class="fas fa-edit"></i> ${characterCount} 字元</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="note-actions">
+                            <button class="action-btn" onclick="event.stopPropagation(); app.duplicateNote('${note.id}')" title="Duplicate">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button class="action-btn delete" onclick="event.stopPropagation(); app.deleteNote('${note.id}')" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        ${isCurrentNote ? '' : `<div class="note-preview-tooltip" id="tooltip-${note.id}"></div>`}
+                    </div>
+                `;}).join('');
+            }
+
+            async createNote(title) {
+                const note = {
+                    id: this.generateId(),
+                    title: title || 'Untitled Note',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    elementCount: 0
+                };
+
+                await this.db.saveNote(note);
+                await this.db.saveCanvasData(note.id, { 
+                    elements: [], 
+                    appState: { 
+                        viewBackgroundColor: "#ffffff", 
+                        zenModeEnabled: false,
+                        gridSize: null,
+                        activeTool: {
+                            type: "selection"
+                        }
+                    } 
+                });
+                
+                this.notes.unshift(note);
+                this.renderNotesList();
+                this.selectNote(note.id);
+                this.updateStorageInfo();
+            }
+
+            async selectNote(noteId) {
+                console.log(`=== Selecting note: ${noteId} ===`);
+                
+                // Prevent selecting the same note
+                if (this.currentNote?.id === noteId) {
+                    console.log('Same note selected, just hiding sidebar');
+                    this.hideSidebar();
+                    return;
+                }
+
+                // 🔥 CRITICAL: 取消所有延時儲存，防止儲存到錯誤的筆記
+                if (this.autoSaveTimeout) {
+                    clearTimeout(this.autoSaveTimeout);
+                    this.autoSaveTimeout = null;
+                    console.log('⚠️ Cancelled pending auto-save to prevent cross-note contamination');
+                }
+                if (this.renderTimeout) {
+                    clearTimeout(this.renderTimeout);
+                    this.renderTimeout = null;
+                    console.log('⚠️ Cancelled pending render updates');
+                }
+
+                // Save current note before switching
+                if (this.currentNote && this.excalidrawAPI) {
+                    console.log('Saving current note before switching...');
+                    await this.autoSave();
+                }
+                
+                // ✅ 使用官方API清除歷史記錄
+                if (this.excalidrawAPI) {
+                    console.log('🧹 Clearing undo/redo history before note switch...');
+                    this.clearExcalidrawHistory();
+                }
+
+                const note = this.notes.find(n => n.id === noteId);
+                if (!note) {
+                    console.error('Note not found');
+                    return;
+                }
+
+                console.log(`Switching to note: ${note.title}`);
+                this.currentNote = note;
+                document.getElementById('canvasTitle').textContent = note.title;
+                
+                // Setup Excalidraw if not initialized
+                if (!document.getElementById('excalidrawWrapper')) {
+                    console.log('Setting up Excalidraw for first time...');
+                    this.setupExcalidraw();
+                    
+                    // Wait a bit for initialization
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                // Load and display canvas data (with fallback method)
+                try {
+                    console.log(`Loading canvas data for note: ${noteId}`);
+                    const canvasData = await this.db.getCanvasData(noteId);
+                    const files = await this.db.getNoteFiles(noteId);
+                    
+                    const elements = canvasData?.elements || [];
+                    const savedAppState = canvasData?.appState || {};
+                    const appState = {
+                        viewBackgroundColor: "#ffffff",
+                        zenModeEnabled: false,
+                        collaborators: new Map(),
+                        gridSize: null,
+                        activeTool: {
+                            type: "selection"
+                        },
+                        // Preserve zoom but reset scroll if it might cause offset issues
+                        zoom: savedAppState.zoom || { value: 1 },
+                        scrollX: elements.length > 0 ? (savedAppState.scrollX || 0) : 0,
+                        scrollY: elements.length > 0 ? (savedAppState.scrollY || 0) : 0,
+                        ...savedAppState
+                    };
+                    
+                    // Ensure collaborators is always a Map
+                    if (!appState.collaborators || typeof appState.collaborators.forEach !== 'function') {
+                        appState.collaborators = new Map();
+                    }
+                    
+                    // Always ensure selection tool is active (Hand tool)
+                    if (!appState.activeTool || appState.activeTool.type !== "selection") {
+                        appState.activeTool = { type: "selection" };
+                    }
+                    
+                    // Force reset scroll coordinates to prevent offset issues
+                    appState.scrollX = 0;
+                    appState.scrollY = 0;
+
+                    console.log(`Attempting to update scene with ${elements.length} elements and ${Object.keys(files).length} files`);
+                    
+                    // Try to update via API
+                    if (this.excalidrawAPI) {
+                        console.log('Using Excalidraw API to update scene');
+                        
+                        // Update scene with all data at once
+                        try {
+                            console.log('🎯 Updating Excalidraw scene with data:', {
+                                elements: elements?.length || 0,
+                                files: Object.keys(files || {}).length,
+                                fileIds: Object.keys(files || {})
+                            });
+                            
+                            // 詳細檢查每個檔案
+                            if (files && Object.keys(files).length > 0) {
+                                Object.entries(files).forEach(([fileId, fileData]) => {
+                                    console.log(`📁 File ${fileId}:`, {
+                                        hasDataURL: !!fileData?.dataURL,
+                                        dataURLStart: fileData?.dataURL?.substring(0, 50),
+                                        fileSize: fileData?.dataURL?.length,
+                                        mimeType: fileData?.mimeType
+                                    });
+                                });
+                            }
+                            
+                            // 檢查圖片元素與檔案的對應關係
+                            const imageElements = elements?.filter(el => el.type === 'image') || [];
+                            console.log(`🖼️  Found ${imageElements.length} image elements:`);
+                            imageElements.forEach(img => {
+                                const hasFile = files && files[img.fileId];
+                                console.log(`  - Image ${img.id} → File ${img.fileId}: ${hasFile ? '✅ 有檔案' : '❌ 缺少檔案'}`);
+                            });
+                            
+                            // 更新檔案快取
+                            this.fileCache.clear();
+                            Object.entries(files || {}).forEach(([fileId, fileData]) => {
+                                this.fileCache.set(fileId, fileData);
+                                console.log(`💾 Cached file: ${fileId}, size: ${fileData?.dataURL?.length || 0}`);
+                            });
+                            
+                            console.log('🚀 Calling updateScene...');
+                            this.excalidrawAPI.updateScene({
+                                elements: elements || [],
+                                appState: appState || {},
+                                files: files || {}
+                            });
+                            
+                            // 🚫 暫時停用額外歷史清除
+                            // setTimeout(() => {
+                            //     this.forceResetExcalidrawHistory();
+                            // }, 50);
+                            
+                            // 載入完成後自動居中內容並清除歷史
+                            setTimeout(() => {
+                                this.scrollToContentCenter();
+                                this.clearExcalidrawHistory();
+                                console.log('🧹 Final history cleanup after note load');
+                            }, 100);
+                            
+                            // 檢查更新後的狀態
+                            setTimeout(() => {
+                                if (this.excalidrawAPI) {
+                                    const currentFiles = this.excalidrawAPI.getFiles();
+                                    console.log('🔍 Post-update files in Excalidraw:', {
+                                        count: Object.keys(currentFiles).length,
+                                        ids: Object.keys(currentFiles)
+                                    });
+                                    
+                                    this.excalidrawAPI.refresh();
+                                    console.log('🔄 Excalidraw refreshed');
+                                }
+                            }, 200);
+                            
+                        } catch (updateError) {
+                            console.error('❌ Failed to update Excalidraw scene:', updateError);
+                        }
+                    } else {
+                        console.log('Excalidraw API not available, using fallback method');
+                        // Fallback: Store data globally and let Excalidraw pick it up
+                        window.pendingExcalidrawData = { elements, appState, files };
+                        
+                        // Try to trigger a re-render by recreating the component
+                        this.setupExcalidraw();
+                    }
+                    
+                    console.log('Scene update attempted');
+                    
+                } catch (error) {
+                    console.error('Failed to load and display canvas data:', error);
+                }
+
+                this.renderNotesList();
+                this.hideSidebar();
+                console.log(`=== Note selection complete ===`);
+            }
+
+            async ensureExcalidrawReady() {
+                console.log('Ensuring Excalidraw is ready...');
+                
+                if (this.excalidrawAPI) {
+                    console.log('Excalidraw API already available');
+                    return true;
+                }
+
+                // Prevent multiple initialization attempts
+                if (this.isInitializing) {
+                    console.log('Already initializing, waiting...');
+                    let attempts = 0;
+                    const maxAttempts = 30;
+                    
+                    while (this.isInitializing && attempts < maxAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        attempts++;
+                    }
+                    
+                    return this.excalidrawAPI !== null;
+                }
+
+                this.isInitializing = true;
+
+                try {
+                    console.log('Starting Excalidraw initialization...');
+                    
+                    // Check if container exists
+                    const container = document.getElementById('canvasContainer');
+                    if (!container) {
+                        console.error('Canvas container not found');
+                        return false;
+                    }
+
+                    // Setup Excalidraw if not exists
+                    if (!document.getElementById('excalidrawWrapper') || !this.excalidrawAPI) {
+                        const success = this.setupExcalidraw();
+                        if (!success) {
+                            console.error('Failed to setup Excalidraw');
+                            return false;
+                        }
+                    }
+
+                    // Wait for API to be ready with timeout
+                    let attempts = 0;
+                    const maxAttempts = 50; // Increase attempts
+                    
+                    console.log('Waiting for Excalidraw API...');
+                    while (!this.excalidrawAPI && attempts < maxAttempts) {
+                        await new Promise(resolve => setTimeout(resolve, 100)); // Shorter intervals
+                        attempts++;
+                        
+                        // Try to find Excalidraw instance in DOM
+                        const excalidrawElement = wrapper.querySelector('.excalidraw');
+                        if (excalidrawElement && !this.excalidrawAPI) {
+                            console.log('Excalidraw DOM found but API not set, checking again...');
+                            // Sometimes the API takes longer to be available
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                        }
+                        
+                        if (attempts % 5 === 0) {
+                            console.log(`API wait attempt ${attempts}/${maxAttempts}`);
+                        }
+                    }
+
+                    const isReady = this.excalidrawAPI !== null;
+                    console.log(`Excalidraw ready: ${isReady}`, this.excalidrawAPI);
+                    return isReady;
+                } finally {
+                    this.isInitializing = false;
+                }
+            }
+
+            async deleteNote(noteId) {
+                if (!confirm('Are you sure you want to delete this note?')) return;
+
+                await this.db.deleteNote(noteId);
+                this.notes = this.notes.filter(n => n.id !== noteId);
+                
+                if (this.currentNote?.id === noteId) {
+                    this.currentNote = null;
+                    document.getElementById('canvasTitle').textContent = 'Select a note to start drawing';
+                    this.showEmptyState();
+                }
+                
+                this.renderNotesList();
+                this.updateStorageInfo();
+            }
+
+            async duplicateNote(noteId) {
+                const originalNote = this.notes.find(n => n.id === noteId);
+                const canvasData = await this.db.getCanvasData(noteId);
+                
+                const newNote = {
+                    id: this.generateId(),
+                    title: `${originalNote.title} (Copy)`,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    elementCount: originalNote.elementCount
+                };
+
+                await this.db.saveNote(newNote);
+                await this.db.saveCanvasData(newNote.id, canvasData || { elements: [], appState: {} });
+                
+                this.notes.unshift(newNote);
+                this.renderNotesList();
+                this.updateStorageInfo();
+            }
+
+            async saveCurrentCanvas(elements, appState, files) {
+                if (!this.currentNote) {
+                    console.warn('No current note to save to');
+                    return;
+                }
+                
+                // 🔥 CRITICAL: 取得當前筆記ID的快照，防止在async操作中被改變
+                const targetNoteId = this.currentNote.id;
+                const targetNoteTitle = this.currentNote.title;
+
+
+                try {
+                    console.log(`🔄 Saving canvas for note: ${targetNoteTitle} (ID: ${targetNoteId}) with ${elements.length} elements`);
+                    console.log(`🔍 Current note when saving: ${this.currentNote?.title} (${this.currentNote?.id})`);
+                    
+                    // Clean appState for serialization (remove Map objects and problematic properties)
+                    const cleanAppState = { ...appState };
+                    if (cleanAppState.collaborators) {
+                        delete cleanAppState.collaborators;
+                    }
+                    // Remove potentially problematic scroll coordinates
+                    delete cleanAppState.offsetLeft;
+                    delete cleanAppState.offsetTop;
+                    delete cleanAppState.width;
+                    delete cleanAppState.height;
+                    
+                    // Save files if provided (到全域檔案庫，不重複儲存)
+                    if (files) {
+                        console.log(`Checking ${Object.keys(files).length} files for global storage`);
+                        for (const [fileId, fileData] of Object.entries(files)) {
+                            await this.db.saveFile(fileId, fileData);
+                        }
+                    }
+                    
+                    // Prepare canvas data
+                    const canvasData = {
+                        elements: elements || [],
+                        appState: cleanAppState || {}
+                    };
+                    
+                    // Save canvas data to IndexedDB using snapshot ID
+                    await this.db.saveCanvasData(targetNoteId, canvasData);
+                    console.log(`Canvas data saved successfully for note ${targetNoteId}`);
+                    
+                    // Calculate character count from text elements
+                    let characterCount = 0;
+                    elements.forEach(element => {
+                        if (element.type === 'text' && element.text) {
+                            characterCount += element.text.length;
+                        }
+                    });
+                    
+                    // 🔥 CRITICAL: 只有當目標筆記仍是當前筆記時才更新
+                    if (this.currentNote && this.currentNote.id === targetNoteId) {
+                        this.currentNote.elementCount = elements.length;
+                        this.currentNote.characterCount = Math.min(characterCount, 4095); // 限制在4095以內
+                        this.currentNote.updatedAt = new Date().toISOString();
+                        await this.db.saveNote(this.currentNote);
+                        console.log(`✅ Note metadata updated - Characters: ${this.currentNote.characterCount}, Elements: ${this.currentNote.elementCount}`);
+                    } else {
+                        console.warn(`⚠️ Skipped metadata update - current note changed during save operation (target: ${targetNoteId}, current: ${this.currentNote?.id})`);
+                    }
+                    
+                    // Show save status
+                    this.showSaveStatus();
+                    
+                } catch (error) {
+                    console.error('Failed to save canvas:', error);
+                } finally {
+                    // Saving complete
+                }
+            }
+
+            showSaveStatus() {
+                const saveStatus = document.getElementById('saveStatus');
+                if (saveStatus && this.currentNote) {
+                    saveStatus.style.display = 'flex';
+                    saveStatus.style.opacity = '1';
+                    
+                    // Hide after 2 seconds
+                    setTimeout(() => {
+                        saveStatus.style.opacity = '0';
+                        setTimeout(() => {
+                            saveStatus.style.display = 'none';
+                        }, 300);
+                    }, 2000);
+                }
+            }
+
+            async autoSave() {
+                if (!this.currentNote || !this.excalidrawAPI) return;
+                
+                // 🔥 CRITICAL: 取得當前筆記ID快照，防止async操作中被改變
+                const targetNoteId = this.currentNote.id;
+                const targetNoteTitle = this.currentNote.title;
+                console.log(`🔄 AutoSave started for note: ${targetNoteTitle} (${targetNoteId})`);
+
+                const elements = this.excalidrawAPI.getSceneElements();
+                const appState = this.excalidrawAPI.getAppState();
+                let files = this.excalidrawAPI.getFiles();
+                
+                // 合併快取中的檔案
+                const cachedFiles = {};
+                this.fileCache.forEach((fileData, fileId) => {
+                    cachedFiles[fileId] = fileData;
+                });
+                
+                // 優先使用快取，然後使用API返回的檔案
+                files = { ...files, ...cachedFiles };
+                
+                console.log('Auto-save files check:', {
+                    apiFiles: Object.keys(this.excalidrawAPI.getFiles()).length,
+                    cachedFiles: this.fileCache.size,
+                    finalFiles: Object.keys(files).length,
+                    fileIds: Object.keys(files)
+                });
+                
+                // 🔥 CRITICAL: 在執行saveCurrentCanvas前再次檢查目標筆記
+                if (this.currentNote && this.currentNote.id === targetNoteId) {
+                    await this.saveCurrentCanvas(elements, appState, files);
+                    this.renderNotesList();
+                    console.log(`✅ AutoSave completed for note: ${targetNoteId}`);
+                } else {
+                    console.warn(`⚠️ AutoSave cancelled - note changed during save (target: ${targetNoteId}, current: ${this.currentNote?.id})`);
+                }
+            }
+
+            setupExcalidraw() {
+                try {
+                    console.log('Setting up Excalidraw...');
+                    const container = document.getElementById('canvasContainer');
+                    
+                    if (!container) {
+                        console.error('Canvas container not found');
+                        return false;
+                    }
+                    
+                    // Don't re-initialize if already exists and working
+                    if (document.getElementById('excalidrawWrapper') && this.excalidrawAPI) {
+                        console.log('Excalidraw already initialized');
+                        return true;
+                    }
+                    
+                    // Clear container and create wrapper
+                    container.innerHTML = '<div class="excalidraw-wrapper" id="excalidrawWrapper"></div>';
+                    
+                    const wrapper = document.getElementById('excalidrawWrapper');
+                    if (!wrapper) {
+                        console.error('Failed to create excalidraw wrapper');
+                        return false;
+                    }
+                    
+                    // Reset API reference
+                    this.excalidrawAPI = null;
+                    
+                    // Check if React and Excalidraw are available
+                    if (typeof React === 'undefined' || typeof ReactDOM === 'undefined' || typeof ExcalidrawLib === 'undefined') {
+                        console.error('React or Excalidraw libraries not loaded');
+                        return false;
+                    }
+                    
+                    // Create Excalidraw component with onLoad callback
+                    const ExcalidrawComponent = React.createElement(ExcalidrawLib.Excalidraw, {
+                        ref: (api) => {
+                            console.log('Excalidraw ref callback called');
+                            if (api) {
+                                this.excalidrawAPI = api;
+                                console.log('Excalidraw API set via ref');
+                            }
+                        },
+                        excalidrawAPI: (api) => {
+                            console.log('Excalidraw excalidrawAPI callback called');
+                            if (api) {
+                                this.excalidrawAPI = api;
+                                console.log('Excalidraw API set via excalidrawAPI');
+                                
+                                // 延遲執行內容居中並清除歷史，確保元素已載入
+                                setTimeout(() => {
+                                    this.scrollToContentCenter();
+                                    this.clearExcalidrawHistory();
+                                    console.log('🧹 Initial history cleanup');
+                                }, 500);
+                            }
+                        },
+                        onChange: (elements, appState, files) => {
+                            // 監聽檔案變更
+                            const imageElements = elements.filter(el => el.type === 'image');
+                            
+                            if (imageElements.length > 0) {
+                                console.log(`📸 onChange: ${imageElements.length} image elements, ${Object.keys(files || {}).length} files available`);
+                                
+                                // 檢查每個圖片元素是否有對應的檔案
+                                imageElements.forEach(img => {
+                                    const hasFile = files && files[img.fileId];
+                                    if (!hasFile) {
+                                        console.warn(`⚠️  Image element ${img.id} missing file ${img.fileId}`);
+                                        
+                                        // 嘗試從快取中恢復
+                                        if (this.fileCache.has(img.fileId)) {
+                                            console.log(`🔄 Restoring file ${img.fileId} from cache`);
+                                            if (!files) files = {};
+                                            files[img.fileId] = this.fileCache.get(img.fileId);
+                                        }
+                                    }
+                                });
+                            }
+                            
+                            if (files && Object.keys(files).length > 0) {
+                                console.log('Files changed in Excalidraw:', Object.keys(files));
+                                // 更新檔案快取
+                                Object.entries(files).forEach(([fileId, fileData]) => {
+                                    this.fileCache.set(fileId, fileData);
+                                    console.log(`Cached file ${fileId}, dataURL: ${fileData?.dataURL?.length} bytes`);
+                                });
+                            }
+                            
+                            // Original onChange logic
+                            // Set API on first onChange if not already set
+                            if (!this.excalidrawAPI) {
+                                // Try to get API from the event
+                                const excalidrawWrapper = document.getElementById('excalidrawWrapper');
+                                if (excalidrawWrapper && excalidrawWrapper._reactInternalFiber) {
+                                    console.log('Trying to get API from DOM...');
+                                }
+                            }
+                            
+                            // Update current note's element count in real-time
+                            if (this.currentNote) {
+                                this.currentNote.elementCount = elements.length;
+                                this.currentNote.updatedAt = new Date().toISOString();
+                                
+                                // Debounce the render update to avoid performance issues
+                                clearTimeout(this.renderTimeout);
+                                this.renderTimeout = setTimeout(() => {
+                                    this.renderNotesList();
+                                }, 300);
+                                
+                                // Debounce auto-save for real-time saving (including files)
+                                clearTimeout(this.autoSaveTimeout);
+                                this.autoSaveTimeout = setTimeout(() => {
+                                    // 🔥 CRITICAL: 檢查當前筆記是否仍然存在，防止切換後誤存
+                                    if (this.currentNote) {
+                                        console.log(`⏰ Auto-saving to note: ${this.currentNote.title} (${this.currentNote.id})`);
+                                        this.saveCurrentCanvas(elements, appState, files);
+                                    } else {
+                                        console.warn('⚠️ Auto-save cancelled - no current note');
+                                    }
+                                }, 1000); // Save after 1 second of inactivity
+                            }
+                        },
+                        initialData: {
+                            elements: window.pendingExcalidrawData?.elements || [],
+                            appState: { 
+                                zenModeEnabled: false,
+                                viewBackgroundColor: "#ffffff",
+                                collaborators: new Map(),
+                                gridSize: null,
+                                activeTool: {
+                                    type: "selection"
+                                },
+                                scrollX: 0,
+                                scrollY: 0,
+                                zoom: { value: 1 },
+                                // 移除手動歷史設定，改用官方API
+                                ...window.pendingExcalidrawData?.appState,
+                                // Force override these to prevent offset issues
+                                scrollX: 0,
+                                scrollY: 0,
+                                activeTool: { type: "selection" }
+                            },
+                            files: window.pendingExcalidrawData?.files || {}
+                        }
+                    });
+
+                    ReactDOM.render(ExcalidrawComponent, wrapper);
+                    
+                    // Clean up pending data after use
+                    if (window.pendingExcalidrawData) {
+                        console.log('Used pending Excalidraw data:', window.pendingExcalidrawData);
+                        setTimeout(() => {
+                            delete window.pendingExcalidrawData;
+                        }, 1000);
+                    }
+                    
+                    // Additional check after render
+                    setTimeout(() => {
+                        console.log('Post-render API check:', this.excalidrawAPI);
+                    }, 100);
+                    
+                    console.log('Excalidraw setup completed');
+                    return true;
+                } catch (error) {
+                    console.error('Failed to setup Excalidraw:', error);
+                    return false;
+                }
+            }
+
+            showEmptyState() {
+                const container = document.getElementById('canvasContainer');
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-draw-polygon"></i>
+                        <h3>Start Creating</h3>
+                        <p>Create a new note to begin drawing your visual ideas</p>
+                    </div>
+                `;
+            }
+
+            async updateStorageInfo() {
+                const usage = await this.db.getStorageUsage();
+                const usedMB = Math.round(usage.used / 1024 / 1024);
+                const quotaMB = Math.round(usage.quota / 1024 / 1024);
+                const percentage = (usage.used / usage.quota) * 100;
+
+                document.getElementById('storageText').textContent = `Storage: ${usedMB} MB / ~${quotaMB} MB`;
+                document.getElementById('storageFill').style.width = `${Math.min(percentage, 100)}%`;
+            }
+
+            searchNotes(term) {
+                this.searchTerm = term;
+                this.renderNotesList();
+            }
+
+            // Utility functions
+            generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+
+                if (diffMins < 1) return 'now';
+                if (diffMins < 60) return `${diffMins}m`;
+                if (diffHours < 24) return `${diffHours}h`;
+                if (diffDays < 7) return `${diffDays}d`;
+                return date.toLocaleDateString();
+            }
+
+
+
+            hideSidebar() {
+                // Only hide on mobile
+                if (window.innerWidth <= 768) {
+                    document.getElementById('sidebar').classList.remove('open');
+                }
+            }
+
+            async debugFiles() {
+                if (!this.currentNote) {
+                    alert('No note selected');
+                    return;
+                }
+                
+                console.log('=== DEBUG FILES ===');
+                console.log('Current note:', this.currentNote);
+                
+                // Check current scene files
+                if (this.excalidrawAPI) {
+                    const currentFiles = this.excalidrawAPI.getFiles();
+                    console.log('Current Excalidraw files:', currentFiles);
+                }
+                
+                // Check database files
+                try {
+                    const dbFiles = await this.db.getNoteFiles(this.currentNote.id);
+                    console.log('Database files:', dbFiles);
+                    
+                    // Check if files match
+                    alert(`Debug Info:
+Current Note: ${this.currentNote.title}
+Database Files: ${Object.keys(dbFiles).length}
+Check console for detailed info`);
+                } catch (error) {
+                    console.error('Error loading files:', error);
+                    alert('Error loading files: ' + error.message);
+                }
+            }
+
+            async cleanupOrphanedImages() {
+                if (!this.currentNote || !this.excalidrawAPI) {
+                    alert('No note selected or Excalidraw not ready');
+                    return;
+                }
+                
+                try {
+                    console.log('=== CLEANING ORPHANED IMAGES ===');
+                    
+                    const elements = this.excalidrawAPI.getSceneElements();
+                    const files = this.excalidrawAPI.getFiles();
+                    const dbFiles = await this.db.getNoteFiles(this.currentNote.id);
+                    
+                    // Find image elements without valid files
+                    const imageElements = elements.filter(el => el.type === 'image');
+                    const orphanedImages = imageElements.filter(img => {
+                        const hasValidFile = img.fileId && (files[img.fileId] || dbFiles[img.fileId]);
+                        return !hasValidFile;
+                    });
+                    
+                    console.log(`Found ${orphanedImages.length} orphaned images out of ${imageElements.length} total images`);
+                    
+                    if (orphanedImages.length === 0) {
+                        alert('No orphaned images found!');
+                        return;
+                    }
+                    
+                    // Confirm removal
+                    const confirmed = confirm(`Found ${orphanedImages.length} broken image(s). Remove them?`);
+                    if (!confirmed) return;
+                    
+                    // Remove orphaned images
+                    const cleanElements = elements.filter(el => {
+                        if (el.type === 'image') {
+                            const hasValidFile = el.fileId && (files[el.fileId] || dbFiles[el.fileId]);
+                            return hasValidFile;
+                        }
+                        return true;
+                    });
+                    
+                    // Update scene without orphaned images
+                    this.excalidrawAPI.updateScene({
+                        elements: cleanElements
+                    });
+                    
+                    // Save the cleaned scene
+                    await this.autoSave();
+                    
+                    alert(`Removed ${orphanedImages.length} broken image(s). Scene cleaned!`);
+                    console.log('Cleanup completed');
+                    
+                } catch (error) {
+                    console.error('Error during cleanup:', error);
+                    alert('Error during cleanup: ' + error.message);
+                }
+            }
+
+            async testFileId() {
+                console.log('=== TESTING FILE ID GENERATION ===');
+                
+                // 測試目前的 fileId 格式
+                if (this.excalidrawAPI) {
+                    const files = this.excalidrawAPI.getFiles();
+                    const elements = this.excalidrawAPI.getSceneElements();
+                    
+                    console.log('Current files in scene:', Object.keys(files));
+                    
+                    const imageElements = elements.filter(el => el.type === 'image');
+                    imageElements.forEach(img => {
+                        console.log(`Image element: ${img.id}, fileId: ${img.fileId}, fileId length: ${img.fileId?.length}`);
+                        
+                        // 分析 fileId 格式
+                        if (img.fileId) {
+                            const isHex = /^[0-9a-f]+$/i.test(img.fileId);
+                            const isNanoid = /^[A-Za-z0-9_-]+$/.test(img.fileId);
+                            
+                            console.log(`FileId ${img.fileId} analysis:`, {
+                                length: img.fileId.length,
+                                isHexOnly: isHex,
+                                isNanoidFormat: isNanoid,
+                                possibleType: img.fileId.length === 40 && isHex ? 'SHA-1' : 
+                                            img.fileId.length === 21 && isNanoid ? 'nanoid' : 'unknown'
+                            });
+                        }
+                    });
+                }
+                
+                // 模擬生成一些 ID 來測試
+                console.log('Generating test IDs:');
+                
+                // 模擬 nanoid (如果有的話)
+                function generateRandomId(length = 21) {
+                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-';
+                    let result = '';
+                    for (let i = 0; i < length; i++) {
+                        result += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    return result;
+                }
+                
+                // 模擬基於時間的 ID
+                function generateTimeBasedId() {
+                    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+                }
+                
+                console.log('Random ID (nanoid-like):', generateRandomId());
+                console.log('Time-based ID:', generateTimeBasedId());
+                
+                alert('FileID analysis logged to console. Check developer tools.');
+            }
+
+            // 🖼️ 圖片檢視庫功能
+            switchToNotesView() {
+                this.currentView = 'notes';
+                document.getElementById('notesList').style.display = 'block';
+                document.getElementById('imagesGrid').style.display = 'none';
+                document.getElementById('uploadArea').style.display = 'none';
+                document.getElementById('notesViewBtn').classList.add('active');
+                document.getElementById('imagesViewBtn').classList.remove('active');
+                document.getElementById('toggleViewBtn').classList.remove('active');
+                
+                // 更新切換按鈕圖標
+                document.getElementById('toggleViewIcon').className = 'fas fa-sticky-note';
+                document.getElementById('toggleViewBtn').title = '筆記檢視 - 點擊切換到圖片庫';
+            }
+
+            switchToImagesView() {
+                this.currentView = 'images';
+                document.getElementById('notesList').style.display = 'none';
+                document.getElementById('imagesGrid').style.display = 'grid';
+                document.getElementById('uploadArea').style.display = 'block';
+                document.getElementById('notesViewBtn').classList.remove('active');
+                document.getElementById('imagesViewBtn').classList.add('active');
+                document.getElementById('toggleViewBtn').classList.add('active');
+                
+                // 更新切換按鈕圖標
+                document.getElementById('toggleViewIcon').className = 'fas fa-images';
+                document.getElementById('toggleViewBtn').title = '圖片檢視庫 - 點擊切換到筆記';
+                
+                this.renderImagesGrid();
+                this.setupImageUpload();
+            }
+
+            // 收縮模式下的切換功能
+            toggleView() {
+                if (this.currentView === 'notes') {
+                    this.switchToImagesView();
+                } else {
+                    this.switchToNotesView();
+                }
+            }
+
+            async renderImagesGrid() {
+                try {
+                    console.log('=== RENDERING IMAGES GRID ===');
+                    
+                    // 載入全域檔案庫中的所有圖片
+                    const allFiles = await this.getAllFilesFromGlobalStore();
+                    console.log(`Found ${allFiles.length} files in global store`);
+                    
+                    // 調試：檢查檔案格式
+                    if (allFiles.length > 0) {
+                        console.log('Sample file structure:', {
+                            id: allFiles[0].id,
+                            hasData: !!allFiles[0].data,
+                            hasDataURL: !!allFiles[0].data?.dataURL,
+                            size: allFiles[0].size,
+                            createdAt: allFiles[0].createdAt,
+                            dataURLLength: allFiles[0].data?.dataURL?.length
+                        });
+                    }
+                    
+                    // 分析每張圖片的引用情況
+                    const imageAnalysis = await this.analyzeImageReferences(allFiles);
+                    console.log('Image analysis completed:', imageAnalysis);
+                    
+                    // 渲染圖片網格
+                    const imagesGrid = document.getElementById('imagesGrid');
+                    if (allFiles.length === 0) {
+                        imagesGrid.innerHTML = `
+                            <div style="grid-column: 1 / -1; text-align: center; color: #999; padding: 40px;">
+                                <i class="fas fa-images" style="font-size: 48px; margin-bottom: 16px;"></i>
+                                <p>圖片檢視庫是空的</p>
+                                <p style="font-size: 14px;">在筆記中添加圖片後，這裡就會顯示所有圖片</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    const imagesHtml = allFiles.map(file => {
+                        const analysis = imageAnalysis[file.id] || { referencedBy: [], isOrphaned: true };
+                        const thumbnail = this.createImageThumbnail(file.data.dataURL);
+                        
+                        return `
+                            <div class="image-card" title="${file.id}${analysis.referencedBy.length > 0 ? ' - 使用於: ' + analysis.referencedBy.join(', ') : ' - 未使用'}">
+                                <div class="image-thumbnail">
+                                    <img src="${file.data.dataURL}" alt="Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;">
+                                </div>
+                                <div class="image-info">
+                                    <div class="image-id" title="${file.id}">${file.id.substring(0, 8)}...</div>
+                                    <div>大小: ${this.formatFileSize(file.size || file.data?.dataURL?.length || 0)}</div>
+                                    <div>建立: ${file.createdAt ? new Date(file.createdAt).toLocaleDateString() : '未知'}</div>
+                                    <div class="image-refs">
+                                        ${analysis.referencedBy.length > 0 ? 
+                                            analysis.referencedBy.map(noteTitle => 
+                                                `<span class="ref-tag">${noteTitle}</span>`
+                                            ).join('') : 
+                                            '<span style="color: #dc3545;">未被引用</span>'
+                                        }
+                                    </div>
+                                    ${analysis.isOrphaned ? 
+                                        `<button class="delete-btn" onclick="app.deleteOrphanedImage('${file.id}')" title="刪除未使用的圖片">
+                                            <i class="fas fa-trash"></i> 刪除
+                                        </button>` : ''
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    imagesGrid.innerHTML = imagesHtml;
+                    
+                } catch (error) {
+                    console.error('Error rendering images grid:', error);
+                    document.getElementById('imagesGrid').innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; color: #dc3545; padding: 40px;">
+                            載入圖片時發生錯誤：${error.message}
+                        </div>
+                    `;
+                }
+            }
+
+            async getAllFilesFromGlobalStore() {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.db.transaction(['files'], 'readonly');
+                    const store = transaction.objectStore('files');
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => {
+                        resolve(request.result || []);
+                    };
+                    
+                    request.onerror = () => {
+                        reject(request.error);
+                    };
+                });
+            }
+
+            async analyzeImageReferences(allFiles) {
+                const analysis = {};
+                
+                // 初始化所有檔案為孤立狀態
+                allFiles.forEach(file => {
+                    analysis[file.id] = {
+                        referencedBy: [],
+                        isOrphaned: true
+                    };
+                });
+                
+                // 遍歷所有筆記，找出圖片引用
+                for (const note of this.notes) {
+                    try {
+                        const canvasData = await this.db.getCanvasData(note.id);
+                        const elements = canvasData?.elements || [];
+                        
+                        elements.forEach(element => {
+                            if (element.type === 'image' && element.fileId && analysis[element.fileId]) {
+                                // 避免重複添加同一個筆記
+                                if (!analysis[element.fileId].referencedBy.includes(note.title)) {
+                                    analysis[element.fileId].referencedBy.push(note.title);
+                                }
+                                analysis[element.fileId].isOrphaned = false;
+                            }
+                        });
+                    } catch (error) {
+                        console.warn(`Failed to analyze note ${note.id}:`, error);
+                    }
+                }
+                
+                return analysis;
+            }
+
+            createImageThumbnail(dataURL) {
+                // 簡單的縮圖生成（實際應用中可能需要更複雜的處理）
+                return dataURL;
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+            }
+
+            async deleteOrphanedImage(fileId) {
+                try {
+                    const confirmed = confirm(`確定要刪除這張未使用的圖片嗎？\n圖片ID: ${fileId.substring(0, 16)}...`);
+                    if (!confirmed) return;
+                    
+                    console.log(`Deleting orphaned image: ${fileId}`);
+                    
+                    const transaction = this.db.db.transaction(['files'], 'readwrite');
+                    const store = transaction.objectStore('files');
+                    const request = store.delete(fileId);
+                    
+                    request.onsuccess = () => {
+                        console.log(`Successfully deleted image: ${fileId}`);
+                        // 重新渲染圖片網格
+                        this.renderImagesGrid();
+                        alert('圖片已刪除');
+                    };
+                    
+                    request.onerror = () => {
+                        console.error(`Failed to delete image: ${fileId}`, request.error);
+                        alert('刪除圖片時發生錯誤');
+                    };
+                    
+                } catch (error) {
+                    console.error('Error deleting orphaned image:', error);
+                    alert('刪除圖片時發生錯誤：' + error.message);
+                }
+            }
+
+            async migrateOldFiles() {
+                try {
+                    console.log('=== MIGRATING OLD FILES TO GLOBAL STORE ===');
+                    
+                    // 掃描資料庫中所有舊格式的檔案
+                    const transaction = this.db.db.transaction(['files'], 'readwrite');
+                    const store = transaction.objectStore('files');
+                    const getAllRequest = store.getAll();
+                    
+                    getAllRequest.onsuccess = async () => {
+                        const allRecords = getAllRequest.result;
+                        console.log(`Found ${allRecords.length} existing file records`);
+                        
+                        // 檢查舊格式檔案 (有 noteId 屬性的)
+                        const oldFormatFiles = allRecords.filter(record => record.noteId);
+                        const newFormatFiles = allRecords.filter(record => !record.noteId);
+                        
+                        console.log(`Old format files: ${oldFormatFiles.length}, New format files: ${newFormatFiles.length}`);
+                        
+                        if (oldFormatFiles.length === 0) {
+                            alert('沒有發現需要遷移的舊檔案');
+                            return;
+                        }
+                        
+                        let migratedCount = 0;
+                        let errorCount = 0;
+                        
+                        // 遷移舊檔案到新格式
+                        for (const oldFile of oldFormatFiles) {
+                            try {
+                                console.log(`Migrating file: ${oldFile.id} from note: ${oldFile.noteId}`);
+                                
+                                // 檢查新格式中是否已存在
+                                const existingNew = newFormatFiles.find(f => f.id === oldFile.id);
+                                if (existingNew) {
+                                    console.log(`File ${oldFile.id} already exists in new format, skipping`);
+                                    continue;
+                                }
+                                
+                                // 創建新格式的檔案記錄
+                                const newFileRecord = {
+                                    id: oldFile.id,
+                                    data: oldFile.data,
+                                    createdAt: oldFile.timestamp || Date.now(),
+                                    lastUsed: Date.now(),
+                                    size: oldFile.data?.dataURL?.length || 0
+                                };
+                                
+                                // 儲存新格式檔案
+                                await new Promise((resolve, reject) => {
+                                    const putRequest = store.put(newFileRecord);
+                                    putRequest.onsuccess = () => resolve();
+                                    putRequest.onerror = () => reject(putRequest.error);
+                                });
+                                
+                                console.log(`✅ Migrated file: ${oldFile.id}`);
+                                migratedCount++;
+                                
+                            } catch (error) {
+                                console.error(`❌ Failed to migrate file ${oldFile.id}:`, error);
+                                errorCount++;
+                            }
+                        }
+                        
+                        console.log(`Migration completed: ${migratedCount} migrated, ${errorCount} errors`);
+                        alert(`檔案遷移完成！\n成功遷移：${migratedCount} 個檔案\n錯誤：${errorCount} 個檔案`);
+                        
+                        // 重新載入當前筆記
+                        if (this.currentNote) {
+                            await this.selectNote(this.currentNote.id);
+                        }
+                    };
+                    
+                    getAllRequest.onerror = () => {
+                        console.error('Failed to read existing files:', getAllRequest.error);
+                        alert('讀取現有檔案時發生錯誤');
+                    };
+                    
+                } catch (error) {
+                    console.error('Error during migration:', error);
+                    alert('遷移過程中發生錯誤：' + error.message);
+                }
+            }
+
+            // 🔄 圖片上傳功能
+            setupImageUpload() {
+                const fileInput = document.getElementById('imageUpload');
+                if (!fileInput) return;
+                
+                fileInput.onchange = (e) => {
+                    const files = Array.from(e.target.files);
+                    if (files.length > 0) {
+                        this.previewSelectedImages(files);
+                    }
+                };
+            }
+
+            async previewSelectedImages(files) {
+                const previewArea = document.getElementById('previewArea');
+                const previewImages = document.getElementById('previewImages');
+                const uploadBtn = document.getElementById('uploadBtn');
+                const uploadStatus = document.getElementById('uploadStatus');
+                
+                if (files.length === 0) {
+                    previewArea.style.display = 'none';
+                    uploadBtn.disabled = true;
+                    return;
+                }
+                
+                previewArea.style.display = 'block';
+                uploadBtn.disabled = false;
+                uploadStatus.textContent = `已選擇 ${files.length} 個檔案`;
+                
+                // 清空預覽區域
+                previewImages.innerHTML = '';
+                
+                // 儲存選擇的檔案到 app 實例
+                this.selectedFiles = files;
+                
+                // 生成預覽
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    try {
+                        const dataURL = await this.fileToDataURL(file);
+                        const fileId = await this.calculateSHA1(dataURL);
+                        
+                        const previewDiv = document.createElement('div');
+                        previewDiv.style.cssText = `
+                            width: 100px; 
+                            height: 100px; 
+                            border: 1px solid #444; 
+                            border-radius: 6px; 
+                            overflow: hidden; 
+                            position: relative;
+                            background: #222;
+                        `;
+                        
+                        previewDiv.innerHTML = `
+                            <img src="${dataURL}" style="width: 100%; height: 80px; object-fit: cover;">
+                            <div style="padding: 2px; font-size: 10px; color: #999; text-align: center; white-space: nowrap; overflow: hidden;">
+                                ${fileId.substring(0, 8)}...
+                            </div>
+                        `;
+                        
+                        previewImages.appendChild(previewDiv);
+                        
+                    } catch (error) {
+                        console.error(`Failed to process file ${file.name}:`, error);
+                    }
+                }
+            }
+
+            async fileToDataURL(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            async calculateSHA1(dataURL) {
+                // 移除 data URL 前綴，只保留 base64 資料
+                const base64Data = dataURL.split(',')[1];
+                
+                // 將 base64 轉換為 ArrayBuffer
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                // 計算 SHA-1 hash
+                const hashBuffer = await crypto.subtle.digest('SHA-1', bytes);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                
+                return hashHex;
+            }
+
+            async uploadSelectedImages() {
+                if (!this.selectedFiles || this.selectedFiles.length === 0) {
+                    alert('請先選擇要上傳的圖片');
+                    return;
+                }
+                
+                const uploadBtn = document.getElementById('uploadBtn');
+                const uploadStatus = document.getElementById('uploadStatus');
+                
+                uploadBtn.disabled = true;
+                uploadStatus.textContent = '正在上傳...';
+                
+                let successCount = 0;
+                let errorCount = 0;
+                let duplicateCount = 0;
+                
+                try {
+                    for (let i = 0; i < this.selectedFiles.length; i++) {
+                        const file = this.selectedFiles[i];
+                        
+                        try {
+                            uploadStatus.textContent = `正在處理 ${i + 1}/${this.selectedFiles.length}: ${file.name}`;
+                            
+                            // 轉換為 dataURL
+                            const dataURL = await this.fileToDataURL(file);
+                            const fileId = await this.calculateSHA1(dataURL);
+                            
+                            // 檢查是否已存在
+                            const existingFile = await this.checkFileExists(fileId);
+                            if (existingFile) {
+                                console.log(`File ${fileId} already exists, skipping`);
+                                duplicateCount++;
+                                continue;
+                            }
+                            
+                            // 準備檔案資料
+                            const fileData = {
+                                id: fileId,
+                                dataURL: dataURL,
+                                mimeType: file.type,
+                                width: 0,  // 實際應用中可能需要獲取圖片尺寸
+                                height: 0,
+                                created: Date.now(),
+                                lastRetrieved: Date.now()
+                            };
+                            
+                            // 上傳到全域資料庫
+                            await this.db.saveFile(fileId, fileData);
+                            
+                            console.log(`✅ Uploaded file: ${fileId} (${file.name})`);
+                            successCount++;
+                            
+                        } catch (error) {
+                            console.error(`❌ Failed to upload ${file.name}:`, error);
+                            errorCount++;
+                        }
+                    }
+                    
+                    // 顯示結果
+                    const message = `上傳完成！\n成功：${successCount} 個\n重複：${duplicateCount} 個\n錯誤：${errorCount} 個`;
+                    alert(message);
+                    uploadStatus.textContent = `完成 - 成功: ${successCount}, 重複: ${duplicateCount}, 錯誤: ${errorCount}`;
+                    
+                    // 清空選擇
+                    this.selectedFiles = [];
+                    document.getElementById('imageUpload').value = '';
+                    document.getElementById('previewArea').style.display = 'none';
+                    
+                    // 重新渲染圖片庫
+                    this.renderImagesGrid();
+                    
+                } catch (error) {
+                    console.error('Upload failed:', error);
+                    alert('上傳過程中發生錯誤：' + error.message);
+                } finally {
+                    uploadBtn.disabled = false;
+                }
+            }
+
+            async checkFileExists(fileId) {
+                try {
+                    const transaction = this.db.db.transaction(['files'], 'readonly');
+                    const store = transaction.objectStore('files');
+                    
+                    return new Promise((resolve, reject) => {
+                        const request = store.get(fileId);
+                        request.onsuccess = () => resolve(request.result);
+                        request.onerror = () => reject(request.error);
+                    });
+                } catch (error) {
+                    console.error('Error checking file existence:', error);
+                    return null;
+                }
+            }
+        }
+
+        // Global app instance
+        let app;
+        
+        try {
+            app = new NotesApp();
+            console.log('NotesApp instance created successfully');
+        } catch (error) {
+            console.error('Failed to create NotesApp instance:', error);
+        }
+
+        // UI Event Handlers
+        function toggleSidebarCollapse() {
+            const sidebar = document.getElementById('sidebar');
+            const icon = document.getElementById('toggleIcon');
+            
+            sidebar.classList.toggle('collapsed');
+            
+            if (sidebar.classList.contains('collapsed')) {
+                icon.className = 'fas fa-chevron-right';
+            } else {
+                icon.className = 'fas fa-chevron-left';
+            }
+        }
+
+        function showNewNoteModal() {
+            document.getElementById('newNoteModal').classList.add('show');
+            document.getElementById('noteNameInput').focus();
+        }
+
+        function hideNewNoteModal() {
+            document.getElementById('newNoteModal').classList.remove('show');
+            document.getElementById('noteNameInput').value = '';
+        }
+
+        function createNewNote() {
+            const title = document.getElementById('noteNameInput').value.trim();
+            if (title && app) {
+                app.createNote(title);
+                hideNewNoteModal();
+            }
+        }
+
+        function searchNotes(term) {
+            if (app) {
+                app.searchNotes(term);
+            }
+        }
+
+        function exportNote() {
+            if (!app || !app.currentNote || !app.excalidrawAPI) return;
+            
+            const elements = app.excalidrawAPI.getSceneElements();
+            const canvas = app.excalidrawAPI.getCanvasForExport();
+            
+            // Export as PNG
+            const link = document.createElement('a');
+            link.download = `${app.currentNote.title}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function shareNote() {
+            if (!app || !app.currentNote) return;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: app.currentNote.title,
+                    text: 'Check out my visual note!',
+                    url: window.location.href
+                });
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copied to clipboard!');
+            }
+        }
+
+        function fullscreenCanvas() {
+            const container = document.getElementById('canvasContainer');
+            if (container.requestFullscreen) {
+                container.requestFullscreen();
+            }
+        }
+
+        function editNoteName() {
+            if (!app || !app.currentNote) return;
+            
+            const titleElement = document.getElementById('canvasTitle');
+            const currentTitle = titleElement.textContent;
+            
+            // Create input element
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTitle;
+            input.className = 'canvas-title editing';
+            input.maxLength = 50;
+            
+            // Replace the title with input
+            titleElement.parentNode.replaceChild(input, titleElement);
+            input.focus();
+            input.select();
+            
+            // Save function
+            const saveTitle = async () => {
+                const newTitle = input.value.trim() || 'Untitled Note';
+                
+                // Update note title
+                app.currentNote.title = newTitle;
+                app.currentNote.updatedAt = new Date().toISOString();
+                await app.db.saveNote(app.currentNote);
+                
+                // Update display
+                const newTitleElement = document.createElement('div');
+                newTitleElement.className = 'canvas-title';
+                newTitleElement.id = 'canvasTitle';
+                newTitleElement.textContent = newTitle;
+                newTitleElement.onclick = editNoteName;
+                newTitleElement.title = 'Click to edit note name';
+                
+                input.parentNode.replaceChild(newTitleElement, input);
+                
+                // Refresh notes list
+                app.renderNotesList();
+            };
+            
+            // Cancel function
+            const cancelEdit = () => {
+                const titleElement = document.createElement('div');
+                titleElement.className = 'canvas-title';
+                titleElement.id = 'canvasTitle';
+                titleElement.textContent = currentTitle;
+                titleElement.onclick = editNoteName;
+                titleElement.title = 'Click to edit note name';
+                
+                input.parentNode.replaceChild(titleElement, input);
+            };
+            
+            // Event listeners
+            input.addEventListener('blur', saveTitle);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelEdit();
+                }
+            });
+        }
+
+        async function debugCurrentNote() {
+            if (!app || !app.currentNote) {
+                alert('No current note selected');
+                return;
+            }
+
+            try {
+                console.log('=== DEBUG INFO ===');
+                console.log('Current note:', app.currentNote);
+                
+                // Get current canvas state
+                if (app.excalidrawAPI) {
+                    const elements = app.excalidrawAPI.getSceneElements();
+                    const appState = app.excalidrawAPI.getAppState();
+                    const currentFiles = app.excalidrawAPI.getFiles();
+                    
+                    console.log('Current canvas elements:', elements);
+                    console.log('Current canvas appState:', appState);
+                    console.log('Current Excalidraw files:', currentFiles);
+                    
+                    // Check image elements specifically
+                    const imageElements = elements.filter(el => el.type === 'image');
+                    console.log(`Found ${imageElements.length} image elements:`, imageElements);
+                    
+                    // Check file references
+                    imageElements.forEach(imgEl => {
+                        if (imgEl.fileId) {
+                            const fileData = currentFiles[imgEl.fileId];
+                            console.log(`Image element ${imgEl.id} references file ${imgEl.fileId}:`, {
+                                hasFile: !!fileData,
+                                fileData: fileData
+                            });
+                        }
+                    });
+                }
+                
+                // Check what's stored in database
+                const storedData = await app.db.getCanvasData(app.currentNote.id);
+                console.log('Stored canvas data:', storedData);
+                
+                // Check stored files
+                const storedFiles = await app.db.getNoteFiles(app.currentNote.id);
+                console.log('Stored files:', storedFiles);
+                
+                // Validate stored file data
+                for (const [fileId, fileData] of Object.entries(storedFiles)) {
+                    console.log(`Stored file ${fileId}:`, {
+                        mimeType: fileData?.mimeType,
+                        hasDataURL: !!(fileData?.dataURL),
+                        dataURLLength: fileData?.dataURL?.length,
+                        isValidDataURL: fileData?.dataURL?.startsWith('data:')
+                    });
+                }
+                
+                // Manual save test
+                if (app.excalidrawAPI) {
+                    const elements = app.excalidrawAPI.getSceneElements();
+                    const appState = app.excalidrawAPI.getAppState();
+                    const files = app.excalidrawAPI.getFiles();
+                    console.log('Files to save:', files);
+                    await app.saveCurrentCanvas(elements, appState, files);
+                    console.log('Manual save completed');
+                }
+                
+                alert('Debug info logged to console. Check developer tools.');
+            } catch (error) {
+                console.error('Debug failed:', error);
+                alert('Debug failed: ' + error.message);
+            }
+        }
+        
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key) {
+                    case 'n':
+                        e.preventDefault();
+                        showNewNoteModal();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        if (app) app.autoSave();
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        document.querySelector('.search-box').focus();
+                        break;
+                }
+            }
+            
+            if (e.key === 'Escape') {
+                hideNewNoteModal();
             }
         });
-        return { frontMatter, body };
-    }
 
-    // --- Routing and Navigation ---
-    function navigateToPage(pageId, articleId = null, options = {}) {
-        activePageId = pageId;
-        document.querySelectorAll('.page-section').forEach(p => p.style.display = 'none');
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        const targetPage = document.getElementById(`${pageId}-page`);
-        const activeLinkSelector = (pageId === 'article-detail') ? 'home' : pageId;
-        const activeLink = document.querySelector(`.nav-link[data-page="${activeLinkSelector}"]`);
-        if (targetPage) targetPage.style.display = 'block';
-        if (activeLink) activeLink.classList.add('active');
-        if (pageId === 'home') { applyFiltersAndSort(); displayArticles(); }
-        else if (pageId === 'article-detail' && articleId) { displayArticleDetail(articleId); }
-        else if (pageId === 'archive') { renderArchivePage(); }
-        else if (pageId === 'about') { renderAboutPage(); }
-        if (!options.fromURL) { updateURL(pageId, articleId); }
-        window.scrollTo(0, 0);
-    }
-    function loadStateFromURL() {
-        const params = new URLSearchParams(window.location.search);
-        let page = params.get('page') || 'home';
-        let articleId = params.get('id') || null;
-        document.getElementById('sortSelect').value = params.get('sort') || 'newest';
-        document.getElementById('keywordSearchInput').value = params.get('q') || '';
-        const tags = params.get('tags') ? params.get('tags').split(',') : [];
-        document.querySelectorAll('.hashtag-btn').forEach(btn => { btn.classList.toggle('active', tags.includes(btn.dataset.hashtag)); });
-        currentPage = parseInt(params.get('p')) || 1;
-        navigateToPage(page, articleId, { fromURL: true });
-    }
-    function updateURL(pageId, articleId) {
-        const params = new URLSearchParams();
-        if (pageId) params.set('page', pageId);
-        if (pageId === 'home') {
-            params.set('sort', document.getElementById('sortSelect').value);
-            const query = document.getElementById('keywordSearchInput').value;
-            if (query) params.set('q', query);
-            const activeTags = [...document.querySelectorAll('.hashtag-btn.active')].map(b => b.dataset.hashtag);
-            if (activeTags.length) params.set('tags', activeTags.join(','));
-            if (currentPage > 1) params.set('p', currentPage);
-        } else if (pageId === 'article-detail' && articleId) {
-            params.set('id', articleId);
-        }
-        const newUrl = `${window.location.pathname}?${params.toString()}`;
-        history.pushState({ pageId, articleId }, '', newUrl);
-    }
+        // Modal click outside to close
+        document.getElementById('newNoteModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                hideNewNoteModal();
+            }
+        });
 
-    // --- Content Display ---
-    function displayArticles() {
-        const listEl = document.getElementById('articlesList');
-        const paginationEl = document.getElementById('paginationControls');
-        listEl.innerHTML = '';
-        paginationEl.innerHTML = '';
-        if (filteredArticles.length === 0) {
-            listEl.innerHTML = '<p>沒有找到符合條件的文章。</p>';
-            return;
-        }
-        const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
-        const startIndex = (currentPage - 1) * articlesPerPage;
-        const paginatedArticles = filteredArticles.slice(startIndex, startIndex + articlesPerPage);
-        paginatedArticles.forEach(article => {
-            const articleEl = document.createElement('div');
-            articleEl.className = 'article-card';
-            const preview = (article.content || "").replace(/[#*`>\-\[\]()!]/g, '').replace(/\n/g, ' ').substring(0, 150) + '...';
-            articleEl.innerHTML = `
-                <h2 class="article-title"><a href="#" data-page="article-detail" data-id="${article.id}">${escapeHtml(article.title)}</a></h2>
-                <div class="article-meta">${article.date.toLocaleDateString('zh-TW')}</div>
-                <p class="article-preview">${escapeHtml(preview)}</p>
-                <div class="article-tags">${(article.tags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}</div>`;
-            listEl.appendChild(articleEl);
+        // Enter key in modal input
+        document.getElementById('noteNameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                createNewNote();
+            }
         });
-        if (totalPages > 1) {
-            const prevBtn = document.createElement('button'); prevBtn.textContent = '上一頁'; prevBtn.disabled = currentPage === 1;
-            prevBtn.onclick = () => { currentPage--; navigateToPage('home'); };
-            const pageInfo = document.createElement('span'); pageInfo.textContent = `第 ${currentPage} / ${totalPages} 頁`;
-            const nextBtn = document.createElement('button'); nextBtn.textContent = '下一頁'; nextBtn.disabled = currentPage === totalPages;
-            nextBtn.onclick = () => { currentPage++; navigateToPage('home'); };
-            paginationEl.append(prevBtn, pageInfo, nextBtn);
-        }
-    }
-    function displayArticleDetail(articleId) {
-        const article = allArticles.find(a => a.id === articleId);
-        const container = document.getElementById('article-detail-page');
-        if (!article) {
-            container.innerHTML = '<h2>文章不存在</h2><a href="#" data-page="home" class="back-to-home">返回首頁</a>';
-            return;
-        }
-        const isEncrypted = article.tags && article.tags.includes('加密');
-        let mainContent = article.content || "", correctPassword = '', showPrompt = false;
-        if (isEncrypted) {
-            const lines = mainContent.trim().split('\n');
-            if (lines.length > 1) { correctPassword = lines.pop().trim(); mainContent = lines.join('\n'); showPrompt = true; }
-        }
-        container.innerHTML = `
-            <a href="#" data-page="home" class="back-to-home">← 返回首頁</a>
-            <div class="article-detail-header">
-                <h1>${escapeHtml(article.title)}</h1>
-                <div class="article-meta">${article.date.toLocaleDateString('zh-TW')}</div>
-                <div class="article-tags">${(article.tags || []).map(tag => `<span class="tag">#${escapeHtml(tag)}</span>`).join('')}</div>
-            </div><div class="markdown-content"></div>`;
-        const contentWrapper = container.querySelector('.markdown-content');
-        if (showPrompt && correctPassword) {
-            contentWrapper.innerHTML = generatePasswordPromptHtml(article.id);
-            setupDecryptionHandler(article.id, mainContent, correctPassword, contentWrapper);
-        } else { renderMarkdown(mainContent, contentWrapper); }
-    }
-    function renderArchivePage() {
-        const contentEl = document.getElementById('archive-content');
-        if (allArticles.length === 0) { contentEl.innerHTML = '<p>目前沒有文章。</p>'; return; }
-        const articlesByYear = {};
-        [...allArticles].sort((a,b) => b.date - a.date).forEach(article => {
-            const year = article.date.getFullYear();
-            if (!articlesByYear[year]) articlesByYear[year] = [];
-            articlesByYear[year].push(article);
-        });
-        let html = '<div class="archive-list">';
-        for (const year in articlesByYear) {
-            html += `<h2 class="archive-year">${year}</h2>`;
-            articlesByYear[year].forEach(article => {
-                const dateStr = `${(article.date.getMonth() + 1).toString().padStart(2, '0')}-${article.date.getDate().toString().padStart(2, '0')}`;
-                html += `<div class="archive-item"><span class="archive-date">${dateStr}</span><a href="#" class="archive-link" data-page="article-detail" data-id="${article.id}">${escapeHtml(article.title)}</a></div>`;
+
+        // Initialize app when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded, initializing app...');
+            
+            // Check if required libraries are loaded
+            if (typeof React === 'undefined') {
+                console.error('React not loaded');
+                return;
+            }
+            if (typeof ReactDOM === 'undefined') {
+                console.error('ReactDOM not loaded');
+                return;
+            }
+            if (typeof ExcalidrawLib === 'undefined') {
+                console.error('ExcalidrawLib not loaded');
+                return;
+            }
+            
+            if (!app) {
+                console.error('App instance not created');
+                return;
+            }
+            
+            console.log('All libraries loaded, starting app initialization...');
+            app.init().catch(error => {
+                console.error('App initialization failed:', error);
             });
-        }
-        html += '</div>'; contentEl.innerHTML = html;
-    }
-    function renderAboutPage() { renderMarkdown(aboutContent, document.getElementById('about-content')); }
+        });
 
-    // --- Filtering and Sorting ---
-    function applyFiltersAndSort() {
-        const sort = document.getElementById('sortSelect').value;
-        const query = document.getElementById('keywordSearchInput').value.toLowerCase().trim();
-        const activeTags = [...document.querySelectorAll('.hashtag-btn.active')].map(b => b.dataset.hashtag);
-        filteredArticles = allArticles.filter(article => {
-            const matchesQuery = !query || article.title.toLowerCase().includes(query) || article.content.toLowerCase().includes(query);
-            const matchesTags = activeTags.length === 0 || activeTags.every(tag => (article.tags || []).includes(tag));
-            return matchesQuery && matchesTags;
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
         });
-        filteredArticles.sort((a, b) => (sort === 'newest' ? b.date - a.date : a.date - b.date));
-    }
-    function generateHashtagFilters(tags) {
-        const container = document.getElementById('hashtagFilters'); container.innerHTML = '';
-        tags.forEach(tag => {
-            const btn = document.createElement('button'); btn.className = 'hashtag-btn'; btn.textContent = `#${tag}`; btn.dataset.hashtag = tag;
-            btn.onclick = () => { btn.classList.toggle('active'); currentPage = 1; navigateToPage('home'); };
-            container.appendChild(btn);
-        });
-    }
-
-    // --- Event Handling ---
-    function setupEventListeners() {
-        document.getElementById('sortSelect').addEventListener('change', () => { currentPage = 1; navigateToPage('home'); });
-        document.getElementById('keywordSearchButton').addEventListener('click', () => { currentPage = 1; navigateToPage('home'); });
-        document.getElementById('keywordClearButton').addEventListener('click', () => {
-            document.getElementById('keywordSearchInput').value = ''; currentPage = 1; navigateToPage('home');
-        });
-        document.getElementById('keywordSearchInput').addEventListener('keyup', e => {
-            if (e.key === 'Enter') { currentPage = 1; navigateToPage('home'); }
-        });
-        document.body.addEventListener('click', e => {
-            const link = e.target.closest('a[data-page]');
-            if (!link) return;
-            e.preventDefault();
-            const page = link.dataset.page;
-            const articleId = link.dataset.id;
-            navigateToPage(page, articleId);
-        });
-        window.addEventListener('popstate', (event) => {
-            if (event.state || window.location.search) { loadStateFromURL(); }
-            else { navigateToPage('home', null, { fromURL: true }); }
-        });
-    }
-    
-    // --- Rendering & Utility Helpers ---
-    function renderMarkdown(markdownString, targetElement) {
-        if (!targetElement) return;
-        const unescapeHtml = (safe) => { const temp = document.createElement('textarea'); temp.innerHTML = safe; return temp.value; }
-        let html = marked.parse(markdownString || '', { breaks: true, gfm: true });
-        html = html.replace(/<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g, (match, code) => `<div class="mermaid">${unescapeHtml(code)}</div>`);
-        html = html.replace(/(<pre><code( class="language-[^"]+")?>[\s\S]*?<\/code><\/pre>)/g, (match) => match.includes('class="language-mermaid"') ? match : `<div class="code-block-container">${match}<button class="copy-code-button">複製</button></div>`);
-        targetElement.innerHTML = html;
-        setTimeout(() => {
-            try {
-                if (typeof mermaid !== 'undefined') mermaid.run({ nodes: targetElement.querySelectorAll('.mermaid') });
-                if (typeof Prism !== 'undefined') Prism.highlightAllUnder(targetElement);
-                targetElement.querySelectorAll('.copy-code-button').forEach(btn => btn.addEventListener('click', handleCopyCodeClick));
-            } catch(e) { console.error("渲染後處理失敗:", e); }
-        }, 0);
-    }
-    function handleCopyCodeClick(event) {
-        const button = event.currentTarget;
-        const code = button.previousElementSibling?.querySelector('code')?.innerText;
-        if (code) {
-            navigator.clipboard.writeText(code).then(() => {
-                button.textContent = '已複製!'; button.classList.add('copied');
-                setTimeout(() => { button.textContent = '複製'; button.classList.remove('copied'); }, 2000);
-            });
-        }
-    }
-    function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
-    function generatePasswordPromptHtml(articleId) {
-        return `
-            <div class="password-prompt-container">
-                <h3>🔒 這篇文章已加密</h3><p>請輸入密碼以閱讀文章內容。</p>
-                <input type="password" id="password-input-${articleId}" placeholder="請在此輸入密碼">
-                <button id="decrypt-button-${articleId}">解鎖文章</button>
-                <p id="decrypt-message-${articleId}" class="decrypt-message"></p>
-            </div>`;
-    }
-    function setupDecryptionHandler(articleId, mainContent, correctPassword, contentWrapper) {
-        const btn = document.getElementById(`decrypt-button-${articleId}`);
-        const input = document.getElementById(`password-input-${articleId}`);
-        const msg = document.getElementById(`decrypt-message-${articleId}`);
-        const decrypt = () => {
-            if (input.value === correctPassword) { renderMarkdown(mainContent, contentWrapper); }
-            else { msg.textContent = '密碼錯誤，請再試一次。'; input.focus(); }
-        };
-        btn.onclick = decrypt;
-        input.onkeyup = e => { if (e.key === 'Enter') decrypt(); };
-    }
     </script>
 </body>
 </html>
