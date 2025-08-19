@@ -424,9 +424,23 @@
                 line-height: 1.4 !important;
             }
             
-            /* Hide unnecessary buttons on mobile, but show timer, font, search and mobile jump */
-            .toolbar button:not(#sidebar-toggle):not(#mobile-view-toggle):not(#timer-btn):not(#font-settings-btn):not(#search-toggle-btn):not(#mobile-jump-btn) {
+            /* Hide unnecessary buttons on mobile, but show timer, font, search, mobile jump, and file navigation */
+            .toolbar button:not(#sidebar-toggle):not(#mobile-view-toggle):not(#timer-btn):not(#font-settings-btn):not(#search-toggle-btn):not(#mobile-jump-btn):not(#prev-file-btn):not(#next-file-btn):not(#dual-prev-file-btn):not(#dual-next-file-btn):not(#dual-layout-toggle) {
                 display: none !important;
+            }
+            
+            /* Mobile file navigation controls - now direct buttons */
+            .single-editor-nav-controls,
+            .dual-editor-nav-controls {
+                margin: 0 2px !important;
+            }
+            
+            .single-editor-nav-controls.file-nav-btn,
+            .dual-editor-nav-controls.file-nav-btn {
+                min-width: 36px !important;
+                height: 32px !important;
+                padding: 2px 6px !important;
+                font-size: 14px !important;
             }
             
             /* Hide view mode controls on mobile */
@@ -434,15 +448,7 @@
                 display: none !important;
             }
             
-            /* Dual Editor Controls in Toolbar */
-            .dual-editor-controls-toolbar {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                border: 1px solid var(--border-color);
-                background: var(--header-bg);
-                overflow-x: auto;
-            }
+            /* Dual Editor Controls - Now Direct Buttons (no container div) */
             
             .toolbar-dual-btn {
                 background: transparent;
@@ -474,13 +480,106 @@
                 border-color: #0099ff;
             }
             
-            /* Hide single editor view controls in dual mode, show dual controls */
-            .dual-mode .single-editor-view-controls {
+            /* File Navigation Controls Styling - Now Direct Buttons */
+            
+            .file-nav-btn {
+                background: transparent;
+                color: var(--text-color);
+                border: 1px solid var(--border-color);
+                border-radius: 3px;
+                padding: 2px 6px !important;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: inline-block !important;
+                vertical-align: middle !important;
+                min-width: 24px;
+                height: 24px !important;
+                font-size: 12px;
+                margin: 0 2px !important;
+                box-sizing: border-box;
+                line-height: 20px !important;
+                text-align: center !important;
+                float: none !important;
+            }
+            
+            .file-nav-btn:hover {
+                background: var(--button-hover-bg);
+                border-color: var(--accent-color);
+                transform: translateY(-1px);
+            }
+            
+            .file-nav-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                background: transparent;
+                border-color: var(--border-color);
+                transform: none;
+            }
+            
+            .file-nav-btn:disabled:hover {
+                background: transparent;
+                border-color: var(--border-color);
+                transform: none;
+            }
+            
+            /* Ensure dual editor navigation buttons follow toolbar-dual-btn styling */
+            .toolbar-dual-btn.file-nav-btn {
+                border: none;
+                border-right: 1px solid var(--border-color);
+                border-radius: 0;
+                padding: 2px 4px;
+                min-width: auto;
+                height: auto;
+            }
+            
+            .toolbar-dual-btn.file-nav-btn:hover {
+                background: var(--button-hover-bg);
+                border-color: var(--border-color);
+                transform: none;
+            }
+            
+            .toolbar-dual-btn.file-nav-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+            
+            /* Additional specific fixes for file navigation layout */
+            .toolbar > .file-navigation-controls {
+                display: inline-flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                height: 28px !important;
+                flex-shrink: 0 !important;
+            }
+            
+            .toolbar > .file-navigation-controls > .file-nav-btn {
+                display: inline-flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                margin: 0 !important;
+                padding: 2px 6px !important;
+                height: 24px !important;
+                line-height: 1 !important;
+            }
+            
+            /* Navigation button icons */
+            .file-nav-btn i {
+                display: inline !important;
+                vertical-align: middle !important;
+                line-height: 1 !important;
+                margin: 0 !important;
+                font-style: normal !important;
+                text-align: center !important;
+            }
+            
+            /* Hide single editor view controls and navigation in dual mode, show dual controls */
+            .dual-mode .single-editor-view-controls,
+            .dual-mode .single-editor-nav-controls {
                 display: none !important;
             }
             
-            .dual-mode .dual-editor-controls-toolbar {
-                display: flex !important;
+            .dual-mode .dual-editor-nav-controls {
+                display: inline-block !important;
             }
             
             /* Hide editor and preview headers in dual mode since dual-pane-header shows files */
@@ -819,6 +918,7 @@
             font-size: 14px;
             font-weight: 500;
             margin-left: 20px;
+			word-break: break-all;
         }
         .file-item-actions {
             display: flex;
@@ -1048,15 +1148,18 @@
 
         /* 改善工具列 */
         .toolbar {
-            display: flex;
-            align-items: center;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
             padding: 4px 10px;
             background: var(--header-bg);
             border-bottom: 1px solid var(--border-color);
-            flex-wrap: nowrap;
+            flex-wrap: nowrap !important;
             overflow-x: auto;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             border: 1px solid var(--border-color);
+            min-height: 40px;
+            max-height: 40px;
         }
         .toolbar button {
             background: transparent;
@@ -3842,6 +3945,15 @@
             <div class="toolbar">
                 <!-- View Mode Controls - Always Visible -->
                 <button id="sidebar-toggle"><i class="fas fa-bars"></i> <span class="btn-text"></span></button>
+                
+                <!-- File Navigation Controls - Single Editor Mode -->
+                <!-- <button id="prev-file-btn" class="file-nav-btn single-editor-nav-controls" title="前一個文件 (Ctrl+←)"> -->
+                    <!-- <i class="fas fa-chevron-left"></i> -->
+                <!-- </button> -->
+                <!-- <button id="next-file-btn" class="file-nav-btn single-editor-nav-controls" title="下一個文件 (Ctrl+→)"> -->
+                    <!-- <i class="fas fa-chevron-right"></i> -->
+                <!-- </button> -->
+                
                 <div class="single-editor-view-controls">
                     <button id="single-split-view-btn" class="header-view-mode-btn active" title="雙顯示">
                         <i class="fas fa-columns"></i>
@@ -3854,20 +3966,26 @@
                     </button>
                 </div>
                 
-				<button id="dual-editor-btn" class="toolbar-dual-btn" title="雙編輯器模式"><i class="fas fa-clone"></i></button>
+				<!-- <button id="dual-editor-btn" class="toolbar-dual-btn" title="雙編輯器模式"><i class="fas fa-clone"></i></button> -->
+
                 <!-- Dual Editor Controls - Only visible in dual mode -->
-                <div class="dual-editor-controls-toolbar" id="dual-editor-controls-toolbar">
-                    <button id="dual-layout-toggle" class="toolbar-dual-btn" title="切換上下/左右佈局">
-                        <i class="fas fa-arrows-alt-h"></i>
-                    </button>
-                </div>
+
+                <!-- <button id="dual-prev-file-btn" class="toolbar-dual-btn file-nav-btn dual-editor-nav-controls" title="前一個文件 (Ctrl+←)"> -->
+                    <!-- <i class="fas fa-chevron-left"></i> -->
+                <!-- </button> -->
+                <!-- <button id="dual-next-file-btn" class="toolbar-dual-btn file-nav-btn dual-editor-nav-controls" title="下一個文件 (Ctrl+→)"> -->
+                    <!-- <i class="fas fa-chevron-right"></i> -->
+                <!-- </button> -->
+                <!-- <button id="dual-layout-toggle" class="toolbar-dual-btn dual-editor-nav-controls" title="切換上下/左右佈局"> -->
+                    <!-- <i class="fas fa-arrows-alt-h"></i> -->
+                <!-- </button> -->
 
 
                 <!-- View Mode Toggle Buttons moved to file header -->
                 <button id="drawing-mode-btn" class="view-mode-toolbar-btn" title="繪圖模式"><i class="fas fa-draw-polygon"></i></button>
 
                 <button id="sync-scroll-toggle" class="fold-toggle-btn" title="同步滾動" style="display: none;">
-                    <i class="fas fa-sync"></i>
+                    <i class="fas fa-equals"></i>
                 </button>
                 <button id="fold-all-btn" class="fold-toggle-btn" title="收摺所有標題">
                     <i class="fas fa-compress"></i>
@@ -4643,12 +4761,41 @@
                     }
                     
                     const workspace = await this.exportSyncFilteredWorkspace();
+                    const workspaceJson = JSON.stringify(workspace, null, 2);
+                    
+                    // 檢查文件大小限制（GitHub Gist限制）
+                    const fileSizeBytes = new Blob([workspaceJson]).size;
+                    const fileSizeMB = fileSizeBytes / (1024 * 1024);
+                    
+                    console.log(`Workspace檔案大小: ${fileSizeMB.toFixed(2)} MB (${fileSizeBytes} bytes)`);
+                    
+                    // GitHub Gist單個文件限制為1MB
+                    if (fileSizeBytes > 1024 * 1024) {
+                        throw new Error(
+                            `工作區檔案過大 (${fileSizeMB.toFixed(2)} MB)，超過GitHub Gist的1MB限制。\n\n` +
+                            `建議方案：\n` +
+                            `1. 刪除一些較大的筆記文件\n` +
+                            `2. 清理NoteTask.md中的歷史記錄\n` +
+                            `3. 使用#UNSYNC標籤排除大文件\n\n` +
+                            `檔案數量: ${workspace.files?.length || 0} 個`
+                        );
+                    }
+                    
+                    // 警告接近限制的情況
+                    if (fileSizeMB > 0.8) {
+                        showNotification(
+                            `⚠️ 工作區檔案較大 (${fileSizeMB.toFixed(2)} MB)，接近1MB限制！\n` +
+                            `建議清理大文件以避免同步失敗。`, 
+                            'warning'
+                        );
+                    }
+                    
                     const gistData = {
-                        description: `PowerNote Workspace - ${new Date().toLocaleString()}`,
+                        description: `PowerNote Workspace - ${new Date().toLocaleString()} (${fileSizeMB.toFixed(2)}MB)`,
                         public: false,
                         files: {
                             'powernote-workspace.json': {
-                                content: JSON.stringify(workspace, null, 2)
+                                content: workspaceJson
                             }
                         }
                     };
@@ -4723,7 +4870,108 @@
                         throw new Error('工作區檔案不存在');
                     }
                     
-                    const workspace = JSON.parse(workspaceFile.content);
+                    // 檢查下載的文件大小和完整性
+                    const downloadSizeBytes = new Blob([workspaceFile.content]).size;
+                    const downloadSizeMB = downloadSizeBytes / (1024 * 1024);
+                    console.log(`下載的Workspace檔案大小: ${downloadSizeMB.toFixed(2)} MB (${downloadSizeBytes} bytes)`);
+                    
+                    // 檢查文件是否可能被截斷
+                    const contentLength = workspaceFile.content.length;
+                    const lastChar = workspaceFile.content.trim().slice(-1);
+                    console.log(`文件長度: ${contentLength} 字符，最後字符: "${lastChar}"`);
+                    
+                    if (downloadSizeBytes >= 1024 * 1024 * 0.99) { // 接近1MB
+                        showNotification(
+                            `⚠️ 下載的文件接近GitHub限制 (${downloadSizeMB.toFixed(2)} MB)，\n` +
+                            `可能存在數據截斷問題！`, 
+                            'warning'
+                        );
+                    }
+                    
+                    // 嘗試解析JSON，並修復常見格式問題
+                    let workspace;
+                    try {
+                        workspace = JSON.parse(workspaceFile.content);
+                        console.log('JSON解析成功');
+                    } catch (parseError) {
+                        console.warn('JSON解析失敗，嘗試修復格式...', parseError);
+                        console.warn('錯誤位置:', parseError.message);
+                        
+                        // 嘗試修復常見的JSON格式問題
+                        let fixedContent = workspaceFile.content.trim();
+                        
+                        // 檢查是否缺少結尾括號
+                        const openBraces = (fixedContent.match(/\{/g) || []).length;
+                        const closeBraces = (fixedContent.match(/\}/g) || []).length;
+                        const openSquare = (fixedContent.match(/\[/g) || []).length;
+                        const closeSquare = (fixedContent.match(/\]/g) || []).length;
+                        
+                        console.log(`括號統計: { ${openBraces}個, } ${closeBraces}個, [ ${openSquare}個, ] ${closeSquare}個`);
+                        
+                        if (openBraces > closeBraces) {
+                            // 添加缺少的結尾括號
+                            const missingBraces = openBraces - closeBraces;
+                            fixedContent += '}'.repeat(missingBraces);
+                            console.log(`添加了 ${missingBraces} 個缺少的結尾括號`);
+                        }
+                        
+                        if (openSquare > closeSquare) {
+                            // 添加缺少的結尾方括號
+                            const missingSquare = openSquare - closeSquare;
+                            fixedContent = fixedContent.replace(/}+$/, '') + ']'.repeat(missingSquare) + '}';
+                            console.log(`添加了 ${missingSquare} 個缺少的結尾方括號`);
+                        }
+                        
+                        // 移除尾隨逗號
+                        fixedContent = fixedContent.replace(/,(\s*[}\]])/g, '$1');
+                        
+                        // 如果文件看起來被截斷，嘗試處理不完整的最後一個對象
+                        if (!lastChar || (lastChar !== '}' && lastChar !== ']')) {
+                            console.warn('文件可能被截斷，嘗試修復...');
+                            // 找到最後一個完整的對象/數組
+                            const lastCompleteIndex = Math.max(
+                                fixedContent.lastIndexOf('},'),
+                                fixedContent.lastIndexOf('}]'),
+                                fixedContent.lastIndexOf('}}')
+                            );
+                            
+                            if (lastCompleteIndex > 0) {
+                                fixedContent = fixedContent.substring(0, lastCompleteIndex + 1);
+                                if (fixedContent.includes('"files":[')) {
+                                    fixedContent += ']}'; // 關閉files數組和主對象
+                                } else {
+                                    fixedContent += '}'; // 關閉主對象
+                                }
+                                console.log('嘗試截取到最後完整的對象');
+                            }
+                        }
+                        
+                        try {
+                            workspace = JSON.parse(fixedContent);
+                            showNotification(
+                                `JSON格式已自動修復\n` +
+                                `⚠️ 原文件可能因超過GitHub限制而被截斷`, 
+                                'warning'
+                            );
+                        } catch (secondError) {
+                            console.error('JSON修復失敗:', secondError);
+                            console.error('原始內容長度:', workspaceFile.content.length);
+                            console.error('原始內容結尾:', workspaceFile.content.slice(-200));
+                            console.error('修復後內容長度:', fixedContent.length);
+                            console.error('修復後內容結尾:', fixedContent.slice(-200));
+                            
+                            throw new Error(
+                                `JSON格式錯誤無法修復: ${secondError.message}\n\n` +
+                                `可能原因：\n` +
+                                `1. 工作區檔案超過GitHub Gist 1MB限制而被截斷\n` +
+                                `2. 上傳時發生網路錯誤\n` +
+                                `3. 文件格式損壞\n\n` +
+                                `下載大小: ${downloadSizeMB.toFixed(2)} MB\n` +
+                                `建議使用較小的工作區重新同步`
+                            );
+                        }
+                    }
+                    
                     await this.importWorkspace(workspace, useMergeMode); // 使用指定的模式
                     
                     return gist;
@@ -5800,7 +6048,7 @@
                             }
                         }
                     }
-                }, 150);
+                }, 500);
             }
             
             // 處理 TODO 項目樣式的函數
@@ -6707,7 +6955,7 @@
                     singleEditorCursorTimer = setTimeout(() => {
                         applyStructuralBold(cm);
                         hideMarkdownSyntax(cm);
-                    }, 300);
+                    }, 500);
                     
                     // Mobile updates remain immediate (lightweight)
                     if (isMobileDevice()) {
@@ -9318,15 +9566,15 @@ gantt
                 const lineCount = fileContent.split('\n').length;
                 console.log(`📊 檔案 ${currentFile.name} 分析：大小 ${Math.round(fileContent.length/1024)}KB，行數 ${lineCount}`);
                 
-                if (fileContent.length > 3145728) { // 3MB以上進行大小分段載入
+                if (fileContent.length > 31457280) { // 30MB以上進行大小分段載入
                     console.log(`📄 檔案 ${currentFile.name} 過大，使用大小分段載入`);
                     handleLargeFileLoading(fileId, fileContent);
                     isLargeFile = true;
-                } else if (lineCount > 3000) { // 3000行以上進行行數分段載入
+                } else if (lineCount > 4000) { // 4000行以上進行行數分段載入
                     console.log(`📋 檔案 ${currentFile.name} 行數過多 (${lineCount}行)，使用行數分段載入`);
                     handleLargeLineLoading(fileId, fileContent, lineCount);
                     isLargeFile = true;
-                } else if (fileContent.length > 2097152) { // 2MB-3MB使用非同步載入檢測
+                } else if (fileContent.length > 20971520) { // 20MB-30MB使用非同步載入檢測
                     console.log(`⏳ 檔案 ${currentFile.name} 較大 (${Math.round(fileContent.length/1024)}KB)，使用安全載入模式`);
                     // 使用非同步載入避免阻塞UI
                     setTimeout(() => {
@@ -9385,6 +9633,7 @@ gantt
                     editor.clearHistory();
                     currentFileNameEl.textContent = currentFile.name;
                     renderFileList();
+                    updateFileNavigationButtons(); // Update navigation button states
                     generateToc(); // 刷新目錄
                     
                     // Re-highlight search results for the newly loaded file
@@ -9893,6 +10142,9 @@ gantt
                     
                     fileListEl.appendChild(item);
                 });
+                
+                // Update navigation button states when file list is rendered
+                updateFileNavigationButtons();
             }
             
             function isSystemFile(fileName) {
@@ -10350,6 +10602,105 @@ gantt
                 
                 // 儲存釘選配置到NoteConfig.md
                 await savePinnedFilesToConfig();
+            }
+            
+            // File Navigation Functions
+            function getCurrentFileIndex() {
+                const sortedFiles = getSortedFiles(); // Use the same sorting as file list
+                
+                if (isDualEditorMode) {
+                    // In dual editor mode, get the index based on active pane
+                    const currentFileInPane = dualEditorFiles[activePaneIndex];
+                    if (!currentFileInPane) return -1;
+                    return sortedFiles.findIndex(f => f.id === currentFileInPane.id);
+                } else {
+                    // In single editor mode, use the current file
+                    if (!currentFile) return -1;
+                    return sortedFiles.findIndex(f => f.id === currentFile.id);
+                }
+            }
+            
+            function navigateToPreviousFile() {
+                if (files.length <= 1) return;
+                
+                const sortedFiles = getSortedFiles(); // Use same sorting as file list
+                const currentIndex = getCurrentFileIndex();
+                if (currentIndex === -1) return;
+                
+                const prevIndex = currentIndex === 0 ? sortedFiles.length - 1 : currentIndex - 1;
+                const prevFile = sortedFiles[prevIndex];
+                
+                if (isDualEditorMode) {
+                    loadFileIntoDualPane(prevFile.id);
+                } else {
+                    loadFile(prevFile.id);
+                }
+                
+                updateFileNavigationButtons();
+            }
+            
+            function navigateToNextFile() {
+                if (files.length <= 1) return;
+                
+                const sortedFiles = getSortedFiles(); // Use same sorting as file list
+                const currentIndex = getCurrentFileIndex();
+                if (currentIndex === -1) return;
+                
+                const nextIndex = currentIndex === sortedFiles.length - 1 ? 0 : currentIndex + 1;
+                const nextFile = sortedFiles[nextIndex];
+                
+                if (isDualEditorMode) {
+                    loadFileIntoDualPane(nextFile.id);
+                } else {
+                    loadFile(nextFile.id);
+                }
+                
+                updateFileNavigationButtons();
+            }
+            
+            function updateFileNavigationButtons() {
+                const prevBtn = document.getElementById('prev-file-btn');
+                const nextBtn = document.getElementById('next-file-btn');
+                const dualPrevBtn = document.getElementById('dual-prev-file-btn');
+                const dualNextBtn = document.getElementById('dual-next-file-btn');
+                
+                const sortedFiles = getSortedFiles(); // Use same sorting as file list
+                const hasMultipleFiles = sortedFiles.length > 1;
+                const currentIndex = getCurrentFileIndex();
+                
+                // Single editor mode buttons
+                if (prevBtn && nextBtn) {
+                    prevBtn.disabled = !hasMultipleFiles;
+                    nextBtn.disabled = !hasMultipleFiles;
+                    
+                    if (hasMultipleFiles && currentIndex !== -1) {
+                        const prevIndex = currentIndex === 0 ? sortedFiles.length - 1 : currentIndex - 1;
+                        const nextIndex = currentIndex === sortedFiles.length - 1 ? 0 : currentIndex + 1;
+                        
+                        prevBtn.title = `前一個文件: ${sortedFiles[prevIndex].name}`;
+                        nextBtn.title = `下一個文件: ${sortedFiles[nextIndex].name}`;
+                    } else {
+                        prevBtn.title = '前一個文件 (Ctrl+←)';
+                        nextBtn.title = '下一個文件 (Ctrl+→)';
+                    }
+                }
+                
+                // Dual editor mode buttons
+                if (dualPrevBtn && dualNextBtn) {
+                    dualPrevBtn.disabled = !hasMultipleFiles;
+                    dualNextBtn.disabled = !hasMultipleFiles;
+                    
+                    if (hasMultipleFiles && currentIndex !== -1) {
+                        const prevIndex = currentIndex === 0 ? sortedFiles.length - 1 : currentIndex - 1;
+                        const nextIndex = currentIndex === sortedFiles.length - 1 ? 0 : currentIndex + 1;
+                        
+                        dualPrevBtn.title = `前一個文件: ${sortedFiles[prevIndex].name}`;
+                        dualNextBtn.title = `下一個文件: ${sortedFiles[nextIndex].name}`;
+                    } else {
+                        dualPrevBtn.title = '前一個文件 (Ctrl+←)';
+                        dualNextBtn.title = '下一個文件 (Ctrl+→)';
+                    }
+                }
             }
             
             async function savePinnedFilesToConfig() {
@@ -12076,7 +12427,7 @@ gantt
                 safeAddEventListener('export-md-btn', 'click', exportToMd);
                 safeAddEventListener('export-html-btn', 'click', exportToHtml);
                 safeAddEventListener('presentation-toggle-btn', 'click', togglePresentationMode);
-                safeAddEventListener('editor-open-files-btn', 'click', () => fileInput.click());
+                // editor-open-files-btn 事件監聽器已在下方統一處理，避免重複綁定
                 if (fileInput) fileInput.addEventListener('change', handleFileSelection);
                 
                 // Presentation controls
@@ -12167,6 +12518,17 @@ gantt
                 }
                 if (viewModeToggle) viewModeToggle.addEventListener('click', toggleViewMode);
                 if (mobileViewToggle) mobileViewToggle.addEventListener('click', toggleMobileView);
+                
+                // File Navigation Event Listeners
+                const prevFileBtn = document.getElementById('prev-file-btn');
+                const nextFileBtn = document.getElementById('next-file-btn');
+                const dualPrevFileBtn = document.getElementById('dual-prev-file-btn');
+                const dualNextFileBtn = document.getElementById('dual-next-file-btn');
+                
+                if (prevFileBtn) prevFileBtn.addEventListener('click', navigateToPreviousFile);
+                if (nextFileBtn) nextFileBtn.addEventListener('click', navigateToNextFile);
+                if (dualPrevFileBtn) dualPrevFileBtn.addEventListener('click', navigateToPreviousFile);
+                if (dualNextFileBtn) dualNextFileBtn.addEventListener('click', navigateToNextFile);
                 if (closeFilePanelBtn) closeFilePanelBtn.addEventListener('click', closeSidebar);
                 if (tocListEl) tocListEl.addEventListener('click', (e) => { if (e.target.tagName === 'LI') navigateToTocLine(e.target.dataset.line); });
                 if (newFileBtn) newFileBtn.addEventListener('click', async () => await createNewFile());
@@ -12418,6 +12780,18 @@ gantt
 
                 // Keyboard shortcuts for presentation mode
                 document.addEventListener('keydown', async (e) => {
+                    // File Navigation shortcuts
+                    /*if (e.ctrlKey && e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        navigateToPreviousFile();
+                        return;
+                    }
+                    if (e.ctrlKey && e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        navigateToNextFile();
+                        return;
+                    }*/
+                    
                     if (e.ctrlKey && e.key === 'f') {
 						e.preventDefault();
 						toggleSearchBar();
@@ -12452,10 +12826,10 @@ gantt
                             e.preventDefault();
                             toggleMarkdownFormat('*', '*', '斜體文字');
                         }
-                        if (e.ctrlKey && e.key === 'u') {
+                        /*if (e.ctrlKey && e.key === 'u') {
                             e.preventDefault();
                             toggleMarkdownFormat('<u>', '</u>', '下劃線文字');
-                        }
+                        }*/
                         if (e.ctrlKey && e.key === 'k') {
                             e.preventDefault();
                             toggleMarkdownFormat('[', '](https://)', '連結文字');
@@ -12468,10 +12842,10 @@ gantt
                             e.preventDefault();
                             toggleMarkdownFormat('```\n', '\n```', '程式碼區塊');
                         }
-                        if (e.ctrlKey && e.key === 'd') {
+                        /*if (e.ctrlKey && e.key === 'd') {
                             e.preventDefault();
                             toggleMarkdownFormat('~~', '~~', '刪除線文字');
-                        }
+                        }*/
                         
                         // Header shortcuts
                         if (e.ctrlKey && e.key === '1') {
@@ -13944,6 +14318,7 @@ gantt
                 
                 updateDualFileNameDisplay(paneIndex, file.name);
                 updateDualPreview(paneIndex);
+                updateFileNavigationButtons(); // Update navigation button states
                 
                 // Apply hashtag highlighting after file loads
                 setTimeout(() => {
@@ -14027,7 +14402,7 @@ gantt
                                 if (fileId) {
                                     showWikiPreview(e.target, fileId, sectionName);
                                 }
-                            }, 500);
+                            }, 200);
                         }
                     });
                     
