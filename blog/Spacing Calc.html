@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spacing Calculator (for UL 60730-1)</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #333; max-width: 960px; margin: 20px auto; padding: 0 20px; background-color: #f4f7f9; }
+        h1 { color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px; }
+        .container { background-color: #ffffff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; }
+        select, input[type='number'], button { width: 100%; padding: 12px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; }
+        input[type='radio'] { margin-right: 8px; }
+        .radio-group label { display: inline-block; margin-right: 20px; font-weight: normal; }
+        .radio-group .case-note { font-size: 0.9em; color: #555; margin-left: 5px; }
+        
+        .form-row { display: flex; flex-wrap: wrap; gap: 20px; }
+        .form-row > .form-group { flex: 1; min-width: 200px; }
+        
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; transition: background-color 0.3s; margin-top: 10px; }
+        button:hover { background-color: #0056b3; }
+        
+        .result-area { margin-top: 25px; }
+        .result-table-container { padding: 20px; background-color: #fff; border: 1px solid #ddd; border-radius: 5px; display: none; overflow-x: auto; margin-bottom: 20px; }
+        .result-summary { margin-bottom: 20px; font-size: 1.1em; text-align: center; }
+        .error { color: #D8000C; background-color: #FFD2D2; padding: 10px; border-radius: 5px; margin-top: 15px; display: none; }
+        .fallback-note { font-size: 0.9em; color: #c00; margin-top: 10px; }
+
+        .result-table { width: 100%; border-collapse: collapse; font-size: 11px; border: 1px solid black; }
+        .result-table th, .result-table td { border: 1px solid black; padding: 5px; text-align: center; vertical-align: top; }
+        .result-table thead th { font-weight: bold; background-color: #f2f2f2; }
+        
+        .highlight-row { background-color: #e9f5ff !important; }
+        .highlight-cell { background-color: #007bff !important; color: white !important; font-weight: bold; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Spacing Calculator (for UL 60730-1)</h1>
+        
+        <div class="form-group radio-group">
+            <label><input type="radio" name="inputType" value="system" onchange="toggleInputType()" checked> Declare by Power System</label>
+            <label><input type="radio" name="inputType" value="ln_direct" onchange="toggleInputType()"> Enter Line-to-Neutral Voltage Directly</label>
+        </div>
+
+        <div id="systemInputs">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="powerSystemSelect">Power System (from Standard):</label>
+                    <select id="powerSystemSelect" onchange="updateNominalVoltageOptions()"></select>
+                </div>
+                <div class="form-group">
+                    <label for="nominalVoltageSelect">Nominal Voltage System:</label>
+                    <select id="nominalVoltageSelect"></select>
+                </div>
+            </div>
+        </div>
+
+        <div id="lnDirectInput" style="display: none;">
+             <div class="form-group">
+                <label for="lnVoltage">Line-to-Neutral Voltage (V):</label>
+                <input type="number" id="lnVoltage" placeholder="e.g., 150, 300">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="workingVoltage">Rated voltage (V) for Basic Insulation Creepage:</label>
+                <input type="number" id="workingVoltage" placeholder="e.g., 250">
+            </div>
+            <div class="form-group">
+                <label for="workingVoltageRms">Working Voltage (V r.m.s.) for Functional Insulation:</label>
+                <input type="number" id="workingVoltageRms" placeholder="e.g., 50">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="overvoltageCategory">Overvoltage Category:</label>
+                <select id="overvoltageCategory"><option value="I">I</option><option value="II">II</option><option value="III">III</option><option value="IV">IV</option></select>
+            </div>
+            <div class="form-group">
+                <label for="pollutionDegree">Pollution Degree:</label>
+                <select id="pollutionDegree"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
+            </div>
+             <div class="form-group">
+                <label for="materialGroupSelect">Material Group:</label>
+                <select id="materialGroupSelect">
+                    <option value="I">Group I (PTI/CTI ≥ 600; CTI Index 0)</option>
+                    <option value="II">Group II (400 ≤ PTI/CTI &lt; 600; CTI Index 1)</option>
+                    <option value="IIIa">Group IIIa (175 ≤ PTI/CTI &lt; 400; CTI Index 2, 3)</option>
+                    <option value="IIIb">Group IIIb (100 ≤ PTI/CTI &lt; 175; CTI Index 4)</option>
+                </select>
+            </div>
+			<div class="form-group">
+				<label for="altitudeSelect">Altitude (sea level):</label>
+				<select id="altitudeSelect">
+					<option value="0">≤ 2000 (Standard condition)</option>
+					<option value="2000" selected>2000 (No correction)</option>
+					<option value="3000">3000 (Factor: 1.14)</option>
+					<option value="4000">4000 (Factor: 1.29)</option>
+					<option value="5000">5000 (Factor: 1.48)</option>
+					<option value="6000">6000 (Factor: 1.70)</option>
+					<option value="7000">7000 (Factor: 1.95)</option>
+					<option value="8000">8000 (Factor: 2.25)</option>
+					<option value="9000">9000 (Factor: 2.62)</option>
+					<option value="10000">10000 (Factor: 3.02)</option>
+					<option value="15000">15000 (Factor: 6.67)</option>
+					<option value="20000">20000 (Factor: 14.5)</option>
+				</select>
+			</div>
+        </div>
+        
+        <div class="form-group radio-group">
+            <label>Clearance Case:</label>
+            <label><input type="radio" name="clearanceCase" value="A" checked> Case A <span class="case-note">(Inhomogeneous Field)</span></label>
+            <label><input type="radio" name="clearanceCase" value="B"> Case B <span class="case-note">(Homogeneous Field)</span></label>
+        </div>
+
+        <div class="form-group radio-group">
+            <label>Application Type for Creepage:</label>
+            <label><input type="radio" name="applicationType" value="pcb" checked> Printed Wiring Material (PCB)</label>
+            <label><input type="radio" name="applicationType" value="plastic"> Plastic Material</label>
+        </div>
+
+        <button onclick="runCalculation()">Calculate</button>
+        <div id="error-message" class="error"></div>
+    </div>
+    
+    <div class="result-area">
+        <div id="result-table-21-container" class="result-table-container"></div>
+        <div id="result-table-k1-container" class="result-table-container"></div>
+        <div id="result-table-22-container" class="result-table-container"></div>
+        <div id="result-table-23-container" class="result-table-container"></div>
+        <div id="result-table-24-container" class="result-table-container"></div>
+    </div>
+
+    <script>
+    // --- Data Models ---
+    const powerSystems = { 't21_three_phase': { displayName: 'Table 21: Three-phase, four-wire', tableId: '21', validVoltages: [ { text: '230/400 V', value: 300 }, { text: '277/480 V', value: 300 }, { text: '400/690 V', value: 600 } ] }, 't21_single_phase': { displayName: 'Table 21: Single-phase', tableId: '21', validVoltages: [ { text: '120/240 V', value: 150 } ] }, 'k1_three_phase_four_wire': { displayName: 'Table K.1: Three-phase, four-wire (earthed)', tableId: 'k1', validVoltages: [ { text: '66/115 V', value: 100 }, { text: '120/208 V', value: 150 }, { text: '127/220 V', value: 150 }, { text: '220/380 V', value: 300 }, { text: '230/400 V', value: 300 }, { text: '240/415 V', value: 300 }, { text: '260/440 V', value: 300 }, { text: '277/480 V', value: 300 }, { text: '347/600 V', value: 600 }, { text: '380/660 V', value: 600 }, { text: '400/690 V', value: 600 }, { text: '417/720 V', value: 600 }, { text: '480/830 V', value: 600 } ] }, 'k1_three_phase_three_wire': { displayName: 'Table K.1: Three-phase, three-wire (unearthed)', tableId: 'k1', validVoltages: [ { text: '66 V', value: 100 }, { text: '115 V', value: 150 }, { text: '120 V', value: 150 }, { text: '127 V', value: 150 }, { text: '220 V', value: 300 }, { text: '230 V', value: 300 }, { text: '240 V', value: 300 }, { text: '260 V', value: 300 }, { text: '277 V', value: 300 }, { text: '347 V', value: 300 }, { text: '380 V', value: 300 }, { text: '400 V', value: 300 }, { text: '415 V', value: 300 }, { text: '440 V', value: 300 }, { text: '480 V', value: 300 }, { text: '500 V', value: 600 }, { text: '577 V', value: 600 }, { text: '600 V', value: 600 }, { text: '660 V', value: 1000 }, { text: '690 V', value: 1000 }, { text: '720 V', value: 1000 }, { text: '830 V', value: 1000 }, { text: '1000 V', value: 1000 } ] } };
+    const impulseData = { '21': [ { ln: 50, I: 330, II: 500, III: 800, IV: 1500 }, { ln: 100, I: 500, II: 800, III: 1500, IV: 2500 }, { ln: 150, I: 800, II: 1500, III: 2500, IV: 4000 }, { ln: 300, I: 1500, II: 2500, III: 4000, IV: 6000 }, { ln: 600, I: 2500, II: 4000, III: 6000, IV: 8000 } ], 'k1': [ { ln: 50, I: 330, II: 500, III: 800, IV: 1500 }, { ln: 100, I: 500, II: 800, III: 1500, IV: 2500 }, { ln: 150, I: 800, II: 1500, III: 2500, IV: 4000 }, { ln: 300, I: 1500, II: 2500, III: 4000, IV: 6000 }, { ln: 600, I: 2500, II: 4000, III: 6000, IV: 8000 }, { ln: 1000, I: 4000, II: 6000, III: 8000, IV: 12000 } ] };
+    const clearanceData = { 0.33: { A: { 1: 0.01, 2: 0.20, 3: 0.8, 4: 1.6 }, B: { 1: 0.01, 2: 0.2, 3: 0.8, 4: 1.6 } }, 0.50: { A: { 1: 0.04, 2: 0.20, 3: 0.8, 4: 1.6 }, B: { 1: 0.04, 2: 0.2, 3: 0.8, 4: 1.6 } }, 0.80: { A: { 1: 0.10, 2: 0.20, 3: 0.8, 4: 1.6 }, B: { 1: 0.1, 2: 0.2, 3: 0.8, 4: 1.6 } }, 1.5: { A: { 1: 0.5, 2: 0.5, 3: 0.3, 4: 0.3 }, B: { 1: 0.5, 2: 0.5, 3: 0.3, 4: 0.3 } }, 2.5: { A: { 1: 1.5, 2: 1.5, 3: 1.5, 4: 0.6 }, B: { 1: 1.5, 2: 1.5, 3: 1.5, 4: 0.6 } }, 4.0: { A: { 1: 3, 2: 3, 3: 3, 4: 3 }, B: { 1: 1.2, 2: 1.2, 3: 1.2, 4: 1.2 } }, 6.0: { A: { 1: 5.5, 2: 5.5, 3: 5.5, 4: 5.5 }, B: { 1: 2, 2: 2, 3: 2, 4: 2 } }, 8.0: { A: { 1: 8, 2: 8, 3: 8, 4: 8 }, B: { 1: 3, 2: 3, 3: 3, 4: 3 } } };
+    // 添加海拔修正係數數據
+	const altitudeCorrectionFactors = {
+		2000: 1.00,
+		3000: 1.14,
+		4000: 1.29,
+		5000: 1.48,
+		6000: 1.70,
+		7000: 1.95,
+		8000: 2.25,
+		9000: 2.62,
+		10000: 3.02,
+		15000: 6.67,
+		20000: 14.5
+	};
+	const creepageData = { "50":  { "pcb": { "1": 0.025,"2": 0.04 }, "plastic": { "1": { "all": 0.2  }, "2": { "I": 0.6, "II": 0.9, "IIIa": 1.2, "IIIb": 1.2  }, "3": { "I": 1.5, "II": 1.7, "IIIa": 1.9, "IIIb": 1.9  }, "4": { "I": 2.0, "II": 2.5, "IIIa": 3.2, "IIIb": 3.2  } } }, "125": { "pcb": { "1": 0.16, "2": 0.25 }, "plastic": { "1": { "all": 0.3  }, "2": { "I": 0.8, "II": 1.1, "IIIa": 1.5, "IIIb": 1.5  }, "3": { "I": 1.9, "II": 2.1, "IIIa": 2.4, "IIIb": 2.4  }, "4": { "I": 2.5, "II": 3.2, "IIIa": 4.0, "IIIb": 4.0  } } }, "250": { "pcb": { "1": 0.56, "2": 1.0  }, "plastic": { "1": { "all": 0.6  }, "2": { "I": 1.3, "II": 1.8, "IIIa": 2.5, "IIIb": 2.5  }, "3": { "I": 3.2, "II": 3.6, "IIIa": 4.0, "IIIb": 4.0  }, "4": { "I": 5.0, "II": 6.3, "IIIa": 8.0, "IIIb": 8.0  } } }, "400": { "pcb": { "1": 1.0,  "2": 2.0  }, "plastic": { "1": { "all": 1.0  }, "2": { "I": 2.0, "II": 2.8, "IIIa": 4.0, "IIIb": 4.0  }, "3": { "I": 5.0, "II": 5.6, "IIIa": 6.3, "IIIb": 6.3  }, "4": { "I": 8.0, "II": 10.0, "IIIa": 12.5, "IIIb": 12.5 } } }, "500": { "pcb": { "1": 1.3,  "2": 2.5  }, "plastic": { "1": { "all": 1.3  }, "2": { "I": 2.5, "II": 3.6, "IIIa": 5.0, "IIIb": 5.0  }, "3": { "I": 6.3, "II": 7.1, "IIIa": 8.0, "IIIb": 8.0  }, "4": { "I": 10.0, "II": 12.5, "IIIa": 16.0, "IIIb": 16.0 } } }, "630": { "pcb": { "1": 1.8,  "2": 3.2  }, "plastic": { "1": { "all": 1.8  }, "2": { "I": 3.2, "II": 4.5, "IIIa": 6.3, "IIIb": 6.3  }, "3": { "I": 8.0, "II": 9.0, "IIIa": 10.0, "IIIb": 10.0 }, "4": { "I": 12.5, "II": 16.0, "IIIa": 20.0, "IIIb": 20.0 } } }, "800": { "pcb": { "1": 2.4,  "2": 4.0  }, "plastic": { "1": { "all": 2.4  }, "2": { "I": 4.0, "II": 5.6, "IIIa": 8.0, "IIIb": 8.0  }, "3": { "I": 10.0, "II": 11.0, "IIIa": 12.5, "IIIb": 12.5 }, "4": { "I": 16.0, "II": 20.0, "IIIa": 25.0, "IIIb": 25.0 } } } };
+    const functionalCreepageData = { "10": { "pcb": { "1": 0.025, "2": 0.04 }, "plastic": { "1": { "all": 0.08 }, "2": { "I": 0.4, "II": 0.4, "IIIa": 0.4, "IIIb": 0.4 }, "3": { "I": 1, "II": 1, "IIIa": 1, "IIIb": 1 }, "4": { "I": 1.6, "II": 1.6, "IIIa": 1.6, "IIIb": 1.6 } } }, "12.5": { "pcb": { "1": 0.025, "2": 0.04 }, "plastic": { "1": { "all": 0.09 }, "2": { "I": 0.42, "II": 0.42, "IIIa": 0.42, "IIIb": 0.42 }, "3": { "I": 1.05, "II": 1.05, "IIIa": 1.05, "IIIb": 1.05 }, "4": { "I": 1.6, "II": 1.6, "IIIa": 1.6, "IIIb": 1.6 } } }, "16": { "pcb": { "1": 0.025, "2": 0.04 }, "plastic": { "1": { "all": 0.1 }, "2": { "I": 0.45, "II": 0.45, "IIIa": 0.45, "IIIb": 0.45 }, "3": { "I": 1.1, "II": 1.1, "IIIa": 1.1, "IIIb": 1.1 }, "4": { "I": 1.6, "II": 1.6, "IIIa": 1.6, "IIIb": 1.6 } } }, "20": { "pcb": { "1": 0.025, "2": 0.04 }, "plastic": { "1": { "all": 0.11 }, "2": { "I": 0.48, "II": 0.48, "IIIa": 0.48, "IIIb": 0.48 }, "3": { "I": 1.2, "II": 1.2, "IIIa": 1.2, "IIIb": 1.2 }, "4": { "I": 1.6, "II": 1.6, "IIIa": 1.6, "IIIb": 1.6 } } }, "25": { "pcb": { "1": 0.025, "2": 0.04 }, "plastic": { "1": { "all": 0.125 }, "2": { "I": 0.5, "II": 0.5, "IIIa": 0.5, "IIIb": 0.5 }, "3": { "I": 1.25, "II": 1.25, "IIIa": 1.25, "IIIb": 1.25 }, "4": { "I": 1.7, "II": 1.7, "IIIa": 1.7, "IIIb": 1.7 } } }, "32": { "pcb": { "1": 0.025, "2": 0.04 }, "plastic": { "1": { "all": 0.14 }, "2": { "I": 0.53, "II": 0.53, "IIIa": 0.53, "IIIb": 0.53 }, "3": { "I": 1.3, "II": 1.3, "IIIa": 1.3, "IIIb": 1.3 }, "4": { "I": 1.8, "II": 1.8, "IIIa": 1.8, "IIIb": 1.8 } } }, "40": { "pcb": { "1": 0.025, "2": 0.04 }, "plastic": { "1": { "all": 0.16 }, "2": { "I": 0.56, "II": 0.8, "IIIa": 1.1, "IIIb": 1.1 }, "3": { "I": 1.4, "II": 1.6, "IIIa": 1.8, "IIIb": 1.8 }, "4": { "I": 1.9, "II": 2.4, "IIIa": 3, "IIIb": 3 } } }, "50": { "pcb": { "1": 0.025, "2": 0.04 }, "plastic": { "1": { "all": 0.18 }, "2": { "I": 0.6, "II": 0.85, "IIIa": 1.2, "IIIb": 1.2 }, "3": { "I": 1.5, "II": 1.7, "IIIa": 1.9, "IIIb": 1.9 }, "4": { "I": 2, "II": 2.5, "IIIa": 3.2, "IIIb": 3.2 } } }, "63": { "pcb": { "1": 0.04, "2": 0.063 }, "plastic": { "1": { "all": 0.2 }, "2": { "I": 0.63, "II": 0.9, "IIIa": 1.25, "IIIb": 1.25 }, "3": { "I": 1.6, "II": 1.8, "IIIa": 2, "IIIb": 2 }, "4": { "I": 2.1, "II": 2.6, "IIIa": 3.4, "IIIb": 3.4 } } }, "80": { "pcb": { "1": 0.063, "2": 0.1 }, "plastic": { "1": { "all": 0.22 }, "2": { "I": 0.67, "II": 0.95, "IIIa": 1.3, "IIIb": 1.3 }, "3": { "I": 1.7, "II": 1.9, "IIIa": 2.1, "IIIb": 2.1 }, "4": { "I": 2.2, "II": 2.8, "IIIa": 3.6, "IIIb": 3.6 } } }, "100": { "pcb": { "1": 0.1, "2": 0.16 }, "plastic": { "1": { "all": 0.25 }, "2": { "I": 0.71, "II": 1, "IIIa": 1.4, "IIIb": 1.4 }, "3": { "I": 1.8, "II": 2, "IIIa": 2.2, "IIIb": 2.2 }, "4": { "I": 2.4, "II": 3, "IIIa": 3.8, "IIIb": 3.8 } } }, "125": { "pcb": { "1": 0.16, "2": 0.25 }, "plastic": { "1": { "all": 0.28 }, "2": { "I": 0.75, "II": 1.05, "IIIa": 1.5, "IIIb": 1.5 }, "3": { "I": 1.9, "II": 2.1, "IIIa": 2.4, "IIIb": 2.4 }, "4": { "I": 2.5, "II": 3.2, "IIIa": 4, "IIIb": 4 } } }, "160": { "pcb": { "1": 0.25, "2": 0.4 }, "plastic": { "1": { "all": 0.32 }, "2": { "I": 0.8, "II": 1.1, "IIIa": 1.6, "IIIb": 1.6 }, "3": { "I": 2, "II": 2.2, "IIIa": 2.5, "IIIb": 2.5 }, "4": { "I": 3.2, "II": 4, "IIIa": 5, "IIIb": 5 } } }, "200": { "pcb": { "1": 0.4, "2": 0.63 }, "plastic": { "1": { "all": 0.42 }, "2": { "I": 1, "II": 1.4, "IIIa": 2, "IIIb": 2 }, "3": { "I": 2.5, "II": 2.8, "IIIa": 3.2, "IIIb": 3.2 }, "4": { "I": 4, "II": 5, "IIIa": 6.3, "IIIb": 6.3 } } }, "250": { "pcb": { "1": 0.56, "2": 1 }, "plastic": { "1": { "all": 0.56 }, "2": { "I": 1.25, "II": 1.8, "IIIa": 2.5, "IIIb": 2.5 }, "3": { "I": 3.2, "II": 3.6, "IIIa": 4, "IIIb": 4 }, "4": { "I": 5, "II": 6.3, "IIIa": 8, "IIIb": 8 } } }, "320": { "pcb": { "1": 0.75, "2": 1.6 }, "plastic": { "1": { "all": 0.75 }, "2": { "I": 1.6, "II": 2.2, "IIIa": 3.2, "IIIb": 3.2 }, "3": { "I": 4, "II": 4.5, "IIIa": 5, "IIIb": 5 }, "4": { "I": 6.3, "II": 8, "IIIa": 10, "IIIb": 10 } } }, "400": { "pcb": { "1": 1, "2": 2 }, "plastic": { "1": { "all": 1 }, "2": { "I": 2, "II": 2.8, "IIIa": 4, "IIIb": 4 }, "3": { "I": 5, "II": 5.6, "IIIa": 6.3, "IIIb": 6.3 }, "4": { "I": 8, "II": 10, "IIIa": 12.5, "IIIb": 12.5 } } }, "500": { "pcb": { "1": 1.3, "2": 2.5 }, "plastic": { "1": { "all": 1.3 }, "2": { "I": 2.5, "II": 3.6, "IIIa": 5, "IIIb": 5 }, "3": { "I": 6.3, "II": 7.1, "IIIa": 8, "IIIb": 8 }, "4": { "I": 10, "II": 12.5, "IIIa": 16, "IIIb": 16 } } }, "630": { "pcb": { "1": 1.8, "2": 3.2 }, "plastic": { "1": { "all": 1.8 }, "2": { "I": 3.2, "II": 4.5, "IIIa": 6.3, "IIIb": 6.3 }, "3": { "I": 8, "II": 9, "IIIa": 10, "IIIb": 10 }, "4": { "I": 12.5, "II": 16, "IIIa": 21, "IIIb": 21 } } }, "800": { "pcb": { "1": 2.4, "2": 4 }, "plastic": { "1": { "all": 2.4 }, "2": { "I": 4, "II": 5.6, "IIIa": 8, "IIIb": 8 }, "3": { "I": 10, "II": 11, "IIIa": 12.5, "IIIb": 12.5 }, "4": { "I": 16, "II": 20, "IIIa": 25, "IIIb": 25 } } } };
+
+    // --- Helper & Calculation Functions ---
+    function formatImpulseVoltageKey(value) { const num = Number(value); return num < 1 ? num.toFixed(2) : num.toFixed(1); }
+    function findTableRow(tableId, ln_voltage) { const tableData = impulseData[tableId]; const max_ln = tableData[tableData.length - 1].ln; if (ln_voltage <= 0 || ln_voltage > max_ln) return null; for (const row of tableData) { if (ln_voltage <= row.ln) return row; } return null; }
+    function findClearanceRow(impulseVoltage) { const impulsekV = impulseVoltage / 1000; const clearanceKeys = Object.keys(clearanceData).map(Number).sort((a, b) => a - b); for (const key of clearanceKeys) { if (impulsekV <= Number(key)) return { data: clearanceData[key], key: formatImpulseVoltageKey(key) }; } return null; }
+    // 添加海拔修正係數計算函數
+	function getAltitudeCorrectionFactor(altitude) {
+		if (altitude <= 2000) {
+			return { factor: 1.00, note: "" };
+		}
+		
+		const altitudeKeys = Object.keys(altitudeCorrectionFactors).map(Number).sort((a, b) => a - b);
+		
+		// 找到對應的海拔等級
+		for (const key of altitudeKeys) {
+			if (altitude <= key) {
+				const factor = altitudeCorrectionFactors[key];
+				const note = `<span style="font-size: 0.9em; color: #c00;">Note: Clearance values corrected for altitude ${altitude}m (correction factor: ${factor}).</span>`;
+				return { factor, note };
+			}
+		}
+		
+		// 如果超過最高海拔，使用最高的修正係數
+		const maxFactor = altitudeCorrectionFactors[20000];
+		const note = `<span style="font-size: 0.9em; color: #c00;">Note: Clearance values corrected for altitude ${altitude}m (correction factor: ${maxFactor}, extrapolated from maximum table value).</span>`;
+		return { factor: maxFactor, note };
+	}
+	function findGenericVoltageTier(voltage, dataObject) { const voltageKeys = Object.keys(dataObject).map(Number).sort((a, b) => a - b); let selectedTier = null; for (const key of voltageKeys) { if (voltage <= key) { selectedTier = key; break; } } if (selectedTier === null && voltage > 0) { selectedTier = voltageKeys[voltageKeys.length - 1]; } return selectedTier; }
+    function findCreepageValue(applicationType, ratedVoltage, pollutionDegree, materialGroup) { const voltageTier = findGenericVoltageTier(ratedVoltage, creepageData); if (!voltageTier) return null; return processCreepageLogic(applicationType, voltageTier, pollutionDegree, materialGroup, creepageData); }
+    function findFunctionalCreepageValue(applicationType, workingVoltage, pollutionDegree, materialGroup) { const voltageTier = findGenericVoltageTier(workingVoltage, functionalCreepageData); if (!voltageTier) return null; return processCreepageLogic(applicationType, voltageTier, pollutionDegree, materialGroup, functionalCreepageData); }
+    function processCreepageLogic(applicationType, voltageTier, pollutionDegree, materialGroup, dataObject) { if (materialGroup === 'IIIb' && (voltageTier > 630 || pollutionDegree === '4')) { throw new Error("Material Group IIIb is not permitted for applications > 630V or in Pollution Degree 4."); } const rowData = dataObject[voltageTier]; let value = null; let highlightInfo = { type: applicationType, pd: pollutionDegree, mg: materialGroup }; let fallbackMessage = null; if (applicationType === 'pcb') { if (pollutionDegree === '1') { value = rowData.pcb['1']; } else if (pollutionDegree === '2') { if (materialGroup === 'IIIb') { value = rowData.plastic['2'][materialGroup]; highlightInfo.type = 'plastic'; fallbackMessage = `<b>Note:</b> Fallback to Plastic Material value applied. Material Group IIIb is not applicable for PCB in Pollution Degree 2.`; } else { value = rowData.pcb['2']; } } else { value = rowData.plastic[pollutionDegree][materialGroup]; highlightInfo.type = 'plastic'; fallbackMessage = `<b>Note:</b> Fallback to Plastic Material value applied. PCB-specific values are only defined for Pollution Degrees 1 and 2.`; } } else { if (pollutionDegree === '1') { value = rowData.plastic['1'].all; highlightInfo.mg = 'all'; } else { value = rowData.plastic[pollutionDegree][materialGroup]; } } return { value, highlightInfo, fallbackMessage }; }
+    
+    // --- UI Control ---
+    function populatePowerSystems() { const select = document.getElementById('powerSystemSelect'); select.innerHTML = ''; for (const key in powerSystems) { const option = document.createElement('option'); option.value = key; option.textContent = powerSystems[key].displayName; select.appendChild(option); } }
+    function updateNominalVoltageOptions() { const systemKey = document.getElementById('powerSystemSelect').value; const system = powerSystems[systemKey]; const select = document.getElementById('nominalVoltageSelect'); select.innerHTML = ''; system.validVoltages.forEach(v => { const option = document.createElement('option'); option.value = v.value; option.textContent = v.text; select.appendChild(option); }); }
+    function toggleInputType() { const inputType = document.querySelector('input[name="inputType"]:checked').value; document.getElementById('systemInputs').style.display = (inputType === 'system') ? 'block' : 'none'; document.getElementById('lnDirectInput').style.display = (inputType === 'system') ? 'none' : 'block'; }
+
+    // --- Main Calculation Runner ---
+	function runCalculation() {
+		document.getElementById('error-message').style.display = 'none';
+		['21', 'k1', '22', '23', '24'].forEach(id => { 
+			const container = document.getElementById(`result-table-${id}-container`); 
+			if (container) container.style.display = 'none'; 
+		});
+		document.querySelectorAll('.result-table tbody tr').forEach(r => r.classList.remove('highlight-row'));
+		document.querySelectorAll('.result-table tbody td').forEach(c => c.classList.remove('highlight-cell'));
+
+		try {
+			const inputType = document.querySelector('input[name="inputType"]:checked').value;
+			const ovc = document.getElementById('overvoltageCategory').value;
+			const pollutionDegree = document.getElementById('pollutionDegree').value;
+			const clearanceCase = document.querySelector('input[name="clearanceCase"]:checked').value;
+			const applicationType = document.querySelector('input[name="applicationType"]:checked').value;
+			const materialGroup = document.getElementById('materialGroupSelect').value;
+			const altitude = parseFloat(document.getElementById('altitudeSelect').value) || 0;
+
+			// --- Impulse & Clearance Calculation ---
+			let tableId, ln_voltage, tableRow, selectedSystemText;
+			if (inputType === 'system') { 
+				const systemKey = document.getElementById('powerSystemSelect').value; 
+				tableId = powerSystems[systemKey].tableId; 
+				ln_voltage = parseFloat(document.getElementById('nominalVoltageSelect').value); 
+				selectedSystemText = document.getElementById('nominalVoltageSelect').options[document.getElementById('nominalVoltageSelect').selectedIndex].text; 
+			} else { 
+				ln_voltage = parseFloat(document.getElementById('lnVoltage').value); 
+				if (isNaN(ln_voltage)) throw new Error('Please enter a valid Line-to-Neutral Voltage.'); 
+				tableId = (ln_voltage > 600) ? 'k1' : '21'; 
+				selectedSystemText = `Direct Input: ${ln_voltage}V`; 
+			}
+			
+			tableRow = findTableRow(tableId, ln_voltage);
+			if (!tableRow) { 
+				throw new Error(`The L-N Voltage (${ln_voltage.toFixed(1)} V) is outside the defined range.`); 
+			}
+			
+			const impulseVoltage = tableRow[ovc];
+			const impulseContainer = document.getElementById(`result-table-${tableId}-container`);
+			impulseContainer.querySelector('.result-summary').innerHTML = `For system <b>${selectedSystemText}</b> (L-N Tier: <b>${tableRow.ln}V</b>), Category <b>${ovc}</b> requires <b>${impulseVoltage} V</b>.`;
+			impulseContainer.style.display = 'block';
+			
+			const targetImpulseRow = impulseContainer.querySelector(`tbody tr[data-ln-value="${tableRow.ln}"]`);
+			if (targetImpulseRow) { 
+				targetImpulseRow.classList.add('highlight-row'); 
+				const cell = targetImpulseRow.querySelector(`td[data-ovc="${ovc}"]`); 
+				if(cell) cell.classList.add('highlight-cell'); 
+			}
+			
+			const clearanceRowData = findClearanceRow(impulseVoltage);
+			if (!clearanceRowData) { 
+				throw new Error(`Rated Impulse Voltage (${impulseVoltage} V) is outside the range for clearances.`); 
+			}
+			
+			const clearanceContainer = document.getElementById('result-table-22-container');
+			const basicClearanceCell = clearanceContainer.querySelector(`tbody tr[data-impulse-voltage="${clearanceRowData.key}"] td[data-case="${clearanceCase}"][data-pd="${pollutionDegree}"]`);
+			if (!basicClearanceCell) throw new Error("Could not locate the basic clearance cell in the DOM.");
+			
+			// 獲取原始間隙距離值並應用海拔修正
+			const originalBasicClearance = parseFloat(basicClearanceCell.textContent);
+			const altitudeCorrection = getAltitudeCorrectionFactor(altitude);
+			const correctedBasicClearance = (originalBasicClearance * altitudeCorrection.factor).toFixed(2).replace(/\.00$/, '').replace(/\.([1-9])0$/, '.$1');
+			
+			basicClearanceCell.classList.add('highlight-cell');
+			basicClearanceCell.parentElement.classList.add('highlight-row');
+
+			let clearanceSummaryHTML = `For Rated Impulse Voltage <b>${impulseVoltage} V</b>, Case <b>${clearanceCase}</b>, and PD <b>${pollutionDegree}</b>: <br>Clearance (Basic Insulation) is <b>${correctedBasicClearance} mm</b>`;
+			
+			if (altitude > 2000) {
+				clearanceSummaryHTML += ` (original: ${originalBasicClearance} mm, corrected for ${altitude}m altitude)`;
+			}
+			clearanceSummaryHTML += `.`;
+			
+			const nextRow = basicClearanceCell.parentElement.nextElementSibling;
+			let correctedReinforcedClearance = null;
+			if (nextRow) {
+				const reinforcedCell = nextRow.querySelector(`td[data-case="A"][data-pd="${pollutionDegree}"]`);
+				const nextImpulseTier = nextRow.firstElementChild.textContent;
+				const originalReinforcedClearance = parseFloat(reinforcedCell.textContent);
+				correctedReinforcedClearance = (originalReinforcedClearance * altitudeCorrection.factor).toFixed(2).replace(/\.00$/, '').replace(/\.([1-9])0$/, '.$1');
+				
+				clearanceSummaryHTML += `<br>Clearance (Reinforced Insulation) is <b>${correctedReinforcedClearance} mm</b>`;
+				if (altitude > 2000) {
+					clearanceSummaryHTML += ` (original: ${originalReinforcedClearance} mm, corrected for ${altitude}m altitude)`;
+				}
+				clearanceSummaryHTML += ` (evaluated at next impulse tier: ${nextImpulseTier} kV, Case A).`;
+			} else {
+				clearanceSummaryHTML += `<br>Clearance (Reinforced Insulation) cannot be determined as it's the highest impulse tier.`;
+			}
+			
+			// 添加海拔修正註釋
+			if (altitudeCorrection.note) {
+				clearanceSummaryHTML += `<br><div class="fallback-note">${altitudeCorrection.note}</div>`;
+			}
+			
+			clearanceContainer.querySelector('.result-summary').innerHTML = clearanceSummaryHTML;
+			clearanceContainer.style.display = 'block';
+
+			// --- Basic Insulation Creepage Calculation (修改後包含間隙距離比較) ---
+			const ratedVoltage = parseFloat(document.getElementById('workingVoltage').value);
+			if (!isNaN(ratedVoltage) && ratedVoltage > 0) {
+				const result = findCreepageValue(applicationType, ratedVoltage, pollutionDegree, materialGroup);
+				if (!result) throw new Error(`Could not determine Basic Creepage value.`);
+				
+				// 使用修正後的間隙距離進行比較
+				const correctedBasicClearanceValue = parseFloat(correctedBasicClearance);
+				let finalBasicCreepageValue = result.value;
+				let basicCreepageNote = "";
+				
+				// 比較 Corrected Clearance BI vs Creepage BI
+				if (correctedBasicClearanceValue > result.value) {
+					finalBasicCreepageValue = correctedBasicClearanceValue;
+					basicCreepageNote = `<span style="font-size: 0.9em; color: #c00;">Note: Basic Insulation Creepage distance replaced by Clearance distance (${correctedBasicClearance} mm) as Clearance > Creepage.</span>`;
+				}
+				
+				// 計算加強絕緣爬電距離
+				const reinforcedCreepageValue = (result.value * 2);
+				
+				// 獲取修正後的加強絕緣間隙距離值進行比較
+				let finalReinforcedCreepageValue = reinforcedCreepageValue;
+				let reinforcedCreepageNote = "";
+				
+				if (correctedReinforcedClearance !== null) {
+					const correctedReinforcedClearanceValue = parseFloat(correctedReinforcedClearance);
+					
+					// 比較 Corrected Clearance RI vs Creepage RI
+					if (correctedReinforcedClearanceValue > reinforcedCreepageValue) {
+						finalReinforcedCreepageValue = correctedReinforcedClearanceValue;
+						reinforcedCreepageNote = `<span style="font-size: 0.9em; color: #c00;">Note: Reinforced Insulation Creepage distance replaced by Clearance distance (${correctedReinforcedClearance} mm) as Clearance > Creepage.</span>`;
+					}
+				}
+				
+				// 格式化最終的加強絕緣爬電距離值
+				const finalReinforcedCreepageValueStr = finalReinforcedCreepageValue.toFixed(2).replace(/\.00$/, '').replace(/\.([1-9])0$/, '.$1');
+				
+				const creepageContainer = document.getElementById('result-table-23-container');
+				let summaryHTML = `For Rated Voltage <b>${ratedVoltage} V</b> (App: <b>${applicationType.toUpperCase()}</b>), PD <b>${pollutionDegree}</b>, MG <b>${materialGroup}</b>:<br>`;
+				summaryHTML += `Creepage (Basic Insulation) is <b>${finalBasicCreepageValue} mm</b>. <br>`;
+				summaryHTML += `Creepage (Reinforced Insulation) is <b>${finalReinforcedCreepageValueStr} mm</b>.`;
+				
+				// 添加回退訊息（如果有）
+				if (result.fallbackMessage) {
+					summaryHTML += `<div class="fallback-note">${result.fallbackMessage}</div>`;
+				}
+				
+				// 添加間隙距離替換註釋（如果有）
+				if (basicCreepageNote) {
+					summaryHTML += `<div class="fallback-note">${basicCreepageNote}</div>`;
+				}
+				if (reinforcedCreepageNote) {
+					summaryHTML += `<div class="fallback-note">${reinforcedCreepageNote}</div>`;
+				}
+				
+				creepageContainer.querySelector('.result-summary').innerHTML = summaryHTML;
+				creepageContainer.style.display = 'block';
+				const voltageTier = findGenericVoltageTier(ratedVoltage, creepageData);
+				highlightCell(creepageContainer, voltageTier, result.highlightInfo);
+			}
+
+			// --- Functional Insulation Creepage Calculation (修改後包含間隙距離比較) ---
+			const workingVoltageRms = parseFloat(document.getElementById('workingVoltageRms').value);
+			if (!isNaN(workingVoltageRms) && workingVoltageRms > 0) {
+				const result = findFunctionalCreepageValue(applicationType, workingVoltageRms, pollutionDegree, materialGroup);
+				if (!result) throw new Error(`Could not determine Functional Creepage value.`);
+				
+				// 功能絕緣只需要與修正後的基本絕緣間隙距離比較
+				const correctedBasicClearanceValue = parseFloat(correctedBasicClearance);
+				let finalFunctionalCreepageValue = result.value;
+				let functionalCreepageNote = "";
+				
+				// 比較 Corrected Clearance BI vs Functional Creepage
+				if (correctedBasicClearanceValue > result.value) {
+					finalFunctionalCreepageValue = correctedBasicClearanceValue;
+					functionalCreepageNote = `<span style="font-size: 0.9em; color: #c00;">Note: Functional Insulation Creepage distance replaced by Basic Insulation Clearance distance (${correctedBasicClearance} mm) as Clearance > Creepage.</span>`;
+				}
+				
+				const creepageContainer = document.getElementById('result-table-24-container');
+				let summaryHTML = `For <b>Functional Insulation</b> at Working Voltage <b>${workingVoltageRms} V r.m.s</b> (App: <b>${applicationType.toUpperCase()}</b>), PD <b>${pollutionDegree}</b>, MG <b>${materialGroup}</b>, the Creepage is <b>${finalFunctionalCreepageValue} mm</b>.`;
+				
+				// 添加回退訊息（如果有）
+				if (result.fallbackMessage) {
+					summaryHTML += `<div class="fallback-note">${result.fallbackMessage}</div>`;
+				}
+				
+				// 添加間隙距離替換註釋（如果有）
+				if (functionalCreepageNote) {
+					summaryHTML += `<div class="fallback-note">${functionalCreepageNote}</div>`;
+				}
+				
+				creepageContainer.querySelector('.result-summary').innerHTML = summaryHTML;
+				creepageContainer.style.display = 'block';
+				const voltageTier = findGenericVoltageTier(workingVoltageRms, functionalCreepageData);
+				highlightCell(creepageContainer, voltageTier, result.highlightInfo);
+			}
+
+		} catch (e) {
+			document.getElementById('error-message').textContent = e.message;
+			document.getElementById('error-message').style.display = 'block';
+		}
+	}
+
+    function highlightCell(container, voltageTier, highlightInfo) {
+        if (!voltageTier) return;
+        const targetRow = container.querySelector(`tbody tr[data-voltage="${voltageTier}"]`);
+        if (targetRow) {
+            targetRow.classList.add('highlight-row');
+            let selector;
+            if (highlightInfo.type === 'pcb') {
+                selector = `td[data-type="pcb"][data-pd="${highlightInfo.pd}"]`;
+            } else {
+                const displayMG = (highlightInfo.mg === 'all') ? 'all' : ((highlightInfo.mg === 'IIIa' || highlightInfo.mg === 'IIIb') ? 'III' : highlightInfo.mg);
+                selector = `td[data-type="plastic"][data-pd="${highlightInfo.pd}"][data-mg="${displayMG}"]`;
+            }
+            const targetCell = targetRow.querySelector(selector);
+            if (targetCell) targetCell.classList.add('highlight-cell');
+        }
+    }
+    
+    // --- Table Generation Functions ---
+    function generateTableHTML(dataObject) {
+        let tbodyHTML = '';
+        for (const voltage of Object.keys(dataObject).map(Number).sort((a, b) => a - b)) {
+            const row = dataObject[voltage];
+            tbodyHTML += `<tr data-voltage="${voltage}">`;
+            tbodyHTML += `<td>${voltage}</td>`; // Voltage Column
+            tbodyHTML += `<td data-type="pcb" data-pd="1">${row.pcb['1']}</td>`;
+            tbodyHTML += `<td data-type="pcb" data-pd="2">${row.pcb['2']}</td>`;
+            tbodyHTML += `<td data-type="plastic" data-pd="1" data-mg="all">${row.plastic['1'].all}</td>`;
+            ['2', '3', '4'].forEach(pd => {
+                tbodyHTML += `<td data-type="plastic" data-pd="${pd}" data-mg="I">${row.plastic[pd].I}</td>`;
+                tbodyHTML += `<td data-type="plastic" data-pd="${pd}" data-mg="II">${row.plastic[pd].II}</td>`;
+                tbodyHTML += `<td data-type="plastic" data-pd="${pd}" data-mg="III">${row.plastic[pd].IIIa}</td>`;
+            });
+            tbodyHTML += `</tr>`;
+        }
+        return tbodyHTML;
+    }
+
+    // --- DOMContentLoaded: Initial Setup ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const table21HTML = `<thead><tr><th colspan="2">Nominal voltage of the supply</th><th rowspan="3">Voltage line-to-neutral derived from nominal voltages a.c. or d.c. up to and including<br>V</th><th colspan="4">Rated impulse voltage required according to overvoltage category</th></tr><tr><th colspan="2">V</th><th colspan="4">V</th></tr><tr><th>Three-phase four-wire systems</th><th>Single-phase systems</th><th>I</th><th>II</th><th>III</th><th>IV</th></tr></thead><tbody><tr data-ln-value="50"><td></td><td></td><td>50</td><td data-ovc="I">330</td><td data-ovc="II">500</td><td data-ovc="III">800</td><td data-ovc="IV">1 500</td></tr><tr data-ln-value="100"><td></td><td></td><td>100</td><td data-ovc="I">500</td><td data-ovc="II">800</td><td data-ovc="III">1 500</td><td data-ovc="IV">2 500</td></tr><tr data-ln-value="150"><td></td><td>120/240</td><td>150</td><td data-ovc="I">800</td><td data-ovc="II">1 500</td><td data-ovc="III">2 500</td><td data-ovc="IV">4 000</td></tr><tr data-ln-value="300"><td>230/400</td><td rowspan="2"></td><td rowspan="2">300</td><td rowspan="2" data-ovc="I">1 500</td><td rowspan="2" data-ovc="II">2 500</td><td rowspan="2" data-ovc="III">4 000</td><td rowspan="2" data-ovc="IV">6 000</td></tr><tr data-ln-value="300"><td>277/480</td></tr><tr data-ln-value="600"><td>400/690</td><td></td><td>600</td><td data-ovc="I">2 500</td><td data-ovc="II">4 000</td><td data-ovc="III">6 000</td><td data-ovc="IV">8 000</td></tr></tbody>`;
+        const tableK1HTML = `<thead><tr><th rowspan="3">Voltage line-to-neutral from nominal voltages a.c. or d.c.</th><th colspan="4" rowspan="2">Nominal voltages presently used in the world</th><th colspan="4">Rated impulse voltage for equipment</th></tr><tr><th colspan="4">V</th></tr><tr><th>Three-phase four-wire systems with earthed neutral</th><th>Three-phase three-wire systems unearthed</th><th>Single-phase two-wire systems a.c. or d.c.</th><th>Single-phase three-wire systems a.c. or d.c.</th><th>I</th><th>II</th><th>III</th><th>IV</th></tr></thead><tbody><tr data-ln-value="50"><td>50</td><td></td><td></td><td>12,5; 24; 25; 30; 42; 48</td><td>30 / 60</td><td data-ovc="I">330</td><td data-ovc="II">500</td><td data-ovc="III">800</td><td data-ovc="IV">1 500</td></tr><tr data-ln-value="100"><td>100</td><td>66 / 115</td><td>66</td><td>60</td><td></td><td data-ovc="I">500</td><td data-ovc="II">800</td><td data-ovc="III">1 500</td><td data-ovc="IV">2 500</td></tr><tr data-ln-value="150"><td>150</td><td>120 / 208; 127 / 220</td><td>115; 120; 127</td><td>110; 120</td><td>110 / 220; 120 / 240</td><td data-ovc="I">800</td><td data-ovc="II">1 500</td><td data-ovc="III">2 500</td><td data-ovc="IV">4 000</td></tr><tr data-ln-value="300"><td>300</td><td>220 / 380; 230 / 400; 240 / 415; 260 / 440; 277 / 480</td><td>220; 230; 240; 260; 277; 347; 380; 400; 415; 440; 480</td><td>220</td><td>220 / 440</td><td data-ovc="I">1 500</td><td data-ovc="II">2 500</td><td data-ovc="III">4 000</td><td data-ovc="IV">6 000</td></tr><tr data-ln-value="600"><td>600</td><td>347 / 600; 380 / 660; 400 / 690; 417 / 720; 480 / 830</td><td>500; 577; 600</td><td>480</td><td>480 / 960</td><td data-ovc="I">2 500</td><td data-ovc="II">4 000</td><td data-ovc="III">6 000</td><td data-ovc="IV">8 000</td></tr><tr data-ln-value="1000"><td>1000</td><td></td><td>660; 690; 720; 830; 1 000</td><td>1 000</td><td></td><td data-ovc="I">4 000</td><td data-ovc="II">6 000</td><td data-ovc="III">8 000</td><td data-ovc="IV">12 000</td></tr></tbody>`;
+        const table22HTML = `<thead><tr><th rowspan="2">Rated impulse voltage (kV)</th><th colspan="4">Case A</th><th colspan="4">Case B</th></tr><tr><th>PD 1</th><th>PD 2</th><th>PD 3</th><th>PD 4</th><th>PD 1</th><th>PD 2</th><th>PD 3</th><th>PD 4</th></tr></thead><tbody><tr data-impulse-voltage="0.33"><td>0.33</td><td data-case="A" data-pd="1">0.01</td><td data-case="A" data-pd="2">0.20</td><td data-case="A" data-pd="3">0.8</td><td data-case="A" data-pd="4">1.6</td><td data-case="B" data-pd="1">0.01</td><td data-case="B" data-pd="2">0.2</td><td data-case="B" data-pd="3">0.8</td><td data-case="B" data-pd="4">1.6</td></tr><tr data-impulse-voltage="0.50"><td>0.50</td><td data-case="A" data-pd="1">0.04</td><td data-case="A" data-pd="2">0.20</td><td data-case="A" data-pd="3">0.8</td><td data-case="A" data-pd="4">1.6</td><td data-case="B" data-pd="1">0.04</td><td data-case="B" data-pd="2">0.2</td><td data-case="B" data-pd="3">0.8</td><td data-case="B" data-pd="4">1.6</td></tr><tr data-impulse-voltage="0.80"><td>0.80</td><td data-case="A" data-pd="1">0.10</td><td data-case="A" data-pd="2">0.20</td><td data-case="A" data-pd="3">0.8</td><td data-case="A" data-pd="4">1.6</td><td data-case="B" data-pd="1">0.1</td><td data-case="B" data-pd="2">0.2</td><td data-case="B" data-pd="3">0.8</td><td data-case="B" data-pd="4">1.6</td></tr><tr data-impulse-voltage="1.5"><td>1.5</td><td data-case="A" data-pd="1">0.5</td><td data-case="A" data-pd="2">0.5</td><td data-case="A" data-pd="3">0.3</td><td data-case="A" data-pd="4">0.3</td><td data-case="B" data-pd="1">0.5</td><td data-case="B" data-pd="2">0.5</td><td data-case="B" data-pd="3">0.3</td><td data-case="B" data-pd="4">0.3</td></tr><tr data-impulse-voltage="2.5"><td>2.5</td><td data-case="A" data-pd="1">1.5</td><td data-case="A" data-pd="2">1.5</td><td data-case="A" data-pd="3">1.5</td><td data-case="A" data-pd="4">0.6</td><td data-case="B" data-pd="1">1.5</td><td data-case="B" data-pd="2">1.5</td><td data-case="B" data-pd="3">1.5</td><td data-case="B" data-pd="4">0.6</td></tr><tr data-impulse-voltage="4.0"><td>4.0</td><td data-case="A" data-pd="1">3</td><td data-case="A" data-pd="2">3</td><td data-case="A" data-pd="3">3</td><td data-case="A" data-pd="4">3</td><td data-case="B" data-pd="1">1.2</td><td data-case="B" data-pd="2">1.2</td><td data-case="B" data-pd="3">1.2</td><td data-case="B" data-pd="4">1.2</td></tr><tr data-impulse-voltage="6.0"><td>6.0</td><td data-case="A" data-pd="1">5.5</td><td data-case="A" data-pd="2">5.5</td><td data-case="A" data-pd="3">5.5</td><td data-case="A" data-pd="4">5.5</td><td data-case="B" data-pd="1">2</td><td data-case="B" data-pd="2">2</td><td data-case="B" data-pd="3">2</td><td data-case="B" data-pd="4">2</td></tr><tr data-impulse-voltage="8.0"><td>8.0</td><td data-case="A" data-pd="1">8</td><td data-case="A" data-pd="2">8</td><td data-case="A" data-pd="3">8</td><td data-case="A" data-pd="4">8</td><td data-case="B" data-pd="1">3</td><td data-case="B" data-pd="2">3</td><td data-case="B" data-pd="3">3</td><td data-case="B" data-pd="4">3</td></tr></tbody>`;
+        const table23Header = `<thead><tr><th rowspan="3">Rated voltage<br>up to and including (V)</th><th colspan="2">Printed wiring material</th><th colspan="10">Plastic Material (Creepage distances in mm)</th></tr><tr><th>PD 1</th><th>PD 2</th><th rowspan="2">PD 1<br>(All Groups)</th><th colspan="3">Pollution Degree 2</th><th colspan="3">Pollution Degree 3</th><th colspan="3">Pollution Degree 4</th></tr><tr><th>(Note c)</th><th>(Note d)</th><th>Group I</th><th>Group II</th><th>Group III</th><th>Group I</th><th>Group II</th><th>Group III</th><th>Group I</th><th>Group II</th><th>Group III</th></tr></thead>`;
+        const table24Header = `<thead><tr><th rowspan="3">Working voltage<br>r.m.s. (V)</th><th colspan="2">Printed wiring material</th><th colspan="10">Plastic Material (Creepage distances in mm)</th></tr><tr><th>PD 1</th><th>PD 2</th><th rowspan="2">PD 1<br>(All Groups)</th><th colspan="3">Pollution Degree 2</th><th colspan="3">Pollution Degree 3</th><th colspan="3">Pollution Degree 4</th></tr><tr><th>(Note e)</th><th>(Note f)</th><th>Group I</th><th>Group II</th><th>Group III</th><th>Group I</th><th>Group II</th><th>Group III</th><th>Group I</th><th>Group II</th><th>Group III</th></tr></thead>`;
+
+        document.getElementById('result-table-21-container').innerHTML = `<div class="result-summary"></div><table id="result-table-21" class="result-table">${table21HTML}</table>`;
+        document.getElementById('result-table-k1-container').innerHTML = `<div class="result-summary"></div><table id="result-table-k1" class="result-table">${tableK1HTML}</table>`;
+        document.getElementById('result-table-22-container').innerHTML = `<div class="result-summary"></div><table id="result-table-22" class="result-table">${table22HTML}</table>`;
+        document.getElementById('result-table-23-container').innerHTML = `<div class="result-summary"></div><table id="result-table-23" class="result-table">${table23Header}<tbody>${generateTableHTML(creepageData)}</tbody></table>`;
+        document.getElementById('result-table-24-container').innerHTML = `<div class="result-summary"></div><table id="result-table-24" class="result-table">${table24Header}<tbody>${generateTableHTML(functionalCreepageData)}</tbody></table>`;
+        
+        populatePowerSystems();
+        updateNominalVoltageOptions();
+        toggleInputType();
+    });
+    </script>
+
+</body>
+</html>
