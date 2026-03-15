@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Line Assistant Dashboard v0.0.2</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#0f1117;--bg2:#161b27;--bg3:#1e2535;--bg4:#242d42;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#e8eaf0;--text2:#8891a8;--text3:#4a5270;
+  --accent:#4f8ef7;--green:#34d399;--amber:#fbbf24;--red:#f87171;--pink:#f472b6;--teal:#2dd4bf;
+  --font:'DM Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+}
+@media(prefers-color-scheme:light){:root{
+  --bg:#f4f6fb;--bg2:#fff;--bg3:#edf0f7;--bg4:#e2e8f5;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);
+  --text:#1a1f35;--text2:#5a6380;--text3:#9aa3ba;
+  --accent:#2563eb;--green:#059669;--amber:#d97706;--red:#dc2626;--pink:#db2777;--teal:#0d9488;
+}}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+/* LOGIN */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px;}
+.lcard{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:40px 48px;width:360px;display:flex;flex-direction:column;gap:18px;}
+.llogo{font-family:var(--mono);font-size:12px;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;}
+.ltitle{font-size:22px;font-weight:600;}
+.lsub{font-size:13px;color:var(--text2);margin-top:-6px;}
+.linput{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;font-family:var(--mono);font-size:15px;color:var(--text);outline:none;transition:border-color .2s;}
+.linput:focus{border-color:var(--accent);}
+.lbtn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);}
+.lbtn:hover{opacity:.88;}
+.lerr{color:var(--red);font-size:13px;text-align:center;display:none;}
+.lhash{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:center;word-break:break-all;max-width:360px;}
+
+#dashboard{display:none;min-height:100vh;flex-direction:column;}
+#dashboard.visible{display:flex;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:3px;padding:0 14px;height:52px;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;z-index:200;flex-shrink:0;}
+.topbar-logo{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;font-weight:500;margin-right:6px;}
+.topbar-sep{flex:1;}
+.topbar-time{font-family:var(--mono);font-size:11px;color:var(--text3);margin-right:6px;}
+.ib{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;color:var(--text2);cursor:pointer;transition:all .15s;flex-shrink:0;user-select:none;position:relative;}
+.ib:hover{background:var(--bg3);color:var(--text);}
+.ib.active{background:var(--bg3);outline:1px solid var(--border2);color:var(--accent);}
+.ib.active.global-btn{color:var(--teal);}
+.ib.active.date-btn{color:var(--amber);outline-color:rgba(251,191,36,.3);}
+.ib .idot{position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--amber);display:none;}
+.ib.active.date-btn .idot{display:block;}
+.ib[data-tip]:hover::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg4);border:1px solid var(--border2);color:var(--text2);font-size:11px;padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:400;font-family:var(--font);}
+.tb-div{width:1px;height:18px;background:var(--border2);margin:0 3px;flex-shrink:0;}
+.snap-pill{display:none;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2);font-size:11px;color:var(--amber);font-family:var(--mono);white-space:nowrap;flex-shrink:0;}
+.snap-pill.visible{display:flex;}
+
+/* GLOBAL BANNER */
+.global-banner{background:rgba(45,212,191,.06);border-bottom:1px solid rgba(45,212,191,.12);padding:5px 20px;font-size:11px;color:var(--teal);display:none;align-items:center;gap:8px;flex-shrink:0;}
+.global-banner.visible{display:flex;}
+.gb-pulse{width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* CALENDAR */
+.cal-popup{display:none;position:absolute;top:calc(100% + 8px);right:14px;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:16px;width:272px;z-index:500;box-shadow:0 8px 32px rgba(0,0,0,.35);}
+.cal-popup.open{display:block;}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cal-nav{display:flex;align-items:center;gap:4px;}
+.cal-nav-btn{appearance:none;-webkit-appearance:none;width:28px;height:28px;padding:0;margin:0;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;flex-shrink:0;outline:none;}
+.cal-nav-btn:hover{background:var(--bg4);color:var(--text);}
+.cal-nav-btn svg{display:block;}
+.cal-month-lbl{font-size:13px;font-weight:600;color:var(--text);min-width:106px;text-align:center;}
+.cal-latest-btn{appearance:none;-webkit-appearance:none;width:100%;padding:7px;border-radius:8px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:12px;font-family:var(--font);cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,color .15s;outline:none;}
+.cal-latest-btn:hover{background:var(--bg3);color:var(--text);}
+.cal-latest-btn.active{background:rgba(79,142,247,.1);border-color:rgba(79,142,247,.3);color:var(--accent);}
+.cal-wds{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+.cal-wd{text-align:center;font-size:10px;color:var(--text3);padding:2px 0;font-weight:500;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-day{aspect-ratio:1;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--text2);gap:2px;}
+.cal-day.has-data{cursor:pointer;color:var(--text);}
+.cal-day.has-data:hover{background:var(--bg3);}
+.cal-day.sel{background:var(--accent)!important;color:#fff!important;}
+.cal-day.sel .cdots span{background:rgba(255,255,255,.7)!important;}
+.cal-day.today .cal-day-n{font-weight:600;color:var(--accent);}
+.cal-day.sel .cal-day-n{color:#fff!important;}
+.cal-day.other{opacity:.3;}
+.cal-day-n{font-size:12px;line-height:1;}
+.cdots{display:flex;gap:2px;align-items:center;height:4px;}
+.cdots span{width:4px;height:4px;border-radius:50%;background:var(--accent);}
+.cal-legend{display:flex;align-items:center;gap:5px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);}
+.cal-legend-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+
+/* GROUP MENU */
+#group-menu{display:none;position:absolute;top:calc(100% + 8px);right:80px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:8px;min-width:200px;z-index:500;box-shadow:0 8px 32px rgba(0,0,0,.3);}
+
+/* TABS */
+.tabs{display:flex;padding:0 20px;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;}
+.tab{padding:10px 14px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;user-select:none;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+.content{padding:20px;flex:1;overflow:auto;}
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* PAGE COPY BAR */
+.page-copy-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;}
+.page-copy-bar-info{font-size:12px;color:var(--text2);}
+.page-copy-bar-info strong{color:var(--text);}
+.copy-page-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid var(--border2);color:var(--text2);font-size:12px;font-family:var(--font);cursor:pointer;transition:all .15s;white-space:nowrap;user-select:none;}
+.copy-page-btn:hover{background:var(--bg3);color:var(--text);}
+.copy-page-btn.copied{border-color:var(--green);color:var(--green);}
+
+/* FILTERS */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.fi{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:7px 11px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;transition:border-color .2s;}
+.fi:focus{border-color:var(--accent);}
+.fi::placeholder{color:var(--text3);}
+select.fi{cursor:pointer;}
+
+/* STATS */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+.stat-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.stat-value{font-size:24px;font-weight:600;font-family:var(--mono);}
+
+/* TABLE */
+.tw{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+thead{background:var(--bg3);}
+th{text-align:left;padding:9px 13px;font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:9px 13px;font-size:13px;color:var(--text);border-bottom:1px solid var(--border);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg3);}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
+.b-blue{background:rgba(79,142,247,.15);color:var(--accent);}
+.b-green{background:rgba(52,211,153,.15);color:var(--green);}
+.b-amber{background:rgba(251,191,36,.15);color:var(--amber);}
+.b-red{background:rgba(248,113,113,.15);color:var(--red);}
+.b-pink{background:rgba(244,114,182,.15);color:var(--pink);}
+.b-teal{background:rgba(45,212,191,.15);color:var(--teal);}
+.b-gray{background:var(--bg3);color:var(--text2);}
+.eref{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:10px;font-family:var(--mono);background:rgba(45,212,191,.1);color:var(--teal);border:1px solid rgba(45,212,191,.2);}
+
+/* CARD */
+.ccard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s;}
+.ccard:hover{border-color:var(--border2);}
+.ccard-header{display:flex;align-items:flex-start;justify-content:space-between;padding:14px 16px 10px;gap:10px;cursor:pointer;}
+.ccard-header-left{flex:1;min-width:0;}
+.ccard-title{font-size:13px;font-weight:600;color:var(--text);}
+.ccard-summary{padding:0 16px 4px;font-size:13px;color:var(--text2);line-height:1.6;}
+.ccard-body{padding:0 16px 14px;border-top:1px solid var(--border);display:none;}
+.ccard-body.open{display:block;}
+.card-copy-icon{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;color:var(--text3);cursor:pointer;transition:all .15s;flex-shrink:0;margin-top:-2px;user-select:none;}
+.card-copy-icon:hover{background:var(--bg3);color:var(--accent);}
+.card-copy-icon.copied{color:var(--green);}
+
+/* SHOW MORE */
+.show-more{display:inline-flex;align-items:center;gap:3px;padding:4px 16px 10px;cursor:pointer;font-size:11px;color:var(--accent);font-family:var(--font);opacity:.6;transition:opacity .15s;user-select:none;}
+.show-more:hover{opacity:1;}
+.show-more svg{transition:transform .2s;}
+.show-more.open svg{transform:rotate(180deg);}
+
+/* EVENT */
+.ev-grid{display:flex;flex-direction:column;gap:12px;}
+.ev-progress-bar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:4px;}
+.ev-progress-fill{height:100%;border-radius:2px;transition:width .4s;}
+.ev-check-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);padding:3px 0;}
+.ev-check-item.done{color:var(--text3);text-decoration:line-through;}
+.ev-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+
+/* URL LIST */
+.url-list{display:flex;flex-direction:column;gap:4px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.url-item{display:flex;align-items:baseline;gap:8px;padding:3px 0;}
+.url-item-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.url-item-body{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.url-item-meta{font-size:10px;color:var(--text3);display:flex;align-items:center;gap:5px;}
+.src-badge{font-family:var(--mono);font-size:10px;padding:0 5px;border-radius:3px;}
+.src-badge.signup{background:rgba(52,211,153,.1);color:var(--green);}
+.src-badge.chat{background:rgba(79,142,247,.1);color:var(--accent);}
+.url-item-link{font-family:var(--mono);font-size:11px;color:var(--accent);text-decoration:none;word-break:break-all;}
+.url-item-link:hover{text-decoration:underline;}
+.url-section-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);font-weight:500;margin-bottom:2px;}
+
+/* TIMELINE */
+.tl-drawer{display:none;border-top:1px solid var(--border);background:var(--bg3);padding:16px;}
+.tl-drawer.open{display:block;}
+.tl-drawer-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.tl-drawer-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;}
+.tl-add{display:flex;gap:6px;margin-bottom:14px;}
+.tl-add input{flex:1;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:6px 10px;font-size:12px;font-family:var(--font);color:var(--text);outline:none;}
+.tl-add input:focus{border-color:var(--accent);}
+.tl-add input::placeholder{color:var(--text3);}
+.tl-addbtn{appearance:none;-webkit-appearance:none;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-family:var(--font);cursor:pointer;outline:none;}
+.tl-addbtn:hover{opacity:.88;}
+.git-log{display:flex;flex-direction:column;}
+.git-entry{display:flex;gap:10px;}
+.git-left{display:flex;flex-direction:column;align-items:center;width:14px;flex-shrink:0;}
+.git-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px;border:2px solid var(--bg3);}
+.git-dot.major-auto{background:var(--accent);box-shadow:0 0 0 2px rgba(79,142,247,.2);}
+.git-dot.auto{background:var(--text3);}
+.git-dot.manual-tag{background:var(--amber);box-shadow:0 0 0 2px rgba(251,191,36,.2);}
+.git-line{width:1px;background:var(--border2);flex:1;margin:2px 0;}
+.git-right{padding-bottom:12px;flex:1;min-width:0;}
+.git-top{display:flex;align-items:center;gap:5px;margin-bottom:2px;flex-wrap:wrap;}
+.git-hash{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.git-tag{font-size:10px;padding:1px 6px;border-radius:10px;font-weight:500;}
+.git-tag.major{background:rgba(79,142,247,.15);color:var(--accent);}
+.git-tag.manual{background:rgba(251,191,36,.15);color:var(--amber);}
+.git-msg{font-size:13px;color:var(--text);font-weight:500;margin-bottom:2px;}
+.git-sub{font-size:11px;color:var(--text2);line-height:1.5;}
+.git-time{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px;}
+.git-diffs{margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;}
+.gd{font-size:10px;padding:2px 6px;border-radius:4px;font-family:var(--mono);}
+.gd-add{background:rgba(52,211,153,.1);color:var(--green);}
+.gd-mod{background:rgba(251,191,36,.1);color:var(--amber);}
+.gd-del{background:rgba(248,113,113,.1);color:var(--red);}
+
+/* FORMAT MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:24px;width:300px;display:flex;flex-direction:column;gap:12px;}
+.modal-title{font-size:14px;font-weight:600;}
+.modal-sub{font-size:12px;color:var(--text2);margin-top:-6px;}
+.modal-opts{display:flex;flex-direction:column;gap:8px;}
+.modal-opt{display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:10px;border:1px solid var(--border2);cursor:pointer;transition:all .15s;}
+.modal-opt:hover{border-color:var(--accent);background:rgba(79,142,247,.05);}
+.modal-opt-label{font-size:13px;font-weight:500;color:var(--text);}
+.modal-opt-desc{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;}
+.modal-cancel{appearance:none;-webkit-appearance:none;border:1px solid var(--border2);background:none;color:var(--text2);font-size:13px;font-family:var(--font);padding:9px;border-radius:8px;cursor:pointer;width:100%;outline:none;display:block;}
+.modal-cancel:hover{background:var(--bg3);color:var(--text);}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-size:12px;font-family:var(--font);padding:8px 16px;border-radius:20px;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;z-index:2000;display:flex;align-items:center;gap:6px;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;}
+
+.link-url{color:var(--accent);font-family:var(--mono);font-size:12px;text-decoration:none;word-break:break-all;}
+.link-url:hover{text-decoration:underline;}
+.amount-pos{color:var(--green);font-family:var(--mono);font-weight:500;}
+.amount-neg{color:var(--red);font-family:var(--mono);font-weight:500;}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px;}
+.todo-check{width:14px;height:14px;cursor:pointer;accent-color:var(--green);}
+.todo-done{text-decoration:line-through;color:var(--text3);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="lcard">
+    <div>
+      <div class="llogo">Line Assistant</div>
+      <div class="ltitle">Dashboard</div>
+      <div class="lsub" style="margin-top:6px">Enter your password to sync cloud data</div>
+    </div>
+    <input class="linput" type="password" id="pw-input" placeholder="Password">
+    <button class="lbtn" onclick="tryLogin()">Unlock & Sync</button>
+    <div class="lerr" id="login-error">Incorrect password. Try again.</div>
+  </div>
+  <div class="lhash" id="hash-display">SHA-256: —</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar" id="topbar">
+    <div class="topbar-logo">⬡ Line</div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-time" id="topbar-time"></div>
+
+    <!-- DATE -->
+    <div class="ib date-btn" id="ib-date" data-tip="Snapshot date" onclick="toggleCal(event)">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1" y="2.5" width="14" height="12" rx="2"/><path d="M1 6.5h14M5 1v3M11 1v3"/></svg>
+      <div class="idot"></div>
+    </div>
+    <div class="snap-pill" id="snap-pill">
+      <svg width="9" height="9" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="6"/><polyline points="7 4 7 7 9 9"/></svg>
+      <span id="snap-label">—</span>
+    </div>
+    <div class="tb-div"></div>
+
+    <!-- GROUP -->
+    <div class="ib" id="ib-group" data-tip="Filter group" onclick="toggleGroupMenu(event)">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/><circle cx="12" cy="5" r="2"/><path d="M14 13c0-2-1.3-3.6-3-4.2"/></svg>
+    </div>
+    <div class="tb-div"></div>
+
+    <!-- SINGLE / GLOBAL -->
+    <div class="ib active" id="vt-single" data-tip="Single group" onclick="setViewMode('single')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="5.5" r="3"/><path d="M1.5 15c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/></svg>
+    </div>
+    <div class="ib global-btn" id="vt-global" data-tip="Global view" onclick="setViewMode('global')">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="7"/><path d="M8 1c-2.5 2.3-3.5 4.5-3.5 7s1 4.7 3.5 7M8 1c2.5 2.3 3.5 4.5 3.5 7s-1 4.7-3.5 7M1 8h14"/></svg>
+    </div>
+    <div class="tb-div"></div>
+
+    <!-- RELOAD -->
+    <div class="ib" data-tip="Reload" onclick="syncAllData()">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13.5 8A5.5 5.5 0 112.5 5"/><polyline points="2.5 1 2.5 5 6.5 5"/></svg>
+    </div>
+
+    <!-- LOCK -->
+    <div class="ib" data-tip="Lock" onclick="logout()">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="7" width="12" height="8" rx="2"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
+    </div>
+
+    <!-- CALENDAR POPUP -->
+    <div class="cal-popup" id="cal-popup">
+      <div class="cal-header">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="navMonth(-1)">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="8 2 4 6 8 10"/></svg>
+          </button>
+          <div class="cal-month-lbl" id="cal-month-lbl"></div>
+          <button class="cal-nav-btn" onclick="navMonth(1)">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="4 2 8 6 4 10"/></svg>
+          </button>
+        </div>
+      </div>
+      <button class="cal-latest-btn" id="cal-latest-btn" onclick="selectLatest()">
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="6"/><polyline points="7 4 7 7 9 9"/></svg>
+        Latest (each group's newest)
+      </button>
+      <div class="cal-wds">
+        <div class="cal-wd">Su</div><div class="cal-wd">Mo</div><div class="cal-wd">Tu</div>
+        <div class="cal-wd">We</div><div class="cal-wd">Th</div><div class="cal-wd">Fr</div><div class="cal-wd">Sa</div>
+      </div>
+      <div class="cal-days" id="cal-days"></div>
+      <div class="cal-legend"><div class="cal-legend-dot"></div>Each dot = one group with summary (max 4)</div>
+    </div>
+
+    <!-- GROUP MENU -->
+    <div id="group-menu"></div>
+  </div>
+
+  <div class="global-banner" id="global-banner">
+    <div class="gb-pulse"></div>
+    Global mode — all groups visible. Items with <span style="font-family:var(--mono);padding:0 4px;background:rgba(45,212,191,.1);border-radius:3px;margin:0 2px">event_ref</span> are linked across groups.
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('summary')">Summary</div>
+    <div class="tab" onclick="switchTab('todos')">Todos</div>
+    <div class="tab" onclick="switchTab('finance')">Finance</div>
+    <div class="tab" onclick="switchTab('headcount')">Headcount</div>
+    <div class="tab" onclick="switchTab('links')">Links</div>
+    <div class="tab" onclick="switchTab('events')">Events</div>
+    <div class="tab" onclick="switchTab('logs')">Raw Logs</div>
+  </div>
+
+  <div class="content">
+
+    <!-- SUMMARY -->
+    <div class="panel active" id="panel-summary">
+      <div class="page-copy-bar">
+        <div class="page-copy-bar-info" id="sum-info">—</div>
+        <span class="copy-page-btn" id="copy-sum-btn" onclick="copyPage('summary')">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+          Copy all
+        </span>
+      </div>
+      <div class="filter-bar">
+        <input class="fi" id="sum-search" placeholder="Search…" style="width:200px" oninput="renderSummary()">
+      </div>
+      <div class="stat-row" id="sum-stats"></div>
+      <div id="sum-grid" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+
+    <!-- TODOS -->
+    <div class="panel" id="panel-todos">
+      <div class="page-copy-bar">
+        <div class="page-copy-bar-info" id="todo-info">—</div>
+        <span class="copy-page-btn" id="copy-todo-btn" onclick="copyPage('todos')">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+          Copy all
+        </span>
+      </div>
+      <div class="filter-bar">
+        <input class="fi" id="todo-search" placeholder="Search…" style="width:180px" oninput="renderTodos()">
+        <select class="fi" id="todo-priority" onchange="renderTodos()"><option value="">All priorities</option><option>高</option><option>中</option><option>低</option></select>
+        <select class="fi" id="todo-done" onchange="renderTodos()"><option value="">All</option><option value="false">Pending</option><option value="true">Done</option></select>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th></th><th>Group</th><th>Todo</th><th>Priority</th><th>Due</th><th id="todo-ref-th" style="display:none">Ref</th></tr></thead>
+        <tbody id="todo-body"></tbody>
+      </table></div>
+    </div>
+
+    <!-- FINANCE -->
+    <div class="panel" id="panel-finance">
+      <div class="page-copy-bar">
+        <div class="page-copy-bar-info" id="fin-info">—</div>
+        <span class="copy-page-btn" id="copy-fin-btn" onclick="copyPage('finance')">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+          Copy all
+        </span>
+      </div>
+      <div class="filter-bar">
+        <input class="fi" id="fin-search" placeholder="Search…" style="width:180px" oninput="renderFinance()">
+        <select class="fi" id="fin-dir" onchange="renderFinance()"><option value="">All</option><option>支出</option><option>收入</option></select>
+      </div>
+      <div class="stat-row" id="fin-stats"></div>
+      <div class="tw"><table>
+        <thead><tr><th>Date</th><th>Group</th><th>Description</th><th>Amount</th><th>Dir</th><th>Payer</th><th>Payees</th><th>Note</th><th id="fin-ref-th" style="display:none">Ref</th></tr></thead>
+        <tbody id="fin-body"></tbody>
+      </table></div>
+    </div>
+
+    <!-- HEADCOUNT -->
+    <div class="panel" id="panel-headcount">
+      <div class="page-copy-bar">
+        <div class="page-copy-bar-info" id="hc-info">—</div>
+        <span class="copy-page-btn" id="copy-hc-btn" onclick="copyPage('headcount')">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+          Copy all
+        </span>
+      </div>
+      <div class="filter-bar">
+        <input class="fi" id="hc-search" placeholder="Search…" style="width:180px" oninput="renderHeadcount()">
+        <select class="fi" id="hc-status" onchange="renderHeadcount()"><option value="">All status</option><option>確認</option><option>未確認</option><option>請假</option></select>
+      </div>
+      <div class="stat-row" id="hc-stats"></div>
+      <div class="tw"><table>
+        <thead><tr><th>Group</th><th>Event</th><th>Date</th><th>Person</th><th>Status</th><th>RSVP Time</th><th>Note</th><th id="hc-ref-th" style="display:none">Ref</th></tr></thead>
+        <tbody id="hc-body"></tbody>
+      </table></div>
+    </div>
+
+    <!-- LINKS -->
+    <div class="panel" id="panel-links">
+      <div class="page-copy-bar">
+        <div class="page-copy-bar-info" id="lnk-info">—</div>
+        <span class="copy-page-btn" id="copy-lnk-btn" onclick="copyPage('links')">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+          Copy all
+        </span>
+      </div>
+      <div class="filter-bar">
+        <input class="fi" id="lnk-search" placeholder="Search…" style="width:200px" oninput="renderLinks()">
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>Time</th><th>Group</th><th>Sender</th><th>URL</th><th id="lnk-ref-th" style="display:none">Ref</th></tr></thead>
+        <tbody id="lnk-body"></tbody>
+      </table></div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="panel" id="panel-events">
+      <div class="page-copy-bar">
+        <div class="page-copy-bar-info" id="ev-info">—</div>
+        <span class="copy-page-btn" id="copy-ev-btn" onclick="copyPage('events')">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+          Copy all
+        </span>
+      </div>
+      <div class="filter-bar">
+        <input class="fi" id="ev-search" placeholder="Search events…" style="width:180px" oninput="renderEvents()">
+        <select class="fi" id="ev-status" onchange="renderEvents()"><option value="">All status</option><option value="upcoming">Upcoming</option><option value="ongoing">Ongoing</option><option value="completed">Completed</option></select>
+      </div>
+      <div class="stat-row" id="ev-stats"></div>
+      <div class="ev-grid" id="ev-grid"></div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="panel" id="panel-logs">
+      <div class="filter-bar">
+        <input class="fi" id="log-search" placeholder="Search…" style="width:180px" oninput="renderLogs()">
+        <select class="fi" id="log-type" onchange="renderLogs()"><option value="">All types</option><option>text</option><option>image</option></select>
+        <input class="fi" id="log-from" type="date" onchange="renderLogs()">
+        <span style="font-size:12px;color:var(--text2)">→</span>
+        <input class="fi" id="log-to" type="date" onchange="renderLogs()">
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>Time</th><th>Group</th><th>Sender</th><th>Content</th><th>Type</th></tr></thead>
+        <tbody id="log-body"></tbody>
+      </table></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FORMAT MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div><div class="modal-title">選擇複製格式</div><div class="modal-sub" id="modal-sub"></div></div>
+    <div class="modal-opts">
+      <div class="modal-opt" onclick="confirmCopy('brief')">
+        <div style="font-size:18px;flex-shrink:0;line-height:1">⚡</div>
+        <div><div class="modal-opt-label">精簡版</div><div class="modal-opt-desc">摘要 + 注意事項 + 統計，適合快速分享</div></div>
+      </div>
+      <div class="modal-opt" onclick="confirmCopy('full')">
+        <div style="font-size:18px;flex-shrink:0;line-height:1">📋</div>
+        <div><div class="modal-opt-label">完整版</div><div class="modal-opt-desc">所有欄位完整列出，適合存檔或詳細報告</div></div>
+      </div>
+    </div>
+    <button class="modal-cancel" onclick="closeModal()">取消</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-msg">已複製到剪貼簿</span></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzdTgOVhd9YmAvFgZn57Pva2e_afh_PU6ktCu-kUjXKlsERaCTaViREUa-oceMNPs-r5w/exec";
+
+// ── STATE ────────────────────────────────────────────────────────────
+let currentApiToken = '';
+let viewMode = 'single', selectedGroup = '', selectedDate = 'latest';
+let expandedCards = {}, openTimeline = null;
+let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
+let cardDataStore = {}, renderedData = {}, DATE_MAP = {};
+let D = { summary:[], todos:[], finance:[], headcount:[], links:[], events:[], logs:[] };
+let pendingCopy = null, pendingCardId = null;
+
+// ── AUTH ─────────────────────────────────────────────────────────────
+async function sha256(s) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
+}
+
+async function tryLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if(!pw) return;
+  const h = await sha256(pw);
+  try {
+    const res = await fetch(`${GAS_URL}?token=${h}&action=ping`);
+    const data = await res.json();
+    if(data.ok) {
+      currentApiToken = h;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').classList.add('visible');
+      initDashboard();
+      await syncAllData();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('login-error').style.display = 'block';
+    console.error('Login error:', e);
+  }
+}
+
+document.getElementById('pw-input').addEventListener('keydown', e => { if(e.key === 'Enter') tryLogin(); });
+document.getElementById('pw-input').addEventListener('input', async function() {
+  document.getElementById('hash-display').textContent = this.value ? 'SHA-256: ' + (await sha256(this.value)) : 'SHA-256: —';
+});
+
+function logout() {
+  currentApiToken = '';
+  document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+// ── SYNC ─────────────────────────────────────────────────────────────
+async function syncAllData() {
+  showToast('☁️ 正在從 Google Sheet 同步...');
+  try {
+    // 1. 先拉日期資料給日曆
+    const datesRes = await fetch(`${GAS_URL}?token=${currentApiToken}&action=dates`).then(r => r.json());
+    if(datesRes.ok) {
+      DATE_MAP = {};
+      datesRes.data.forEach(d => { DATE_MAP[d.created_at] = d.groups; });
+      // 自動跳到最新有資料的月份
+      const dates = Object.keys(DATE_MAP).sort().reverse();
+      if(dates.length) {
+        const latest = new Date(dates[0]);
+        calYear = latest.getFullYear();
+        calMonth = latest.getMonth();
+      }
+      renderCal();
+    }
+
+    // 2. 並行拉所有分頁資料
+    const actions = ['summary','todos','finance','headcount','links','events','logs'];
+    const results = await Promise.all(
+      actions.map(act => fetch(`${GAS_URL}?token=${currentApiToken}&action=${act}&created_at=${selectedDate}`).then(r => r.json()))
+    );
+
+    results.forEach((res, i) => {
+      if(res.ok && res.data) {
+        D[actions[i]] = res.data.map(item => ({
+          ...item,
+          // 統一把 created_at 截成日期字串供 filterData 比對
+          _date: item.created_at ? item.created_at.toString().slice(0,10) : ''
+        }));
+      }
+    });
+
+    renderAll();
+    showToast('✅ 資料已同步');
+  } catch(e) {
+    showToast('❌ 同步失敗，請檢查網路');
+    console.error('Sync error:', e);
+  }
+}
+
+// ── FILTER ───────────────────────────────────────────────────────────
+// FIX #3: 正確實作 latest = 每個 group_name 只取 created_at 最新的那筆
+function applyDateFilter(arr) {
+  if(selectedDate === 'latest') {
+    const latestMap = {};
+    arr.forEach(r => {
+      const g = r.group_name;
+      if(!latestMap[g] || r.created_at > latestMap[g]) latestMap[g] = r.created_at;
+    });
+    return arr.filter(r => r.created_at === latestMap[r.group_name]);
+  }
+  return arr.filter(r => r._date === selectedDate);
+}
+
+function filterData(arr) {
+  let d = applyDateFilter(arr);
+  if(viewMode === 'single' && selectedGroup) d = d.filter(r => r.group_name === selectedGroup);
+  return d;
+}
+
+function filterDesc() {
+  const parts = [];
+  if(selectedDate !== 'latest') parts.push(`Snapshot: ${selectedDate}`);
+  else parts.push('Latest');
+  if(selectedGroup) parts.push(`Group: ${selectedGroup}`);
+  else parts.push('All groups');
+  if(viewMode === 'global') parts.push('Global');
+  return parts.join(' · ');
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────
+function initDashboard() {
+  setInterval(() => {
+    document.getElementById('topbar-time').textContent = new Date().toLocaleString('en-GB', {hour12:false});
+  }, 1000);
+}
+
+function renderAll() {
+  renderSummary(); renderTodos(); renderFinance();
+  renderHeadcount(); renderLinks(); renderEvents(); renderLogs();
+}
+
+function switchTab(t) {
+  const tabs = ['summary','todos','finance','headcount','links','events','logs'];
+  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', tabs[i] === t));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+}
+
+function setViewMode(m) {
+  viewMode = m;
+  document.getElementById('vt-single').classList.toggle('active', m === 'single');
+  document.getElementById('vt-global').classList.toggle('active', m === 'global');
+  document.getElementById('global-banner').classList.toggle('visible', m === 'global');
+  ['todo','fin','hc','lnk'].forEach(p => {
+    const th = document.getElementById(p+'-ref-th');
+    if(th) th.style.display = m === 'global' ? '' : 'none';
+  });
+  renderAll();
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────
+function groupBadge(g) {
+  const label = g && g.length > 14 ? g.slice(0,14)+'…' : (g||'');
+  return `<span class="badge b-blue" style="font-size:10px" title="${g||''}">${label}</span>`;
+}
+function refBadge(r) { return r ? `<span class="eref">⬡ ${r}</span>` : ''; }
+
+// FIX #6: showMore 含完整 id、sm-label、SVG
+function showMore(id) {
+  return `<span class="show-more" id="pt-${id}" onclick="toggleCard('${id}')">
+    <span class="sm-label">Show more</span>
+    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="2 4 6 8 10 4"/></svg>
+  </span>`;
+}
+
+// FIX #7: toggleCard 加 null 檢查，同時更新 show-more 狀態
+function toggleCard(id) {
+  expandedCards[id] = !expandedCards[id];
+  const body = document.getElementById('pb-'+id);
+  const btn = document.getElementById('pt-'+id);
+  if(body) body.classList.toggle('open', expandedCards[id]);
+  if(btn) {
+    btn.classList.toggle('open', expandedCards[id]);
+    const lbl = btn.querySelector('.sm-label');
+    if(lbl) lbl.textContent = expandedCards[id] ? 'Show less' : 'Show more';
+  }
+}
+
+function cardCopyIcon(id) {
+  return `<span class="card-copy-icon" id="cci-${id}" onclick="event.stopPropagation();copyCard('${id}')" title="Copy">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+  </span>`;
+}
+
+// ── SUMMARY ──────────────────────────────────────────────────────────
+function renderSummary() {
+  const q = document.getElementById('sum-search').value.toLowerCase();
+  let data = filterData(D.summary).filter(r =>
+    !q || (r.group_name||'').toLowerCase().includes(q) ||
+    (r.summary||'').toLowerCase().includes(q) ||
+    (r.topics||[]).join(' ').toLowerCase().includes(q)
+  );
+  renderedData.summary = data.map(r => ({...r, _tab:'Summary'}));
+  document.getElementById('sum-info').innerHTML =
+    `Showing <strong>${data.length} cards</strong> · ${filterDesc()}`;
+
+  const groups = [...new Set(D.summary.map(d => d.group_name))].length;
+  const todoCount = D.todos.length;
+  const linksCount = D.links.length;
+  const peopleCount = [...new Set(D.headcount.map(h => h.person_name).filter(Boolean))].length;
+  document.getElementById('sum-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Groups</div><div class="stat-value">${groups}</div></div>
+    <div class="stat-card"><div class="stat-label">Todos</div><div class="stat-value">${todoCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Links</div><div class="stat-value">${linksCount}</div></div>
+    <div class="stat-card"><div class="stat-label">People</div><div class="stat-value">${peopleCount}</div></div>`;
+
+  document.getElementById('sum-grid').innerHTML = data.length === 0
+    ? '<div class="empty-state">No results</div>'
+    : data.map((r, i) => {
+      const id = 's'+i;
+      cardDataStore[id] = {...r, _tab:'Summary'};
+      // FIX #16: notes 空值保護
+      const notesHtml = r.notes && r.notes.length
+        ? `<div style="font-size:12px;color:var(--amber);padding:7px 10px;background:rgba(251,191,36,.07);border-radius:8px">${r.notes.map(n=>'⚠ '+n).join('<br>')}</div>`
+        : '';
+      return `<div class="ccard">
+        <div class="ccard-header" onclick="toggleCard('${id}')">
+          <div class="ccard-header-left">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span class="ccard-title">${r.group_name||''}</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${(r.created_at||'').slice(0,16)}</span>
+            </div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              ${(r.topics||[]).map(t=>`<span class="badge b-blue">${t}</span>`).join('')}
+              ${viewMode==='global'&&r.event_ref ? refBadge(r.event_ref) : ''}
+            </div>
+          </div>
+          ${cardCopyIcon(id)}
+        </div>
+        <div class="ccard-summary">${r.summary||''}</div>
+        <div class="ccard-body" id="pb-${id}">
+          <div style="padding-top:12px;display:flex;flex-direction:column;gap:8px">
+            ${notesHtml}
+            <div style="display:flex;gap:14px;font-size:12px;color:var(--text2)">
+              <span>Todos <strong style="color:var(--text)">${r.todos||0}</strong></span>
+              <span>Links <strong style="color:var(--text)">${r.urls||0}</strong></span>
+              <span>People <strong style="color:var(--text)">${r.people||0}</strong></span>
+            </div>
+            ${viewMode==='global' ? `<div style="font-size:12px;color:var(--text2)">Event ref ${refBadge(r.event_ref)}</div>` : ''}
+          </div>
+        </div>
+        ${showMore(id)}
+      </div>`;
+    }).join('');
+}
+
+// ── TODOS ────────────────────────────────────────────────────────────
+function renderTodos() {
+  const q = document.getElementById('todo-search').value.toLowerCase();
+  const pf = document.getElementById('todo-priority').value;
+  const df = document.getElementById('todo-done').value;
+  let data = filterData(D.todos);
+  if(q) data = data.filter(r =>
+    (r.group_name||'').toLowerCase().includes(q) ||
+    (r.todo||'').toLowerCase().includes(q) ||
+    (r.priority||'').toLowerCase().includes(q) ||
+    (r.due_date||'').includes(q)
+  );
+  if(pf) data = data.filter(r => r.priority === pf);
+  // FIX #1: done 比對用 Boolean 轉換，相容 TRUE/FALSE 字串和 boolean
+  if(df !== '') {
+    const wantDone = df === 'true';
+    data = data.filter(r => {
+      const isDone = r.done === true || r.done === 'TRUE' || r.done === 'true';
+      return isDone === wantDone;
+    });
+  }
+  renderedData.todos = data.map(r => ({...r, _tab:'Todos'}));
+  document.getElementById('todo-info').innerHTML =
+    `Showing <strong>${data.length} items</strong> · ${filterDesc()}`;
+
+  const pb = {'高':'b-red','中':'b-amber','低':'b-gray'};
+  document.getElementById('todo-body').innerHTML = data.length === 0
+    ? '<tr><td colspan="6" class="empty-state">No todos</td></tr>'
+    : data.map((r, idx) => {
+      const isDone = r.done === true || r.done === 'TRUE' || r.done === 'true';
+      // FIX #1: 用 idx 定位，不用 findIndex by id
+      return `<tr>
+        <td><input type="checkbox" class="todo-check" ${isDone?'checked':''} onchange="toggleTodoDone(${idx},this.checked)"></td>
+        <td>${groupBadge(r.group_name)}</td>
+        <td class="${isDone?'todo-done':''}">${r.todo||''}</td>
+        <td><span class="badge ${pb[r.priority]||'b-gray'}">${r.priority||''}</span></td>
+        <td style="font-family:var(--mono);font-size:11px">${r.due_date||'—'}</td>
+        ${viewMode==='global' ? `<td>${refBadge(r.event_ref)}</td>` : ''}
+      </tr>`;
+    }).join('');
+}
+
+function toggleTodoDone(idx, checked) {
+  if(renderedData.todos[idx]) renderedData.todos[idx].done = checked;
+  renderTodos();
+}
+
+// ── FINANCE ──────────────────────────────────────────────────────────
+function renderFinance() {
+  const q = document.getElementById('fin-search').value.toLowerCase();
+  const df = document.getElementById('fin-dir').value;
+  let data = filterData(D.finance);
+  if(q) data = data.filter(r =>
+    (r.group_name||'').toLowerCase().includes(q) ||
+    (r.description||'').toLowerCase().includes(q) ||
+    String(r.amount||'').includes(q) ||
+    (r.direction||'').toLowerCase().includes(q) ||
+    (r.payer||'').toLowerCase().includes(q)
+  );
+  if(df) data = data.filter(r => r.direction === df);
+  renderedData.finance = data.map(r => ({...r, _tab:'Finance'}));
+  document.getElementById('fin-info').innerHTML =
+    `Showing <strong>${data.length} records</strong> · ${filterDesc()}`;
+
+  const out = data.filter(r=>r.direction==='支出').reduce((a,b)=>a+(Number(b.amount)||0),0);
+  const inc = data.filter(r=>r.direction==='收入').reduce((a,b)=>a+(Number(b.amount)||0),0);
+  document.getElementById('fin-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">支出</div><div class="stat-value" style="color:var(--red)">$${out.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">收入</div><div class="stat-value" style="color:var(--green)">$${inc.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">Net</div><div class="stat-value" style="color:${inc-out>=0?'var(--green)':'var(--red)'}">$${(inc-out).toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">Txns</div><div class="stat-value">${data.length}</div></div>`;
+
+  document.getElementById('fin-body').innerHTML = data.length === 0
+    ? '<tr><td colspan="9" class="empty-state">No records</td></tr>'
+    : data.map(r => {
+      const amt = Number(r.amount)||0;
+      const isOut = r.direction === '支出';
+      // FIX #2: 金額符號根據方向決定
+      return `<tr>
+        <td style="font-family:var(--mono);font-size:11px">${(r.created_at||'').slice(0,10)}</td>
+        <td>${groupBadge(r.group_name)}</td>
+        <td>${r.description||''}</td>
+        <td class="${isOut?'amount-neg':'amount-pos'}">${isOut?'-':'+'} $${amt.toLocaleString()}</td>
+        <td><span class="badge ${isOut?'b-red':'b-green'}">${r.direction||''}</span></td>
+        <td>${r.payer||''}</td>
+        <td style="font-size:12px;color:var(--text2)">${Array.isArray(r.payees)?r.payees.join(', '):(r.payees||'')}</td>
+        <td style="font-size:12px;color:var(--text3)">${r.split_note||''}</td>
+        ${viewMode==='global' ? `<td>${refBadge(r.event_ref)}</td>` : ''}
+      </tr>`;
+    }).join('');
+}
+
+// ── HEADCOUNT ────────────────────────────────────────────────────────
+function renderHeadcount() {
+  const q = document.getElementById('hc-search').value.toLowerCase();
+  const sf = document.getElementById('hc-status').value;
+  let data = filterData(D.headcount);
+  if(q) data = data.filter(r =>
+    (r.group_name||'').toLowerCase().includes(q) ||
+    (r.event_name||'').toLowerCase().includes(q) ||
+    (r.person_name||'').toLowerCase().includes(q) ||
+    (r.rsvp_status||'').toLowerCase().includes(q) ||
+    (r.note||'').toLowerCase().includes(q)
+  );
+  if(sf) data = data.filter(r => r.rsvp_status === sf);
+  renderedData.headcount = data.map(r => ({...r, _tab:'Headcount'}));
+  document.getElementById('hc-info').innerHTML =
+    `Showing <strong>${data.length} records</strong> · ${filterDesc()}`;
+
+  const c = data.filter(r=>r.rsvp_status==='確認').length;
+  const p = data.filter(r=>r.rsvp_status==='未確認').length;
+  const a = data.filter(r=>r.rsvp_status==='請假').length;
+  document.getElementById('hc-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Confirmed</div><div class="stat-value" style="color:var(--green)">${c}</div></div>
+    <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--amber)">${p}</div></div>
+    <div class="stat-card"><div class="stat-label">Absent</div><div class="stat-value" style="color:var(--red)">${a}</div></div>
+    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${data.length}</div></div>`;
+
+  // FIX #13: badge 顏色根據 rsvp_status
+  const sb = {'確認':'b-green','未確認':'b-amber','請假':'b-red'};
+  document.getElementById('hc-body').innerHTML = data.length === 0
+    ? '<tr><td colspan="8" class="empty-state">No records</td></tr>'
+    : data.map(r => `<tr>
+        <td>${groupBadge(r.group_name)}</td>
+        <td>${r.event_name||''}</td>
+        <td style="font-family:var(--mono);font-size:11px">${r.event_date||''}</td>
+        <td style="font-weight:500">${r.person_name||''}</td>
+        <td><span class="badge ${sb[r.rsvp_status]||'b-gray'}">${r.rsvp_status||''}</span></td>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">${r.rsvp_time||'—'}</td>
+        <td style="font-size:12px;color:var(--text2)">${r.note||'—'}</td>
+        ${viewMode==='global' ? `<td>${refBadge(r.event_ref)}</td>` : ''}
+      </tr>`).join('');
+}
+
+// ── LINKS ────────────────────────────────────────────────────────────
+function renderLinks() {
+  const q = document.getElementById('lnk-search').value.toLowerCase();
+  let data = filterData(D.links);
+  if(q) data = data.filter(r =>
+    (r.group_name||'').toLowerCase().includes(q) ||
+    (r.sender||'').toLowerCase().includes(q) ||
+    (r.url||'').toLowerCase().includes(q)
+  );
+  renderedData.links = data.map(r => ({...r, _tab:'Links'}));
+  document.getElementById('lnk-info').innerHTML =
+    `Showing <strong>${data.length} links</strong> · ${filterDesc()}`;
+
+  // FIX #12: 顯示完整 URL
+  document.getElementById('lnk-body').innerHTML = data.length === 0
+    ? '<tr><td colspan="5" class="empty-state">No links</td></tr>'
+    : data.map(r => `<tr>
+        <td style="font-family:var(--mono);font-size:11px">${(r.created_at||'').slice(0,16)}</td>
+        <td>${groupBadge(r.group_name)}</td>
+        <td>${r.sender||''}</td>
+        <td><a class="link-url" href="${r.url||'#'}" target="_blank">${r.url||''}</a></td>
+        ${viewMode==='global' ? `<td>${refBadge(r.event_ref)}</td>` : ''}
+      </tr>`).join('');
+}
+
+// ── EVENTS ───────────────────────────────────────────────────────────
+function renderEvents() {
+  const q = document.getElementById('ev-search').value.toLowerCase();
+  const sf = document.getElementById('ev-status').value;
+  let data = D.events.filter(ev => {
+    if(viewMode === 'single' && selectedGroup && !(ev.groups||[]).includes(selectedGroup)) return false;
+    if(sf && ev.status !== sf) return false;
+    if(q && !(
+      (ev.name||'').toLowerCase().includes(q) ||
+      (ev.description||'').toLowerCase().includes(q) ||
+      (ev.location||'').toLowerCase().includes(q)
+    )) return false;
+    return true;
+  });
+  renderedData.events = data.map(ev => ({...ev, _tab:'Events'}));
+  document.getElementById('ev-info').innerHTML =
+    `Showing <strong>${data.length} events</strong> · ${filterDesc()}`;
+
+  const up = data.filter(e=>e.status==='upcoming').length;
+  const on = data.filter(e=>e.status==='ongoing').length;
+  const co = data.filter(e=>e.status==='completed').length;
+  document.getElementById('ev-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Upcoming</div><div class="stat-value" style="color:var(--accent)">${up}</div></div>
+    <div class="stat-card"><div class="stat-label">Ongoing</div><div class="stat-value" style="color:var(--green)">${on}</div></div>
+    <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--text3)">${co}</div></div>
+    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${data.length}</div></div>`;
+
+  const scolor = {upcoming:'var(--accent)',ongoing:'var(--green)',completed:'var(--text3)'};
+  const sbadge = {upcoming:'b-blue',ongoing:'b-green',completed:'b-gray'};
+
+  document.getElementById('ev-grid').innerHTML = data.length === 0
+    ? '<div class="empty-state">No events found.</div>'
+    : data.map(ev => {
+      const cid = 'ev-'+ev.id;
+      cardDataStore[cid] = {...ev, _tab:'Events'};
+      // FIX #15: 用 ev.actual 不是 ev.headcount
+      const pct = ev.target ? Math.min(100, Math.round((Number(ev.actual)||0) / Number(ev.target) * 100)) : 0;
+      const preList = Array.isArray(ev.pre) ? ev.pre : [];
+      const postList = Array.isArray(ev.post) ? ev.post : [];
+      const hist = Array.isArray(ev.history) ? ev.history : [];
+      const tlOpen = openTimeline === ev.id;
+      const allUrls = getEventUrls(ev);
+      // FIX #14: 用 ev.owner 不是 ev.organizer
+      return `<div class="ccard" style="border-left:3px solid ${scolor[ev.status]||'var(--accent)'}">
+        <div class="ccard-header" onclick="toggleCard('${cid}')">
+          <div class="ccard-header-left">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">
+              <span class="ccard-title">${ev.name||''}</span>
+              <span class="badge ${sbadge[ev.status]||'b-gray'}">${ev.status||''}</span>
+              ${viewMode==='global'&&ev.event_ref ? refBadge(ev.event_ref) : ''}
+            </div>
+            <div style="display:flex;gap:10px;font-size:12px;color:var(--text2);flex-wrap:wrap">
+              <span>📅 ${ev.date||''}</span>
+              <span>📍 ${ev.location||''}</span>
+              <span>👤 ${ev.owner||''}</span>
+              ${ev.signup_deadline ? `<span>⏰ ${ev.signup_deadline}</span>` : ''}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;margin-top:-2px">
+            ${cardCopyIcon(cid)}
+            <span onclick="event.stopPropagation();toggleTimeline('${ev.id}')"
+              style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:8px;font-size:11px;font-family:var(--mono);cursor:pointer;border:1px solid ${tlOpen?'var(--accent)':'var(--border2)'};background:${tlOpen?'rgba(79,142,247,.1)':'none'};color:${tlOpen?'var(--accent)':'var(--text3)'};transition:all .2s;white-space:nowrap">
+              <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="6"/><polyline points="7 4 7 7 9 9"/></svg>${hist.length}v
+            </span>
+          </div>
+        </div>
+        <div class="ccard-summary">
+          <div style="margin-bottom:8px">${ev.description||''}</div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px">
+              <span>Headcount</span><span style="color:var(--text)">${ev.actual||0} / ${ev.target||0}</span>
+            </div>
+            <div class="ev-progress-bar"><div class="ev-progress-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':pct>=60?'var(--accent)':'var(--amber)'}"></div></div>
+          </div>
+          ${renderUrlList(allUrls)}
+        </div>
+        <div class="ccard-body" id="pb-${cid}">
+          <div style="padding-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px;font-weight:500">Pre-event (${preList.filter(i=>i.done).length}/${preList.length})</div>
+              ${preList.map(i=>`<div class="ev-check-item ${i.done?'done':''}"><div class="ev-dot" style="background:${i.done?'var(--green)':'var(--border2)'}"></div>${i.text||i.t||''}</div>`).join('')}
+            </div>
+            <div>
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px;font-weight:500">Post-event (${postList.filter(i=>i.done).length}/${postList.length})</div>
+              ${postList.map(i=>`<div class="ev-check-item ${i.done?'done':''}"><div class="ev-dot" style="background:${i.done?'var(--green)':'var(--border2)'}"></div>${i.text||i.t||''}</div>`).join('')}
+            </div>
+          </div>
+        </div>
+        ${showMore(cid)}
+        <div class="tl-drawer ${tlOpen?'open':''}" id="tl-${ev.id}">
+          <div class="tl-drawer-header">
+            <span class="tl-drawer-title">Version history</span>
+            <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${hist.length} entries</span>
+          </div>
+          <div class="tl-add">
+            <input type="text" id="tag-input-${ev.id}" placeholder="Add manual tag…">
+            <button class="tl-addbtn" onclick="addTag('${ev.id}')">Tag</button>
+          </div>
+          ${renderGitLog(hist)}
+        </div>
+      </div>`;
+    }).join('');
+}
+
+// FIX #4 #5: toggleTimeline 和 addTag 補回
+function toggleTimeline(evId) {
+  openTimeline = openTimeline === evId ? null : evId;
+  renderEvents();
+}
+
+function addTag(evId) {
+  const inp = document.getElementById('tag-input-'+evId);
+  const msg = inp ? inp.value.trim() : '';
+  if(!msg) return;
+  const ev = D.events.find(e => e.id === evId);
+  if(ev) {
+    if(!Array.isArray(ev.history)) ev.history = [];
+    ev.history.push({
+      id: Math.random().toString(36).slice(2,8),
+      recorded_at: new Date().toLocaleString('sv').slice(0,16).replace('T',' '),
+      type: 'manual-tag',
+      msg,
+      sub: '手動版本備註',
+      diffs: []
+    });
+  }
+  if(inp) inp.value = '';
+  renderEvents();
+}
+
+function renderGitLog(history) {
+  if(!history || !history.length)
+    return '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">No history yet</div>';
+  return `<div class="git-log">${[...history].reverse().map((c,i,arr) => {
+    const isLast = i === arr.length-1;
+    const typeClass = c.type === 'major-auto' ? 'major-auto' : c.type === 'manual-tag' ? 'manual-tag' : 'auto';
+    return `<div class="git-entry">
+      <div class="git-left">
+        <div class="git-dot ${typeClass}"></div>
+        ${!isLast ? '<div class="git-line"></div>' : ''}
+      </div>
+      <div class="git-right">
+        <div class="git-top">
+          <span class="git-hash">${c.id||''}</span>
+          ${c.type==='major-auto'?'<span class="git-tag major">major</span>':c.type==='manual-tag'?'<span class="git-tag manual">tagged</span>':''}
+        </div>
+        <div class="git-msg">${c.msg||''}</div>
+        <div class="git-sub">${c.sub||''}</div>
+        ${(c.diffs||[]).length?`<div class="git-diffs">${c.diffs.map(d=>`<span class="gd gd-${d.k==='add'?'add':d.k==='mod'?'mod':'del'}">${d.k==='add'?'+':d.k==='mod'?'~':'-'} ${d.v}</span>`).join('')}</div>`:''}
+        <div class="git-time">${c.recorded_at||c.ts||''}</div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── LOGS ─────────────────────────────────────────────────────────────
+function renderLogs() {
+  const q = document.getElementById('log-search').value.toLowerCase();
+  const type = document.getElementById('log-type').value;
+  const from = document.getElementById('log-from').value;
+  const to = document.getElementById('log-to').value;
+  let data = D.logs.filter(r => {
+    if(viewMode==='single' && selectedGroup && r.group_name !== selectedGroup) return false;
+    if(type && r.message_type !== type) return false;
+    if(from && (r.created_at||'') < from) return false;
+    if(to && (r.created_at||'') > to+' 99') return false;
+    if(q && !(
+      (r.group_name||'').toLowerCase().includes(q) ||
+      (r.sender_name||'').toLowerCase().includes(q) ||
+      (r.content||'').toLowerCase().includes(q)
+    )) return false;
+    return true;
+  }).sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
+
+  const tb = {'text':'b-blue','image':'b-pink'};
+  document.getElementById('log-body').innerHTML = data.length === 0
+    ? '<tr><td colspan="5" class="empty-state">No logs</td></tr>'
+    : data.map(r => `<tr>
+        <td style="font-family:var(--mono);font-size:11px;white-space:nowrap">${(r.created_at||'').slice(0,16)}</td>
+        <td>${groupBadge(r.group_name)}</td>
+        <td style="white-space:nowrap">${r.sender_name||''}</td>
+        <td>${r.content||'[media]'}</td>
+        <td><span class="badge ${tb[r.message_type]||'b-gray'}">${r.message_type||''}</span></td>
+      </tr>`).join('');
+}
+
+// ── URL LIST ─────────────────────────────────────────────────────────
+function getEventUrls(ev) {
+  const all = [...(ev.signup_urls||[])];
+  if(ev.event_ref) {
+    D.links.filter(l => l.event_ref === ev.event_ref).forEach(l => {
+      all.push({label:l.sender, url:l.url, source:'chat', ts:l.timestamp||l.created_at, sender:l.sender});
+    });
+  }
+  return all;
+}
+
+function renderUrlList(urls) {
+  if(!urls || !urls.length) return '';
+  const signup = urls.filter(u => u.source === 'signup');
+  const chat = urls.filter(u => u.source === 'chat');
+  let h = '<div class="url-list">';
+  if(signup.length) {
+    h += `<div class="url-section-label">報名 / 固定連結</div>`;
+    signup.forEach(u => {
+      h += `<div class="url-item">
+        <div class="url-item-dot" style="background:var(--green)"></div>
+        <div class="url-item-body">
+          <span class="url-item-meta"><span class="src-badge signup">signup</span>${u.label||''}</span>
+          <a class="url-item-link" href="${u.url||'#'}" target="_blank">${u.url||''}</a>
+        </div>
+      </div>`;
+    });
+  }
+  if(chat.length) {
+    if(signup.length) h += `<div style="margin-top:6px"></div>`;
+    h += `<div class="url-section-label">群組分享連結</div>`;
+    chat.forEach(u => {
+      h += `<div class="url-item">
+        <div class="url-item-dot" style="background:var(--accent)"></div>
+        <div class="url-item-body">
+          <span class="url-item-meta"><span class="src-badge chat">chat</span>${u.sender||''} · ${u.ts||''}</span>
+          <a class="url-item-link" href="${u.url||'#'}" target="_blank">${u.url||''}</a>
+        </div>
+      </div>`;
+    });
+  }
+  return h + '</div>';
+}
+
+// ── CALENDAR ─────────────────────────────────────────────────────────
+function toggleCal(e) {
+  e.stopPropagation();
+  document.getElementById('group-menu').style.display = 'none';
+  document.getElementById('cal-popup').classList.toggle('open');
+  if(document.getElementById('cal-popup').classList.contains('open')) renderCal();
+}
+
+function navMonth(dir) {
+  calMonth += dir;
+  if(calMonth > 11) { calMonth = 0; calYear++; }
+  if(calMonth < 0) { calMonth = 11; calYear--; }
+  renderCal();
+}
+
+function renderCal() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-lbl').textContent = `${months[calMonth]} ${calYear}`;
+  // FIX #9: 更新 latest btn active 狀態
+  document.getElementById('cal-latest-btn').classList.toggle('active', selectedDate === 'latest');
+
+  const today = new Date();
+  const fd = new Date(calYear, calMonth, 1).getDay();
+  const dim = new Date(calYear, calMonth+1, 0).getDate();
+  const dip = new Date(calYear, calMonth, 0).getDate();
+
+  let html = '';
+  // 前補白
+  for(let i = fd-1; i >= 0; i--)
+    html += `<div class="cal-day other"><span class="cal-day-n">${dip-i}</span><div class="cdots"></div></div>`;
+
+  // 本月日期
+  for(let d = 1; d <= dim; d++) {
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const groups = DATE_MAP[ds] || [];
+    const hasData = groups.length > 0;
+    const isToday = today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d;
+    const isSel = selectedDate === ds;
+    const dc = Math.min(groups.length, 4);
+    html += `<div class="cal-day${hasData?' has-data':''}${isToday?' today':''}${isSel?' sel':''}"
+      ${hasData?`onclick="selectDate('${ds}')"`:''}">
+      <span class="cal-day-n">${d}</span>
+      <div class="cdots">${'<span></span>'.repeat(dc)}</div>
+    </div>`;
+  }
+
+  // FIX #10: 後補白
+  const total = Math.ceil((fd + dim) / 7) * 7;
+  for(let d = 1; d <= total - fd - dim; d++)
+    html += `<div class="cal-day other"><span class="cal-day-n">${d}</span><div class="cdots"></div></div>`;
+
+  document.getElementById('cal-days').innerHTML = html;
+}
+
+function selectDate(ds) {
+  selectedDate = ds;
+  // FIX #11: ib-date active 樣式
+  document.getElementById('ib-date').classList.add('active');
+  document.getElementById('snap-pill').classList.add('visible');
+  document.getElementById('snap-label').textContent = ds;
+  document.getElementById('cal-popup').classList.remove('open');
+  renderCal();
+  syncAllData();
+}
+
+function selectLatest() {
+  selectedDate = 'latest';
+  // FIX #11: 移除 ib-date active
+  document.getElementById('ib-date').classList.remove('active');
+  document.getElementById('snap-pill').classList.remove('visible');
+  document.getElementById('cal-popup').classList.remove('open');
+  renderCal();
+  syncAllData();
+}
+
+// ── GROUP MENU ────────────────────────────────────────────────────────
+function toggleGroupMenu(e) {
+  e.stopPropagation();
+  document.getElementById('cal-popup').classList.remove('open');
+  const menu = document.getElementById('group-menu');
+  if(menu.style.display === 'block') { menu.style.display = 'none'; return; }
+  const groups = [...new Set(D.summary.map(d => d.group_name).filter(Boolean))].sort();
+  let html = `<div style="padding:4px 8px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);font-weight:500">Group filter</div>`;
+  html += `<div onclick="setGroup('')" style="padding:7px 10px;border-radius:8px;font-size:12px;cursor:pointer;color:${!selectedGroup?'var(--accent)':'var(--text2)'};background:${!selectedGroup?'rgba(79,142,247,.1)':'none'}">All groups</div>`;
+  groups.forEach(g => {
+    const active = selectedGroup === g;
+    html += `<div onclick="setGroup('${g.replace(/'/g,"\\'")}') " style="padding:7px 10px;border-radius:8px;font-size:12px;cursor:pointer;color:${active?'var(--accent)':'var(--text2)'};background:${active?'rgba(79,142,247,.1)':'none'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px" title="${g}">${g}</div>`;
+  });
+  menu.innerHTML = html;
+  menu.style.display = 'block';
+}
+
+function setGroup(g) {
+  selectedGroup = g;
+  document.getElementById('ib-group').classList.toggle('active', g !== '');
+  document.getElementById('group-menu').style.display = 'none';
+  renderAll();
+}
+
+// ── COPY ─────────────────────────────────────────────────────────────
+function copyPage(tab) {
+  pendingCopy = {type:'page', tab};
+  document.getElementById('modal-sub').textContent = `${tab} · ${filterDesc()}`;
+  document.getElementById('modal').classList.add('open');
+}
+
+function copyCard(id) {
+  pendingCopy = {type:'card'};
+  pendingCardId = id;
+  const c = cardDataStore[id];
+  document.getElementById('modal-sub').textContent = c ? `${c.group_name||c.name||''} · ${(c.created_at||c.date||'').slice(0,10)}` : id;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+
+function confirmCopy(fmt) {
+  closeModal();
+  const now = new Date().toLocaleString('zh-TW', {hour12:false});
+  let text = '';
+  if(pendingCopy && pendingCopy.type === 'card') {
+    const c = cardDataStore[pendingCardId];
+    text = fmt === 'brief' ? formatCardBrief(c) : formatCardFull(c);
+    flashCardIcon(pendingCardId);
+  } else if(pendingCopy && pendingCopy.type === 'page') {
+    const tab = pendingCopy.tab;
+    const data = renderedData[tab] || [];
+    // FIX #17: 動態篩選條件描述
+    text = `📋 Dashboard 匯出 — ${tab.toUpperCase()}\n產生時間：${now}\n篩選條件：${filterDesc()}\n${'═'.repeat(30)}\n\n`;
+    text += data.map(r => fmt === 'brief' ? formatCardBrief(r) : formatCardFull(r)).join(`\n\n${'─'.repeat(28)}\n\n`);
+    flashPageBtn(tab);
+  }
+  navigator.clipboard.writeText(text).catch(() => {});
+  showToast(fmt === 'brief' ? '精簡版已複製' : '完整版已複製');
+  pendingCopy = null; pendingCardId = null;
+}
+
+function flashCardIcon(id) {
+  const icon = document.getElementById('cci-'+id);
+  if(!icon) return;
+  icon.classList.add('copied');
+  icon.innerHTML = `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="2 7 5 10 12 3"/></svg>`;
+  setTimeout(() => {
+    icon.classList.remove('copied');
+    icon.innerHTML = `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>`;
+  }, 2000);
+}
+
+function flashPageBtn(tab) {
+  const map = {summary:'sum',todos:'todo',finance:'fin',headcount:'hc',links:'lnk',events:'ev'};
+  const btn = document.getElementById('copy-'+(map[tab]||tab)+'-btn');
+  if(!btn) return;
+  btn.classList.add('copied');
+  const orig = btn.innerHTML;
+  btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="2 7 5 10 12 3"/></svg> Copied!`;
+  setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 2000);
+}
+
+// ── FORMAT FUNCTIONS ──────────────────────────────────────────────────
+function formatCardBrief(c) {
+  if(!c) return '';
+  let t = `【${c._tab||''}】${c.group_name||c.name||''} ${(c.created_at||c.date||'').slice(0,10)}`;
+  if(c.summary) t += `\n\n${c.summary}`;
+  if(c.description && !c.summary) t += `\n\n${c.description}`;
+  if(c.notes && c.notes.length) t += `\n\n⚠ 注意\n${c.notes.map(n=>'・'+n).join('\n')}`;
+  if(c.todos != null) t += `\n\n📊 Todos: ${c.todos}  Links: ${c.urls||0}  People: ${c.people||0}`;
+  if(c.amount != null) t += `\n\n${c.direction==='支出'?'-':'+'} $${Number(c.amount).toLocaleString()}  ${c.payer||''} → ${Array.isArray(c.payees)?c.payees.join(', '):(c.payees||'')}`;
+  if(c.todo) t += `\n\n${(c.done===true||c.done==='TRUE')?'✓':'○'} ${c.todo}  [${c.priority||''}]  Due: ${c.due_date||'—'}`;
+  if(c.person_name) t += `\n\n${c.person_name}  ${c.rsvp_status||''}  ${c.event_name||''}`;
+  if(c.url) t += `\n\n🔗 ${c.url}`;
+  if(c.actual != null) t += `\n\n👥 ${c.actual}/${c.target||0}  📅 ${c.date||''}  📍 ${c.location||''}`;
+  return t;
+}
+
+function formatCardFull(c) {
+  if(!c) return '';
+  const sep = '─'.repeat(28);
+  let t = `【${c._tab||''}】${c.group_name||c.name||''} ${(c.created_at||c.date||'').slice(0,10)}\n${sep}`;
+  if(c.topics && c.topics.length) t += `\n主題：${c.topics.join('、')}`;
+  if(c.summary) t += `\n\n摘要\n${c.summary}`;
+  if(c.description && !c.summary) t += `\n\n說明\n${c.description}`;
+  if(c.notes && c.notes.length) t += `\n\n注意事項\n${c.notes.map(n=>'・'+n).join('\n')}`;
+  if(c.todos != null) t += `\n\n統計\n・代辦事項：${c.todos} 項\n・相關連結：${c.urls||0} 個\n・參與人數：${c.people||0} 人`;
+  if(c.amount != null) t += `\n\n金額：${c.direction==='支出'?'-':'+'} $${Number(c.amount).toLocaleString()}\n支付方：${c.payer||''}\n收款方：${Array.isArray(c.payees)?c.payees.join(', '):(c.payees||'')}\n備註：${c.split_note||''}`;
+  if(c.todo) t += `\n\n代辦：${c.todo}\n優先：${c.priority||''}  截止：${c.due_date||'—'}  狀態：${(c.done===true||c.done==='TRUE')?'完成':'待辦'}`;
+  if(c.person_name) t += `\n\n人員：${c.person_name}\n活動：${c.event_name||''}  ${c.event_date||''}\n狀態：${c.rsvp_status||''}  回覆時間：${c.rsvp_time||'—'}\n備註：${c.note||'—'}`;
+  if(c.url) t += `\n\n連結：${c.url}\n分享者：${c.sender||''}  時間：${c.created_at||''}`;
+  if(c.actual != null) {
+    t += `\n\n出席：${c.actual}/${c.target||0}  日期：${c.date||''}  地點：${c.location||''}\n負責人：${c.owner||''}`;
+    if(c.signup_deadline) t += `  報名截止：${c.signup_deadline}`;
+    if(c.pre && c.pre.length) t += `\n\n會前準備\n${c.pre.map(i=>`${i.done?'✓':'○'} ${i.text||i.t||''}`).join('\n')}`;
+    if(c.post && c.post.length) t += `\n\n會後事項\n${c.post.map(i=>`${i.done?'✓':'○'} ${i.text||i.t||''}`).join('\n')}`;
+    if(c.signup_urls && c.signup_urls.length) t += `\n\n連結\n${c.signup_urls.map(u=>`・${u.label||''}: ${u.url||''}`).join('\n')}`;
+  }
+  return t;
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────
+function showToast(m) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = m;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── CLOSE POPUPS ON OUTSIDE CLICK ────────────────────────────────────
+document.addEventListener('click', () => {
+  document.getElementById('cal-popup').classList.remove('open');
+  document.getElementById('group-menu').style.display = 'none';
+});
+document.getElementById('cal-popup').addEventListener('click', e => e.stopPropagation());
+document.getElementById('group-menu').addEventListener('click', e => e.stopPropagation());
+</script>
+</body>
+</html>
