@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IG 圖片格式化工具</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+–bg: #0f0f0f;
+–surface: #1a1a1a;
+–surface2: #242424;
+–border: #2e2e2e;
+–accent: #e8c97e;
+–accent2: #c4a45a;
+–text: #f0ede8;
+–muted: #888;
+–radius: 12px;
+}
+
+body {
+font-family: ‘Noto Sans TC’, sans-serif;
+background: var(–bg);
+color: var(–text);
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 40px 20px 60px;
+}
+
+h1 {
+font-size: 1.6rem;
+font-weight: 700;
+letter-spacing: 0.04em;
+margin-bottom: 6px;
+color: var(–accent);
+}
+
+.subtitle {
+color: var(–muted);
+font-size: 0.85rem;
+margin-bottom: 36px;
+}
+
+.card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: var(–radius);
+padding: 28px;
+width: 100%;
+max-width: 560px;
+margin-bottom: 20px;
+}
+
+.card-title {
+font-size: 0.75rem;
+text-transform: uppercase;
+letter-spacing: 0.12em;
+color: var(–accent);
+margin-bottom: 16px;
+font-weight: 500;
+}
+
+/* Drop zone */
+.drop-zone {
+border: 2px dashed var(–border);
+border-radius: var(–radius);
+padding: 40px 20px;
+text-align: center;
+cursor: pointer;
+transition: border-color 0.2s, background 0.2s;
+position: relative;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+border-color: var(–accent);
+background: rgba(232,201,126,0.04);
+}
+.drop-zone input[type=file] {
+position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.drop-icon { font-size: 2.4rem; margin-bottom: 10px; }
+.drop-label { font-size: 0.9rem; color: var(–muted); }
+.drop-label span { color: var(–accent); }
+
+/* Format selector */
+.format-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 10px;
+}
+.fmt-btn {
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 14px 8px;
+cursor: pointer;
+text-align: center;
+transition: border-color 0.2s, background 0.2s;
+user-select: none;
+}
+.fmt-btn:hover { border-color: var(–accent2); }
+.fmt-btn.active {
+border-color: var(–accent);
+background: rgba(232,201,126,0.08);
+}
+.fmt-icon {
+display: flex; align-items: center; justify-content: center;
+margin: 0 auto 8px;
+}
+.fmt-icon svg { display: block; }
+.fmt-label { font-size: 0.78rem; color: var(–text); font-weight: 500; }
+.fmt-desc { font-size: 0.68rem; color: var(–muted); margin-top: 2px; }
+
+/* BG options */
+.bg-options {
+display: flex; gap: 10px; flex-wrap: wrap;
+}
+.bg-option {
+display: flex; align-items: center; gap: 8px;
+background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 10px 14px;
+cursor: pointer;
+font-size: 0.82rem;
+transition: border-color 0.2s;
+user-select: none;
+}
+.bg-option.active { border-color: var(–accent); }
+.bg-swatch {
+width: 18px; height: 18px; border-radius: 4px;
+border: 1px solid rgba(255,255,255,0.1);
+}
+.bg-option.blur-opt .bg-swatch {
+background: linear-gradient(135deg, #aaa, #555);
+backdrop-filter: blur(4px);
+}
+
+/* Preview */
+#preview-wrap {
+display: none;
+text-align: center;
+}
+#preview-wrap canvas {
+border-radius: var(–radius);
+max-width: 100%;
+border: 1px solid var(–border);
+}
+
+/* Download btn */
+.dl-btn {
+display: block;
+width: 100%;
+margin-top: 16px;
+padding: 14px;
+background: var(–accent);
+color: #1a1500;
+font-family: inherit;
+font-size: 0.95rem;
+font-weight: 700;
+letter-spacing: 0.05em;
+border: none;
+border-radius: var(–radius);
+cursor: pointer;
+transition: background 0.2s;
+}
+.dl-btn:hover { background: var(–accent2); }
+.dl-btn:disabled { background: var(–border); color: var(–muted); cursor: not-allowed; }
+
+/* File list */
+.file-list { list-style: none; }
+.file-item {
+display: flex; align-items: center; gap: 10px;
+padding: 10px 12px;
+background: var(–surface2);
+border-radius: 8px;
+margin-bottom: 8px;
+font-size: 0.82rem;
+}
+.file-item .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-item .fdl {
+background: var(–accent);
+color: #1a1500;
+border: none;
+font-family: inherit;
+font-size: 0.75rem;
+font-weight: 700;
+padding: 4px 12px;
+border-radius: 6px;
+cursor: pointer;
+}
+.file-item .fdl:hover { background: var(–accent2); }
+
+.step-num {
+display: inline-flex; align-items: center; justify-content: center;
+width: 22px; height: 22px;
+border-radius: 50%;
+background: var(–accent);
+color: #1a1500;
+font-size: 0.72rem;
+font-weight: 700;
+margin-right: 6px;
+flex-shrink: 0;
+}
+
+#color-picker-wrap { display: none; align-items: center; gap: 8px; margin-top: 10px; }
+#bg-color-input { width: 36px; height: 36px; border: none; border-radius: 6px; cursor: pointer; background: none; padding: 0; }
+#color-picker-wrap label { font-size: 0.8rem; color: var(–muted); }
+</style>
+
+</head>
+<body>
+
+<h1>📸 IG 圖片工具</h1>
+<p class="subtitle">一鍵把你的活動邀請卡變成 IG 不裁切的尺寸</p>
+
+<!-- Step 1: Upload -->
+
+<div class="card">
+  <div class="card-title"><span class="step-num">1</span>上傳圖片</div>
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept="image/*" multiple>
+    <div class="drop-icon">🖼️</div>
+    <div class="drop-label">點擊上傳，或把圖片拖進來<br><span>支援 JPG、PNG（可一次多張）</span></div>
+  </div>
+</div>
+
+<!-- Step 2: Format -->
+
+<div class="card">
+  <div class="card-title"><span class="step-num">2</span>選擇 IG 格式</div>
+  <div class="format-grid">
+    <div class="fmt-btn" data-ratio="1:1">
+      <div class="fmt-icon">
+        <svg width="38" height="38" viewBox="0 0 38 38">
+          <rect x="4" y="4" width="30" height="30" rx="4" fill="none" stroke="#e8c97e" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="fmt-label">1:1 正方形</div>
+      <div class="fmt-desc">貼文最通用</div>
+    </div>
+    <div class="fmt-btn active" data-ratio="4:5">
+      <div class="fmt-icon">
+        <svg width="32" height="40" viewBox="0 0 32 40">
+          <rect x="2" y="2" width="28" height="36" rx="4" fill="none" stroke="#e8c97e" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="fmt-label">4:5 直式</div>
+      <div class="fmt-desc">貼文最佔版面 ✦</div>
+    </div>
+    <div class="fmt-btn" data-ratio="9:16">
+      <div class="fmt-icon">
+        <svg width="22" height="40" viewBox="0 0 22 40">
+          <rect x="2" y="2" width="18" height="36" rx="4" fill="none" stroke="#e8c97e" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="fmt-label">9:16 限動</div>
+      <div class="fmt-desc">Stories 專用</div>
+    </div>
+  </div>
+</div>
+
+<!-- Step 3: Background -->
+
+<div class="card">
+  <div class="card-title"><span class="step-num">3</span>空白處背景</div>
+  <div class="bg-options">
+    <div class="bg-option active" data-bg="white">
+      <div class="bg-swatch" style="background:#ffffff;"></div>白色
+    </div>
+    <div class="bg-option" data-bg="black">
+      <div class="bg-swatch" style="background:#000000;"></div>黑色
+    </div>
+    <div class="bg-option" data-bg="blur" style="display:none">
+      <div class="bg-swatch blur-opt"></div>模糊延伸
+    </div>
+    <div class="bg-option" data-bg="custom">
+      <div class="bg-swatch" style="background:#d4a574;" id="customSwatch"></div>自訂顏色
+    </div>
+  </div>
+  <div id="color-picker-wrap">
+    <input type="color" id="bg-color-input" value="#d4a574">
+    <label>點擊選色</label>
+  </div>
+</div>
+
+<!-- Step 4: Preview & Download -->
+
+<div class="card" id="preview-wrap">
+  <div class="card-title"><span class="step-num">4</span>預覽 &amp; 下載</div>
+  <canvas id="canvas"></canvas>
+  <button class="dl-btn" id="dlBtn">⬇ 下載這張</button>
+  <div style="margin-top:16px;">
+    <div class="card-title" style="margin-bottom:10px;">批次下載（全部圖片）</div>
+    <ul class="file-list" id="fileList"></ul>
+  </div>
+</div>
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const dlBtn = document.getElementById('dlBtn');
+const previewWrap = document.getElementById('preview-wrap');
+const fileList = document.getElementById('fileList');
+const colorPickerWrap = document.getElementById('color-picker-wrap');
+const bgColorInput = document.getElementById('bg-color-input');
+const customSwatch = document.getElementById('customSwatch');
+
+let images = []; // {file, img, name}
+let currentIndex = 0;
+let selectedRatio = '4:5';
+let selectedBg = 'white';
+let customColor = '#d4a574';
+
+const RATIOS = {
+  '1:1': { w: 1080, h: 1080 },
+  '4:5': { w: 1080, h: 1350 },
+  '9:16': { w: 1080, h: 1920 }
+};
+
+// Drag & drop
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+function handleFiles(files) {
+  images = [];
+  fileList.innerHTML = '';
+  let loaded = 0;
+  const total = files.length;
+  Array.from(files).forEach((file, i) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      images.push({ file, img, name: file.name });
+      loaded++;
+      if (loaded === total) {
+        currentIndex = 0;
+        renderPreview();
+        buildFileList();
+      }
+    };
+    img.src = url;
+  });
+}
+
+// Format buttons
+document.querySelectorAll('.fmt-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedRatio = btn.dataset.ratio;
+    if (images.length) renderPreview();
+  });
+});
+
+// BG options
+document.querySelectorAll('.bg-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    document.querySelectorAll('.bg-option').forEach(o => o.classList.remove('active'));
+    opt.classList.add('active');
+    selectedBg = opt.dataset.bg;
+    colorPickerWrap.style.display = selectedBg === 'custom' ? 'flex' : 'none';
+    if (images.length) renderPreview();
+  });
+});
+
+bgColorInput.addEventListener('input', () => {
+  customColor = bgColorInput.value;
+  customSwatch.style.background = customColor;
+  if (images.length) renderPreview();
+});
+
+function drawImage(img, targetCanvas) {
+  const { w, h } = RATIOS[selectedRatio];
+  targetCanvas.width = w;
+  targetCanvas.height = h;
+  const c = targetCanvas.getContext('2d');
+
+  // Fill background
+  if (selectedBg === 'blur') {
+    // draw scaled-up blurred version of image as bg
+    const scale = Math.max(w / img.width, h / img.height) * 1.1;
+    const bw = img.width * scale;
+    const bh = img.height * scale;
+    const bx = (w - bw) / 2;
+    const by = (h - bh) / 2;
+    c.filter = 'blur(20px) brightness(0.7)';
+    c.drawImage(img, bx, by, bw, bh);
+    c.filter = 'none';
+  } else {
+    c.fillStyle = selectedBg === 'white' ? '#ffffff' : selectedBg === 'black' ? '#000000' : customColor;
+    c.fillRect(0, 0, w, h);
+  }
+
+  // Fit image (contain)
+  const scale = Math.min(w / img.width, h / img.height);
+  const iw = img.width * scale;
+  const ih = img.height * scale;
+  const ix = (w - iw) / 2;
+  const iy = (h - ih) / 2;
+  c.drawImage(img, ix, iy, iw, ih);
+}
+
+function renderPreview() {
+  if (!images.length) return;
+  previewWrap.style.display = 'block';
+  drawImage(images[currentIndex].img, canvas);
+}
+
+dlBtn.addEventListener('click', () => {
+  if (!images.length) return;
+  downloadCanvas(canvas, images[currentIndex].name);
+});
+
+function buildFileList() {
+  fileList.innerHTML = '';
+  images.forEach((item, i) => {
+    const li = document.createElement('li');
+    li.className = 'file-item';
+    li.innerHTML = `<span class="fname">${item.name}</span><button class="fdl" data-i="${i}">下載</button>`;
+    fileList.appendChild(li);
+  });
+  fileList.querySelectorAll('.fdl').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.i);
+      const tmp = document.createElement('canvas');
+      drawImage(images[i].img, tmp);
+      downloadCanvas(tmp, images[i].name);
+    });
+  });
+}
+
+function downloadCanvas(c, originalName) {
+  const ratio = selectedRatio.replace(':', 'x');
+  const baseName = originalName.replace(/\.[^.]+$/, '');
+  const link = document.createElement('a');
+  link.download = `${baseName}_IG_${ratio}.jpg`;
+  link.href = c.toDataURL('image/jpeg', 0.95);
+  link.click();
+}
+</script>
+
+</body>
+</html>
