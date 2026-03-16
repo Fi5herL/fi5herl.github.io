@@ -3,431 +3,279 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Line Assistant — Mobile Mockup v2</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Line Assistant — Mobile</title>
+
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0c0e14;--bg2:#13161f;--bg3:#1a1e2a;--bg4:#222736;
+  --b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.11);
+  --t1:#e4e6ef;--t2:#7c849e;--t3:#3d4258;
+  --ac:#5b8dee;--gr:#3ecf8e;--am:#f5a623;--re:#f0546a;--te:#2dd4bf;
+  --fn:-apple-system,'Helvetica Neue','PingFang TC','Microsoft JhengHei',sans-serif;--mo:'SF Mono','Fira Code','Consolas',monospace;
+  --r:14px;--r2:10px;--nav:56px;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
 
-:root {
-–bg:#0c0e14; –bg2:#13161f; –bg3:#1a1e2a; –bg4:#222736;
-–border:rgba(255,255,255,0.06); –border2:rgba(255,255,255,0.11);
-–text:#e4e6ef; –text2:#7c849e; –text3:#3d4258;
-–accent:#5b8dee; –green:#3ecf8e; –amber:#f5a623; –red:#f0546a;
-–teal:#2dd4bf; –pink:#e879f9;
-–font:‘Noto Sans TC’,sans-serif; –mono:‘JetBrains Mono’,monospace;
-–radius:16px; –radius-sm:10px; –nav-h:64px;
-}
+/* topbar */
+.topbar{flex-shrink:0;padding:10px 16px 8px;background:var(--bg);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.tl h1{font-size:18px;font-weight:700;letter-spacing:-.02em;}
+.tl-sub{font-size:11px;color:var(--t2);margin-top:1px;font-family:var(--mo);}
+.ta{display:flex;gap:7px;}
+.hbtn{width:36px;height:36px;border-radius:10px;background:var(--bg3);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;color:var(--t2);cursor:pointer;user-select:none;flex-shrink:0;transition:all .15s;}
+.hbtn:active{opacity:.7;}
+.hbtn.cal-on{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.25);color:var(--am);}
+.hbtn.grp-on{background:rgba(91,141,238,.1);border-color:rgba(91,141,238,.25);color:var(--ac);}
 
-html, body {
-height: 100%; font-family: var(–font);
-background: #060810; color: var(–text);
-font-size: 14px; -webkit-font-smoothing: antialiased;
-display: flex; align-items: center; justify-content: center;
-overflow: hidden;
-}
+/* snap pill */
+.snap{display:none;margin:5px 16px 0;align-self:flex-start;align-items:center;gap:5px;padding:3px 9px;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);border-radius:20px;font-size:11px;color:var(--am);font-family:var(--mo);}
+.snap.on{display:inline-flex;}
 
-/* ── PHONE FRAME ── */
-.phone {
-width: 390px; height: 844px;
-border-radius: 44px;
-border: 2px solid rgba(255,255,255,0.1);
-overflow: hidden; position: relative;
-background: var(–bg);
-box-shadow: 0 48px 140px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.04);
-}
+/* content */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--b2) transparent;}
+.content::-webkit-scrollbar{width:3px;}
+.content::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px;}
 
-/* ── APP SHELL ── */
-.app { width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; }
+/* panels */
+.panel{display:none;padding-bottom:10px;}
+.panel.on{display:block;animation:fi .15s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── STATUS BAR ── */
-.status-bar {
-height: 44px; display:flex; align-items:center;
-justify-content:space-between; padding:0 24px;
-flex-shrink:0; background:var(–bg);
-}
-.status-time { font-family:var(–mono); font-size:15px; font-weight:500; }
-.status-icons { display:flex; align-items:center; gap:6px; }
+/* bottom nav */
+.bnav{flex-shrink:0;height:var(--nav);background:var(--bg2);border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-around;padding:0 4px;}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;cursor:pointer;border-radius:10px;transition:background .15s;position:relative;user-select:none;}
+.ni.on{background:rgba(91,141,238,.1);}
+.ni:active{opacity:.7;}
+.ni-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:var(--t3);}
+.ni.on .ni-icon{color:var(--ac);}
+.ni-lbl{font-size:10px;color:var(--t3);font-weight:500;}
+.ni.on .ni-lbl{color:var(--ac);}
+.nbadge{position:absolute;top:2px;right:calc(50% - 20px);min-width:16px;height:16px;border-radius:8px;background:var(--re);color:#fff;font-size:9px;font-weight:700;font-family:var(--mo);display:flex;align-items:center;justify-content:center;padding:0 3px;}
 
-/* ── TOP HEADER ── */
-.top-header {
-padding: 6px 20px 12px;
-display:flex; align-items:center; justify-content:space-between;
-flex-shrink:0;
-}
-.header-left h1 { font-size:22px; font-weight:700; letter-spacing:-.02em; line-height:1.1; }
-.header-sub { font-size:11px; color:var(–text2); margin-top:2px; font-family:var(–mono); }
-.header-actions { display:flex; gap:8px; }
-.hbtn {
-width:38px; height:38px; border-radius:12px;
-background:var(–bg3); border:1px solid var(–border2);
-display:flex; align-items:center; justify-content:center;
-color:var(–text2); cursor:pointer; user-select:none;
-transition: background .15s, color .15s;
-}
-.hbtn.cal-active { background:rgba(245,166,35,.1); border-color:rgba(245,166,35,.25); color:var(–amber); }
-.hbtn.grp-active { background:rgba(91,141,238,.1); border-color:rgba(91,141,238,.25); color:var(–accent); }
-.hbtn:active { opacity:.7; }
+/* common */
+.slbl{font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.07em;text-transform:uppercase;padding:12px 16px 6px;}
+.tag{font-size:11px;padding:2px 7px;border-radius:20px;font-weight:500;}
+.bl{background:rgba(91,141,238,.15);color:var(--ac);}
+.gr{background:rgba(62,207,142,.15);color:var(--gr);}
+.am{background:rgba(245,166,35,.15);color:var(--am);}
+.re{background:rgba(240,84,106,.15);color:var(--re);}
+.gy{background:var(--bg3);color:var(--t2);}
 
-/* ── SNAP PILL ── */
-.snap-pill {
-margin: 0 20px 10px;
-display:inline-flex; align-items:center; gap:5px;
-padding:5px 10px;
-background:rgba(245,166,35,.08); border:1px solid rgba(245,166,35,.2);
-border-radius:20px; font-size:11px; color:var(–amber);
-font-family:var(–mono);
-}
-.snap-pill.hidden { display:none; }
+/* filter bar */
+.fbar{display:flex;gap:6px;padding:0 16px 10px;overflow-x:auto;scrollbar-width:none;}
+.fbar::-webkit-scrollbar{display:none;}
+.chip{padding:5px 11px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap;border:1px solid var(--b2);background:var(--bg2);color:var(--t2);cursor:pointer;flex-shrink:0;user-select:none;transition:all .15s;}
+.chip.on{background:rgba(91,141,238,.15);border-color:rgba(91,141,238,.3);color:var(--ac);}
+.chip:active{opacity:.7;}
 
-/* ── CONTENT ── */
-.content {
-flex:1; overflow-y:auto; overflow-x:hidden;
-padding-bottom: calc(var(–nav-h) + 8px);
--webkit-overflow-scrolling:touch; scrollbar-width:none;
-}
-.content::-webkit-scrollbar { display:none; }
+/* search */
+.sbar{margin:0 16px 10px;background:var(--bg3);border:1px solid var(--b2);border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:8px;color:var(--t3);font-size:13px;}
 
-/* ── PANELS ── */
-.panel { display:none; }
-.panel.active {
-display:block;
-animation: panelIn .18s ease;
-}
-@keyframes panelIn {
-from { opacity:0; transform:translateY(6px); }
-to { opacity:1; transform:translateY(0); }
-}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 4px;}
+.stat{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:10px 8px;text-align:center;}
+.sv{font-family:var(--mo);font-size:18px;font-weight:500;line-height:1;margin-bottom:3px;}
+.sl{font-size:10px;color:var(--t2);}
 
-/* ── BOTTOM NAV ── */
-.bottom-nav {
-position:absolute; bottom:0; left:0; right:0;
-height:var(–nav-h); background:var(–bg2);
-border-top:1px solid var(–border);
-display:flex; align-items:center; justify-content:space-around;
-padding:0 8px 8px; z-index:100;
-}
-.nav-item {
-flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
-padding:8px 4px; cursor:pointer; border-radius:12px;
-transition:background .15s; position:relative; user-select:none;
-}
-.nav-item.active { background:rgba(91,141,238,.1); }
-.nav-item:active { opacity:.7; }
-.nav-icon { width:22px; height:22px; display:flex; align-items:center; justify-content:center; color:var(–text3); }
-.nav-item.active .nav-icon { color:var(–accent); }
-.nav-label { font-size:10px; color:var(–text3); font-weight:500; letter-spacing:.02em; }
-.nav-item.active .nav-label { color:var(–accent); }
-.nav-badge {
-position:absolute; top:4px; right:calc(50% - 18px);
-min-width:16px; height:16px; border-radius:8px;
-background:var(–red); color:#fff;
-font-size:9px; font-weight:700; font-family:var(–mono);
-display:flex; align-items:center; justify-content:center;
-padding:0 4px;
-}
+/* summary card */
+.card{margin:0 16px 8px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .15s;}
+.card:active{background:var(--bg3);}
+.ch{padding:12px 14px 8px;display:flex;align-items:flex-start;gap:8px;}
+.cm{flex:1;min-width:0;}
+.cr{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.cn{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.cd{font-family:var(--mo);font-size:10px;color:var(--t3);flex-shrink:0;}
+.ctags{display:flex;gap:4px;flex-wrap:wrap;}
+.copy{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--t3);flex-shrink:0;}
+.cb{padding:0 14px 10px;font-size:13px;color:var(--t2);line-height:1.55;}
+.cnote{margin:0 14px 10px;padding:7px 10px;background:rgba(245,166,35,.07);border-radius:8px;font-size:12px;color:var(--am);}
+.cf{padding:8px 14px 10px;border-top:1px solid var(--b1);display:flex;gap:14px;}
+.cs{font-size:12px;color:var(--t2);}
+.cs strong{color:var(--t1);}
 
-/* ── COMMON ── */
-.section-label {
-font-size:11px; font-weight:600; color:var(–text2);
-letter-spacing:.08em; text-transform:uppercase;
-padding:14px 20px 8px;
-}
-.tag {
-font-size:11px; padding:2px 7px; border-radius:20px; font-weight:500;
-}
-.tag-blue { background:rgba(91,141,238,.15); color:var(–accent); }
-.tag-green { background:rgba(62,207,142,.15); color:var(–green); }
-.tag-amber { background:rgba(245,166,35,.15); color:var(–amber); }
-.tag-red { background:rgba(240,84,106,.15); color:var(–red); }
-.tag-gray { background:var(–bg3); color:var(–text2); }
-.tag-teal { background:rgba(45,212,191,.15); color:var(–teal); }
+/* todo */
+.ti{margin:0 16px 7px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:11px 13px;display:flex;align-items:center;gap:11px;cursor:pointer;}
+.ti:active{background:var(--bg3);}
+.chk{width:20px;height:20px;border-radius:6px;border:2px solid var(--b2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.chk.done{background:var(--gr);border-color:var(--gr);}
+.tb{flex:1;min-width:0;}
+.tt{font-size:13px;color:var(--t1);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tt.done{text-decoration:line-through;color:var(--t3);}
+.tm{display:flex;gap:7px;align-items:center;}
+.tg{font-size:10px;color:var(--t2);background:var(--bg3);padding:1px 6px;border-radius:4px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.td{font-family:var(--mo);font-size:10px;color:var(--t3);}
+.pd{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 
-/* ── FILTER CHIPS ── */
-.filter-bar {
-display:flex; gap:8px; padding:0 20px 12px;
-overflow-x:auto; scrollbar-width:none; flex-shrink:0;
-}
-.filter-bar::-webkit-scrollbar { display:none; }
-.chip {
-padding:6px 12px; border-radius:20px; font-size:12px; font-weight:500;
-white-space:nowrap; border:1px solid var(–border2);
-background:var(–bg2); color:var(–text2);
-cursor:pointer; flex-shrink:0; user-select:none;
-transition: background .15s, color .15s, border-color .15s;
-}
-.chip.active {
-background:rgba(91,141,238,.15); border-color:rgba(91,141,238,.3); color:var(–accent);
-}
-.chip:active { opacity:.7; }
+/* finance */
+.fsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px 4px;}
+.fst{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:10px 8px;text-align:center;}
+.fv{font-family:var(--mo);font-size:16px;font-weight:500;line-height:1;margin-bottom:3px;}
+.fl{font-size:10px;color:var(--t2);}
+.fi{margin:0 16px 7px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:11px 13px;display:flex;align-items:center;gap:11px;}
+.fic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+.fic.out{background:rgba(240,84,106,.12);}
+.fic.in{background:rgba(62,207,142,.12);}
+.fbody{flex:1;min-width:0;}
+.fdesc{font-size:13px;color:var(--t1);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fsub{font-size:11px;color:var(--t2);}
+.famt{font-family:var(--mo);font-size:14px;font-weight:500;flex-shrink:0;}
+.famt.out{color:var(--re);}
+.famt.in{color:var(--gr);}
 
-/* ── SEARCH ── */
-.search-bar {
-margin:0 20px 12px;
-background:var(–bg3); border:1px solid var(–border2);
-border-radius:12px; padding:10px 14px;
-display:flex; align-items:center; gap:8px;
-color:var(–text3); font-size:13px;
-}
+/* headcount */
+.hcc{margin:0 16px 8px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;}
+.hch{padding:12px 14px 8px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.hce{font-size:13px;font-weight:600;margin-bottom:2px;}
+.hcd{font-family:var(--mo);font-size:10px;color:var(--t3);}
+.hcp{padding:0 14px 10px;}
+.pl{display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:5px;}
+.pb{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.pf{height:100%;border-radius:2px;}
+.hca{padding:0 14px 12px;display:flex;gap:5px;flex-wrap:wrap;}
+.av{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:500;}
+.av.ok{background:rgba(62,207,142,.12);color:var(--gr);}
+.av.q{background:rgba(245,166,35,.12);color:var(--am);}
+.av.no{background:rgba(240,84,106,.12);color:var(--re);}
 
-/* ── STATS ROW ── */
-.stats-row {
-display:grid; grid-template-columns:repeat(4,1fr);
-gap:10px; padding:0 20px 4px;
-}
-.stat {
-background:var(–bg2); border:1px solid var(–border);
-border-radius:var(–radius-sm); padding:12px 8px; text-align:center;
-}
-.stat-val { font-family:var(–mono); font-size:20px; font-weight:500; line-height:1; margin-bottom:4px; }
-.stat-lbl { font-size:10px; color:var(–text2); }
+/* more */
+.mi{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:12px 14px;display:flex;align-items:center;gap:11px;margin:0 16px 7px;cursor:pointer;transition:background .15s;}
+.mi:active{background:var(--bg3);}
+.mic{width:34px;height:34px;border-radius:9px;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--t2);flex-shrink:0;}
+.ml{flex:1;font-size:13px;}
+.mb{font-family:var(--mo);font-size:11px;padding:2px 7px;border-radius:8px;background:var(--bg3);color:var(--t2);}
 
-/* ── SUMMARY CARD ── */
-.card {
-margin:0 20px 10px;
-background:var(–bg2); border:1px solid var(–border);
-border-radius:var(–radius); overflow:hidden;
-cursor:pointer; transition:border-color .15s;
-}
-.card:active { border-color:var(–border2); background:var(–bg3); }
-.card-header { padding:14px 16px 10px; display:flex; align-items:flex-start; gap:10px; }
-.card-header-main { flex:1; min-width:0; }
-.card-row { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
-.card-name { font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; }
-.card-date { font-family:var(–mono); font-size:10px; color:var(–text3); flex-shrink:0; }
-.card-tags { display:flex; gap:4px; flex-wrap:wrap; }
-.card-copy { width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(–text3); flex-shrink:0; }
-.card-body { padding:0 16px 12px; font-size:13px; color:var(–text2); line-height:1.6; }
-.card-note {
-margin:0 16px 12px; padding:8px 10px;
-background:rgba(245,166,35,.07); border-radius:8px;
-font-size:12px; color:var(–amber);
-display:flex; gap:6px; align-items:flex-start;
-}
-.card-footer {
-padding:10px 16px 12px; border-top:1px solid var(–border);
-display:flex; gap:16px;
-}
-.card-stat { display:flex; align-items:center; gap:5px; font-size:12px; color:var(–text2); }
-.card-stat strong { color:var(–text); font-weight:600; }
+/* links */
+.li{margin:0 16px 7px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:11px 13px;display:flex;align-items:flex-start;gap:10px;}
+.lf{width:30px;height:30px;border-radius:7px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.lb{flex:1;min-width:0;}
+.lu{font-family:var(--mo);font-size:11px;color:var(--ac);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;}
+.lm{font-size:11px;color:var(--t2);}
 
-/* ── TODO ITEM ── */
-.todo-item {
-margin:0 20px 8px;
-background:var(–bg2); border:1px solid var(–border);
-border-radius:var(–radius-sm); padding:12px 14px;
-display:flex; align-items:center; gap:12px;
-cursor:pointer; transition:background .15s;
-}
-.todo-item:active { background:var(–bg3); }
-.todo-check {
-width:22px; height:22px; border-radius:7px; border:2px solid var(–border2);
-flex-shrink:0; display:flex; align-items:center; justify-content:center;
-transition:all .15s;
-}
-.todo-check.done { background:var(–green); border-color:var(–green); }
-.todo-body { flex:1; min-width:0; }
-.todo-text { font-size:13px; color:var(–text); margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.todo-text.done { text-decoration:line-through; color:var(–text3); }
-.todo-meta { display:flex; gap:8px; align-items:center; }
-.todo-group { font-size:10px; color:var(–text2); background:var(–bg3); padding:1px 6px; border-radius:4px; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.todo-due { font-family:var(–mono); font-size:10px; color:var(–text3); }
-.priority-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+/* login */
+.login{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;}
+.login-logo{font-size:36px;margin-bottom:8px;}
+.login-title{font-size:20px;font-weight:700;margin-bottom:4px;}
+.login-sub{font-size:12px;color:var(--t2);margin-bottom:28px;font-family:var(--mo);}
+.login-box{width:100%;max-width:320px;background:var(--bg2);border:1px solid var(--b2);border-radius:14px;padding:20px;}
+.login-lbl{font-size:12px;color:var(--t2);margin-bottom:8px;}
+.login-inp{width:100%;background:var(--bg3);border:1px solid var(--b2);border-radius:10px;padding:11px 13px;color:var(--t1);font-size:14px;font-family:var(--mo);outline:none;}
+.login-inp:focus{border-color:var(--ac);}
+.login-btn{width:100%;margin-top:12px;padding:12px;border-radius:10px;background:var(--ac);color:#fff;font-size:14px;font-weight:600;font-family:var(--fn);border:none;cursor:pointer;}
+.login-btn:active{opacity:.85;}
+.login-status{margin-top:12px;font-size:12px;text-align:center;min-height:18px;font-family:var(--mo);}
+#app-shell{display:none;flex-direction:column;height:100%;}
 
-/* ── FINANCE ── */
-.finance-summary {
-display:grid; grid-template-columns:repeat(3,1fr);
-gap:10px; padding:0 20px 4px;
-}
-.fin-stat {
-background:var(–bg2); border:1px solid var(–border);
-border-radius:var(–radius-sm); padding:12px 10px; text-align:center;
-}
-.fin-val { font-family:var(–mono); font-size:18px; font-weight:500; line-height:1; margin-bottom:4px; }
-.fin-lbl { font-size:10px; color:var(–text2); }
-.finance-item {
-margin:0 20px 8px;
-background:var(–bg2); border:1px solid var(–border);
-border-radius:var(–radius-sm); padding:12px 14px;
-display:flex; align-items:center; gap:12px;
-}
-.fin-icon {
-width:36px; height:36px; border-radius:10px;
-display:flex; align-items:center; justify-content:center;
-flex-shrink:0; font-size:16px;
-}
-.fin-icon.out { background:rgba(240,84,106,.12); }
-.fin-icon.in { background:rgba(62,207,142,.12); }
-.fin-body { flex:1; min-width:0; }
-.fin-desc { font-size:13px; color:var(–text); margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.fin-sub { font-size:11px; color:var(–text2); }
-.fin-amount { font-family:var(–mono); font-size:15px; font-weight:500; flex-shrink:0; }
-.fin-amount.out { color:var(–red); }
-.fin-amount.in { color:var(–green); }
+/* events */
+.ev-notice{margin:8px 16px 10px;padding:9px 12px;background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.12);border-radius:9px;font-size:12px;color:var(--te);display:flex;align-items:center;gap:7px;}
+.ev-card{margin:0 16px 8px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;}
+.ev-hdr{padding:12px 14px 8px;display:flex;align-items:center;gap:10px;}
+.ev-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.ev-main{flex:1;min-width:0;}
+.ev-name{font-size:13px;font-weight:600;margin-bottom:2px;}
+.ev-sub{font-size:11px;color:var(--t3);font-family:var(--mo);}
+.ev-body{padding:0 14px 10px;display:flex;flex-direction:column;gap:5px;}
+.ev-row{display:flex;gap:8px;font-size:12px;}
+.ev-lbl{color:var(--t2);flex-shrink:0;width:52px;}
+.ev-val{color:var(--t1);flex:1;}
+.ev-foot{padding:0 14px 12px;}
+.ev-add{margin:0 16px 8px;border:1px dashed var(--b2);border-radius:var(--r2);padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--t2);cursor:pointer;}
+.ev-add:active{background:var(--bg3);}
 
-/* ── HEADCOUNT ── */
-.hc-card {
-margin:0 20px 10px;
-background:var(–bg2); border:1px solid var(–border);
-border-radius:var(–radius); overflow:hidden;
-}
-.hc-header { padding:14px 16px 10px; display:flex; align-items:flex-start; justify-content:space-between; }
-.hc-event { font-size:14px; font-weight:600; margin-bottom:2px; }
-.hc-date { font-family:var(–mono); font-size:11px; color:var(–text3); }
-.hc-progress { padding:0 16px 12px; }
-.prog-label { display:flex; justify-content:space-between; font-size:11px; color:var(–text2); margin-bottom:6px; }
-.prog-bar { height:4px; background:var(–bg4); border-radius:2px; overflow:hidden; }
-.prog-fill { height:100%; border-radius:2px; }
-.hc-chips { padding:0 16px 14px; display:flex; gap:6px; flex-wrap:wrap; }
-.avatar {
-padding:4px 8px; border-radius:6px;
-font-size:11px; font-weight:500;
-display:flex; align-items:center; gap:4px;
-}
-.avatar.confirmed { background:rgba(62,207,142,.12); color:var(–green); }
-.avatar.pending { background:rgba(245,166,35,.12); color:var(–amber); }
-.avatar.absent { background:rgba(240,84,106,.12); color:var(–red); }
+/* logs */
+.log-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 4px;}
+.lst{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:10px 8px;text-align:center;}
+.lsv{font-family:var(--mo);font-size:18px;font-weight:500;line-height:1;margin-bottom:3px;}
+.lsl{font-size:10px;color:var(--t2);}
+.log-item{margin:0 16px 7px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:11px 13px;}
+.log-hdr{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap;}
+.log-sender{font-size:12px;font-weight:600;color:var(--t1);}
+.log-group{font-size:10px;color:var(--t2);background:var(--bg3);padding:1px 6px;border-radius:4px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.log-time{font-family:var(--mo);font-size:10px;color:var(--t3);margin-left:auto;}
+.log-msg{font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:7px;}
+.log-tags{display:flex;gap:5px;}
+.ltag{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:500;}
+.ltag.raw{background:rgba(240,84,106,.12);color:var(--re);}
+.ltag.bot{background:rgba(91,141,238,.12);color:var(--ac);}
+.ltag.url{background:rgba(45,212,191,.12);color:var(--te);}
+.log-more{margin:4px 16px 8px;padding:10px;text-align:center;font-size:12px;color:var(--t2);border:1px solid var(--b2);border-radius:var(--r2);cursor:pointer;}
+.log-more:active{background:var(--bg3);}
 
-/* ── MORE TAB ── */
-.global-banner {
-margin:0 20px 10px; padding:10px 14px;
-background:rgba(45,212,191,.06); border:1px solid rgba(45,212,191,.12);
-border-radius:10px; font-size:12px; color:var(–teal);
-display:flex; align-items:center; gap:8px;
-}
-.pulse { width:6px; height:6px; border-radius:50%; background:var(–teal); flex-shrink:0; animation:pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+.gbanner{margin:8px 16px;padding:8px 12px;background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.12);border-radius:9px;font-size:12px;color:var(--te);display:flex;align-items:center;gap:7px;}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--te);flex-shrink:0;animation:p 2s infinite;}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
 
-.more-item {
-background:var(–bg2); border:1px solid var(–border);
-border-radius:var(–radius-sm); padding:13px 14px;
-display:flex; align-items:center; gap:12px;
-margin:0 20px 8px; cursor:pointer; transition:background .15s;
-}
-.more-item:active { background:var(–bg3); }
-.more-icon {
-width:36px; height:36px; border-radius:10px;
-background:var(–bg3); display:flex; align-items:center;
-justify-content:center; color:var(–text2); flex-shrink:0;
-}
-.more-label { flex:1; font-size:13px; }
-.more-badge { font-family:var(–mono); font-size:11px; padding:2px 7px; border-radius:10px; background:var(–bg3); color:var(–text2); }
+/* overlays */
+.ov{position:fixed;inset:0;z-index:300;display:none;}
+.ov.on{display:flex;}
+.bd{position:absolute;inset:0;background:rgba(0,0,0,.65);}
 
-/* ── LINKS ── */
-.link-item {
-margin:0 20px 8px;
-background:var(–bg2); border:1px solid var(–border);
-border-radius:var(–radius-sm); padding:12px 14px;
-display:flex; align-items:flex-start; gap:10px;
-}
-.link-favicon {
-width:32px; height:32px; border-radius:8px;
-background:var(–bg3); flex-shrink:0;
-display:flex; align-items:center; justify-content:center;
-font-size:14px;
-}
-.link-body { flex:1; min-width:0; }
-.link-url { font-family:var(–mono); font-size:11px; color:var(–accent); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:3px; }
-.link-meta { font-size:11px; color:var(–text2); }
+/* calendar */
+.cov{flex-direction:column;align-items:center;justify-content:flex-start;padding-top:70px;}
+.csh{position:relative;width:calc(100% - 32px);max-width:340px;background:var(--bg2);border:1px solid var(--b2);border-radius:18px;padding:18px;z-index:1;box-shadow:0 20px 60px rgba(0,0,0,.6);}
+.ch2{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cnv{width:30px;height:30px;border-radius:8px;background:var(--bg3);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;color:var(--t2);cursor:pointer;}
+.cml{font-size:14px;font-weight:600;}
+.cl{width:100%;padding:7px;border-radius:9px;border:1px solid var(--b2);background:none;color:var(--t2);font-size:12px;font-family:var(--fn);cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;}
+.cl.on{background:rgba(91,141,238,.1);border-color:rgba(91,141,238,.3);color:var(--ac);}
+.cwds{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+.cwd{text-align:center;font-size:10px;color:var(--t3);padding:2px 0;}
+.cdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cday{aspect-ratio:1;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--t3);gap:2px;}
+.cday.has{color:var(--t1);cursor:pointer;}
+.cday.has:active{background:var(--bg3);}
+.cday.sel{background:var(--ac)!important;}
+.cday.sel .cdn{color:#fff!important;}
+.cday.today .cdn{font-weight:700;color:var(--ac);}
+.cday.sel .cdot{background:rgba(255,255,255,.7)!important;}
+.cdn{font-size:12px;line-height:1;}
+.cdots{display:flex;gap:2px;}
+.cdot{width:3px;height:3px;border-radius:50%;background:var(--ac);}
 
-/* ── CALENDAR OVERLAY ── */
-.cal-overlay {
-position:absolute; inset:0; z-index:300;
-display:none;
-}
-.cal-overlay.open { display:flex; flex-direction:column; justify-content:flex-start; }
-.cal-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.6); }
-.cal-sheet {
-position:relative; margin-top:96px;
-background:var(–bg2); border:1px solid var(–border2);
-border-radius:20px; margin-left:16px; margin-right:16px;
-padding:20px; z-index:1;
-box-shadow: 0 20px 60px rgba(0,0,0,.5);
-}
-.cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-.cal-nav-btn {
-width:32px; height:32px; border-radius:10px;
-background:var(–bg3); border:1px solid var(–border2);
-display:flex; align-items:center; justify-content:center;
-color:var(–text2); cursor:pointer;
-}
-.cal-month { font-size:14px; font-weight:600; }
-.cal-latest {
-width:100%; padding:8px; border-radius:10px;
-border:1px solid var(–border2); background:none;
-color:var(–text2); font-size:12px; font-family:var(–font);
-cursor:pointer; margin-bottom:12px;
-display:flex; align-items:center; justify-content:center; gap:6px;
-transition:background .15s;
-}
-.cal-latest:active, .cal-latest.active { background:rgba(91,141,238,.1); border-color:rgba(91,141,238,.3); color:var(–accent); }
-.cal-wds { display:grid; grid-template-columns:repeat(7,1fr); margin-bottom:6px; }
-.cal-wd { text-align:center; font-size:10px; color:var(–text3); padding:2px 0; }
-.cal-days { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
-.cal-day {
-aspect-ratio:1; border-radius:8px;
-display:flex; flex-direction:column; align-items:center; justify-content:center;
-font-size:12px; color:var(–text3); gap:3px;
-cursor:default;
-}
-.cal-day.has-data { color:var(–text); cursor:pointer; }
-.cal-day.has-data:active { background:var(–bg3); }
-.cal-day.today .cal-dn { font-weight:700; color:var(–accent); }
-.cal-day.selected { background:var(–accent) !important; }
-.cal-day.selected .cal-dn { color:#fff !important; }
-.cal-dn { font-size:12px; line-height:1; }
-.cdots { display:flex; gap:2px; }
-.cdot { width:4px; height:4px; border-radius:50%; background:var(–accent); }
-.cal-day.selected .cdot { background:rgba(255,255,255,.7); }
-
-/* ── GROUP SHEET ── */
-.grp-overlay {
-position:absolute; inset:0; z-index:300; display:none;
-}
-.grp-overlay.open { display:flex; flex-direction:column; justify-content:flex-end; }
-.grp-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.6); }
-.grp-sheet {
-position:relative; background:var(–bg2);
-border-radius:20px 20px 0 0; padding:20px 20px 36px;
-border-top:1px solid var(–border2); z-index:1;
-}
-.grp-handle { width:36px; height:4px; background:var(–border2); border-radius:2px; margin:0 auto 16px; }
-.grp-title { font-size:16px; font-weight:700; margin-bottom:14px; }
-.grp-item {
-display:flex; align-items:center; gap:12px;
-padding:12px 0; border-bottom:1px solid var(–border);
-cursor:pointer;
-}
-.grp-item:last-child { border-bottom:none; }
-.grp-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.grp-name { flex:1; font-size:13px; }
-.grp-count { font-family:var(–mono); font-size:11px; color:var(–text2); }
-.grp-check { color:var(–accent); }
+/* group sheet */
+.gov{flex-direction:column;justify-content:flex-end;}
+.gsh{position:relative;background:var(--bg2);border-radius:18px 18px 0 0;padding:16px 16px 28px;border-top:1px solid var(--b2);z-index:1;}
+.ghdl{width:32px;height:4px;background:var(--b2);border-radius:2px;margin:0 auto 14px;}
+.gt{font-size:15px;font-weight:700;margin-bottom:12px;}
+.git{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--b1);cursor:pointer;}
+.git:last-child{border-bottom:none;}
+.git:active{opacity:.7;}
+.gdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.gn{flex:1;font-size:13px;}
+.gc{font-family:var(--mo);font-size:11px;color:var(--t2);}
+.gck{color:var(--ac);}
 </style>
 
 </head>
 <body>
-<div class="phone">
-  <div class="app">
 
-```
-<!-- STATUS BAR -->
-<div class="status-bar">
-  <span class="status-time" id="clock">22:30</span>
-  <div class="status-icons">
-    <svg width="16" height="12" fill="currentColor" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1" opacity=".4"/><rect x="4" y="2" width="3" height="10" rx="1" opacity=".6"/><rect x="8" y="0" width="3" height="12" rx="1"/><rect x="13" y="1" width="2" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="15.2" y="3" width="1" height="4" rx=".5"/></svg>
-    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x=".5" y=".5" width="21" height="11" rx="3.5" stroke="currentColor" stroke-opacity=".35"/><rect x="2" y="2" width="16" height="8" rx="2" fill="currentColor"/><path d="M23 4v4a2 2 0 000-4z" fill="currentColor" opacity=".4"/></svg>
+<!-- LOGIN -->
+
+<div class="login" id="login-screen">
+  <div class="login-logo">⬡</div>
+  <div class="login-title">Line Assistant</div>
+  <div class="login-sub">Dashboard · Private</div>
+  <div class="login-box">
+    <div class="login-lbl">輸入密碼</div>
+    <input class="login-inp" id="token-input" type="password" placeholder="password..." autocomplete="current-password">
+    <button class="login-btn" onclick="doLogin()">登入</button>
+    <div class="login-status" id="login-status"></div>
   </div>
 </div>
 
-<!-- TOP HEADER -->
-<div class="top-header">
-  <div class="header-left">
-    <h1 id="page-title">⬡ Line Asst</h1>
-    <div class="header-sub" id="page-sub">5 groups · Latest</div>
+<!-- APP -->
+
+<div id="app-shell">
+
+<!-- TOPBAR -->
+
+<div class="topbar">
+  <div class="tl">
+    <h1 id="ptitle">⬡ Line Asst</h1>
+    <div class="tl-sub" id="psub">7 groups · Latest</div>
   </div>
-  <div class="header-actions">
+  <div class="ta">
     <div class="hbtn" id="btn-cal" onclick="toggleCal()">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="1" y="2.5" width="14" height="12" rx="2"/><path d="M1 6.5h14M5 1v3M11 1v3"/></svg>
     </div>
@@ -436,545 +284,769 @@ cursor:pointer;
     </div>
   </div>
 </div>
-
-<!-- SNAP PILL -->
-<div class="snap-pill hidden" id="snap-pill">
+<div class="snap" id="snap">
   <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6"/><polyline points="7 4 7 7 9 9"/></svg>
-  <span id="snap-label">—</span>
+  <span id="snap-lbl">—</span>
 </div>
 
 <!-- CONTENT -->
+
 <div class="content">
 
-  <!-- ① SUMMARY PANEL -->
-  <div class="panel active" id="panel-summary">
-    <div class="stats-row">
-      <div class="stat"><div class="stat-val" style="color:var(--accent)">7</div><div class="stat-lbl">Groups</div></div>
-      <div class="stat"><div class="stat-val" style="color:var(--amber)">28</div><div class="stat-lbl">Todos</div></div>
-      <div class="stat"><div class="stat-val" style="color:var(--teal)">12</div><div class="stat-lbl">Links</div></div>
-      <div class="stat"><div class="stat-val" style="color:var(--green)">45</div><div class="stat-lbl">People</div></div>
-    </div>
-    <div class="section-label">近期摘要 · 7 cards</div>
+  <!-- SUMMARY -->
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-header-main">
-          <div class="card-row">
-            <span class="card-name">邱信一, Samuel, 李福軒 Fisher</span>
-            <span class="card-date">03/15</span>
-          </div>
-          <div class="card-tags">
-            <span class="tag tag-blue">展望交通</span>
-            <span class="tag tag-blue">羽球相調</span>
-            <span class="tag tag-blue">增區目標</span>
-          </div>
-        </div>
-        <div class="card-copy"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div>
-      </div>
-      <div class="card-body">召會生活運作，3/7展望交通服事分配完成，3/8羽球相調活動盈餘700元歸入小區基金，訂定年度目標至9/24。</div>
-      <div class="card-note">⚠ 3/8羽球活動盈餘700元已歸入小區基金</div>
-      <div class="card-footer">
-        <div class="card-stat">📋 <strong>5</strong> todos</div>
-        <div class="card-stat">💰 <strong>2</strong></div>
-        <div class="card-stat">👥 <strong>15</strong></div>
-      </div>
+  <div class="panel on" id="p-summary">
+    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-summary" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋摘要..."></div>
+    <div class="stats">
+      <div class="stat"><div class="sv" id="stat-groups" style="color:var(--ac)">—</div><div class="sl">Groups</div></div>
+      <div class="stat"><div class="sv" id="stat-todos" style="color:var(--am)">—</div><div class="sl">Todos</div></div>
+      <div class="stat"><div class="sv" id="stat-links" style="color:var(--te)">—</div><div class="sl">Links</div></div>
+      <div class="stat"><div class="sv" id="stat-people" style="color:var(--gr)">—</div><div class="sl">People</div></div>
     </div>
+    <div class="slbl" id="summary-lbl">載入中...</div>
+    <div id="summary-list"></div>
+  </div>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-header-main">
-          <div class="card-row">
-            <span class="card-name">🎯🎯🎯FIS筆記｜FISNOTE</span>
-            <span class="card-date">03/15</span>
-          </div>
-          <div class="card-tags">
-            <span class="tag tag-blue">技術開發</span>
-            <span class="tag tag-blue">活動籌備</span>
-          </div>
-        </div>
-        <div class="card-copy"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div>
-      </div>
-      <div class="card-body">個人工作日誌，3/27「你選哪一派」活動籌備中，Line Dashboard上線，ICS日曆同步完成。</div>
-      <div class="card-footer">
-        <div class="card-stat">📋 <strong>7</strong> todos</div>
-        <div class="card-stat">🔗 <strong>0</strong></div>
-        <div class="card-stat">👥 <strong>1</strong></div>
-      </div>
+```
+<div class="card">
+  <div class="ch"><div class="cm"><div class="cr"><span class="cn">邱信一, Samuel, 李福軒 Fisher</span><span class="cd">03/15</span></div><div class="ctags"><span class="tag bl">展望交通</span><span class="tag bl">羽球相調</span><span class="tag bl">增區目標</span></div></div><div class="copy"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div></div>
+  <div class="cb">召會生活運作，3/7展望交通服事分配完成，3/8羽球相調活動盈餘700元歸入小區基金，訂定年度目標至9/24。</div>
+  <div class="cnote">⚠ 3/8羽球活動盈餘700元歸入小區基金</div>
+  <div class="cf"><div class="cs">📋 <strong>5</strong> todos</div><div class="cs">💰 <strong>2</strong></div><div class="cs">👥 <strong>15</strong></div></div>
+</div>
+
+<div class="card">
+  <div class="ch"><div class="cm"><div class="cr"><span class="cn">🎯🎯🎯FIS筆記｜FISNOTE</span><span class="cd">03/15</span></div><div class="ctags"><span class="tag bl">技術開發</span><span class="tag bl">活動籌備</span></div></div><div class="copy"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div></div>
+  <div class="cb">個人工作日誌，3/27「你選哪一派」活動籌備中，Line Dashboard 上線，ICS 日曆同步完成。</div>
+  <div class="cf"><div class="cs">📋 <strong>7</strong> todos</div><div class="cs">🔗 <strong>0</strong></div><div class="cs">👥 <strong>1</strong></div></div>
+</div>
+
+<div class="card">
+  <div class="ch"><div class="cm"><div class="cr"><span class="cn">有福信仰</span><span class="cd">03/15</span></div><div class="ctags"><span class="tag bl">交通安排</span><span class="tag bl">關懷轉介</span></div></div><div class="copy"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div></div>
+  <div class="cb">3/16林口行程確認，18:30芝山站搭乘克翔哥的車，三芝憂鬱症朋友已轉介彭爸爸協助。</div>
+  <div class="cf"><div class="cs">📋 <strong>3</strong> todos</div><div class="cs">👥 <strong>4</strong></div></div>
+</div>
+
+<div class="card">
+  <div class="ch"><div class="cm"><div class="cr"><span class="cn">學習學習學習，勉強勉強勉強</span><span class="cd">03/15</span></div><div class="ctags"><span class="tag bl">JavaScript</span><span class="tag bl">讀書會</span></div></div><div class="copy"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div></div>
+  <div class="cb">JavaScript讀書會，ES6語法研究，回家作業：從zip檔選專案改寫成個人風格。</div>
+  <div class="cf"><div class="cs">📋 <strong>5</strong> todos</div><div class="cs">👥 <strong>5</strong></div></div>
+</div>
+
+<div class="card">
+  <div class="ch"><div class="cm"><div class="cr"><span class="cn">紀念日籌備規劃</span><span class="cd">03/15</span></div><div class="ctags"><span class="tag bl">母親節</span></div></div><div class="copy"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div></div>
+  <div class="cb">公告 05/10（週日）為母親節，群組用於紀念日籌備規劃。</div>
+  <div class="cf"><div class="cs">📋 <strong>0</strong> todos</div><div class="cs">👥 <strong>1</strong></div></div>
+</div>
+```
+
+  </div>
+
+  <!-- TODOS -->
+
+  <div class="panel" id="p-todos">
+    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-todos" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋待辦..."></div>
+    <div class="fbar">
+      <div class="chip priority-chip on" data-p="">全部</div>
+      <div class="chip priority-chip" data-p="高">高優先</div>
+      <div class="chip priority-chip" data-p="中">中優先</div>
+      <div class="chip priority-chip" data-p="低">低優先</div>
     </div>
+    <div id="todos-list"><div style="text-align:center;padding:40px;color:var(--t3);font-size:13px;">載入中...</div></div>
+  </div>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-header-main">
-          <div class="card-row">
-            <span class="card-name">有福信仰</span>
-            <span class="card-date">03/15</span>
-          </div>
-          <div class="card-tags">
-            <span class="tag tag-blue">交通安排</span>
-            <span class="tag tag-blue">關懷轉介</span>
-          </div>
-        </div>
-        <div class="card-copy"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div>
-      </div>
-      <div class="card-body">3/16林口行程確認，18:30芝山站搭乘克翔哥的車，三芝憂鬱症朋友已轉介彭爸爸協助。</div>
-      <div class="card-footer">
-        <div class="card-stat">📋 <strong>3</strong> todos</div>
-        <div class="card-stat">👥 <strong>4</strong></div>
-      </div>
+  <!-- FINANCE -->
+
+  <div class="panel" id="p-finance">
+    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-finance" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋財務..."></div>
+    <div class="fsum">
+      <div class="fst"><div class="fv" id="fin-expense" style="color:var(--re)">$0</div><div class="fl">支出</div></div>
+      <div class="fst"><div class="fv" id="fin-income" style="color:var(--gr)">$0</div><div class="fl">收入</div></div>
+      <div class="fst"><div class="fv" id="fin-net" style="color:var(--gr)">$0</div><div class="fl">Net</div></div>
     </div>
+    <div id="finance-list"><div style="text-align:center;padding:40px;color:var(--t3);font-size:13px;">載入中...</div></div>
+  </div>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-header-main">
-          <div class="card-row">
-            <span class="card-name">學習學習學習，勉強勉強勉強</span>
-            <span class="card-date">03/15</span>
-          </div>
-          <div class="card-tags">
-            <span class="tag tag-blue">JavaScript</span>
-            <span class="tag tag-blue">讀書會</span>
-          </div>
-        </div>
-        <div class="card-copy"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div>
-      </div>
-      <div class="card-body">JavaScript讀書會進度追蹤，ES6語法研究，回家作業：從zip檔選專案改寫成個人風格。</div>
-      <div class="card-footer">
-        <div class="card-stat">📋 <strong>5</strong> todos</div>
-        <div class="card-stat">👥 <strong>5</strong></div>
-      </div>
+  <!-- HEADCOUNT -->
+
+  <div class="panel" id="p-hc">
+    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-hc" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋活動或人名..."></div>
+    <div id="hc-list"><div style="text-align:center;padding:40px;color:var(--t3);font-size:13px;">載入中...</div></div>
+  </div>
+
+  <!-- MORE -->
+
+  <div class="panel" id="p-more">
+    <div class="gbanner"><div class="pulse"></div>已連接 GAS API · <span id="more-groups">—</span> groups</div>
+    <div class="slbl">其他分頁</div>
+    <div class="mi" onclick="go('links')">
+      <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M6 9a4 4 0 005.7 0l1.5-1.5a4 4 0 00-5.7-5.7L6 3.4"/><path d="M10 7a4 4 0 00-5.7 0L2.8 8.5a4 4 0 005.7 5.7l1.5-1.5"/></svg></div>
+      <span class="ml">Links</span><span class="mb" id="more-links-cnt">—</span>
+    </div>
+    <div class="mi" onclick="go('events')">
+      <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="1" y="2.5" width="14" height="12" rx="2"/><path d="M1 6.5h14M5 1v3M11 1v3"/></svg></div>
+      <span class="ml">Events（活動主檔）</span><span class="mb" id="more-events-cnt">—</span>
+    </div>
+    <div class="mi" onclick="go('logs')">
+      <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M2 4h12M2 8h8M2 12h5"/></svg></div>
+      <span class="ml">Raw Logs</span><span class="mb" id="more-logs-cnt">—</span>
+    </div>
+    <div class="slbl">操作</div>
+    <div class="mi" onclick="loadAll()">
+      <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M13.5 8A5.5 5.5 0 112.5 5"/><polyline points="2.5 1 2.5 5 6.5 5"/></svg></div>
+      <span class="ml">重新同步資料</span>
+    </div>
+    <div class="mi" onclick="doLogout()">
+      <div class="mic" style="color:var(--re)"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="2" y="7" width="12" height="8" rx="2"/><path d="M5 7V5a3 3 0 016 0v2"/></svg></div>
+      <span class="ml" style="color:var(--re)">登出</span>
     </div>
   </div>
 
-  <!-- ② TODOS PANEL -->
-  <div class="panel" id="panel-todos">
-    <div class="search-bar">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
-      Search todos...
-    </div>
-    <div class="filter-bar">
-      <div class="chip active">全部</div>
-      <div class="chip">待辦</div>
-      <div class="chip">高優先</div>
-      <div class="chip">已完成</div>
-    </div>
-    <div class="section-label">高優先 · 5 items</div>
-    <div class="todo-item"><div class="todo-check"></div><div class="todo-body"><div class="todo-text">確認4月羽球活動場地租借</div><div class="todo-meta"><span class="todo-group">邱信一群組</span><span class="todo-due">03/15</span></div></div><div class="priority-dot" style="background:var(--red)"></div></div>
-    <div class="todo-item"><div class="todo-check"></div><div class="todo-body"><div class="todo-text">安排3/27青職福音活動邀約</div><div class="todo-meta"><span class="todo-group">邱信一群組</span><span class="todo-due">03/20</span></div></div><div class="priority-dot" style="background:var(--red)"></div></div>
-    <div class="todo-item"><div class="todo-check"></div><div class="todo-body"><div class="todo-text">發送3/27活動邀請卡給配搭審閱</div><div class="todo-meta"><span class="todo-group">FIS筆記</span><span class="todo-due">03/04</span></div></div><div class="priority-dot" style="background:var(--red)"></div></div>
-    <div class="section-label">中優先 · 14 items</div>
-    <div class="todo-item"><div class="todo-check"></div><div class="todo-body"><div class="todo-text">更新小區堅定主日名單</div><div class="todo-meta"><span class="todo-group">邱信一群組</span><span class="todo-due">03/10</span></div></div><div class="priority-dot" style="background:var(--amber)"></div></div>
-    <div class="todo-item"><div class="todo-check"></div><div class="todo-body"><div class="todo-text">調整 Google Sheet 日期往後shift一週</div><div class="todo-meta"><span class="todo-group">組長提醒</span><span class="todo-due">02/12</span></div></div><div class="priority-dot" style="background:var(--amber)"></div></div>
-    <div class="todo-item"><div class="todo-check done"><svg width="12" height="12" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg></div><div class="todo-body"><div class="todo-text done">填寫AHC 5S自我評估表</div><div class="todo-meta"><span class="todo-group">79會所</span><span class="todo-due" style="color:var(--green)">完成</span></div></div><div class="priority-dot" style="background:var(--text3)"></div></div>
-    <div class="section-label">低優先 · 9 items</div>
-    <div class="todo-item"><div class="todo-check"></div><div class="todo-body"><div class="todo-text">練習PAPAYA Blender教學影片</div><div class="todo-meta"><span class="todo-group">學習群組</span><span class="todo-due">—</span></div></div><div class="priority-dot" style="background:var(--text3)"></div></div>
+  <!-- LINKS -->
+
+  <div class="panel" id="p-links">
+    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg> Search links...</div>
+    <div class="fbar"><div class="chip on">全部</div><div class="chip">邱信一群組</div><div class="chip">FIS筆記</div><div class="chip">79會所</div></div>
+    <div class="slbl">12 links</div>
+    <div class="li"><div class="lf">📊</div><div class="lb"><div class="lu">docs.google.com/spreadsheets/d/1dft...</div><div class="lm">李福軒 · 79會所 · 03/05</div></div></div>
+    <div class="li"><div class="lf">📝</div><div class="lb"><div class="lu">forms.gle/E8oZJL1jcxQUDJJQ7</div><div class="lm">李福軒 · FIS筆記 · 03/08</div></div></div>
+    <div class="li"><div class="lf">🐙</div><div class="lb"><div class="lu">github.com/koala73/worldmonitor</div><div class="lm">李福軒 · 學習群組 · 03/03</div></div></div>
+    <div class="li"><div class="lf">🔗</div><div class="lb"><div class="lu">forms.gle/bLFzNnmTqiRSZ9GK7</div><div class="lm">李福軒 · 79會所 · 02/10</div></div></div>
   </div>
 
-  <!-- ③ FINANCE PANEL -->
-  <div class="panel" id="panel-finance">
-    <div class="finance-summary">
-      <div class="fin-stat"><div class="fin-val" style="color:var(--red)">$800</div><div class="fin-lbl">支出</div></div>
-      <div class="fin-stat"><div class="fin-val" style="color:var(--green)">$2,700</div><div class="fin-lbl">收入</div></div>
-      <div class="fin-stat"><div class="fin-val" style="color:var(--green)">$1,900</div><div class="fin-lbl">Net</div></div>
-    </div>
-    <div class="filter-bar">
-      <div class="chip active">全部</div>
-      <div class="chip">支出</div>
-      <div class="chip">收入</div>
-    </div>
-    <div class="section-label">2 records</div>
-    <div class="finance-item">
-      <div class="fin-icon in">💰</div>
-      <div class="fin-body">
-        <div class="fin-desc">3/8羽球活動結餘歸入小區基金</div>
-        <div class="fin-sub">邱信一群組 · 參加者 → 2-4區小區基金</div>
+  <!-- EVENTS -->
+
+  <div class="panel" id="p-events">
+    <div class="ev-notice"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v3.5l2 2"/></svg>Events 為手動維護的活動主檔，記錄長期追蹤的活動。</div>
+    <div class="fbar"><div class="chip on">全部</div><div class="chip">即將到來</div><div class="chip">已結束</div></div>
+    <div class="slbl">3 events</div>
+    <div class="ev-card">
+      <div class="ev-hdr"><div class="ev-dot" style="background:var(--ac)"></div><div class="ev-main"><div class="ev-name">3/27 你選哪一派？福音聚會</div><div class="ev-sub">北投路二段13號B1 · 週五 18:30–21:00</div></div><span class="tag am">即將到來</span></div>
+      <div class="ev-body">
+        <div class="ev-row"><span class="ev-lbl">主辦</span><span class="ev-val">李福軒 Fisher</span></div>
+        <div class="ev-row"><span class="ev-lbl">狀態</span><span class="ev-val" style="color:var(--am)">籌備中（IG宣傳、邀請卡待完成）</span></div>
+        <div class="ev-row"><span class="ev-lbl">相關群組</span><span class="ev-val">FIS筆記</span></div>
       </div>
-      <div class="fin-amount in">+$700</div>
+      <div class="ev-foot"><div class="pl"><span>準備進度</span><span style="color:var(--am)">60%</span></div><div class="pb"><div class="pf" style="width:60%;background:var(--am)"></div></div></div>
     </div>
-    <div class="finance-item">
-      <div class="fin-icon in">💰</div>
-      <div class="fin-body">
-        <div class="fin-desc">3/8羽球活動報名費（每人）</div>
-        <div class="fin-sub">邱信一群組 · 每人100元</div>
+    <div class="ev-card">
+      <div class="ev-hdr"><div class="ev-dot" style="background:var(--gr)"></div><div class="ev-main"><div class="ev-name">3/8 羽球相調活動</div><div class="ev-sub">清江國小活動中心 · 15:00–17:00</div></div><span class="tag gy">已結束</span></div>
+      <div class="ev-body">
+        <div class="ev-row"><span class="ev-lbl">費用</span><span class="ev-val">每人100元</span></div>
+        <div class="ev-row"><span class="ev-lbl">結果</span><span class="ev-val" style="color:var(--gr)">盈餘700元已歸入小區基金</span></div>
+        <div class="ev-row"><span class="ev-lbl">相關群組</span><span class="ev-val">邱信一群組</span></div>
       </div>
-      <div class="fin-amount in">+$100</div>
+      <div class="ev-foot"><div class="pl"><span>出席</span><span style="color:var(--gr)">完成</span></div><div class="pb"><div class="pf" style="width:100%;background:var(--gr)"></div></div></div>
     </div>
+    <div class="ev-card">
+      <div class="ev-hdr"><div class="ev-dot" style="background:var(--re)"></div><div class="ev-main"><div class="ev-name">3/7 展望交通聚會</div><div class="ev-sub">2-4區 · 週五晚上</div></div><span class="tag gy">已結束</span></div>
+      <div class="ev-body">
+        <div class="ev-row"><span class="ev-lbl">出席</span><span class="ev-val">15 人確認</span></div>
+        <div class="ev-row"><span class="ev-lbl">服事</span><span class="ev-val">邱信一（會後）、李福軒（電器）、黃惠屏（招待）</span></div>
+        <div class="ev-row"><span class="ev-lbl">相關群組</span><span class="ev-val">邱信一群組</span></div>
+      </div>
+    </div>
+    <div class="ev-add" onclick="alert('新增活動 — 連接 GAS API 後啟用')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v6M5 8h6"/></svg>手動新增活動</div>
   </div>
 
-  <!-- ④ HEADCOUNT PANEL -->
-  <div class="panel" id="panel-headcount">
-    <div class="filter-bar">
-      <div class="chip active">全部活動</div>
-      <div class="chip">邱信一群組</div>
-      <div class="chip">有福信仰</div>
-    </div>
-    <div class="section-label">3 events</div>
+  <!-- LINKS -->
 
-    <div class="hc-card">
-      <div class="hc-header">
-        <div><div class="hc-event">3/7 展望交通聚會</div><div class="hc-date">邱信一群組 · 2026-03-07</div></div>
-        <span class="tag tag-blue">upcoming</span>
-      </div>
-      <div class="hc-progress">
-        <div class="prog-label"><span>出席確認</span><span style="color:var(--text)">15 人</span></div>
-        <div class="prog-bar"><div class="prog-fill" style="width:75%;background:var(--accent)"></div></div>
-      </div>
-      <div class="hc-chips">
-        <div class="avatar confirmed">✓ 邱信一</div>
-        <div class="avatar confirmed">✓ 金慧靈</div>
-        <div class="avatar confirmed">✓ 李福軒</div>
-        <div class="avatar confirmed">✓ 黃惠屏</div>
-        <div class="avatar confirmed">✓ Samuel</div>
-        <div class="avatar confirmed" style="opacity:.6">+10 人</div>
-      </div>
-    </div>
-
-    <div class="hc-card">
-      <div class="hc-header">
-        <div><div class="hc-event">林口行程（克翔哥接送）</div><div class="hc-date">有福信仰 · 2026-03-16</div></div>
-        <span class="tag tag-amber">upcoming</span>
-      </div>
-      <div class="hc-progress">
-        <div class="prog-label"><span>確認人數</span><span style="color:var(--text)">3 / 4</span></div>
-        <div class="prog-bar"><div class="prog-fill" style="width:75%;background:var(--amber)"></div></div>
-      </div>
-      <div class="hc-chips">
-        <div class="avatar confirmed">✓ 邱信一</div>
-        <div class="avatar confirmed">✓ Caleb</div>
-        <div class="avatar confirmed">✓ 李福軒</div>
-        <div class="avatar pending">? 克翔哥</div>
-      </div>
-    </div>
-
-    <div class="hc-card">
-      <div class="hc-header">
-        <div><div class="hc-event">UL福樂讀書會</div><div class="hc-date">79會所 · 2026-03-03</div></div>
-        <span class="tag tag-gray">completed</span>
-      </div>
-      <div class="hc-progress">
-        <div class="prog-label"><span>主辦人員</span><span style="color:var(--text)">3 人</span></div>
-        <div class="prog-bar"><div class="prog-fill" style="width:100%;background:var(--green)"></div></div>
-      </div>
-      <div class="hc-chips">
-        <div class="avatar confirmed">✓ Fisher Li</div>
-        <div class="avatar confirmed">✓ Glory Ko</div>
-        <div class="avatar confirmed">✓ LiYao Chiu</div>
-      </div>
-    </div>
+  <div class="panel" id="p-links">
+    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-links" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋連結..."></div>
+    <div id="links-list"><div style="text-align:center;padding:40px;color:var(--t3);">載入中...</div></div>
   </div>
 
-  <!-- ⑤ MORE PANEL -->
-  <div class="panel" id="panel-more">
-    <div class="global-banner">
-      <div class="pulse"></div>
-      目前：Single group mode
-    </div>
-    <div class="section-label">檢視設定</div>
-    <div class="more-item" onclick="alert('切換到 Global mode')">
-      <div class="more-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 1c-2.5 2.3-3.5 4.5-3.5 7s1 4.7 3.5 7M8 1c2.5 2.3 3.5 4.5 3.5 7s-1 4.7-3.5 7M1 8h14"/></svg></div>
-      <span class="more-label">Global 模式</span>
-      <span class="more-badge">OFF</span>
-    </div>
-    <div class="section-label">其他分頁</div>
-    <div class="more-item" onclick="switchTab('links')">
-      <div class="more-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M6 9a4 4 0 005.7 0l1.5-1.5a4 4 0 00-5.7-5.7L6 3.4"/><path d="M10 7a4 4 0 00-5.7 0L2.8 8.5a4 4 0 005.7 5.7l1.5-1.5"/></svg></div>
-      <span class="more-label">Links（共享連結）</span>
-      <span class="more-badge">12</span>
-    </div>
-    <div class="more-item" onclick="alert('Events 功能開發中')">
-      <div class="more-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="1" y="2.5" width="14" height="12" rx="2"/><path d="M1 6.5h14M5 1v3M11 1v3"/></svg></div>
-      <span class="more-label">Events（活動主檔）</span>
-      <span class="more-badge">手動</span>
-    </div>
-    <div class="more-item" onclick="alert('Raw Logs')">
-      <div class="more-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M2 4h12M2 8h8M2 12h5"/></svg></div>
-      <span class="more-label">Raw Logs</span>
-      <span class="more-badge">3000</span>
-    </div>
-    <div class="section-label">操作</div>
-    <div class="more-item" onclick="alert('重新同步資料')">
-      <div class="more-icon"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M13.5 8A5.5 5.5 0 112.5 5"/><polyline points="2.5 1 2.5 5 6.5 5"/></svg></div>
-      <span class="more-label">重新同步</span>
-    </div>
-    <div class="more-item" onclick="alert('登出')">
-      <div class="more-icon" style="color:var(--red)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="2" y="7" width="12" height="8" rx="2"/><path d="M5 7V5a3 3 0 016 0v2"/></svg></div>
-      <span class="more-label" style="color:var(--red)">登出</span>
-    </div>
+  <!-- EVENTS -->
+
+  <div class="panel" id="p-events">
+    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-events" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋活動..."></div>
+    <div class="ev-notice"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v3.5l2 2"/></svg>Events 由 Headcount 資料自動彙整。</div>
+    <div id="events-list"><div style="text-align:center;padding:40px;color:var(--t3);">載入中...</div></div>
+    <div class="ev-add" onclick="alert('新增活動 — 連接 GAS API 後啟用')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v6M5 8h6"/></svg>手動新增活動</div>
   </div>
 
-  <!-- ⑥ LINKS PANEL (hidden, accessed from More) -->
-  <div class="panel" id="panel-links">
-    <div class="search-bar">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
-      Search links...
+  <!-- LOGS -->
+
+  <div class="panel" id="p-logs">
+    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-logs" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋訊息內容..."></div>
+    <div class="log-stats">
+      <div class="lst"><div class="lsv" id="log-stat-total" style="color:var(--t1)">—</div><div class="lsl">全部</div></div>
+      <div class="lst"><div class="lsv" id="log-stat-raw" style="color:var(--re)">—</div><div class="lsl">未處理</div></div>
+      <div class="lst"><div class="lsv" id="log-stat-done" style="color:var(--gr)">—</div><div class="lsl">已處理</div></div>
+      <div class="lst"><div class="lsv" id="log-stat-groups" style="color:var(--am)">—</div><div class="lsl">群組</div></div>
     </div>
-    <div class="section-label">12 links</div>
-    <div class="link-item">
-      <div class="link-favicon">📊</div>
-      <div class="link-body">
-        <div class="link-url">docs.google.com/spreadsheets/d/1dft...</div>
-        <div class="link-meta">李福軒 Fisher · 79會所 · 03/05</div>
-      </div>
-    </div>
-    <div class="link-item">
-      <div class="link-favicon">📝</div>
-      <div class="link-body">
-        <div class="link-url">forms.gle/E8oZJL1jcxQUDJJQ7</div>
-        <div class="link-meta">李福軒 Fisher · FIS筆記 · 03/08</div>
-      </div>
-    </div>
-    <div class="link-item">
-      <div class="link-favicon">🐙</div>
-      <div class="link-body">
-        <div class="link-url">github.com/koala73/worldmonitor</div>
-        <div class="link-meta">李福軒 Fisher · 學習群組 · 03/03</div>
-      </div>
-    </div>
+    <div id="logs-list"><div style="text-align:center;padding:40px;color:var(--t3);">載入中...</div></div>
   </div>
 
 </div><!-- end content -->
 
 <!-- BOTTOM NAV -->
-<div class="bottom-nav">
-  <div class="nav-item active" id="nav-summary" onclick="switchTab('summary')">
-    <div class="nav-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><rect x="2" y="3" width="7" height="7" rx="2"/><rect x="11" y="3" width="7" height="7" rx="2"/><rect x="2" y="12" width="7" height="7" rx="2"/><rect x="11" y="12" width="7" height="7" rx="2"/></svg></div>
-    <span class="nav-label">摘要</span>
+
+<div class="bnav">
+  <div class="ni on" id="n-summary" onclick="go('summary')">
+    <div class="ni-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><rect x="2" y="3" width="7" height="7" rx="2"/><rect x="11" y="3" width="7" height="7" rx="2"/><rect x="2" y="12" width="7" height="7" rx="2"/><rect x="11" y="12" width="7" height="7" rx="2"/></svg></div>
+    <span class="ni-lbl">摘要</span>
   </div>
-  <div class="nav-item" id="nav-todos" onclick="switchTab('todos')">
-    <div class="nav-icon" style="position:relative">
+  <div class="ni" id="n-todos" onclick="go('todos')">
+    <div class="ni-icon" style="position:relative">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="6" cy="10" r="1.5"/><path d="M10 10h6M10 6h6M10 14h4"/></svg>
-      <div class="nav-badge">28</div>
+      <div class="nbadge">28</div>
     </div>
-    <span class="nav-label">Todos</span>
+    <span class="ni-lbl">Todos</span>
   </div>
-  <div class="nav-item" id="nav-finance" onclick="switchTab('finance')">
-    <div class="nav-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 6v8M7 8h4.5a1.5 1.5 0 010 3H7m0 0h5a1.5 1.5 0 010 3H7"/></svg></div>
-    <span class="nav-label">Finance</span>
+  <div class="ni" id="n-finance" onclick="go('finance')">
+    <div class="ni-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 6v8M7 8.5h4a1.5 1.5 0 010 3H7m0 0h5"/></svg></div>
+    <span class="ni-lbl">Finance</span>
   </div>
-  <div class="nav-item" id="nav-headcount" onclick="switchTab('headcount')">
-    <div class="nav-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="8" cy="8" r="3"/><path d="M2 18c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M14 6c1 .5 2 1.5 2 3s-1 2.5-2 3"/><path d="M17 18c0-1.5-.8-2.8-2-3.5"/></svg></div>
-    <span class="nav-label">人數</span>
+  <div class="ni" id="n-hc" onclick="go('hc')">
+    <div class="ni-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="8" cy="7" r="3"/><path d="M2 18c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M14 5c1 .5 2 1.5 2 3s-1 2.5-2 3"/><path d="M17 17c0-1.5-.8-2.8-2-3.5"/></svg></div>
+    <span class="ni-lbl">人數</span>
   </div>
-  <div class="nav-item" id="nav-more" onclick="switchTab('more')">
-    <div class="nav-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="5" cy="10" r="1.5" fill="currentColor"/><circle cx="10" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/></svg></div>
-    <span class="nav-label">更多</span>
+  <div class="ni" id="n-more" onclick="go('more')">
+    <div class="ni-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="5" cy="10" r="1.5" fill="currentColor"/><circle cx="10" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/></svg></div>
+    <span class="ni-lbl">更多</span>
   </div>
 </div>
-```
 
-  </div><!-- end app -->
+<!-- CALENDAR OVERLAY -->
 
-  <!-- CALENDAR OVERLAY -->
-
-  <div class="cal-overlay" id="cal-overlay">
-    <div class="cal-backdrop" onclick="toggleCal()"></div>
-    <div class="cal-sheet">
-      <div class="cal-header">
-        <div class="cal-nav-btn" onclick="navMonth(-1)">
-          <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 10 10"><polyline points="7 2 3 5 7 8"/></svg>
-        </div>
-        <div class="cal-month" id="cal-month-lbl">March 2026</div>
-        <div class="cal-nav-btn" onclick="navMonth(1)">
-          <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 10 10"><polyline points="3 2 7 5 3 8"/></svg>
-        </div>
-      </div>
-      <button class="cal-latest active" id="cal-latest-btn" onclick="selectLatest()">
-        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6"/><polyline points="7 4 7 7 9 9"/></svg>
-        Latest (每組最新)
-      </button>
-      <div class="cal-wds">
-        <div class="cal-wd">Su</div><div class="cal-wd">Mo</div><div class="cal-wd">Tu</div>
-        <div class="cal-wd">We</div><div class="cal-wd">Th</div><div class="cal-wd">Fr</div><div class="cal-wd">Sa</div>
-      </div>
-      <div class="cal-days" id="cal-days"></div>
+<div class="ov cov" id="ov-cal">
+  <div class="bd" onclick="closeOv('cal')"></div>
+  <div class="csh">
+    <div class="ch2">
+      <div class="cnv" onclick="nm(-1)"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 10 10"><polyline points="7 2 3 5 7 8"/></svg></div>
+      <div class="cml" id="cml">March 2026</div>
+      <div class="cnv" onclick="nm(1)"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 10 10"><polyline points="3 2 7 5 3 8"/></svg></div>
     </div>
+    <button class="cl on" id="cl-btn" onclick="selLatest()">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6"/><polyline points="7 4 7 7 9 9"/></svg>
+      Latest（每組最新）
+    </button>
+    <div class="cwds"><div class="cwd">Su</div><div class="cwd">Mo</div><div class="cwd">Tu</div><div class="cwd">We</div><div class="cwd">Th</div><div class="cwd">Fr</div><div class="cwd">Sa</div></div>
+    <div class="cdays" id="cdays"></div>
   </div>
+</div>
 
-  <!-- GROUP OVERLAY -->
+<!-- GROUP OVERLAY -->
 
-  <div class="grp-overlay" id="grp-overlay">
-    <div class="grp-backdrop" onclick="toggleGrp()"></div>
-    <div class="grp-sheet">
-      <div class="grp-handle"></div>
-      <div class="grp-title">群組篩選</div>
-      <div class="grp-item" onclick="selectGroup('')">
-        <div class="grp-dot" style="background:var(--accent)"></div>
-        <div class="grp-name">所有群組</div>
-        <div class="grp-count">7 groups</div>
-        <svg class="grp-check" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 14"><polyline points="2 7 5 10 12 3"/></svg>
-      </div>
-      <div class="grp-item" onclick="selectGroup('邱信一群組')">
-        <div class="grp-dot" style="background:#f0546a"></div>
-        <div class="grp-name">邱信一, Samuel, 李福軒</div>
-        <div class="grp-count">370 msgs</div>
-      </div>
-      <div class="grp-item" onclick="selectGroup('FIS筆記')">
-        <div class="grp-dot" style="background:#5b8dee"></div>
-        <div class="grp-name">🎯🎯🎯FIS筆記｜FISNOTE</div>
-        <div class="grp-count">87 msgs</div>
-      </div>
-      <div class="grp-item" onclick="selectGroup('有福信仰')">
-        <div class="grp-dot" style="background:#3ecf8e"></div>
-        <div class="grp-name">有福信仰</div>
-        <div class="grp-count">10 msgs</div>
-      </div>
-      <div class="grp-item" onclick="selectGroup('學習群組')">
-        <div class="grp-dot" style="background:#f5a623"></div>
-        <div class="grp-name">學習學習學習，勉強勉強勉強</div>
-        <div class="grp-count">23 msgs</div>
-      </div>
-      <div class="grp-item" onclick="selectGroup('紀念日')">
-        <div class="grp-dot" style="background:#e879f9"></div>
-        <div class="grp-name">紀念日籌備規劃</div>
-        <div class="grp-count">4 msgs</div>
-      </div>
-    </div>
+<div class="ov gov" id="ov-grp">
+  <div class="bd" onclick="closeOv('grp')"></div>
+  <div class="gsh">
+    <div class="ghdl"></div>
+    <div class="gt">篩選群組</div>
+    <div id="grp-list"></div>
   </div>
+</div>
 
-</div><!-- end phone -->
+</div><!-- end app-shell -->
 
 <script>
-// ── TAB SWITCHING ──
-const tabs = ['summary','todos','finance','headcount','more','links'];
-const titles = {
-  summary: ['⬡ Line Asst', '5 groups · Latest'],
-  todos:   ['Todos', '28 items · Latest'],
-  finance: ['Finance', '2 records · Latest'],
-  headcount: ['人數統計', '3 events · Latest'],
+// ── CONFIG ──
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzdTgOVhd9YmAvFgZn57Pva2e_afh_PU6ktCu-kUjXKlsERaCTaViREUa-oceMNPs-r5w/exec';
+
+// ── STATE ──
+let TOKEN = '';
+let DB = { summary:[], todos:[], finance:[], headcount:[], links:[], logs:[] };
+let activeGroup = '';
+let activeDate = 'latest';
+let currentTab = 'summary';
+let searchQ = { summary:'', todos:'', finance:'', hc:'', links:'', events:'', logs:'' };
+let filterPriority = '';
+let filterDone = 'all'; // all | undone | done
+
+// ── LOGIN ──
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-shell').style.display = 'none';
+}
+function hideLogin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'flex';
+}
+async function doLogin() {
+  const inp = document.getElementById('token-input').value.trim();
+  if (!inp) return;
+  setLoginStatus('驗證中...', '');
+  // hash the token
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(inp));
+  const hash = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  TOKEN = hash;
+  await loadAll();
+}
+function setLoginStatus(msg, color) {
+  const el = document.getElementById('login-status');
+  el.textContent = msg;
+  el.style.color = color || 'var(--t2)';
+}
+
+// ── LOAD ALL DATA ──
+async function loadAll() {
+  setLoginStatus('載入資料中...', 'var(--te)');
+  try {
+    const sheets = ['summary','todos','finance','headcount','links','logs'];
+    const results = await Promise.all(sheets.map(s => fetchSheet(s)));
+    sheets.forEach((s, i) => { DB[s] = results[i]; });
+    hideLogin();
+    buildGroupFilter();
+    buildCalendarDots();
+    // update more tab badges
+    const grpCount = new Set(DB.summary.map(r=>r.group_name)).size;
+    document.getElementById('more-groups').textContent = grpCount;
+    document.getElementById('more-links-cnt').textContent = DB.links.length;
+    document.getElementById('more-logs-cnt').textContent = DB.logs.length;
+    const evCount = new Set(DB.headcount.map(r=>r.event_name)).size;
+    document.getElementById('more-events-cnt').textContent = evCount;
+    go('summary');
+    setLoginStatus('', '');
+  } catch(e) {
+    setLoginStatus('❌ ' + (e.message || '連線失敗，請確認 token'), 'var(--re)');
+    TOKEN = '';
+  }
+}
+
+async function fetchSheet(sheet, extra='') {
+  const url = `${GAS_URL}?token=${TOKEN}&action=getSheet&sheet=${sheet}&created_at=latest${extra}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data.rows || data.data || [];
+}
+
+// ── TABS ──
+const TABS = ['summary','todos','finance','hc','more','links','events','logs'];
+const META = {
+  summary: ['⬡ Line Asst', ''],
+  todos:   ['Todos', ''],
+  finance: ['Finance', ''],
+  hc:      ['人數統計', ''],
   more:    ['更多', '設定與其他功能'],
-  links:   ['Links', '12 links · Latest'],
+  links:   ['Links', ''],
+  events:  ['Events', '手動維護'],
+  logs:    ['Raw Logs', ''],
 };
 
-function switchTab(tab) {
-  // hide all panels
-  tabs.forEach(t => {
-    document.getElementById('panel-'+t)?.classList.remove('active');
-    document.getElementById('nav-'+t)?.classList.remove('active');
+function go(t) {
+  currentTab = t;
+  TABS.forEach(x => {
+    document.getElementById('p-'+x)?.classList.remove('on');
+    document.getElementById('n-'+x)?.classList.remove('on');
   });
-  // show target
-  document.getElementById('panel-'+tab)?.classList.add('active');
-  if(['summary','todos','finance','headcount','more'].includes(tab)) {
-    document.getElementById('nav-'+tab)?.classList.add('active');
-  }
-  // update header
-  const [title, sub] = titles[tab] || ['—','—'];
-  document.getElementById('page-title').textContent = title;
-  document.getElementById('page-sub').textContent = sub;
-  // scroll to top
+  document.getElementById('p-'+t)?.classList.add('on');
+  if (['summary','todos','finance','hc','more'].includes(t))
+    document.getElementById('n-'+t)?.classList.add('on');
   document.querySelector('.content').scrollTop = 0;
-  // close overlays
-  closeAll();
+  closeOv('cal'); closeOv('grp');
+  renderTab(t);
 }
 
-// ── CALENDAR ──
-let calYear = 2026, calMonth = 2, selectedDate = 'latest';
-const DATE_MAP = {
-  '2026-03-14': ['紀念日','有福','FIS'],
-  '2026-03-15': ['邱信一','FIS','有福','學習','組長'],
-};
-
-function toggleCal() {
-  const o = document.getElementById('cal-overlay');
-  const btn = document.getElementById('btn-cal');
-  const isOpen = o.classList.toggle('open');
-  btn.classList.toggle('cal-active', isOpen);
-  if(isOpen) {
-    document.getElementById('grp-overlay').classList.remove('open');
-    document.getElementById('btn-grp').classList.remove('grp-active');
-    renderCal();
+function renderTab(t) {
+  const q = (searchQ[t] || '').toLowerCase();
+  switch(t) {
+    case 'summary':   renderSummary(q); break;
+    case 'todos':     renderTodos(q); break;
+    case 'finance':   renderFinance(q); break;
+    case 'hc':        renderHC(q); break;
+    case 'links':     renderLinks(q); break;
+    case 'logs':      renderLogs(q); break;
+    case 'events':    renderEvents(q); break;
   }
 }
 
-function navMonth(d) {
-  calMonth += d;
-  if(calMonth > 11){ calMonth=0; calYear++; }
-  if(calMonth < 0){ calMonth=11; calYear--; }
-  renderCal();
-}
-
-function renderCal() {
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('cal-month-lbl').textContent = months[calMonth]+' '+calYear;
-  document.getElementById('cal-latest-btn').classList.toggle('active', selectedDate==='latest');
-  const fd = new Date(calYear, calMonth, 1).getDay();
-  const dim = new Date(calYear, calMonth+1, 0).getDate();
-  const today = new Date();
-  let html = '';
-  for(let i=0;i<fd;i++) html+=`<div class="cal-day"></div>`;
-  for(let d=1;d<=dim;d++){
-    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const grps = DATE_MAP[ds]||[];
-    const has = grps.length>0;
-    const isSel = selectedDate===ds;
-    const isToday = today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
-    const dots = grps.slice(0,4).map(()=>'<div class="cdot"></div>').join('');
-    html+=`<div class="cal-day${has?' has-data':''}${isSel?' selected':''}${isToday?' today':''}" ${has?`onclick="selectDate('${ds}')"`:''}><span class="cal-dn">${d}</span><div class="cdots">${dots}</div></div>`;
-  }
-  document.getElementById('cal-days').innerHTML = html;
-}
-
-function selectDate(ds) {
-  selectedDate = ds;
-  document.getElementById('snap-pill').classList.remove('hidden');
-  document.getElementById('snap-label').textContent = ds;
-  document.getElementById('btn-cal').classList.add('cal-active');
-  document.getElementById('cal-latest-btn').classList.remove('active');
-  renderCal();
-  setTimeout(()=>toggleCal(),150);
-}
-
-function selectLatest() {
-  selectedDate = 'latest';
-  document.getElementById('snap-pill').classList.add('hidden');
-  document.getElementById('btn-cal').classList.remove('cal-active');
-  renderCal();
-  setTimeout(()=>toggleCal(),150);
+// ── SEARCH WIRING ──
+function wireSearch(inputId, tab) {
+  const el = document.getElementById(inputId);
+  if (!el) return;
+  el.addEventListener('input', () => {
+    searchQ[tab] = el.value;
+    renderTab(tab);
+  });
 }
 
 // ── GROUP FILTER ──
-function toggleGrp() {
-  const o = document.getElementById('grp-overlay');
-  const btn = document.getElementById('btn-grp');
-  const isOpen = o.classList.toggle('open');
-  btn.classList.toggle('grp-active', isOpen);
-  if(isOpen) {
-    document.getElementById('cal-overlay').classList.remove('open');
-    document.getElementById('btn-cal').classList.remove('cal-active');
+function buildGroupFilter() {
+  const groups = [...new Set(DB.summary.map(r => r.group_name).filter(Boolean))];
+  const container = document.getElementById('grp-list');
+  if (!container) return;
+  const colors = ['#5b8dee','#f0546a','#3ecf8e','#f5a623','#e879f9','#2dd4bf','#f59e0b'];
+  let html = `<div class="git" onclick="selGrp('')"><div class="gdot" style="background:var(--ac)"></div><div class="gn">所有群組</div><div class="gc">${groups.length} groups</div><svg class="gck" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 14"><polyline points="2 7 5 10 12 3"/></svg></div>`;
+  groups.forEach((g, i) => {
+    const cnt = DB.logs.filter(r => r.group_name === g).length;
+    html += `<div class="git" onclick="selGrp('${g.replace(/'/g,"\\'")}')"><div class="gdot" style="background:${colors[i%colors.length]}"></div><div class="gn">${g}</div><div class="gc">${cnt} msgs</div></div>`;
+  });
+  container.innerHTML = html;
+}
+
+// ── CALENDAR DOTS ──
+function buildCalendarDots() {
+  window._calDots = {};
+  DB.summary.forEach(r => {
+    const d = (r.created_at || '').slice(0, 10);
+    if (d) window._calDots[d] = (window._calDots[d] || 0) + 1;
+  });
+}
+
+// ── FILTER HELPERS ──
+function filteredByGroup(arr) {
+  if (!activeGroup) return arr;
+  return arr.filter(r => r.group_name === activeGroup);
+}
+function filteredByDate(arr) {
+  if (activeDate === 'latest') return arr;
+  return arr.filter(r => (r.created_at || '').startsWith(activeDate));
+}
+function applyFilters(arr) {
+  return filteredByDate(filteredByGroup(arr));
+}
+function matchQ(obj, q) {
+  if (!q) return true;
+  return Object.values(obj).some(v => String(v).toLowerCase().includes(q));
+}
+
+// ── RENDER SUMMARY ──
+function renderSummary(q) {
+  let rows = applyFilters(DB.summary).filter(r => matchQ(r, q));
+  // latest per group
+  if (activeDate === 'latest') {
+    const seen = new Set();
+    rows = rows.filter(r => { if (seen.has(r.group_name)) return false; seen.add(r.group_name); return true; });
+  }
+  const total_todos = DB.todos.length;
+  const total_links = DB.links.length;
+  const total_people = DB.headcount.length;
+  const total_groups = new Set(DB.summary.map(r=>r.group_name)).size;
+  document.getElementById('stat-groups').textContent = total_groups;
+  document.getElementById('stat-todos').textContent = total_todos;
+  document.getElementById('stat-links').textContent = total_links;
+  document.getElementById('stat-people').textContent = total_people;
+  const el = document.getElementById('summary-list');
+  if (!el) return;
+  if (rows.length === 0) { el.innerHTML = empty('沒有符合的摘要'); updateMeta('summary', 0, '摘要'); return; }
+  el.innerHTML = rows.map(r => {
+    const topics = tryJSON(r.topics, []);
+    const notes = tryJSON(r.notes, []);
+    const hasNote = notes.some(n => n.includes('元') || n.includes('基金') || n.includes('盈餘'));
+    const noteText = hasNote ? notes.find(n => n.includes('元') || n.includes('基金') || n.includes('盈餘')) : '';
+    return `<div class="card">
+      <div class="ch"><div class="cm">
+        <div class="cr"><span class="cn">${esc(r.group_name)}</span><span class="cd">${fmtDate(r.created_at)}</span></div>
+        <div class="ctags">${topics.slice(0,3).map(t=>`<span class="tag bl">${esc(t)}</span>`).join('')}</div>
+      </div></div>
+      <div class="cb">${esc(r.summary)}</div>
+      ${noteText ? `<div class="cnote">⚠ ${esc(noteText)}</div>` : ''}
+      <div class="cf">
+        <div class="cs">📋 <strong>${r.todos||0}</strong></div>
+        <div class="cs">💰 <strong>${r.finance||0}</strong></div>
+        <div class="cs">👥 <strong>${r.people||0}</strong></div>
+      </div>
+    </div>`;
+  }).join('');
+  updateMeta('summary', rows.length, '摘要');
+}
+
+// ── RENDER TODOS ──
+function renderTodos(q) {
+  let rows = applyFilters(DB.todos).filter(r => matchQ(r, q));
+  if (filterPriority) rows = rows.filter(r => r.priority === filterPriority);
+  if (filterDone === 'undone') rows = rows.filter(r => !r.done || r.done === 'FALSE' || r.done === false);
+  if (filterDone === 'done') rows = rows.filter(r => r.done === true || r.done === 'TRUE');
+  const groups = { '高': [], '中': [], '低': [] };
+  rows.forEach(r => { (groups[r.priority] || groups['中']).push(r); });
+  const el = document.getElementById('todos-list');
+  if (!el) return;
+  if (rows.length === 0) { el.innerHTML = empty('沒有符合的待辦'); updateMeta('todos', 0, '待辦'); return; }
+  let html = '';
+  [['高','var(--re)'],['中','var(--am)'],['低','var(--t3)']].forEach(([p, color]) => {
+    const items = groups[p] || [];
+    if (!items.length) return;
+    html += `<div class="slbl">${p}優先 · ${items.length} items</div>`;
+    items.forEach(r => {
+      const done = r.done === true || r.done === 'TRUE';
+      html += `<div class="ti" onclick="toggleTodo(this,'${esc(r.row_number||'')}')">
+        <div class="chk${done?' done':''}">${done?'<svg width="11" height="11" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg>':''}</div>
+        <div class="tb">
+          <div class="tt${done?' done':''}">${esc(r.todo)}</div>
+          <div class="tm"><span class="tg">${esc(r.group_name)}</span>${r.due_date?`<span class="td">${r.due_date}</span>`:''}</div>
+        </div>
+        <div class="pd" style="background:${color}"></div>
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
+  updateMeta('todos', rows.length, '待辦');
+}
+
+function toggleTodo(el, row) {
+  const chk = el.querySelector('.chk');
+  const tt = el.querySelector('.tt');
+  const done = chk.classList.toggle('done');
+  tt.classList.toggle('done', done);
+  chk.innerHTML = done ? '<svg width="11" height="11" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg>' : '';
+  // fire-and-forget update to GAS
+  if (row) fetch(`${GAS_URL}?token=${TOKEN}&action=updateTodo&row=${row}&done=${done}`).catch(()=>{});
+}
+
+// ── RENDER FINANCE ──
+function renderFinance(q) {
+  let rows = applyFilters(DB.finance).filter(r => matchQ(r, q));
+  const income = rows.filter(r=>r.direction==='收入').reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const expense = rows.filter(r=>r.direction==='支出').reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const net = income - expense;
+  document.getElementById('fin-expense').textContent = `$${expense.toLocaleString()}`;
+  document.getElementById('fin-income').textContent = `$${income.toLocaleString()}`;
+  document.getElementById('fin-net').textContent = `${net>=0?'+':''}$${net.toLocaleString()}`;
+  document.getElementById('fin-net').style.color = net >= 0 ? 'var(--gr)' : 'var(--re)';
+  const el = document.getElementById('finance-list');
+  if (!el) return;
+  if (rows.length === 0) { el.innerHTML = empty('沒有財務紀錄'); updateMeta('finance', 0, '紀錄'); return; }
+  el.innerHTML = rows.map(r => {
+    const out = r.direction === '支出';
+    return `<div class="fi">
+      <div class="fic ${out?'out':'in'}">${out?'💸':'💰'}</div>
+      <div class="fbody">
+        <div class="fdesc">${esc(r.description)}</div>
+        <div class="fsub">${esc(r.group_name)} · ${esc(r.payer||'')}${r.payees?` → ${esc(r.payees)}`:''}</div>
+      </div>
+      <div class="famt ${out?'out':'in'}">${out?'-':'+'}$${parseFloat(r.amount||0).toLocaleString()}</div>
+    </div>`;
+  }).join('');
+  updateMeta('finance', rows.length, '紀錄');
+}
+
+// ── RENDER HEADCOUNT ──
+function renderHC(q) {
+  let rows = applyFilters(DB.headcount).filter(r => matchQ(r, q));
+  // group by event
+  const events = {};
+  rows.forEach(r => {
+    const key = r.event_name + '|' + r.event_date + '|' + r.group_name;
+    if (!events[key]) events[key] = { name:r.event_name, date:r.event_date, group:r.group_name, persons:[] };
+    if (r.person_name) events[key].persons.push(r);
+  });
+  const el = document.getElementById('hc-list');
+  if (!el) return;
+  const evList = Object.values(events);
+  if (evList.length === 0) { el.innerHTML = empty('沒有人數紀錄'); updateMeta('hc', 0, '活動'); return; }
+  el.innerHTML = evList.map(ev => {
+    const confirmed = ev.persons.filter(p => p.rsvp_status === '確認').length;
+    const total = ev.persons.length;
+    const pct = total ? Math.round(confirmed/total*100) : 0;
+    const upcoming = ev.date >= new Date().toISOString().slice(0,10);
+    const chips = ev.persons.slice(0,6).map(p => {
+      const cls = p.rsvp_status==='確認'?'ok':p.rsvp_status==='請假'?'no':'q';
+      const icon = cls==='ok'?'✓':cls==='no'?'✗':'?';
+      return `<div class="av ${cls}">${icon} ${esc(p.person_name)}</div>`;
+    }).join('') + (ev.persons.length > 6 ? `<div class="av ok" style="opacity:.6">+${ev.persons.length-6} 人</div>` : '');
+    return `<div class="hcc">
+      <div class="hch"><div><div class="hce">${esc(ev.name)}</div><div class="hcd">${esc(ev.group)} · ${ev.date}</div></div>
+        <span class="tag ${upcoming?'am':'gy'}">${upcoming?'upcoming':'completed'}</span></div>
+      <div class="hcp"><div class="pl"><span>出席確認</span><span style="color:var(--t1)">${confirmed} / ${total}</span></div>
+        <div class="pb"><div class="pf" style="width:${pct}%;background:${upcoming?'var(--ac)':'var(--gr)'}"></div></div></div>
+      <div class="hca">${chips}</div>
+    </div>`;
+  }).join('');
+  updateMeta('hc', evList.length, '活動');
+}
+
+// ── RENDER LINKS ──
+function renderLinks(q) {
+  let rows = applyFilters(DB.links).filter(r => matchQ(r, q));
+  const el = document.getElementById('links-list');
+  if (!el) return;
+  if (rows.length === 0) { el.innerHTML = empty('沒有連結'); updateMeta('links', 0, '連結'); return; }
+  const icons = { 'docs.google': '📊', 'forms.gle': '📝', 'github': '🐙', 'youtube': '▶️', 'drive.google': '📁', 'notion': '📒' };
+  el.innerHTML = rows.map(r => {
+    const url = r.url || '';
+    const ico = Object.entries(icons).find(([k]) => url.includes(k))?.[1] || '🔗';
+    const short = url.replace(/^https?:\/\//,'').slice(0,50);
+    return `<div class="li" onclick="window.open('${url}','_blank')">
+      <div class="lf">${ico}</div>
+      <div class="lb"><div class="lu">${esc(short)}</div>
+        <div class="lm">${esc(r.sender||r.group_name)} · ${esc(r.group_name)} · ${fmtDate(r.created_at)}</div></div>
+    </div>`;
+  }).join('');
+  updateMeta('links', rows.length, '連結');
+}
+
+// ── RENDER EVENTS (static for now — no events sheet in GAS) ──
+function renderEvents(q) {
+  // events are hand-maintained, derived from headcount data
+  const eventMap = {};
+  applyFilters(DB.headcount).forEach(r => {
+    const key = r.event_name + '|' + r.event_date;
+    if (!eventMap[key]) eventMap[key] = { name:r.event_name, date:r.event_date, group:r.group_name, persons:[] };
+    if (r.person_name) eventMap[key].persons.push(r);
+  });
+  let events = Object.values(eventMap).filter(e => matchQ({name:e.name, group:e.group}, q));
+  const el = document.getElementById('events-list');
+  if (!el) return;
+  if (events.length === 0) { el.innerHTML = empty('沒有活動紀錄'); return; }
+  const now = new Date().toISOString().slice(0,10);
+  el.innerHTML = events.map(ev => {
+    const upcoming = ev.date >= now;
+    const confirmed = ev.persons.filter(p=>p.rsvp_status==='確認').length;
+    const total = ev.persons.length;
+    const pct = total ? Math.round(confirmed/total*100) : 0;
+    return `<div class="ev-card">
+      <div class="ev-hdr"><div class="ev-dot" style="background:${upcoming?'var(--ac)':'var(--gr)'}"></div>
+        <div class="ev-main"><div class="ev-name">${esc(ev.name)}</div><div class="ev-sub">${ev.date} · ${esc(ev.group)}</div></div>
+        <span class="tag ${upcoming?'am':'gy'}">${upcoming?'即將到來':'已結束'}</span></div>
+      <div class="ev-body">
+        <div class="ev-row"><span class="ev-lbl">出席</span><span class="ev-val">${confirmed} / ${total} 人確認</span></div>
+        <div class="ev-row"><span class="ev-lbl">群組</span><span class="ev-val">${esc(ev.group)}</span></div>
+      </div>
+      <div class="ev-foot"><div class="pl"><span>出席率</span><span>${pct}%</span></div>
+        <div class="pb"><div class="pf" style="width:${pct}%;background:${upcoming?'var(--am)':'var(--gr)'}"></div></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER LOGS ──
+function renderLogs(q) {
+  let rows = applyFilters(DB.logs).filter(r => matchQ(r, q));
+  const total = DB.logs.length;
+  const processed = DB.logs.filter(r => r.processed === true || r.processed === 'TRUE').length;
+  const groups = new Set(DB.logs.map(r=>r.group_name)).size;
+  document.getElementById('log-stat-total').textContent = total;
+  document.getElementById('log-stat-raw').textContent = total - processed;
+  document.getElementById('log-stat-done').textContent = processed;
+  document.getElementById('log-stat-groups').textContent = groups;
+  const el = document.getElementById('logs-list');
+  if (!el) return;
+  const show = rows.slice(0, 50);
+  if (show.length === 0) { el.innerHTML = empty('沒有訊息紀錄'); return; }
+  el.innerHTML = show.map(r => {
+    const isProc = r.processed === true || r.processed === 'TRUE';
+    const isBot = r.sender_type === 'bot' || (r.sender_name||'').includes('Bot') || (r.sender_name||'').includes('Asst');
+    const hasUrl = r.has_url === true || r.has_url === 'TRUE';
+    return `<div class="log-item">
+      <div class="log-hdr">
+        <span class="log-sender">${esc(r.sender_name||'Unknown')}</span>
+        <span class="log-group">${esc(r.group_name)}</span>
+        <span class="log-time">${fmtDate(r.created_at)}</span>
+      </div>
+      <div class="log-msg">${esc(r.content||'')}</div>
+      <div class="log-tags">
+        ${!isProc?'<span class="ltag raw">未處理</span>':'<span class="ltag" style="background:rgba(62,207,142,.12);color:var(--gr)">已處理</span>'}
+        ${isBot?'<span class="ltag bot">Bot</span>':''}
+        ${hasUrl?'<span class="ltag url">有URL</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+  if (rows.length > 50) {
+    el.innerHTML += `<div class="log-more">顯示前 50 筆，共 ${rows.length} 筆符合</div>`;
   }
 }
 
-function selectGroup(g) {
-  document.getElementById('page-sub').textContent = g ? `${g} · Latest` : '5 groups · Latest';
-  document.getElementById('btn-grp').classList.toggle('grp-active', g!=='');
-  toggleGrp();
+// ── HELPERS ──
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function tryJSON(s, fallback) {
+  try { return typeof s === 'string' ? JSON.parse(s) : (s || fallback); } catch { return fallback; }
+}
+function fmtDate(s) {
+  if (!s) return '—';
+  const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[2]}/${m[3]}` : String(s).slice(0,10);
+}
+function empty(msg) {
+  return `<div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:13px;">${msg}</div>`;
+}
+function updateMeta(tab, count, unit) {
+  const [title] = META[tab] || ['—'];
+  document.getElementById('ptitle').textContent = title;
+  const grpLabel = activeGroup ? activeGroup.slice(0,10) : (new Set(DB.summary.map(r=>r.group_name)).size) + ' groups';
+  document.getElementById('psub').textContent = `${count} ${unit} · ${grpLabel}`;
 }
 
-function closeAll() {
-  document.getElementById('cal-overlay').classList.remove('open');
-  document.getElementById('grp-overlay').classList.remove('open');
-  document.getElementById('btn-cal').classList.remove('cal-active');
+// ── CALENDAR ──
+let cy=2026, cm=2;
+function toggleCal(){
+  const on = document.getElementById('ov-cal').classList.toggle('on');
+  document.getElementById('btn-cal').classList.toggle('cal-on', on);
+  if (on) { closeOv('grp'); renderCal(); }
 }
-
-// ── CLOCK ──
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent =
-    String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+function closeOv(x){
+  document.getElementById('ov-'+x)?.classList.remove('on');
+  if(x==='cal') document.getElementById('btn-cal')?.classList.remove('cal-on');
+  if(x==='grp') document.getElementById('btn-grp')?.classList.remove('grp-on');
 }
-updateClock();
-setInterval(updateClock, 10000);
+function nm(d){ cm+=d; if(cm>11){cm=0;cy++;} if(cm<0){cm=11;cy--;} renderCal(); }
+function renderCal(){
+  const M=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cml').textContent = M[cm]+' '+cy;
+  document.getElementById('cl-btn').classList.toggle('on', activeDate==='latest');
+  const fd=new Date(cy,cm,1).getDay(), dim=new Date(cy,cm+1,0).getDate(), td=new Date();
+  let h='';
+  for(let i=0;i<fd;i++) h+='<div class="cday"></div>';
+  for(let d=1;d<=dim;d++){
+    const ds=`${cy}-${String(cm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const n=(window._calDots||{})[ds]||0;
+    const dots=Array(Math.min(n,4)).fill('<div class="cdot"></div>').join('');
+    const sel=activeDate===ds, today=td.getFullYear()===cy&&td.getMonth()===cm&&td.getDate()===d;
+    h+=`<div class="cday${n?' has':''}${sel?' sel':''}${today?' today':''}" ${n?`onclick="selDate('${ds}')"`:''}><span class="cdn">${d}</span><div class="cdots">${dots}</div></div>`;
+  }
+  document.getElementById('cdays').innerHTML=h;
+}
+function selDate(ds){ activeDate=ds; document.getElementById('snap').classList.add('on'); document.getElementById('snap-lbl').textContent=ds; renderCal(); renderTab(currentTab); setTimeout(()=>closeOv('cal'),160); }
+function selLatest(){ activeDate='latest'; document.getElementById('snap').classList.remove('on'); document.getElementById('btn-cal').classList.remove('cal-on'); renderCal(); renderTab(currentTab); setTimeout(()=>closeOv('cal'),160); }
 
-// ── CHIP TOGGLE ──
-document.querySelectorAll('.filter-bar').forEach(bar => {
-  bar.querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      bar.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
-      chip.classList.add('active');
-    });
-  });
-});
+// ── GROUP FILTER ──
+function toggleGrp(){ const on=document.getElementById('ov-grp').classList.toggle('on'); document.getElementById('btn-grp').classList.toggle('grp-on',on); if(on) closeOv('cal'); }
+function selGrp(g){ activeGroup=g; document.getElementById('btn-grp').classList.toggle('grp-on',g!==''); closeOv('grp'); renderTab(currentTab); }
 
 // ── INIT ──
-renderCal();
+// inject search bars and list containers into each panel
+document.addEventListener('DOMContentLoaded', () => {
+  // wire chip filters
+  document.querySelectorAll('.fbar').forEach(bar => {
+    bar.querySelectorAll('.chip').forEach(c => {
+      c.addEventListener('click', () => {
+        bar.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
+        c.classList.add('on');
+      });
+    });
+  });
+
+  // wire search inputs
+  wireSearch('search-summary', 'summary');
+  wireSearch('search-todos', 'todos');
+  wireSearch('search-finance', 'finance');
+  wireSearch('search-hc', 'hc');
+  wireSearch('search-links', 'links');
+  wireSearch('search-events', 'events');
+  wireSearch('search-logs', 'logs');
+
+  // wire priority filter chips
+  document.querySelectorAll('.priority-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.priority-chip').forEach(x=>x.classList.remove('on'));
+      c.classList.add('on');
+      filterPriority = c.dataset.p || '';
+      renderTab('todos');
+    });
+  });
+
+  // check saved token
+  const saved = sessionStorage.getItem('las_token');
+  if (saved) { TOKEN = saved; loadAll(); }
+  else showLogin();
+
+  renderCal();
+});
+
+function doLogout() {
+  TOKEN = '';
+  DB = { summary:[], todos:[], finance:[], headcount:[], links:[], logs:[] };
+  sessionStorage.removeItem('las_token');
+  showLogin();
+  document.getElementById('token-input').value = '';
+  document.getElementById('login-status').textContent = '';
+}
+
+// token input enter key
+document.getElementById('token-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 </script>
 
 </body>
