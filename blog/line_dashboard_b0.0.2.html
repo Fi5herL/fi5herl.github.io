@@ -147,7 +147,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
 .mb{font-family:var(--mo);font-size:11px;padding:2px 7px;border-radius:8px;background:var(--bg3);color:var(--t2);}
 
 /* links */
-.li{margin:0 16px 7px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:11px 13px;display:flex;align-items:flex-start;gap:10px;}
+.li{margin:0 16px 7px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:11px 13px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;}
+.li:active{background:var(--bg3);}
 .lf{width:30px;height:30px;border-radius:7px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
 .lb{flex:1;min-width:0;}
 .lu{font-family:var(--mo);font-size:11px;color:var(--ac);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;}
@@ -206,6 +207,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
 .pulse{width:6px;height:6px;border-radius:50%;background:var(--te);flex-shrink:0;animation:p 2s infinite;}
 @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
 
+/* loading overlay */
+.loading-bar{position:fixed;top:0;left:0;height:2px;background:var(--ac);border-radius:1px;z-index:500;transition:width .3s ease;width:0;}
+.loading-bar.active{animation:lbar 1.5s ease infinite;}
+@keyframes lbar{0%{width:0;left:0}50%{width:60%;left:20%}100%{width:0;left:100%}}
+
 /* overlays */
 .ov{position:fixed;inset:0;z-index:300;display:none;}
 .ov.on{display:flex;}
@@ -250,6 +256,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
 </head>
 <body>
 
+<!-- Loading bar -->
+
+<div class="loading-bar" id="loading-bar"></div>
+
 <!-- LOGIN -->
 
 <div class="login" id="login-screen">
@@ -257,8 +267,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
   <div class="login-title">Line Assistant</div>
   <div class="login-sub">Dashboard · Private</div>
   <div class="login-box">
-    <div class="login-lbl">輸入密碼</div>
-    <input class="login-inp" id="token-input" type="password" placeholder="password..." autocomplete="current-password">
+    <div class="login-lbl">輸入 API Token</div>
+    <input class="login-inp" id="token-input" type="password" placeholder="token..." autocomplete="current-password">
     <button class="login-btn" onclick="doLogin()">登入</button>
     <div class="login-status" id="login-status"></div>
   </div>
@@ -273,7 +283,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
 <div class="topbar">
   <div class="tl">
     <h1 id="ptitle">⬡ Line Asst</h1>
-    <div class="tl-sub" id="psub">7 groups · Latest</div>
+    <div class="tl-sub" id="psub">載入中...</div>
   </div>
   <div class="ta">
     <div class="hbtn" id="btn-cal" onclick="toggleCal()">
@@ -296,7 +306,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
   <!-- SUMMARY -->
 
   <div class="panel on" id="p-summary">
-    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-summary" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋摘要..."></div>
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-summary" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋摘要...">
+    </div>
     <div class="stats">
       <div class="stat"><div class="sv" id="stat-groups" style="color:var(--ac)">—</div><div class="sl">Groups</div></div>
       <div class="stat"><div class="sv" id="stat-todos" style="color:var(--am)">—</div><div class="sl">Todos</div></div>
@@ -307,71 +320,45 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
     <div id="summary-list"></div>
   </div>
 
-```
-<div class="card">
-  <div class="ch"><div class="cm"><div class="cr"><span class="cn">邱信一, Samuel, 李福軒 Fisher</span><span class="cd">03/15</span></div><div class="ctags"><span class="tag bl">展望交通</span><span class="tag bl">羽球相調</span><span class="tag bl">增區目標</span></div></div><div class="copy"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div></div>
-  <div class="cb">召會生活運作，3/7展望交通服事分配完成，3/8羽球相調活動盈餘700元歸入小區基金，訂定年度目標至9/24。</div>
-  <div class="cnote">⚠ 3/8羽球活動盈餘700元歸入小區基金</div>
-  <div class="cf"><div class="cs">📋 <strong>5</strong> todos</div><div class="cs">💰 <strong>2</strong></div><div class="cs">👥 <strong>15</strong></div></div>
-</div>
-
-<div class="card">
-  <div class="ch"><div class="cm"><div class="cr"><span class="cn">🎯🎯🎯FIS筆記｜FISNOTE</span><span class="cd">03/15</span></div><div class="ctags"><span class="tag bl">技術開發</span><span class="tag bl">活動籌備</span></div></div><div class="copy"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div></div>
-  <div class="cb">個人工作日誌，3/27「你選哪一派」活動籌備中，Line Dashboard 上線，ICS 日曆同步完成。</div>
-  <div class="cf"><div class="cs">📋 <strong>7</strong> todos</div><div class="cs">🔗 <strong>0</strong></div><div class="cs">👥 <strong>1</strong></div></div>
-</div>
-
-<div class="card">
-  <div class="ch"><div class="cm"><div class="cr"><span class="cn">有福信仰</span><span class="cd">03/15</span></div><div class="ctags"><span class="tag bl">交通安排</span><span class="tag bl">關懷轉介</span></div></div><div class="copy"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div></div>
-  <div class="cb">3/16林口行程確認，18:30芝山站搭乘克翔哥的車，三芝憂鬱症朋友已轉介彭爸爸協助。</div>
-  <div class="cf"><div class="cs">📋 <strong>3</strong> todos</div><div class="cs">👥 <strong>4</strong></div></div>
-</div>
-
-<div class="card">
-  <div class="ch"><div class="cm"><div class="cr"><span class="cn">學習學習學習，勉強勉強勉強</span><span class="cd">03/15</span></div><div class="ctags"><span class="tag bl">JavaScript</span><span class="tag bl">讀書會</span></div></div><div class="copy"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div></div>
-  <div class="cb">JavaScript讀書會，ES6語法研究，回家作業：從zip檔選專案改寫成個人風格。</div>
-  <div class="cf"><div class="cs">📋 <strong>5</strong> todos</div><div class="cs">👥 <strong>5</strong></div></div>
-</div>
-
-<div class="card">
-  <div class="ch"><div class="cm"><div class="cr"><span class="cn">紀念日籌備規劃</span><span class="cd">03/15</span></div><div class="ctags"><span class="tag bl">母親節</span></div></div><div class="copy"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg></div></div>
-  <div class="cb">公告 05/10（週日）為母親節，群組用於紀念日籌備規劃。</div>
-  <div class="cf"><div class="cs">📋 <strong>0</strong> todos</div><div class="cs">👥 <strong>1</strong></div></div>
-</div>
-```
-
-  </div>
-
   <!-- TODOS -->
 
   <div class="panel" id="p-todos">
-    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-todos" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋待辦..."></div>
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-todos" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋待辦...">
+    </div>
     <div class="fbar">
       <div class="chip priority-chip on" data-p="">全部</div>
       <div class="chip priority-chip" data-p="高">高優先</div>
       <div class="chip priority-chip" data-p="中">中優先</div>
       <div class="chip priority-chip" data-p="低">低優先</div>
     </div>
-    <div id="todos-list"><div style="text-align:center;padding:40px;color:var(--t3);font-size:13px;">載入中...</div></div>
+    <div id="todos-list"><div class="loading-msg">載入中...</div></div>
   </div>
 
   <!-- FINANCE -->
 
   <div class="panel" id="p-finance">
-    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-finance" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋財務..."></div>
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-finance" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋財務...">
+    </div>
     <div class="fsum">
       <div class="fst"><div class="fv" id="fin-expense" style="color:var(--re)">$0</div><div class="fl">支出</div></div>
       <div class="fst"><div class="fv" id="fin-income" style="color:var(--gr)">$0</div><div class="fl">收入</div></div>
       <div class="fst"><div class="fv" id="fin-net" style="color:var(--gr)">$0</div><div class="fl">Net</div></div>
     </div>
-    <div id="finance-list"><div style="text-align:center;padding:40px;color:var(--t3);font-size:13px;">載入中...</div></div>
+    <div id="finance-list"><div class="loading-msg">載入中...</div></div>
   </div>
 
   <!-- HEADCOUNT -->
 
   <div class="panel" id="p-hc">
-    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-hc" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋活動或人名..."></div>
-    <div id="hc-list"><div style="text-align:center;padding:40px;color:var(--t3);font-size:13px;">載入中...</div></div>
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-hc" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋活動或人名...">
+    </div>
+    <div id="hc-list"><div class="loading-msg">載入中...</div></div>
   </div>
 
   <!-- MORE -->
@@ -405,77 +392,50 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
   <!-- LINKS -->
 
   <div class="panel" id="p-links">
-    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg> Search links...</div>
-    <div class="fbar"><div class="chip on">全部</div><div class="chip">邱信一群組</div><div class="chip">FIS筆記</div><div class="chip">79會所</div></div>
-    <div class="slbl">12 links</div>
-    <div class="li"><div class="lf">📊</div><div class="lb"><div class="lu">docs.google.com/spreadsheets/d/1dft...</div><div class="lm">李福軒 · 79會所 · 03/05</div></div></div>
-    <div class="li"><div class="lf">📝</div><div class="lb"><div class="lu">forms.gle/E8oZJL1jcxQUDJJQ7</div><div class="lm">李福軒 · FIS筆記 · 03/08</div></div></div>
-    <div class="li"><div class="lf">🐙</div><div class="lb"><div class="lu">github.com/koala73/worldmonitor</div><div class="lm">李福軒 · 學習群組 · 03/03</div></div></div>
-    <div class="li"><div class="lf">🔗</div><div class="lb"><div class="lu">forms.gle/bLFzNnmTqiRSZ9GK7</div><div class="lm">李福軒 · 79會所 · 02/10</div></div></div>
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-links" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋連結...">
+    </div>
+    <div id="links-list"><div class="loading-msg">載入中...</div></div>
   </div>
 
   <!-- EVENTS -->
 
   <div class="panel" id="p-events">
-    <div class="ev-notice"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v3.5l2 2"/></svg>Events 為手動維護的活動主檔，記錄長期追蹤的活動。</div>
-    <div class="fbar"><div class="chip on">全部</div><div class="chip">即將到來</div><div class="chip">已結束</div></div>
-    <div class="slbl">3 events</div>
-    <div class="ev-card">
-      <div class="ev-hdr"><div class="ev-dot" style="background:var(--ac)"></div><div class="ev-main"><div class="ev-name">3/27 你選哪一派？福音聚會</div><div class="ev-sub">北投路二段13號B1 · 週五 18:30–21:00</div></div><span class="tag am">即將到來</span></div>
-      <div class="ev-body">
-        <div class="ev-row"><span class="ev-lbl">主辦</span><span class="ev-val">李福軒 Fisher</span></div>
-        <div class="ev-row"><span class="ev-lbl">狀態</span><span class="ev-val" style="color:var(--am)">籌備中（IG宣傳、邀請卡待完成）</span></div>
-        <div class="ev-row"><span class="ev-lbl">相關群組</span><span class="ev-val">FIS筆記</span></div>
-      </div>
-      <div class="ev-foot"><div class="pl"><span>準備進度</span><span style="color:var(--am)">60%</span></div><div class="pb"><div class="pf" style="width:60%;background:var(--am)"></div></div></div>
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-events" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋活動...">
     </div>
-    <div class="ev-card">
-      <div class="ev-hdr"><div class="ev-dot" style="background:var(--gr)"></div><div class="ev-main"><div class="ev-name">3/8 羽球相調活動</div><div class="ev-sub">清江國小活動中心 · 15:00–17:00</div></div><span class="tag gy">已結束</span></div>
-      <div class="ev-body">
-        <div class="ev-row"><span class="ev-lbl">費用</span><span class="ev-val">每人100元</span></div>
-        <div class="ev-row"><span class="ev-lbl">結果</span><span class="ev-val" style="color:var(--gr)">盈餘700元已歸入小區基金</span></div>
-        <div class="ev-row"><span class="ev-lbl">相關群組</span><span class="ev-val">邱信一群組</span></div>
-      </div>
-      <div class="ev-foot"><div class="pl"><span>出席</span><span style="color:var(--gr)">完成</span></div><div class="pb"><div class="pf" style="width:100%;background:var(--gr)"></div></div></div>
+    <div class="ev-notice">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v3.5l2 2"/></svg>
+      Events 為手動維護的活動主檔，記錄長期追蹤的活動。
     </div>
-    <div class="ev-card">
-      <div class="ev-hdr"><div class="ev-dot" style="background:var(--re)"></div><div class="ev-main"><div class="ev-name">3/7 展望交通聚會</div><div class="ev-sub">2-4區 · 週五晚上</div></div><span class="tag gy">已結束</span></div>
-      <div class="ev-body">
-        <div class="ev-row"><span class="ev-lbl">出席</span><span class="ev-val">15 人確認</span></div>
-        <div class="ev-row"><span class="ev-lbl">服事</span><span class="ev-val">邱信一（會後）、李福軒（電器）、黃惠屏（招待）</span></div>
-        <div class="ev-row"><span class="ev-lbl">相關群組</span><span class="ev-val">邱信一群組</span></div>
-      </div>
+    <div class="fbar">
+      <div class="chip ev-status-chip on" data-s="all">全部</div>
+      <div class="chip ev-status-chip" data-s="upcoming">即將到來</div>
+      <div class="chip ev-status-chip" data-s="completed">已結束</div>
     </div>
-    <div class="ev-add" onclick="alert('新增活動 — 連接 GAS API 後啟用')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v6M5 8h6"/></svg>手動新增活動</div>
-  </div>
-
-  <!-- LINKS -->
-
-  <div class="panel" id="p-links">
-    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-links" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋連結..."></div>
-    <div id="links-list"><div style="text-align:center;padding:40px;color:var(--t3);">載入中...</div></div>
-  </div>
-
-  <!-- EVENTS -->
-
-  <div class="panel" id="p-events">
-    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-events" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋活動..."></div>
-    <div class="ev-notice"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v3.5l2 2"/></svg>Events 由 Headcount 資料自動彙整。</div>
-    <div id="events-list"><div style="text-align:center;padding:40px;color:var(--t3);">載入中...</div></div>
-    <div class="ev-add" onclick="alert('新增活動 — 連接 GAS API 後啟用')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v6M5 8h6"/></svg>手動新增活動</div>
+    <div id="events-list"><div class="loading-msg">載入中...</div></div>
+    <div class="ev-add" onclick="alert('新增活動 — 請直接在 Google Sheet events 分頁新增')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v6M5 8h6"/></svg>
+      手動新增活動（前往 Sheet）
+    </div>
   </div>
 
   <!-- LOGS -->
 
   <div class="panel" id="p-logs">
-    <div class="sbar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input id="search-logs" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋訊息內容..."></div>
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-logs" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋訊息內容...">
+    </div>
     <div class="log-stats">
       <div class="lst"><div class="lsv" id="log-stat-total" style="color:var(--t1)">—</div><div class="lsl">全部</div></div>
       <div class="lst"><div class="lsv" id="log-stat-raw" style="color:var(--re)">—</div><div class="lsl">未處理</div></div>
       <div class="lst"><div class="lsv" id="log-stat-done" style="color:var(--gr)">—</div><div class="lsl">已處理</div></div>
       <div class="lst"><div class="lsv" id="log-stat-groups" style="color:var(--am)">—</div><div class="lsl">群組</div></div>
     </div>
-    <div id="logs-list"><div style="text-align:center;padding:40px;color:var(--t3);">載入中...</div></div>
+    <div id="logs-list"><div class="loading-msg">載入中...</div></div>
   </div>
 
 </div><!-- end content -->
@@ -490,7 +450,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
   <div class="ni" id="n-todos" onclick="go('todos')">
     <div class="ni-icon" style="position:relative">
       <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="6" cy="10" r="1.5"/><path d="M10 10h6M10 6h6M10 14h4"/></svg>
-      <div class="nbadge">28</div>
+      <div class="nbadge" id="todos-badge" style="display:none">0</div>
     </div>
     <span class="ni-lbl">Todos</span>
   </div>
@@ -540,21 +500,33 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
 
 </div><!-- end app-shell -->
 
+<style>
+.loading-msg{text-align:center;padding:40px;color:var(--t3);font-size:13px;}
+</style>
+
 <script>
-// ── CONFIG ──
+// ── CONFIG ──────────────────────────────────────────────────────────────
+// 換成你的 GAS 部署 URL
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzdTgOVhd9YmAvFgZn57Pva2e_afh_PU6ktCu-kUjXKlsERaCTaViREUa-oceMNPs-r5w/exec';
 
-// ── STATE ──
+// ── STATE ───────────────────────────────────────────────────────────────
 let TOKEN = '';
-let DB = { summary:[], todos:[], finance:[], headcount:[], links:[], logs:[] };
-let activeGroup = '';
+let DB = { summary:[], todos:[], finance:[], headcount:[], links:[], events:[], logs:[] };
+let activeGroup = '';   // '' = 全部
 let activeDate = 'latest';
 let currentTab = 'summary';
 let searchQ = { summary:'', todos:'', finance:'', hc:'', links:'', events:'', logs:'' };
 let filterPriority = '';
-let filterDone = 'all'; // all | undone | done
+let filterEvStatus = 'all';
 
-// ── LOGIN ──
+// ── LOADING BAR ─────────────────────────────────────────────────────────
+function setLoading(on) {
+  const bar = document.getElementById('loading-bar');
+  if (on) bar.classList.add('active');
+  else { bar.classList.remove('active'); bar.style.width = '0'; }
+}
+
+// ── LOGIN ────────────────────────────────────────────────────────────────
 function showLogin() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-shell').style.display = 'none';
@@ -563,67 +535,134 @@ function hideLogin() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-shell').style.display = 'flex';
 }
+
 async function doLogin() {
   const inp = document.getElementById('token-input').value.trim();
   if (!inp) return;
-  setLoginStatus('驗證中...', '');
-  // hash the token
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(inp));
-  const hash = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  TOKEN = hash;
+  TOKEN = inp; // ← 直接送明文，GAS 用 Script Properties 的 API_TOKEN 比對
+  setLoginStatus('驗證中...', 'var(--te)');
   await loadAll();
 }
+
 function setLoginStatus(msg, color) {
   const el = document.getElementById('login-status');
   el.textContent = msg;
   el.style.color = color || 'var(--t2)';
 }
 
-// ── LOAD ALL DATA ──
-async function loadAll() {
-  setLoginStatus('載入資料中...', 'var(--te)');
-  try {
-    const sheets = ['summary','todos','finance','headcount','links','logs'];
-    const results = await Promise.all(sheets.map(s => fetchSheet(s)));
-    sheets.forEach((s, i) => { DB[s] = results[i]; });
-    hideLogin();
-    buildGroupFilter();
-    buildCalendarDots();
-    // update more tab badges
-    const grpCount = new Set(DB.summary.map(r=>r.group_name)).size;
-    document.getElementById('more-groups').textContent = grpCount;
-    document.getElementById('more-links-cnt').textContent = DB.links.length;
-    document.getElementById('more-logs-cnt').textContent = DB.logs.length;
-    const evCount = new Set(DB.headcount.map(r=>r.event_name)).size;
-    document.getElementById('more-events-cnt').textContent = evCount;
-    go('summary');
-    setLoginStatus('', '');
-  } catch(e) {
-    setLoginStatus('❌ ' + (e.message || '連線失敗，請確認 token'), 'var(--re)');
-    TOKEN = '';
-  }
-}
+// ── CORE FETCH ───────────────────────────────────────────────────────────
+// 修正：GAS 的 action 就是 sheet name，不是 action=getSheet&sheet=xxx
+async function fetchSheet(sheet) {
+  let url = `${GAS_URL}?token=${encodeURIComponent(TOKEN)}&action=${sheet}`;
 
-async function fetchSheet(sheet, extra='') {
-  const url = `${GAS_URL}?token=${TOKEN}&action=getSheet&sheet=${sheet}&created_at=latest${extra}`;
+  if (sheet === 'events') {
+    // events 不套 created_at，回傳全部
+    // 可加 &status=upcoming 等篩選，這裡先全撈
+  } else if (sheet === 'logs') {
+    // logs 取最近 500 筆
+    url += '&limit=500';
+  } else {
+    // summary / todos / finance / headcount / links
+    url += `&created_at=${activeDate}`;
+  }
+
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  if (data.error) throw new Error(data.error);
-  return data.rows || data.data || [];
+  if (!data.ok) throw new Error(data.error || 'GAS 回傳錯誤');
+  return data.data || [];
 }
 
-// ── TABS ──
+// 取得有資料的日期（給日曆用），呼叫 GAS ?action=dates
+async function fetchDates() {
+  const url = `${GAS_URL}?token=${encodeURIComponent(TOKEN)}&action=dates`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (!data.ok) return [];
+  return data.data || [];
+}
+
+// ── LOAD ALL ─────────────────────────────────────────────────────────────
+async function loadAll() {
+  setLoading(true);
+  setLoginStatus('載入資料中...', 'var(--te)');
+  try {
+    const sheets = ['summary','todos','finance','headcount','links','events','logs'];
+    const results = await Promise.all(sheets.map(s => fetchSheet(s)));
+    sheets.forEach((s, i) => { DB[s] = results[i]; });
+
+    // 日曆點點（從 dates action 拿更準確的資料）
+    const dateData = await fetchDates();
+    window._calDots = {};
+    dateData.forEach(d => {
+      window._calDots[d.created_at] = d.groups ? d.groups.length : 1;
+    });
+
+    // 登入成功 → 存 token
+    sessionStorage.setItem('las_token', TOKEN);
+    hideLogin();
+    setLoginStatus('', '');
+
+    // 更新 More 頁徽章
+    updateMoreBadges();
+    buildGroupFilter();
+    updateTodoBadge();
+    go('summary');
+
+  } catch (e) {
+    setLoginStatus('❌ ' + (e.message || '連線失敗，請確認 token 與網路'), 'var(--re)');
+    TOKEN = '';
+    sessionStorage.removeItem('las_token');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// 日期切換時只重新 fetch 日期敏感的 sheets
+async function reloadDateSheets() {
+  setLoading(true);
+  try {
+    const sheets = ['summary','todos','finance','headcount','links'];
+    const results = await Promise.all(sheets.map(s => fetchSheet(s)));
+    sheets.forEach((s, i) => { DB[s] = results[i]; });
+    updateTodoBadge();
+  } catch (e) {
+    console.error('Reload error:', e);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function updateMoreBadges() {
+  const grpCount = new Set(DB.summary.map(r=>r.group_name).filter(Boolean)).size;
+  document.getElementById('more-groups').textContent = grpCount;
+  document.getElementById('more-links-cnt').textContent = DB.links.length;
+  document.getElementById('more-logs-cnt').textContent = DB.logs.length;
+  document.getElementById('more-events-cnt').textContent = DB.events.length;
+}
+
+function updateTodoBadge() {
+  const undone = DB.todos.filter(r => !r.done || r.done === 'FALSE' || r.done === false);
+  const badge = document.getElementById('todos-badge');
+  if (undone.length > 0) {
+    badge.textContent = undone.length > 99 ? '99+' : undone.length;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ── TABS ─────────────────────────────────────────────────────────────────
 const TABS = ['summary','todos','finance','hc','more','links','events','logs'];
 const META = {
-  summary: ['⬡ Line Asst', ''],
-  todos:   ['Todos', ''],
-  finance: ['Finance', ''],
-  hc:      ['人數統計', ''],
-  more:    ['更多', '設定與其他功能'],
-  links:   ['Links', ''],
-  events:  ['Events', '手動維護'],
-  logs:    ['Raw Logs', ''],
+  summary: ['⬡ Line Asst', '摘要'],
+  todos:   ['Todos',       '待辦事項'],
+  finance: ['Finance',     '財務紀錄'],
+  hc:      ['人數統計',    '活動出席'],
+  more:    ['更多',        '設定與其他'],
+  links:   ['Links',       '共享連結'],
+  events:  ['Events',      '活動主檔'],
+  logs:    ['Raw Logs',    '原始訊息'],
 };
 
 function go(t) {
@@ -643,99 +682,110 @@ function go(t) {
 function renderTab(t) {
   const q = (searchQ[t] || '').toLowerCase();
   switch(t) {
-    case 'summary':   renderSummary(q); break;
-    case 'todos':     renderTodos(q); break;
-    case 'finance':   renderFinance(q); break;
-    case 'hc':        renderHC(q); break;
-    case 'links':     renderLinks(q); break;
-    case 'logs':      renderLogs(q); break;
-    case 'events':    renderEvents(q); break;
+    case 'summary':  renderSummary(q);  break;
+    case 'todos':    renderTodos(q);    break;
+    case 'finance':  renderFinance(q);  break;
+    case 'hc':       renderHC(q);       break;
+    case 'links':    renderLinks(q);    break;
+    case 'logs':     renderLogs(q);     break;
+    case 'events':   renderEvents(q);   break;
   }
 }
 
-// ── SEARCH WIRING ──
+// ── SEARCH ───────────────────────────────────────────────────────────────
 function wireSearch(inputId, tab) {
   const el = document.getElementById(inputId);
   if (!el) return;
-  el.addEventListener('input', () => {
-    searchQ[tab] = el.value;
-    renderTab(tab);
-  });
+  el.addEventListener('input', () => { searchQ[tab] = el.value; renderTab(tab); });
 }
 
-// ── GROUP FILTER ──
-function buildGroupFilter() {
-  const groups = [...new Set(DB.summary.map(r => r.group_name).filter(Boolean))];
-  const container = document.getElementById('grp-list');
-  if (!container) return;
-  const colors = ['#5b8dee','#f0546a','#3ecf8e','#f5a623','#e879f9','#2dd4bf','#f59e0b'];
-  let html = `<div class="git" onclick="selGrp('')"><div class="gdot" style="background:var(--ac)"></div><div class="gn">所有群組</div><div class="gc">${groups.length} groups</div><svg class="gck" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 14"><polyline points="2 7 5 10 12 3"/></svg></div>`;
-  groups.forEach((g, i) => {
-    const cnt = DB.logs.filter(r => r.group_name === g).length;
-    html += `<div class="git" onclick="selGrp('${g.replace(/'/g,"\\'")}')"><div class="gdot" style="background:${colors[i%colors.length]}"></div><div class="gn">${g}</div><div class="gc">${cnt} msgs</div></div>`;
-  });
-  container.innerHTML = html;
-}
-
-// ── CALENDAR DOTS ──
-function buildCalendarDots() {
-  window._calDots = {};
-  DB.summary.forEach(r => {
-    const d = (r.created_at || '').slice(0, 10);
-    if (d) window._calDots[d] = (window._calDots[d] || 0) + 1;
-  });
-}
-
-// ── FILTER HELPERS ──
+// ── FILTER HELPERS ────────────────────────────────────────────────────────
 function filteredByGroup(arr) {
   if (!activeGroup) return arr;
   return arr.filter(r => r.group_name === activeGroup);
 }
-function filteredByDate(arr) {
-  if (activeDate === 'latest') return arr;
-  return arr.filter(r => (r.created_at || '').startsWith(activeDate));
-}
 function applyFilters(arr) {
-  return filteredByDate(filteredByGroup(arr));
+  return filteredByGroup(arr);
+  // 日期已在 fetchSheet 裡由 GAS server-side 處理
 }
 function matchQ(obj, q) {
   if (!q) return true;
   return Object.values(obj).some(v => String(v).toLowerCase().includes(q));
 }
+function tryJSON(s, fallback) {
+  try { return typeof s === 'string' ? JSON.parse(s) : (s || fallback); }
+  catch { return fallback; }
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(s) {
+  if (!s) return '—';
+  const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[2]}/${m[3]}` : String(s).slice(0,10);
+}
+function empty(msg) {
+  return `<div class="loading-msg">${msg}</div>`;
+}
+function updateMeta(tab, count, unit) {
+  const [title] = META[tab] || ['—'];
+  document.getElementById('ptitle').textContent = title;
+  const grpLabel = activeGroup
+    ? activeGroup.slice(0,14)
+    : (new Set(DB.summary.map(r=>r.group_name).filter(Boolean)).size) + ' groups';
+  const dateLabel = activeDate === 'latest' ? 'latest' : activeDate;
+  document.getElementById('psub').textContent = `${count} ${unit} · ${grpLabel} · ${dateLabel}`;
+}
 
-// ── RENDER SUMMARY ──
+// ── RENDER SUMMARY ────────────────────────────────────────────────────────
 function renderSummary(q) {
   let rows = applyFilters(DB.summary).filter(r => matchQ(r, q));
-  // latest per group
+
+  // latest 模式：每個 group 只取一筆（GAS 已過濾，但 group filter 可能需要再去重）
   if (activeDate === 'latest') {
     const seen = new Set();
-    rows = rows.filter(r => { if (seen.has(r.group_name)) return false; seen.add(r.group_name); return true; });
+    rows = rows.filter(r => {
+      if (seen.has(r.group_name)) return false;
+      seen.add(r.group_name); return true;
+    });
   }
-  const total_todos = DB.todos.length;
-  const total_links = DB.links.length;
+
+  const total_groups = new Set(DB.summary.map(r=>r.group_name).filter(Boolean)).size;
+  const total_todos  = DB.todos.filter(r => !r.done || r.done === 'FALSE' || r.done === false).length;
+  const total_links  = DB.links.length;
   const total_people = DB.headcount.length;
-  const total_groups = new Set(DB.summary.map(r=>r.group_name)).size;
+
   document.getElementById('stat-groups').textContent = total_groups;
-  document.getElementById('stat-todos').textContent = total_todos;
-  document.getElementById('stat-links').textContent = total_links;
+  document.getElementById('stat-todos').textContent  = total_todos;
+  document.getElementById('stat-links').textContent  = total_links;
   document.getElementById('stat-people').textContent = total_people;
+  document.getElementById('summary-lbl').textContent = `${rows.length} 個群組摘要`;
+
   const el = document.getElementById('summary-list');
   if (!el) return;
   if (rows.length === 0) { el.innerHTML = empty('沒有符合的摘要'); updateMeta('summary', 0, '摘要'); return; }
+
   el.innerHTML = rows.map(r => {
     const topics = tryJSON(r.topics, []);
-    const notes = tryJSON(r.notes, []);
-    const hasNote = notes.some(n => n.includes('元') || n.includes('基金') || n.includes('盈餘'));
-    const noteText = hasNote ? notes.find(n => n.includes('元') || n.includes('基金') || n.includes('盈餘')) : '';
+    const notes  = tryJSON(r.notes, []);
+    const noteText = notes.find(n => /元|基金|盈餘|費用/.test(n)) || '';
     return `<div class="card">
-      <div class="ch"><div class="cm">
-        <div class="cr"><span class="cn">${esc(r.group_name)}</span><span class="cd">${fmtDate(r.created_at)}</span></div>
-        <div class="ctags">${topics.slice(0,3).map(t=>`<span class="tag bl">${esc(t)}</span>`).join('')}</div>
-      </div></div>
+      <div class="ch">
+        <div class="cm">
+          <div class="cr">
+            <span class="cn">${esc(r.group_name)}</span>
+            <span class="cd">${fmtDate(r.created_at)}</span>
+          </div>
+          <div class="ctags">${topics.slice(0,4).map(t=>`<span class="tag bl">${esc(t)}</span>`).join('')}</div>
+        </div>
+        <div class="copy" onclick="event.stopPropagation();navigator.clipboard?.writeText('${esc(r.summary||'')}')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+        </div>
+      </div>
       <div class="cb">${esc(r.summary)}</div>
       ${noteText ? `<div class="cnote">⚠ ${esc(noteText)}</div>` : ''}
       <div class="cf">
-        <div class="cs">📋 <strong>${r.todos||0}</strong></div>
+        <div class="cs">📋 <strong>${r.todos||0}</strong> todos</div>
         <div class="cs">💰 <strong>${r.finance||0}</strong></div>
         <div class="cs">👥 <strong>${r.people||0}</strong></div>
       </div>
@@ -744,68 +794,89 @@ function renderSummary(q) {
   updateMeta('summary', rows.length, '摘要');
 }
 
-// ── RENDER TODOS ──
+// ── RENDER TODOS ──────────────────────────────────────────────────────────
 function renderTodos(q) {
   let rows = applyFilters(DB.todos).filter(r => matchQ(r, q));
   if (filterPriority) rows = rows.filter(r => r.priority === filterPriority);
-  if (filterDone === 'undone') rows = rows.filter(r => !r.done || r.done === 'FALSE' || r.done === false);
-  if (filterDone === 'done') rows = rows.filter(r => r.done === true || r.done === 'TRUE');
+
+  const undoneCount = rows.filter(r => !r.done || r.done === 'FALSE' || r.done === false).length;
   const groups = { '高': [], '中': [], '低': [] };
   rows.forEach(r => { (groups[r.priority] || groups['中']).push(r); });
+
   const el = document.getElementById('todos-list');
   if (!el) return;
   if (rows.length === 0) { el.innerHTML = empty('沒有符合的待辦'); updateMeta('todos', 0, '待辦'); return; }
+
   let html = '';
   [['高','var(--re)'],['中','var(--am)'],['低','var(--t3)']].forEach(([p, color]) => {
     const items = groups[p] || [];
     if (!items.length) return;
-    html += `<div class="slbl">${p}優先 · ${items.length} items</div>`;
+    const undone = items.filter(r => !r.done || r.done === 'FALSE' || r.done === false).length;
+    html += `<div class="slbl">${p}優先 · ${undone}/${items.length} 未完成</div>`;
     items.forEach(r => {
       const done = r.done === true || r.done === 'TRUE';
-      html += `<div class="ti" onclick="toggleTodo(this,'${esc(r.row_number||'')}')">
-        <div class="chk${done?' done':''}">${done?'<svg width="11" height="11" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg>':''}</div>
+      const rowId = esc(String(r.row_number || r.id || ''));
+      html += `<div class="ti" onclick="toggleTodo(this,'${rowId}')">
+        <div class="chk${done?' done':''}">
+          ${done ? '<svg width="11" height="11" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg>' : ''}
+        </div>
         <div class="tb">
-          <div class="tt${done?' done':''}">${esc(r.todo)}</div>
-          <div class="tm"><span class="tg">${esc(r.group_name)}</span>${r.due_date?`<span class="td">${r.due_date}</span>`:''}</div>
+          <div class="tt${done?' done':''}">${esc(r.todo || r.task || '')}</div>
+          <div class="tm">
+            <span class="tg">${esc(r.group_name)}</span>
+            ${r.due_date ? `<span class="td">${esc(r.due_date)}</span>` : ''}
+          </div>
         </div>
         <div class="pd" style="background:${color}"></div>
       </div>`;
     });
   });
   el.innerHTML = html;
-  updateMeta('todos', rows.length, '待辦');
+  updateMeta('todos', undoneCount, '未完成');
 }
 
-function toggleTodo(el, row) {
+function toggleTodo(el, rowId) {
   const chk = el.querySelector('.chk');
-  const tt = el.querySelector('.tt');
+  const tt  = el.querySelector('.tt');
   const done = chk.classList.toggle('done');
   tt.classList.toggle('done', done);
   chk.innerHTML = done ? '<svg width="11" height="11" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg>' : '';
-  // fire-and-forget update to GAS
-  if (row) fetch(`${GAS_URL}?token=${TOKEN}&action=updateTodo&row=${row}&done=${done}`).catch(()=>{});
+  // 更新 DB 本地狀態
+  if (rowId) {
+    const item = DB.todos.find(r => String(r.row_number||r.id) === rowId);
+    if (item) item.done = done;
+    updateTodoBadge();
+    // fire-and-forget 回寫 GAS（若你的 GAS 有 doPost 支援的話）
+    fetch(`${GAS_URL}?token=${encodeURIComponent(TOKEN)}&action=updateTodo&row=${rowId}&done=${done}`).catch(()=>{});
+  }
 }
 
-// ── RENDER FINANCE ──
+// ── RENDER FINANCE ────────────────────────────────────────────────────────
 function renderFinance(q) {
   let rows = applyFilters(DB.finance).filter(r => matchQ(r, q));
-  const income = rows.filter(r=>r.direction==='收入').reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
-  const expense = rows.filter(r=>r.direction==='支出').reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+
+  const income  = rows.filter(r=>r.direction==='收入').reduce((s,r)=>s+(parseFloat(r.amount)||0), 0);
+  const expense = rows.filter(r=>r.direction==='支出').reduce((s,r)=>s+(parseFloat(r.amount)||0), 0);
   const net = income - expense;
+
   document.getElementById('fin-expense').textContent = `$${expense.toLocaleString()}`;
-  document.getElementById('fin-income').textContent = `$${income.toLocaleString()}`;
-  document.getElementById('fin-net').textContent = `${net>=0?'+':''}$${net.toLocaleString()}`;
-  document.getElementById('fin-net').style.color = net >= 0 ? 'var(--gr)' : 'var(--re)';
+  document.getElementById('fin-income').textContent  = `$${income.toLocaleString()}`;
+  document.getElementById('fin-net').textContent     = `${net>=0?'+':''}$${net.toLocaleString()}`;
+  document.getElementById('fin-net').style.color     = net >= 0 ? 'var(--gr)' : 'var(--re)';
+
   const el = document.getElementById('finance-list');
   if (!el) return;
   if (rows.length === 0) { el.innerHTML = empty('沒有財務紀錄'); updateMeta('finance', 0, '紀錄'); return; }
+
   el.innerHTML = rows.map(r => {
-    const out = r.direction === '支出';
+    const out  = r.direction === '支出';
+    const payees = tryJSON(r.payees, r.payees);
+    const payeeStr = Array.isArray(payees) ? payees.join(', ') : (payees || '');
     return `<div class="fi">
       <div class="fic ${out?'out':'in'}">${out?'💸':'💰'}</div>
       <div class="fbody">
         <div class="fdesc">${esc(r.description)}</div>
-        <div class="fsub">${esc(r.group_name)} · ${esc(r.payer||'')}${r.payees?` → ${esc(r.payees)}`:''}</div>
+        <div class="fsub">${esc(r.group_name)} · ${esc(r.payer||'')}${payeeStr?` → ${esc(payeeStr)}`:''}</div>
       </div>
       <div class="famt ${out?'out':'in'}">${out?'-':'+'}$${parseFloat(r.amount||0).toLocaleString()}</div>
     </div>`;
@@ -813,240 +884,338 @@ function renderFinance(q) {
   updateMeta('finance', rows.length, '紀錄');
 }
 
-// ── RENDER HEADCOUNT ──
+// ── RENDER HEADCOUNT ──────────────────────────────────────────────────────
 function renderHC(q) {
   let rows = applyFilters(DB.headcount).filter(r => matchQ(r, q));
-  // group by event
-  const events = {};
+
+  // 以活動聚合
+  const eventMap = {};
   rows.forEach(r => {
-    const key = r.event_name + '|' + r.event_date + '|' + r.group_name;
-    if (!events[key]) events[key] = { name:r.event_name, date:r.event_date, group:r.group_name, persons:[] };
-    if (r.person_name) events[key].persons.push(r);
+    const key = (r.event_name||'') + '|' + (r.event_date||'') + '|' + (r.group_name||'');
+    if (!eventMap[key]) eventMap[key] = { name:r.event_name, date:r.event_date, group:r.group_name, persons:[] };
+    if (r.person_name) eventMap[key].persons.push(r);
   });
+
   const el = document.getElementById('hc-list');
   if (!el) return;
-  const evList = Object.values(events);
+  const evList = Object.values(eventMap);
   if (evList.length === 0) { el.innerHTML = empty('沒有人數紀錄'); updateMeta('hc', 0, '活動'); return; }
+
+  const now = new Date().toISOString().slice(0,10);
   el.innerHTML = evList.map(ev => {
     const confirmed = ev.persons.filter(p => p.rsvp_status === '確認').length;
-    const total = ev.persons.length;
-    const pct = total ? Math.round(confirmed/total*100) : 0;
-    const upcoming = ev.date >= new Date().toISOString().slice(0,10);
-    const chips = ev.persons.slice(0,6).map(p => {
+    const total     = ev.persons.length;
+    const pct       = total ? Math.round(confirmed/total*100) : 0;
+    const upcoming  = (ev.date||'') >= now;
+    const chips     = ev.persons.slice(0,6).map(p => {
       const cls = p.rsvp_status==='確認'?'ok':p.rsvp_status==='請假'?'no':'q';
-      const icon = cls==='ok'?'✓':cls==='no'?'✗':'?';
+      const icon = {ok:'✓',no:'✗',q:'?'}[cls];
       return `<div class="av ${cls}">${icon} ${esc(p.person_name)}</div>`;
     }).join('') + (ev.persons.length > 6 ? `<div class="av ok" style="opacity:.6">+${ev.persons.length-6} 人</div>` : '');
+
     return `<div class="hcc">
-      <div class="hch"><div><div class="hce">${esc(ev.name)}</div><div class="hcd">${esc(ev.group)} · ${ev.date}</div></div>
-        <span class="tag ${upcoming?'am':'gy'}">${upcoming?'upcoming':'completed'}</span></div>
-      <div class="hcp"><div class="pl"><span>出席確認</span><span style="color:var(--t1)">${confirmed} / ${total}</span></div>
-        <div class="pb"><div class="pf" style="width:${pct}%;background:${upcoming?'var(--ac)':'var(--gr)'}"></div></div></div>
+      <div class="hch">
+        <div><div class="hce">${esc(ev.name)}</div><div class="hcd">${esc(ev.group)} · ${ev.date||''}</div></div>
+        <span class="tag ${upcoming?'am':'gy'}">${upcoming?'upcoming':'completed'}</span>
+      </div>
+      <div class="hcp">
+        <div class="pl"><span>出席確認</span><span style="color:var(--t1)">${confirmed} / ${total}</span></div>
+        <div class="pb"><div class="pf" style="width:${pct}%;background:${upcoming?'var(--ac)':'var(--gr)'}"></div></div>
+      </div>
       <div class="hca">${chips}</div>
     </div>`;
   }).join('');
   updateMeta('hc', evList.length, '活動');
 }
 
-// ── RENDER LINKS ──
+// ── RENDER LINKS ──────────────────────────────────────────────────────────
 function renderLinks(q) {
   let rows = applyFilters(DB.links).filter(r => matchQ(r, q));
   const el = document.getElementById('links-list');
   if (!el) return;
   if (rows.length === 0) { el.innerHTML = empty('沒有連結'); updateMeta('links', 0, '連結'); return; }
-  const icons = { 'docs.google': '📊', 'forms.gle': '📝', 'github': '🐙', 'youtube': '▶️', 'drive.google': '📁', 'notion': '📒' };
+
+  const icons = {
+    'docs.google': '📊', 'forms.gle': '📝', 'github': '🐙',
+    'youtube': '▶️', 'drive.google': '📁', 'notion': '📒',
+    'figma': '🎨', 'line': '💬',
+  };
   el.innerHTML = rows.map(r => {
     const url = r.url || '';
-    const ico = Object.entries(icons).find(([k]) => url.includes(k))?.[1] || '🔗';
-    const short = url.replace(/^https?:\/\//,'').slice(0,50);
-    return `<div class="li" onclick="window.open('${url}','_blank')">
+    const ico = Object.entries(icons).find(([k]) => url.toLowerCase().includes(k))?.[1] || '🔗';
+    const short = url.replace(/^https?:\/\//,'').slice(0,55);
+    return `<div class="li" onclick="window.open(${JSON.stringify(url)},'_blank')">
       <div class="lf">${ico}</div>
-      <div class="lb"><div class="lu">${esc(short)}</div>
-        <div class="lm">${esc(r.sender||r.group_name)} · ${esc(r.group_name)} · ${fmtDate(r.created_at)}</div></div>
+      <div class="lb">
+        <div class="lu">${esc(short)}</div>
+        <div class="lm">${esc(r.sender_name||r.sender||r.group_name||'')} · ${esc(r.group_name||'')} · ${fmtDate(r.created_at)}</div>
+      </div>
     </div>`;
   }).join('');
   updateMeta('links', rows.length, '連結');
 }
 
-// ── RENDER EVENTS (static for now — no events sheet in GAS) ──
+// ── RENDER EVENTS ─────────────────────────────────────────────────────────
+// 現在直接從 DB.events 渲染（GAS events sheet）
 function renderEvents(q) {
-  // events are hand-maintained, derived from headcount data
-  const eventMap = {};
-  applyFilters(DB.headcount).forEach(r => {
-    const key = r.event_name + '|' + r.event_date;
-    if (!eventMap[key]) eventMap[key] = { name:r.event_name, date:r.event_date, group:r.group_name, persons:[] };
-    if (r.person_name) eventMap[key].persons.push(r);
-  });
-  let events = Object.values(eventMap).filter(e => matchQ({name:e.name, group:e.group}, q));
+  let rows = DB.events.filter(r => matchQ(r, q));
+  const now = new Date().toISOString().slice(0,10);
+
+  // status chip 篩選
+  if (filterEvStatus === 'upcoming') {
+    rows = rows.filter(r => (r.event_date||r.date||'') >= now || r.status === 'upcoming');
+  } else if (filterEvStatus === 'completed') {
+    rows = rows.filter(r => (r.event_date||r.date||'') < now || r.status === 'completed');
+  }
+  if (activeGroup) {
+    rows = rows.filter(r => {
+      const gs = tryJSON(r.groups, [r.group_name]);
+      return Array.isArray(gs) ? gs.includes(activeGroup) : String(gs).includes(activeGroup);
+    });
+  }
+
   const el = document.getElementById('events-list');
   if (!el) return;
-  if (events.length === 0) { el.innerHTML = empty('沒有活動紀錄'); return; }
-  const now = new Date().toISOString().slice(0,10);
-  el.innerHTML = events.map(ev => {
-    const upcoming = ev.date >= now;
-    const confirmed = ev.persons.filter(p=>p.rsvp_status==='確認').length;
-    const total = ev.persons.length;
-    const pct = total ? Math.round(confirmed/total*100) : 0;
+  if (rows.length === 0) { el.innerHTML = empty('沒有活動紀錄'); return; }
+
+  el.innerHTML = rows.map(r => {
+    const evDate   = r.event_date || r.date || '';
+    const upcoming = evDate >= now || r.status === 'upcoming';
+    const pct      = parseInt(r.progress || r.completion || 0);
+    const groups   = tryJSON(r.groups, [r.group_name]).filter(Boolean);
+    const preItems = tryJSON(r.pre, []);
+    const evName   = r.event_name || r.name || '（無名稱）';
+    const location = r.location || '';
+
     return `<div class="ev-card">
-      <div class="ev-hdr"><div class="ev-dot" style="background:${upcoming?'var(--ac)':'var(--gr)'}"></div>
-        <div class="ev-main"><div class="ev-name">${esc(ev.name)}</div><div class="ev-sub">${ev.date} · ${esc(ev.group)}</div></div>
-        <span class="tag ${upcoming?'am':'gy'}">${upcoming?'即將到來':'已結束'}</span></div>
-      <div class="ev-body">
-        <div class="ev-row"><span class="ev-lbl">出席</span><span class="ev-val">${confirmed} / ${total} 人確認</span></div>
-        <div class="ev-row"><span class="ev-lbl">群組</span><span class="ev-val">${esc(ev.group)}</span></div>
+      <div class="ev-hdr">
+        <div class="ev-dot" style="background:${upcoming?'var(--ac)':'var(--gr)'}"></div>
+        <div class="ev-main">
+          <div class="ev-name">${esc(evName)}</div>
+          <div class="ev-sub">${esc(location)}${location&&evDate?' · ':''}${evDate}</div>
+        </div>
+        <span class="tag ${upcoming?'am':'gy'}">${upcoming?'即將到來':'已結束'}</span>
       </div>
-      <div class="ev-foot"><div class="pl"><span>出席率</span><span>${pct}%</span></div>
-        <div class="pb"><div class="pf" style="width:${pct}%;background:${upcoming?'var(--am)':'var(--gr)'}"></div></div></div>
+      <div class="ev-body">
+        ${r.organizer ? `<div class="ev-row"><span class="ev-lbl">主辦</span><span class="ev-val">${esc(r.organizer)}</span></div>` : ''}
+        ${r.status_note ? `<div class="ev-row"><span class="ev-lbl">狀態</span><span class="ev-val" style="color:var(--am)">${esc(r.status_note)}</span></div>` : ''}
+        ${groups.length ? `<div class="ev-row"><span class="ev-lbl">群組</span><span class="ev-val">${groups.map(g=>esc(g)).join(', ')}</span></div>` : ''}
+        ${preItems.length ? `<div class="ev-row"><span class="ev-lbl">待辦</span><span class="ev-val">${preItems.slice(0,3).map(p=>esc(p)).join(' · ')}</span></div>` : ''}
+      </div>
+      ${pct > 0 ? `<div class="ev-foot">
+        <div class="pl"><span>準備進度</span><span style="color:${upcoming?'var(--am)':'var(--gr)'}">${pct}%</span></div>
+        <div class="pb"><div class="pf" style="width:${pct}%;background:${upcoming?'var(--am)':'var(--gr)'}"></div></div>
+      </div>` : ''}
     </div>`;
   }).join('');
 }
 
-// ── RENDER LOGS ──
+// ── RENDER LOGS ───────────────────────────────────────────────────────────
 function renderLogs(q) {
   let rows = applyFilters(DB.logs).filter(r => matchQ(r, q));
-  const total = DB.logs.length;
+
+  const total     = DB.logs.length;
   const processed = DB.logs.filter(r => r.processed === true || r.processed === 'TRUE').length;
-  const groups = new Set(DB.logs.map(r=>r.group_name)).size;
-  document.getElementById('log-stat-total').textContent = total;
-  document.getElementById('log-stat-raw').textContent = total - processed;
-  document.getElementById('log-stat-done').textContent = processed;
+  const groups    = new Set(DB.logs.map(r=>r.group_name).filter(Boolean)).size;
+
+  document.getElementById('log-stat-total').textContent  = total;
+  document.getElementById('log-stat-raw').textContent    = total - processed;
+  document.getElementById('log-stat-done').textContent   = processed;
   document.getElementById('log-stat-groups').textContent = groups;
+
   const el = document.getElementById('logs-list');
   if (!el) return;
-  const show = rows.slice(0, 50);
+  const show = rows.slice(0, 60);
   if (show.length === 0) { el.innerHTML = empty('沒有訊息紀錄'); return; }
+
   el.innerHTML = show.map(r => {
     const isProc = r.processed === true || r.processed === 'TRUE';
-    const isBot = r.sender_type === 'bot' || (r.sender_name||'').includes('Bot') || (r.sender_name||'').includes('Asst');
+    const isBot  = r.sender_type === 'bot' || /Bot|Asst/.test(r.sender_name||'');
     const hasUrl = r.has_url === true || r.has_url === 'TRUE';
     return `<div class="log-item">
       <div class="log-hdr">
         <span class="log-sender">${esc(r.sender_name||'Unknown')}</span>
-        <span class="log-group">${esc(r.group_name)}</span>
-        <span class="log-time">${fmtDate(r.created_at)}</span>
+        <span class="log-group">${esc(r.group_name||'')}</span>
+        <span class="log-time">${fmtDate(r.created_at||r.timestamp)}</span>
       </div>
-      <div class="log-msg">${esc(r.content||'')}</div>
+      <div class="log-msg">${esc((r.content||r.message||'').slice(0,200))}</div>
       <div class="log-tags">
-        ${!isProc?'<span class="ltag raw">未處理</span>':'<span class="ltag" style="background:rgba(62,207,142,.12);color:var(--gr)">已處理</span>'}
-        ${isBot?'<span class="ltag bot">Bot</span>':''}
-        ${hasUrl?'<span class="ltag url">有URL</span>':''}
+        ${isProc
+          ? '<span class="ltag" style="background:rgba(62,207,142,.12);color:var(--gr)">已處理</span>'
+          : '<span class="ltag raw">未處理</span>'}
+        ${isBot  ? '<span class="ltag bot">Bot</span>'  : ''}
+        ${hasUrl ? '<span class="ltag url">有URL</span>' : ''}
       </div>
     </div>`;
   }).join('');
-  if (rows.length > 50) {
-    el.innerHTML += `<div class="log-more">顯示前 50 筆，共 ${rows.length} 筆符合</div>`;
+
+  if (rows.length > 60) {
+    el.innerHTML += `<div class="log-more">顯示前 60 筆，共 ${rows.length} 筆符合</div>`;
   }
 }
 
-// ── HELPERS ──
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function tryJSON(s, fallback) {
-  try { return typeof s === 'string' ? JSON.parse(s) : (s || fallback); } catch { return fallback; }
-}
-function fmtDate(s) {
-  if (!s) return '—';
-  const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})/);
-  return m ? `${m[2]}/${m[3]}` : String(s).slice(0,10);
-}
-function empty(msg) {
-  return `<div style="text-align:center;padding:40px 20px;color:var(--t3);font-size:13px;">${msg}</div>`;
-}
-function updateMeta(tab, count, unit) {
-  const [title] = META[tab] || ['—'];
-  document.getElementById('ptitle').textContent = title;
-  const grpLabel = activeGroup ? activeGroup.slice(0,10) : (new Set(DB.summary.map(r=>r.group_name)).size) + ' groups';
-  document.getElementById('psub').textContent = `${count} ${unit} · ${grpLabel}`;
+// ── GROUP FILTER ──────────────────────────────────────────────────────────
+function buildGroupFilter() {
+  const groups = [...new Set(DB.summary.map(r => r.group_name).filter(Boolean))];
+  const container = document.getElementById('grp-list');
+  if (!container) return;
+  const colors = ['#5b8dee','#f0546a','#3ecf8e','#f5a623','#e879f9','#2dd4bf','#f59e0b','#a78bfa'];
+
+  const allCnt = DB.logs.length;
+  let html = `<div class="git" onclick="selGrp('')">
+    <div class="gdot" style="background:var(--ac)"></div>
+    <div class="gn">所有群組</div>
+    <div class="gc">${groups.length} groups</div>
+    <svg class="gck ${!activeGroup?'':'gy'}" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 14">
+      ${!activeGroup ? '<polyline points="2 7 5 10 12 3"/>' : ''}
+    </svg>
+  </div>`;
+  groups.forEach((g, i) => {
+    const cnt = DB.logs.filter(r => r.group_name === g).length;
+    const active = activeGroup === g;
+    html += `<div class="git" onclick="selGrp(${JSON.stringify(g)})">
+      <div class="gdot" style="background:${colors[i%colors.length]}"></div>
+      <div class="gn">${esc(g)}</div>
+      <div class="gc">${cnt} msgs</div>
+      ${active ? '<svg class="gck" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 14"><polyline points="2 7 5 10 12 3"/></svg>' : ''}
+    </div>`;
+  });
+  container.innerHTML = html;
 }
 
-// ── CALENDAR ──
-let cy=2026, cm=2;
-function toggleCal(){
+// ── CALENDAR ──────────────────────────────────────────────────────────────
+const today = new Date();
+let cy = today.getFullYear(), cm = today.getMonth();
+
+function toggleCal() {
   const on = document.getElementById('ov-cal').classList.toggle('on');
   document.getElementById('btn-cal').classList.toggle('cal-on', on);
   if (on) { closeOv('grp'); renderCal(); }
 }
-function closeOv(x){
+function closeOv(x) {
   document.getElementById('ov-'+x)?.classList.remove('on');
-  if(x==='cal') document.getElementById('btn-cal')?.classList.remove('cal-on');
-  if(x==='grp') document.getElementById('btn-grp')?.classList.remove('grp-on');
+  if (x==='cal') document.getElementById('btn-cal')?.classList.remove('cal-on');
+  if (x==='grp') document.getElementById('btn-grp')?.classList.remove('grp-on');
 }
-function nm(d){ cm+=d; if(cm>11){cm=0;cy++;} if(cm<0){cm=11;cy--;} renderCal(); }
-function renderCal(){
-  const M=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function nm(d) {
+  cm += d;
+  if (cm > 11) { cm = 0; cy++; }
+  if (cm < 0)  { cm = 11; cy--; }
+  renderCal();
+}
+function renderCal() {
+  const M = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   document.getElementById('cml').textContent = M[cm]+' '+cy;
   document.getElementById('cl-btn').classList.toggle('on', activeDate==='latest');
-  const fd=new Date(cy,cm,1).getDay(), dim=new Date(cy,cm+1,0).getDate(), td=new Date();
-  let h='';
-  for(let i=0;i<fd;i++) h+='<div class="cday"></div>';
-  for(let d=1;d<=dim;d++){
-    const ds=`${cy}-${String(cm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const n=(window._calDots||{})[ds]||0;
-    const dots=Array(Math.min(n,4)).fill('<div class="cdot"></div>').join('');
-    const sel=activeDate===ds, today=td.getFullYear()===cy&&td.getMonth()===cm&&td.getDate()===d;
-    h+=`<div class="cday${n?' has':''}${sel?' sel':''}${today?' today':''}" ${n?`onclick="selDate('${ds}')"`:''}><span class="cdn">${d}</span><div class="cdots">${dots}</div></div>`;
+
+  const fd = new Date(cy, cm, 1).getDay();
+  const dim = new Date(cy, cm+1, 0).getDate();
+  const td  = new Date();
+  let h = '';
+  for (let i=0; i<fd; i++) h += '<div class="cday"></div>';
+  for (let d=1; d<=dim; d++) {
+    const ds = `${cy}-${String(cm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const n  = (window._calDots||{})[ds] || 0;
+    const dots = Array(Math.min(n,4)).fill('<div class="cdot"></div>').join('');
+    const sel   = activeDate === ds;
+    const isToday = td.getFullYear()===cy && td.getMonth()===cm && td.getDate()===d;
+    h += `<div class="cday${n?' has':''}${sel?' sel':''}${isToday?' today':''}"
+            ${n ? `onclick="selDate('${ds}')"` : ''}>
+            <span class="cdn">${d}</span>
+            <div class="cdots">${dots}</div>
+          </div>`;
   }
-  document.getElementById('cdays').innerHTML=h;
+  document.getElementById('cdays').innerHTML = h;
 }
-function selDate(ds){ activeDate=ds; document.getElementById('snap').classList.add('on'); document.getElementById('snap-lbl').textContent=ds; renderCal(); renderTab(currentTab); setTimeout(()=>closeOv('cal'),160); }
-function selLatest(){ activeDate='latest'; document.getElementById('snap').classList.remove('on'); document.getElementById('btn-cal').classList.remove('cal-on'); renderCal(); renderTab(currentTab); setTimeout(()=>closeOv('cal'),160); }
 
-// ── GROUP FILTER ──
-function toggleGrp(){ const on=document.getElementById('ov-grp').classList.toggle('on'); document.getElementById('btn-grp').classList.toggle('grp-on',on); if(on) closeOv('cal'); }
-function selGrp(g){ activeGroup=g; document.getElementById('btn-grp').classList.toggle('grp-on',g!==''); closeOv('grp'); renderTab(currentTab); }
+async function selDate(ds) {
+  activeDate = ds;
+  document.getElementById('snap').classList.add('on');
+  document.getElementById('snap-lbl').textContent = ds;
+  renderCal();
+  closeOv('cal');
+  await reloadDateSheets(); // 重新 fetch 日期快照資料
+  renderTab(currentTab);
+}
 
-// ── INIT ──
-// inject search bars and list containers into each panel
+async function selLatest() {
+  activeDate = 'latest';
+  document.getElementById('snap').classList.remove('on');
+  document.getElementById('btn-cal').classList.remove('cal-on');
+  renderCal();
+  closeOv('cal');
+  await reloadDateSheets();
+  renderTab(currentTab);
+}
+
+// ── GROUP SELECT ──────────────────────────────────────────────────────────
+function toggleGrp() {
+  const on = document.getElementById('ov-grp').classList.toggle('on');
+  document.getElementById('btn-grp').classList.toggle('grp-on', on);
+  if (on) { closeOv('cal'); buildGroupFilter(); }
+}
+function selGrp(g) {
+  activeGroup = g;
+  document.getElementById('btn-grp').classList.toggle('grp-on', g !== '');
+  closeOv('grp');
+  renderTab(currentTab);
+}
+
+// ── LOGOUT ────────────────────────────────────────────────────────────────
+function doLogout() {
+  TOKEN = '';
+  DB = { summary:[], todos:[], finance:[], headcount:[], links:[], events:[], logs:[] };
+  sessionStorage.removeItem('las_token');
+  showLogin();
+  document.getElementById('token-input').value = '';
+  setLoginStatus('', '');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // wire chip filters
-  document.querySelectorAll('.fbar').forEach(bar => {
-    bar.querySelectorAll('.chip').forEach(c => {
-      c.addEventListener('click', () => {
-        bar.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
-        c.classList.add('on');
-      });
-    });
-  });
 
-  // wire search inputs
-  wireSearch('search-summary', 'summary');
-  wireSearch('search-todos', 'todos');
-  wireSearch('search-finance', 'finance');
-  wireSearch('search-hc', 'hc');
-  wireSearch('search-links', 'links');
-  wireSearch('search-events', 'events');
-  wireSearch('search-logs', 'logs');
-
-  // wire priority filter chips
+  // priority chips
   document.querySelectorAll('.priority-chip').forEach(c => {
     c.addEventListener('click', () => {
-      document.querySelectorAll('.priority-chip').forEach(x=>x.classList.remove('on'));
+      document.querySelectorAll('.priority-chip').forEach(x => x.classList.remove('on'));
       c.classList.add('on');
       filterPriority = c.dataset.p || '';
       renderTab('todos');
     });
   });
 
-  // check saved token
+  // event status chips
+  document.querySelectorAll('.ev-status-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.ev-status-chip').forEach(x => x.classList.remove('on'));
+      c.classList.add('on');
+      filterEvStatus = c.dataset.s || 'all';
+      renderTab('events');
+    });
+  });
+
+  // search inputs
+  wireSearch('search-summary', 'summary');
+  wireSearch('search-todos',   'todos');
+  wireSearch('search-finance', 'finance');
+  wireSearch('search-hc',      'hc');
+  wireSearch('search-links',   'links');
+  wireSearch('search-events',  'events');
+  wireSearch('search-logs',    'logs');
+
+  // enter key on login
+  document.getElementById('token-input')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  // 初始化日曆（顯示當月）
+  renderCal();
+
+  // 嘗試從 sessionStorage 恢復登入
   const saved = sessionStorage.getItem('las_token');
   if (saved) { TOKEN = saved; loadAll(); }
   else showLogin();
-
-  renderCal();
 });
-
-function doLogout() {
-  TOKEN = '';
-  DB = { summary:[], todos:[], finance:[], headcount:[], links:[], logs:[] };
-  sessionStorage.removeItem('las_token');
-  showLogin();
-  document.getElementById('token-input').value = '';
-  document.getElementById('login-status').textContent = '';
-}
-
-// token input enter key
-document.getElementById('token-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 </script>
 
 </body>
