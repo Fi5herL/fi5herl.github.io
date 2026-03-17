@@ -1,0 +1,4183 @@
+{
+  "name": "Line Assistant — AI 摘要主流程",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "line-message",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        464
+      ],
+      "id": "1b124c3b-a8d4-4973-bf49-bb6d6ee0553b",
+      "name": "Webhook 入口",
+      "webhookId": "PLACEHOLDER-WEBHOOK-ID"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        2224,
+        -256
+      ],
+      "id": "5365bee8-5bb2-4cda-868f-5ce886f6a49f",
+      "name": "When chat message received",
+      "webhookId": "1eba2aab-04f2-4f33-bfd9-044190ba8c50"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $input.first().json.messageText;\nif (!text) return [];\n\nconst replyToken = $input.first().json.replyToken;\nconst userId = $input.first().json.userId;\nconst groupId = $input.first().json.groupId;\n\nif (['/d', '/debug', \"/今天\", \"/今日\"].includes(text)) {\n  return [{ json: { cmd: 'debug', replyToken, userId } }];\n} else if (['/a', '/debug all', \"/所有\", \"/全部\"].includes(text)) {\n  return [{ json: { cmd: 'debug_all', replyToken, userId } }];\n} else if (['/i', '/id'].includes(text) && (groupId != null)) {\n  return [{ json: { cmd: 'get_group_id', replyToken, userId } }];\n} else if (['/i', '/id'].includes(text)) {\n  return [{ json: { cmd: 'get_id', replyToken, userId } }];\n} else if (['/help', '/幫助', \"/說明\", \"/指令\"].includes(text)) {\n  return [{ json: { cmd: 'help', replyToken, userId } }];\n} else if (['PLEASE_RESEND_ALL_NOTIFYCATION', \"PRAN!!!\"].includes(text)) {\n  return [{ json: { cmd: 'PLEASE_RESEND_ALL_NOTIFYCATION', replyToken, userId } }];\n} else if (text.includes('@Asst. 總結') || text.includes('AI總結')) {\n  return [{ json: { cmd: 'summarize', replyToken, userId, groupId } }];\n}\nreturn [];"
+      },
+      "id": "40e1dfb0-e137-4901-9b81-b7d595428aeb",
+      "name": "Command Router",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.cmd }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "debug"
+            },
+            {
+              "value2": "get_id",
+              "output": 2
+            },
+            {
+              "value2": "get_group_id",
+              "output": 3
+            },
+            {
+              "value2": "debug_all",
+              "output": 1
+            }
+          ]
+        }
+      },
+      "id": "3ba4ab78-c354-4d76-86a8-5a7025188ee7",
+      "name": "Switch CMD",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        2544,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $json.replyToken }}\",\n  \"messages\": [{\n    \"type\": \"text\",\n    \"text\": \"🆔 您的 LINE User ID 為：\"\n  },\n  {\n    \"type\": \"text\",\n    \"text\": \"{{ $('Edit Fields').item.json.userId }}\"\n  }\n]\n}",
+        "options": {}
+      },
+      "id": "4018a8b5-e65f-4dd8-ad43-1e6ab916123f",
+      "name": "Reply My ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2752,
+        720
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.To.startsWith('C') ? 'https://api.line.me/v2/bot/group/' + $json.To + '/summary' : ($json.To.startsWith('R') ? 'https://api.line.me/v2/bot/room/' + $json.To + '/summary' : 'https://api.line.me/v2/bot/profile/' + $json.To) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2944,
+        48
+      ],
+      "id": "8b3be88a-27d5-4438-8261-485be9ca903d",
+      "name": "Get_LINE_Name",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $('Edit Fields').item.json.replyToken }}\",\n  \"messages\": [{\n    \"type\": \"text\",\n    \"text\": \"🆔 LINE Group ID 為：\"\n  },\n  {\n    \"type\": \"text\",\n    \"text\": \"{{ $('Edit Fields').item.json.groupId }}\"\n  }\n]\n}",
+        "options": {}
+      },
+      "id": "70d3c82c-0aba-4dd7-a522-755a16e2f826",
+      "name": "Reply Group ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2752,
+        928
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "id": "71e82f73-90cc-47a3-bb45-80880b8abd1f",
+      "name": "每天早上六點觸發",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        -432
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.linePayload }}",
+        "options": {}
+      },
+      "id": "534bfb05-132d-4c49-9e12-f2e86be799ce",
+      "name": "自動提醒 Push Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3056,
+        -448
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 取得所有從 Google Sheets 抓到的行 (多行資料會自動變成陣列)\nconst items = $input.all();\n\nreturn items.map(item => {\n  const row = item.json;\n  \n  // 組合訊息格式 📣[{{Date}}] {{Content}}\n  // 使用傳統字串相加，避免舊版 n8n 的語法衝突\n  const formattedText = \"📣[\" + (row.Date || \"\") + \"]\\n\" + (row.Content || \"\").replace(/\\r/g, \"\");\n\n  return {\n    json: {\n      // 這裡準備好 LINE Push API 要用的 JSON 結構\n      linePayload: {\n        \"to\": row.To,\n        \"messages\": [\n          {\n            \"type\": \"text\",\n            \"text\": formattedText\n          }\n        ]\n      }\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2864,
+        -448
+      ],
+      "id": "25426aa3-ffdb-4eb9-92e7-2aeb34c5952e",
+      "name": "Prepare Push Payload"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.To.startsWith('C') ? 'https://api.line.me/v2/bot/group/' + $json.To + '/summary' : ($json.To.startsWith('R') ? 'https://api.line.me/v2/bot/room/' + $json.To + '/summary' : 'https://api.line.me/v2/bot/profile/' + $json.To) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2944,
+        304
+      ],
+      "id": "c42a7956-248a-4924-b22b-8597659b64bf",
+      "name": "Get_LINE_Name1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $('Edit Fields').item.json.replyToken }}\",\n  \"messages\": [\n    {\n      \"type\": \"text\",\n      \"text\": \"🤖 提醒機器人指令表\\n\\n⏰ 自動提醒\\n每天 06:00 依 Send_Day 推送\\n\\n💬 查詢指令\\n🔹 /d 或 /今天：查今日任務\\n🔹 /a 或 /所有：查所有任務\\n🔹 /i 或 /id ：獲取個人或群組 ID\\n\\n📝 填表重點\\n1. Admin：管理員Line ID\\n2. To：填接收者Line ID\\n3. Send_Day：提醒日期，格式YYYY/MM/DD\\n4. Date: 任務日期\\n5. Content: 提醒內容\\n\\nGoogle sheet連結: https://docs.google.com/spreadsheets/d/1ulgW7xZ6mo7AXDHRDCJWVQmlqgYNlhNxdSuDkSIqx6c/edit?gid=0#gid=0\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "10a7f8c9-2fc3-459b-884c-4c54abf67775",
+      "name": "Reply Debug List2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2480,
+        256
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "11d75c73-b436-4544-952c-21f4d04ed004",
+              "leftValue": "={{ $json.cmd }}",
+              "rightValue": "help",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2000,
+        480
+      ],
+      "id": "16b175fe-21d2-4c92-9921-95791a9fd58c",
+      "name": "If help info"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer P34f0F7ao+U/kqOo1piMUEJU4ezyUjWFfPflA3XFNZ1qM9m4zSkB/KpTg7JQDjhCDyi6u+0k+AoZ5MM55n3DTsJpaBtRWXAdrzMChKgPj5Pu9mTPyaOm1uL8te6TWTf6yjYbtCSPdw1v8wARC808eQdB04t89/1O/w1cDnyilFU="
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $json.replyToken }}\",\n  \"messages\": [\n    {\n      \"type\": \"text\",\n      \"text\": {{ JSON.stringify($json.finalText) }}\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "7b212c09-1349-4ecc-9bf1-4847fc73cbb7",
+      "name": "Reply Debug List ALL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5056,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer P34f0F7ao+U/kqOo1piMUEJU4ezyUjWFfPflA3XFNZ1qM9m4zSkB/KpTg7JQDjhCDyi6u+0k+AoZ5MM55n3DTsJpaBtRWXAdrzMChKgPj5Pu9mTPyaOm1uL8te6TWTf6yjYbtCSPdw1v8wARC808eQdB04t89/1O/w1cDnyilFU="
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $json.replyToken }}\",\n  \"messages\": [\n    {\n      \"type\": \"text\",\n      \"text\": {{ JSON.stringify($json.finalText) }}\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "4ec4db50-de27-454f-b3df-64df45971322",
+      "name": "Reply Debug List TODAY",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4752,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer P34f0F7ao+U/kqOo1piMUEJU4ezyUjWFfPflA3XFNZ1qM9m4zSkB/KpTg7JQDjhCDyi6u+0k+AoZ5MM55n3DTsJpaBtRWXAdrzMChKgPj5Pu9mTPyaOm1uL8te6TWTf6yjYbtCSPdw1v8wARC808eQdB04t89/1O/w1cDnyilFU="
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $json.replyToken }}\",\n  \"messages\": [\n    {{ JSON.stringify($json.flexMessage) }}\n  ]\n}",
+        "options": {}
+      },
+      "id": "a5c986a8-f923-4d7a-96bc-3d8a396b7683",
+      "name": "Reply Debug List TODAY1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4720,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst replyToken = $(\"Edit Fields\").first().json.replyToken;\n\n// --- 1. 設定台灣時間基準點 (校準 UTC+8) ---\n// 取得台灣目前的日期字串 (YYYY-MM-DD)\nconst twNowStr = new Date().toLocaleString(\"en-US\", {timeZone: \"Asia/Taipei\"});\nconst twNow = new Date(twNowStr);\n// 取得台灣今天 00:00:00 的時間戳\nconst today = new Date(twNow.getFullYear(), twNow.getMonth(), twNow.getDate()).getTime();\n\nconst getTimestamp = (ds) => {\n  if (!ds || ds === \"空白\") return new Date(\"9999/12/31\").getTime();\n  return new Date(ds).getTime();\n};\n\n// --- 2. 執行進階排序：今天/未來放前，過去放後 ---\nallItems.sort((a, b) => {\n  const dateA = getTimestamp(a.json.Send_Day || a.json['Send Date']);\n  const dateB = getTimestamp(b.json.Send_Day || b.json['Send Date']);\n\n  const isFutureA = dateA >= today;\n  const isFutureB = dateB >= today;\n\n  if (isFutureA && !isFutureB) return -1;\n  if (!isFutureA && isFutureB) return 1;\n\n  return dateA - dateB;\n});\n\n// 3. 小工具：取得日期的中文週幾\nconst getWeekday = (dateStr) => {\n  if (!dateStr || dateStr === \"空白\" || dateStr === \"\") return \"\";\n  const d = new Date(dateStr);\n  if (isNaN(d.getTime())) return \"\"; \n  const weekDays = [\"週日\", \"週一\", \"週二\", \"週三\", \"週四\", \"週五\", \"週六\"];\n  return ` (${weekDays[d.getDay()]})`;\n};\n\n// 4. 小工具：分析網址類型並產生按鈕\nconst getButtonsFromContent = (content) => {\n  const urlRegex = /(https?:\\/\\/[^\\s]+)/g;\n  const urls = content.match(urlRegex) || [];\n  \n  return urls.map(url => {\n    let label = \"開啟連結\", color = \"#111111\"; \n    if (url.includes(\"spreadsheets\")) { label = \"開啟 Google 試算表\"; color = \"#0F9D58\"; }\n    else if (url.includes(\"forms\")) { label = \"填寫 Google 表單\"; color = \"#673AB7\"; }\n    else if (url.includes(\"document\")) { label = \"查看 Google 文檔\"; color = \"#4285F4\"; }\n    else if (url.includes(\"presentation\")) { label = \"查看 Google 簡報\"; color = \"#FBBC04\"; }\n    else if (url.includes(\"canva.com\")) { label = \"在 Canva 中開啟\"; color = \"#00C4CC\"; }\n\n    return {\n      \"type\": \"button\",\n      \"action\": { \"type\": \"uri\", \"label\": label, \"uri\": url },\n      \"style\": \"primary\", \"color\": color, \"margin\": \"sm\", \"height\": \"sm\"\n    };\n  });\n};\n\n// 5. 建立 Flex Message 卡片陣列\nconst bubbles = allItems.slice(0, 12).map(item => {\n  const row = item.json;\n  const toName = row.To_Name || \"未知接收者\";\n  \n  const rawSd = row.Send_Day || row['Send Date'] || \"今日\";\n  const sdDateObj = new Date(rawSd);\n  const sdTimestamp = new Date(sdDateObj.getFullYear(), sdDateObj.getMonth(), sdDateObj.getDate()).getTime();\n  const sd = rawSd + getWeekday(rawSd);\n  \n  const rawDate = row.Date || \"\";\n  const dateStr = rawDate ? rawDate + getWeekday(rawDate) : \"\";\n  \n  let content = (row.Content || \"\").replace(/\\r/g, \"\");\n  const buttons = getButtonsFromContent(content);\n  \n  const urlRegex = /(https?:\\/\\/[^\\s]+)/g;\n  let cleanContent = content.replace(urlRegex, \"\").trim();\n  const displayContent = cleanContent || \"(請點擊查看下方連結)\";\n\n  // --- 顏色邏輯判斷 ---\n  let headerBgColor = \"#1DB446\"; // 預設：綠色 (未來)\n  if (sdTimestamp === today) {\n    headerBgColor = \"#007BFF\";   // 今天：藍色\n  } else if (sdTimestamp < today) {\n    headerBgColor = \"#888888\";   // 過去：灰色\n  }\n\n  // 設定點擊後回覆格式 (300字限制)\n  const replyHeaderDate = dateStr || sd;\n  let replyMessageText = `📣${replyHeaderDate}\\n\\n${content}`;\n  if (replyMessageText.length > 300) {\n    replyMessageText = replyMessageText.substring(0, 297) + \"...\";\n  }\n\n  const bodyContents = [\n    { \"type\": \"text\", \"text\": `🔔 ${sd}`, \"weight\": \"bold\", \"size\": \"sm\", \"color\": \"#E64A19\" },\n    { \"type\": \"separator\", \"margin\": \"sm\" }\n  ];\n\n  if (dateStr) {\n    bodyContents.push({ \"type\": \"text\", \"text\": dateStr, \"size\": \"xs\", \"color\": \"#888888\", \"wrap\": true, \"margin\": \"sm\" });\n  }\n\n  bodyContents.push({\n    \"type\": \"text\", \"text\": displayContent, \"size\": \"lg\", \"color\": \"#000000\", \n    \"wrap\": true, \"margin\": \"md\", \"weight\": \"bold\" \n  });\n\n  return {\n    \"type\": \"bubble\",\n    \"size\": \"mega\",\n    \"header\": {\n      \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"12px\", \"paddingBottom\": \"10px\",\n      \"backgroundColor\": headerBgColor, // 套用動態顏色\n      \"contents\": [{ \"type\": \"text\", \"text\": toName, \"weight\": \"bold\", \"size\": \"lg\", \"color\": \"#ffffff\" }]\n    },\n    \"body\": {\n      \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"12px\", \n      \"action\": { \"type\": \"message\", \"label\": \"Reply\", \"text\": replyMessageText },\n      \"contents\": bodyContents\n    },\n    \"footer\": buttons.length > 0 ? {\n      \"type\": \"box\", \"layout\": \"vertical\", \"spacing\": \"xs\", \"paddingAll\": \"12px\", \"contents\": buttons\n    } : undefined\n  };\n});\n\nreturn [{\n  json: {\n    replyToken: replyToken,\n    flexMessage: {\n      \"type\": \"flex\",\n      \"altText\": \"任務提醒清單\",\n      \"contents\": {\n        \"type\": \"carousel\",\n        \"contents\": bubbles\n      }\n    }\n  }\n}];"
+      },
+      "id": "a1980abb-2be0-447a-a42c-401036da0df3",
+      "name": "Prepare Message_D",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4496,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\n// 確保 replyToken 抓取路徑正確 (根據你的 Edit Fields 節點)\nconst replyToken = $(\"Edit Fields\").first().json.replyToken;\n\n// 建立一個小工具：取得日期的中文週幾\nconst getWeekday = (dateStr) => {\n  if (!dateStr || dateStr === \"空白\" || dateStr === \"\") return \"\";\n  \n  // 嘗試解析日期 (支援 2026/01/09 或 2026-01-09 格式)\n  const d = new Date(dateStr);\n  \n  // 檢查日期是否有效\n  if (isNaN(d.getTime())) return \"\"; \n  \n  const weekDays = [\"週日\", \"週一\", \"週二\", \"週三\", \"週四\", \"週五\", \"週六\"];\n  return ` (${weekDays[d.getDay()]})`;\n};\n\nlet combinedText = allItems.map(item => {\n  const row = item.json;\n  \n  const name = row.To_Name;\n  \n  // 取得原始日期並加上週幾\n  const rawSd = row.Send_Day || row['Send Date'] || \"空白\";\n  const sd = rawSd + getWeekday(rawSd);\n  \n  const rawDate = row.Date || \"\";\n  const date = rawDate + getWeekday(rawDate);\n  \n  // 處理掉 Content 裡的特殊換行符號 \\r\n  let content = (row.Content || \"\").replace(/\\r/g, \"\");\n\n  return `🔔${sd}\\n接收者: ${name}\\n內容:\\n${date}\\n${content}`;\n}).join('\\n\\n');\n\nif (!combinedText || combinedText.trim() === \"\") {\n  combinedText = \"📭 目前無符合條件的任務。\";\n}\n\nreturn [{\n  json: {\n    replyToken: replyToken,\n    finalText: combinedText\n  }\n}];"
+      },
+      "id": "66dff608-70c6-4fc8-942d-3ec2908a41df",
+      "name": "Prepare Message_Dbk",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4480,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\n// 確保 replyToken 抓取路徑正確 (根據你的 Edit Fields 節點)\nconst replyToken = $(\"Edit Fields\").first().json.replyToken;\n\n// 建立一個小工具：取得日期的中文週幾\nconst getWeekday = (dateStr) => {\n  if (!dateStr || dateStr === \"空白\" || dateStr === \"\") return \"\";\n  \n  // 嘗試解析日期 (支援 2026/01/09 或 2026-01-09 格式)\n  const d = new Date(dateStr);\n  \n  // 檢查日期是否有效\n  if (isNaN(d.getTime())) return \"\"; \n  \n  const weekDays = [\"週日\", \"週一\", \"週二\", \"週三\", \"週四\", \"週五\", \"週六\"];\n  return ` (${weekDays[d.getDay()]})`;\n};\n\nlet combinedText = allItems.map(item => {\n  const row = item.json;\n  \n  const name = row.To_Name;\n  \n  // 取得原始日期並加上週幾\n  const rawSd = row.Send_Day || row['Send Date'] || \"空白\";\n  const sd = rawSd + getWeekday(rawSd);\n  \n  const rawDate = row.Date || \"\";\n  const date = rawDate + getWeekday(rawDate);\n  \n  // 處理掉 Content 裡的特殊換行符號 \\r\n  let content = (row.Content || \"\").replace(/\\r/g, \"\");\n\n  return `🔔${sd}\\n接收者: ${name}\\n內容:\\n${date}\\n${content}`;\n}).join('\\n\\n');\n\nif (!combinedText || combinedText.trim() === \"\") {\n  combinedText = \"📭 目前無符合條件的任務。\";\n}\n\nreturn [{\n  json: {\n    replyToken: replyToken,\n    finalText: combinedText\n  }\n}];"
+      },
+      "id": "7de4f207-58cf-48e1-ae4a-b3c531b27285",
+      "name": "Prepare Message_Abk",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4848,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst replyToken = $(\"Edit Fields\").first().json.replyToken;\n\n// --- 1. 設定台灣時間基準點 (校準 UTC+8) ---\n// 取得台灣目前的日期字串 (YYYY-MM-DD)\nconst twNowStr = new Date().toLocaleString(\"en-US\", {timeZone: \"Asia/Taipei\"});\nconst twNow = new Date(twNowStr);\n// 取得台灣今天 00:00:00 的時間戳\nconst today = new Date(twNow.getFullYear(), twNow.getMonth(), twNow.getDate()).getTime();\n\nconst getTimestamp = (ds) => {\n  if (!ds || ds === \"空白\") return new Date(\"9999/12/31\").getTime();\n  return new Date(ds).getTime();\n};\n\n// --- 2. 執行進階排序：今天/未來放前，過去放後 ---\nallItems.sort((a, b) => {\n  const dateA = getTimestamp(a.json.Send_Day || a.json['Send Date']);\n  const dateB = getTimestamp(b.json.Send_Day || b.json['Send Date']);\n\n  const isFutureA = dateA >= today;\n  const isFutureB = dateB >= today;\n\n  if (isFutureA && !isFutureB) return -1;\n  if (!isFutureA && isFutureB) return 1;\n\n  return dateA - dateB;\n});\n\n// 3. 小工具：取得日期的中文週幾\nconst getWeekday = (dateStr) => {\n  if (!dateStr || dateStr === \"空白\" || dateStr === \"\") return \"\";\n  const d = new Date(dateStr);\n  if (isNaN(d.getTime())) return \"\"; \n  const weekDays = [\"週日\", \"週一\", \"週二\", \"週三\", \"週四\", \"週五\", \"週六\"];\n  return ` (${weekDays[d.getDay()]})`;\n};\n\n// 4. 小工具：分析網址類型並產生按鈕\nconst getButtonsFromContent = (content) => {\n  const urlRegex = /(https?:\\/\\/[^\\s]+)/g;\n  const urls = content.match(urlRegex) || [];\n  \n  return urls.map(url => {\n    let label = \"開啟連結\", color = \"#111111\"; \n    if (url.includes(\"spreadsheets\")) { label = \"開啟 Google 試算表\"; color = \"#0F9D58\"; }\n    else if (url.includes(\"forms\")) { label = \"填寫 Google 表單\"; color = \"#673AB7\"; }\n    else if (url.includes(\"document\")) { label = \"查看 Google 文檔\"; color = \"#4285F4\"; }\n    else if (url.includes(\"presentation\")) { label = \"查看 Google 簡報\"; color = \"#FBBC04\"; }\n    else if (url.includes(\"canva.com\")) { label = \"在 Canva 中開啟\"; color = \"#00C4CC\"; }\n\n    return {\n      \"type\": \"button\",\n      \"action\": { \"type\": \"uri\", \"label\": label, \"uri\": url },\n      \"style\": \"primary\", \"color\": color, \"margin\": \"sm\", \"height\": \"sm\"\n    };\n  });\n};\n\n// 5. 建立 Flex Message 卡片陣列\nconst bubbles = allItems.slice(0, 12).map(item => {\n  const row = item.json;\n  const toName = row.To_Name || \"未知接收者\";\n  \n  const rawSd = row.Send_Day || row['Send Date'] || \"今日\";\n  const sdDateObj = new Date(rawSd);\n  const sdTimestamp = new Date(sdDateObj.getFullYear(), sdDateObj.getMonth(), sdDateObj.getDate()).getTime();\n  const sd = rawSd + getWeekday(rawSd);\n  \n  const rawDate = row.Date || \"\";\n  const dateStr = rawDate ? rawDate + getWeekday(rawDate) : \"\";\n  \n  let content = (row.Content || \"\").replace(/\\r/g, \"\");\n  const buttons = getButtonsFromContent(content);\n  \n  const urlRegex = /(https?:\\/\\/[^\\s]+)/g;\n  let cleanContent = content.replace(urlRegex, \"\").trim();\n  const displayContent = cleanContent || \"(請點擊查看下方連結)\";\n\n  // --- 顏色邏輯判斷 ---\n  let headerBgColor = \"#1DB446\"; // 預設：綠色 (未來)\n  if (sdTimestamp === today) {\n    headerBgColor = \"#007BFF\";   // 今天：藍色\n  } else if (sdTimestamp < today) {\n    headerBgColor = \"#888888\";   // 過去：灰色\n  }\n\n  // 設定點擊後回覆格式 (300字限制)\n  const replyHeaderDate = dateStr || sd;\n  let replyMessageText = `📣${replyHeaderDate}\\n\\n${content}`;\n  if (replyMessageText.length > 300) {\n    replyMessageText = replyMessageText.substring(0, 297) + \"...\";\n  }\n\n  const bodyContents = [\n    { \"type\": \"text\", \"text\": `🔔 ${sd}`, \"weight\": \"bold\", \"size\": \"sm\", \"color\": \"#E64A19\" },\n    { \"type\": \"separator\", \"margin\": \"sm\" }\n  ];\n\n  if (dateStr) {\n    bodyContents.push({ \"type\": \"text\", \"text\": dateStr, \"size\": \"xs\", \"color\": \"#888888\", \"wrap\": true, \"margin\": \"sm\" });\n  }\n\n  bodyContents.push({\n    \"type\": \"text\", \"text\": displayContent, \"size\": \"lg\", \"color\": \"#000000\", \n    \"wrap\": true, \"margin\": \"md\", \"weight\": \"bold\", \n    \"maxLines\": 8  // 限制最大行數，超過會變為 ...\n  });\n\n  return {\n    \"type\": \"bubble\",\n    \"size\": \"mega\",\n    \"header\": {\n      \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"12px\", \"paddingBottom\": \"10px\",\n      \"backgroundColor\": headerBgColor, // 套用動態顏色\n      \"contents\": [{ \"type\": \"text\", \"text\": toName, \"weight\": \"bold\", \"size\": \"lg\", \"color\": \"#ffffff\" }]\n    },\n    \"body\": {\n      \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"12px\", \n      \"action\": { \"type\": \"message\", \"label\": \"Reply\", \"text\": replyMessageText },\n      \"contents\": bodyContents\n    },\n    \"footer\": buttons.length > 0 ? {\n      \"type\": \"box\", \"layout\": \"vertical\", \"spacing\": \"xs\", \"paddingAll\": \"12px\", \"contents\": buttons\n    } : undefined\n  };\n});\n\nreturn [{\n  json: {\n    replyToken: replyToken,\n    flexMessage: {\n      \"type\": \"flex\",\n      \"altText\": \"任務提醒清單\",\n      \"contents\": {\n        \"type\": \"carousel\",\n        \"contents\": bubbles\n      }\n    }\n  }\n}];"
+      },
+      "id": "6cafba37-90ba-4892-b6b0-0f44e71f4eb9",
+      "name": "Prepare Message_A",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4768,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst replyToken = $(\"Edit Fields\").first().json.replyToken;\n\n// --- 1. 設定台灣時間基準點 (校準 UTC+8) ---\nconst twNowStr = new Date().toLocaleString(\"en-US\", {timeZone: \"Asia/Taipei\"});\nconst twNow = new Date(twNowStr);\nconst currentYear = twNow.getFullYear();\nconst today = new Date(currentYear, twNow.getMonth(), twNow.getDate()).getTime();\n\nconst getTimestamp = (ds) => {\n  if (!ds || ds === \"空白\") return null;\n  const d = new Date(ds);\n  if (isNaN(d.getTime())) return null;\n  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();\n};\n\nconst formatCleanDate = (dateStr) => {\n  if (!dateStr || dateStr === \"空白\") return \"\";\n  const d = new Date(dateStr);\n  if (isNaN(d.getTime())) return dateStr;\n  const year = d.getFullYear();\n  const month = (d.getMonth() + 1).toString().padStart(2, '0');\n  const day = d.getDate().toString().padStart(2, '0');\n  const weekDays = [\"週日\", \"週一\", \"週二\", \"週三\", \"週四\", \"週五\", \"週六\"];\n  const weekday = weekDays[d.getDay()];\n  return (year === currentYear) ? `${month}/${day} (${weekday})` : `${year}/${month}/${day} (${weekday})`;\n};\n\n// --- 2. 處理「沒有任務」的情況 ---\nif (allItems.length === 0 || (allItems.length === 1 && !allItems[0].json.Content && !allItems[0].json.To_Name)) {\n  return [{\n    json: {\n      replyToken: replyToken,\n      flexMessage: {\n        \"type\": \"flex\",\n        \"altText\": \"目前沒有待辦任務\",\n        \"contents\": {\n          \"type\": \"bubble\",\n          \"size\": \"mega\",\n          \"header\": {\n            \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"16px\", \"backgroundColor\": \"#7EB2D1\",\n            \"contents\": [{ \"type\": \"text\", \"text\": \"系統狀態\", \"weight\": \"bold\", \"size\": \"lg\", \"color\": \"#ffffff\" }]\n          },\n          \"body\": {\n            \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"32px\", \"spacing\": \"md\", \"alignItems\": \"center\",\n            \"contents\": [\n              { \"type\": \"text\", \"text\": \"☕\", \"size\": \"4xl\" },\n              { \"type\": \"text\", \"text\": \"目前沒有待辦任務\", \"weight\": \"bold\", \"size\": \"md\", \"color\": \"#555555\" },\n              { \"type\": \"text\", \"text\": \"您可以暫時放鬆一下，或是檢查篩選條件是否正確。\", \"size\": \"xs\", \"color\": \"#AAAAAA\", \"wrap\": true, \"align\": \"center\" }\n            ]\n          }\n        }\n      }\n    }\n  }];\n}\n\n// --- 3. 執行排序邏輯 (有任務時) ---\nallItems.sort((a, b) => {\n  const dateA = getTimestamp(a.json.Date) || getTimestamp(a.json.Send_Day) || 9999999999999;\n  const dateB = getTimestamp(b.json.Date) || getTimestamp(b.json.Send_Day) || 9999999999999;\n  const isFutureA = dateA >= today;\n  const isFutureB = dateB >= today;\n  if (isFutureA && !isFutureB) return -1;\n  if (!isFutureA && isFutureB) return 1;\n  return dateA - dateB;\n});\n\n// 4. 小工具：產生按鈕\nconst getButtonsFromContent = (content) => {\n  const urlRegex = /(https?:\\/\\/[^\\s]+)/g;\n  const urls = content.match(urlRegex) || [];\n  return urls.map(url => {\n    let label = \"開啟連結\", color = \"#888888\"; \n    if (url.includes(\"spreadsheets\")) { label = \"開啟 Google 試算表\"; color = \"#4F772D\"; }\n    else if (url.includes(\"forms\")) { label = \"填寫 Google 表單\"; color = \"#778DA9\"; }\n    else if (url.includes(\"document\")) { label = \"查看 Google 文檔\"; color = \"#6B9080\"; }\n    else if (url.includes(\"canva.com\")) { label = \"在 Canva 中開啟\"; color = \"#4895EF\"; }\n    return {\n      \"type\": \"box\", \"layout\": \"vertical\", \"justifyContent\": \"center\", \"alignItems\": \"center\",\n      \"contents\": [{ \"type\": \"text\", \"text\": label, \"color\": color, \"size\": \"sm\", \"weight\": \"bold\", \"align\": \"center\" }],\n      \"borderWidth\": \"1px\", \"borderColor\": color, \"cornerRadius\": \"md\", \"height\": \"40px\", \"margin\": \"sm\",\n      \"action\": { \"type\": \"uri\", \"label\": label, \"uri\": url }\n    };\n  });\n};\n\n// 5. 建立 Flex Message 卡片\nconst bubbles = allItems.slice(0, 12).map(item => {\n  const row = item.json;\n  if (!row.To_Name && !row.Content) return null; // 排除空資料\n\n  const toName = row.To_Name || \"未知接收者\";\n  const dateTimestamp = getTimestamp(row.Date);\n  const dateDisplay = formatCleanDate(row.Date);\n  const sdTimestamp = getTimestamp(row.Send_Day || row['Send Date']);\n  const sdDisplay = formatCleanDate(row.Send_Day || row['Send Date']) || \"今日\";\n  \n  let diff = (dateTimestamp !== null) ? Math.round((dateTimestamp - today) / 86400000) : null;\n  let dateRowBgColor = \"#ffffff\", dateTextColor = \"#333333\", countdownText = \"\", countdownColor = \"#E67E22\"; \n  \n  if (diff === 0) { dateRowBgColor = \"#FFF3E0\"; countdownText = \"就是今天\"; }\n  else if (diff !== null && diff < 0) { dateTextColor = \"#BBBBBB\"; countdownText = \"活動已結束\"; countdownColor = \"#BBBBBB\"; }\n  else if (diff !== null && diff > 0) { countdownText = `還剩 ${diff} 天`; }\n\n  let remindLeadText = \"\";\n  if (sdTimestamp !== null) {\n    if (dateTimestamp !== null && sdTimestamp > dateTimestamp) {\n      const futureDiff = Math.round((sdTimestamp - dateTimestamp) / 86400000);\n      remindLeadText = `來自 ${futureDiff} 天後未來人`;\n    } else {\n      const sdDiff = Math.round((sdTimestamp - today) / 86400000);\n      if (sdDiff > 0) remindLeadText = `${sdDiff} 天後提醒`;\n      else if (sdDiff === 0) remindLeadText = \"今天提醒\";\n      else remindLeadText = \"已發送提醒\";\n    }\n  }\n\n  const buttons = getButtonsFromContent(row.Content || \"\");\n  const cleanContent = (row.Content || \"\").replace(/(https?:\\/\\/[^\\s]+)/g, \"\").trim() || \"(無任務)\";\n\n  const dateRowHorizontalContents = [{ \"type\": \"text\", \"text\": dateDisplay || sdDisplay, \"weight\": \"bold\", \"size\": \"md\", \"color\": dateTextColor, \"flex\": 4 }];\n  if (countdownText) { dateRowHorizontalContents.push({ \"type\": \"text\", \"text\": countdownText, \"size\": \"xs\", \"color\": countdownColor, \"align\": \"end\", \"gravity\": \"bottom\", \"flex\": 2, \"weight\": \"bold\" }); }\n\n  const remindRowHorizontalContents = [{ \"type\": \"text\", \"text\": `⏰${sdDisplay}`, \"size\": \"xs\", \"color\": \"#999999\", \"flex\": 4 }];\n  if (remindLeadText) { remindRowHorizontalContents.push({ \"type\": \"text\", \"text\": remindLeadText, \"size\": \"xxs\", \"color\": \"#BBBBBB\", \"align\": \"end\", \"flex\": 3 }); }\n\n  return {\n    \"type\": \"bubble\", \"size\": \"mega\",\n    \"header\": { \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"16px\", \"backgroundColor\": \"#7EB2D1\", \"contents\": [{ \"type\": \"text\", \"text\": toName, \"weight\": \"bold\", \"size\": \"lg\", \"color\": \"#ffffff\" }] },\n    \"body\": {\n      \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"0px\",\n      \"action\": { \"type\": \"message\", \"label\": \"Reply\", \"text\": `📣${dateDisplay || sdDisplay}\\n\\n${row.Content}`.substring(0, 300) },\n      \"contents\": [\n        { \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"16px\", \"backgroundColor\": dateRowBgColor, \"contents\": [{ \"type\": \"box\", \"layout\": \"horizontal\", \"contents\": dateRowHorizontalContents }] },\n        { \"type\": \"separator\", \"color\": \"#F0F0F0\" },\n        { \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"16px\", \"paddingTop\": \"12px\", \"contents\": [ { \"type\": \"box\", \"layout\": \"horizontal\", \"contents\": remindRowHorizontalContents }, { \"type\": \"text\", \"text\": cleanContent, \"size\": \"md\", \"color\": (diff !== null && diff < 0) ? \"#AAAAAA\" : \"#555555\", \"wrap\": true, \"margin\": \"lg\", \"weight\": \"bold\", \"maxLines\": 8, \"lineSpacing\": \"4px\" } ] }\n      ]\n    },\n    \"footer\": buttons.length > 0 ? { \"type\": \"box\", \"layout\": \"vertical\", \"spacing\": \"xs\", \"paddingAll\": \"12px\", \"contents\": buttons } : undefined\n  };\n}).filter(b => b !== null);\n\nreturn [{\n  json: {\n    replyToken: replyToken,\n    flexMessage: {\n      \"type\": \"flex\",\n      \"altText\": \"任務提醒清單已更新\",\n      \"contents\": { \"type\": \"carousel\", \"contents\": bubbles }\n    }\n  }\n}];"
+      },
+      "id": "fe2de2a5-28cc-4f4f-9df5-32561c8b78be",
+      "name": "Prepare Message_Acolor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3408,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst replyToken = $(\"Edit Fields\").first().json.replyToken;\n\n// --- 1. 設定台灣時間基準點 (校準 UTC+8) ---\nconst twNowStr = new Date().toLocaleString(\"en-US\", {timeZone: \"Asia/Taipei\"});\nconst twNow = new Date(twNowStr);\nconst currentYear = twNow.getFullYear();\n// 取得今天 00:00:00 的時間戳\nconst today = new Date(currentYear, twNow.getMonth(), twNow.getDate()).getTime();\n\nconst getTimestamp = (ds) => {\n  if (!ds || ds === \"空白\") return null;\n  const d = new Date(ds);\n  if (isNaN(d.getTime())) return null;\n  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();\n};\n\nconst formatCleanDate = (dateStr) => {\n  if (!dateStr || dateStr === \"空白\") return \"\";\n  const d = new Date(dateStr);\n  if (isNaN(d.getTime())) return dateStr;\n  const year = d.getFullYear();\n  const month = (d.getMonth() + 1).toString().padStart(2, '0');\n  const day = d.getDate().toString().padStart(2, '0');\n  const weekDays = [\"週日\", \"週一\", \"週二\", \"週三\", \"週四\", \"週五\", \"週六\"];\n  const weekday = weekDays[d.getDay()];\n  return (year === currentYear) ? `${month}/${day} (${weekday})` : `${year}/${month}/${day} (${weekday})`;\n};\n\n// --- 2. 排序邏輯：依據活動日期 (Date) ---\nallItems.sort((a, b) => {\n  const dateA = getTimestamp(a.json.Date) || getTimestamp(a.json.Send_Day) || 9999999999999;\n  const dateB = getTimestamp(b.json.Date) || getTimestamp(b.json.Send_Day) || 9999999999999;\n  const isFutureA = dateA >= today;\n  const isFutureB = dateB >= today;\n  if (isFutureA && !isFutureB) return -1;\n  if (!isFutureA && isFutureB) return 1;\n  return dateA - dateB;\n});\n\n// 3. 小工具：產生按鈕\nconst getButtonsFromContent = (content) => {\n  const urlRegex = /(https?:\\/\\/[^\\s]+)/g;\n  const urls = content.match(urlRegex) || [];\n  return urls.map(url => {\n    let label = \"開啟連結\", color = \"#888888\"; \n    if (url.includes(\"spreadsheets\")) { label = \"開啟 Google 試算表\"; color = \"#4F772D\"; }\n    else if (url.includes(\"forms\")) { label = \"填寫 Google 表單\"; color = \"#778DA9\"; }\n    else if (url.includes(\"document\")) { label = \"查看 Google 文檔\"; color = \"#6B9080\"; }\n    else if (url.includes(\"canva.com\")) { label = \"在 Canva 中開啟\"; color = \"#4895EF\"; }\n    return {\n      \"type\": \"box\", \"layout\": \"vertical\", \"justifyContent\": \"center\", \"alignItems\": \"center\",\n      \"contents\": [{ \"type\": \"text\", \"text\": label, \"color\": color, \"size\": \"sm\", \"weight\": \"bold\", \"align\": \"center\" }],\n      \"borderWidth\": \"1px\", \"borderColor\": color, \"cornerRadius\": \"md\", \"height\": \"40px\", \"margin\": \"sm\",\n      \"action\": { \"type\": \"uri\", \"label\": label, \"uri\": url }\n    };\n  });\n};\n\n// 4. 建立 Flex Message 卡片\nconst bubbles = allItems.slice(0, 12).map(item => {\n  const row = item.json;\n  const toName = row.To_Name || \"未知接收者\";\n  \n  const dateTimestamp = getTimestamp(row.Date);\n  const dateDisplay = formatCleanDate(row.Date);\n  const sdTimestamp = getTimestamp(row.Send_Day || row['Send Date']);\n  const sdDisplay = formatCleanDate(row.Send_Day || row['Send Date']) || \"今日\";\n  \n  // --- 狀態與倒數計算 ---\n  let diff = (dateTimestamp !== null) ? Math.round((dateTimestamp - today) / 86400000) : null;\n  \n  let dateRowBgColor = \"#ffffff\";\n  let dateTextColor = \"#333333\";\n  let countdownText = \"\";\n  let countdownColor = \"#E67E22\"; \n  \n  if (diff === 0) {\n    dateRowBgColor = \"#FFF3E0\";   \n    countdownText = \"就是今天\";\n  } else if (diff !== null && diff < 0) {\n    dateTextColor = \"#BBBBBB\";    \n    countdownText = \"活動已結束\";\n    countdownColor = \"#BBBBBB\";\n  } else if (diff !== null && diff > 0) {\n    countdownText = `還剩 ${diff} 天`;\n  }\n\n  // --- 提醒日提前天數計算 (新增未來人判斷) ---\n  let remindLeadText = \"\";\n  if (dateTimestamp !== null && sdTimestamp !== null) {\n    const leadDiff = Math.round((dateTimestamp - sdTimestamp) / 86400000);\n    if (leadDiff > 0) {\n      remindLeadText = `${leadDiff} 天前提醒`;\n    } else if (leadDiff === 0) {\n      remindLeadText = \"當天提醒\";\n    } else {\n      // 如果 Send_Day 比 Date 還晚 (leadDiff 為負數)\n      remindLeadText = `來自 ${Math.abs(leadDiff)} 天後未來人`;\n    }\n  }\n\n  const buttons = getButtonsFromContent(row.Content || \"\");\n  const cleanContent = (row.Content || \"\").replace(/(https?:\\/\\/[^\\s]+)/g, \"\").trim() || \"(暫無詳細內容)\";\n\n  // --- 動態組合文字元件，避免空字串報錯 ---\n  const dateRowHorizontalContents = [\n    { \"type\": \"text\", \"text\": dateDisplay || sdDisplay, \"weight\": \"bold\", \"size\": \"md\", \"color\": dateTextColor, \"flex\": 4 }\n  ];\n  if (countdownText) {\n    dateRowHorizontalContents.push({ \"type\": \"text\", \"text\": countdownText, \"size\": \"xs\", \"color\": countdownColor, \"align\": \"end\", \"gravity\": \"bottom\", \"flex\": 2, \"weight\": \"bold\" });\n  }\n\n  const remindRowHorizontalContents = [\n    { \"type\": \"text\", \"text\": `⏰${sdDisplay}`, \"size\": \"xs\", \"color\": \"#999999\", \"flex\": 4 }\n  ];\n  if (remindLeadText) {\n    remindRowHorizontalContents.push({ \"type\": \"text\", \"text\": remindLeadText, \"size\": \"xxs\", \"color\": \"#BBBBBB\", \"align\": \"end\", \"flex\": 3 });\n  }\n\n  return {\n    \"type\": \"bubble\",\n    \"size\": \"mega\",\n    \"header\": {\n      \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"16px\", \n      \"backgroundColor\": \"#7EB2D1\",\n      \"contents\": [{ \"type\": \"text\", \"text\": toName, \"weight\": \"bold\", \"size\": \"lg\", \"color\": \"#ffffff\" }]\n    },\n    \"body\": {\n      \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"0px\",\n      \"action\": { \"type\": \"message\", \"label\": \"Reply\", \"text\": `📣${dateDisplay || sdDisplay}\\n\\n${row.Content}`.substring(0, 300) },\n      \"contents\": [\n        {\n          \"type\": \"box\",\n          \"layout\": \"vertical\",\n          \"paddingAll\": \"16px\",\n          \"backgroundColor\": dateRowBgColor,\n          \"contents\": [\n            { \"type\": \"box\", \"layout\": \"horizontal\", \"contents\": dateRowHorizontalContents }\n          ]\n        },\n        { \"type\": \"separator\", \"color\": \"#F0F0F0\" },\n        {\n          \"type\": \"box\",\n          \"layout\": \"vertical\",\n          \"paddingAll\": \"16px\",\n          \"paddingTop\": \"12px\",\n          \"contents\": [\n            { \"type\": \"box\", \"layout\": \"horizontal\", \"contents\": remindRowHorizontalContents },\n            {\n              \"type\": \"text\", \"text\": cleanContent, \"size\": \"md\", \"color\": (diff !== null && diff < 0) ? \"#AAAAAA\" : \"#555555\", \n              \"wrap\": true, \"margin\": \"lg\", \"weight\": \"bold\", \"maxLines\": 8, \"lineSpacing\": \"4px\"\n            }\n          ]\n        }\n      ]\n    },\n    \"footer\": buttons.length > 0 ? {\n      \"type\": \"box\", \"layout\": \"vertical\", \"spacing\": \"xs\", \"paddingAll\": \"12px\", \"contents\": buttons\n    } : undefined\n  };\n});\n\nreturn [{\n  json: {\n    replyToken: replyToken,\n    flexMessage: {\n      \"type\": \"flex\",\n      \"altText\": \"任務提醒清單已更新\",\n      \"contents\": { \"type\": \"carousel\", \"contents\": bubbles }\n    }\n  }\n}];"
+      },
+      "id": "caeaff0a-9f0e-4957-9d1d-77752e26a1cd",
+      "name": "Prepare Message_Acolor1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4496,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nconst replyToken = $(\"Edit Fields\").first().json.replyToken;\n\n// --- 1. 設定台灣時間基準點 (校準 UTC+8) ---\nconst twNowStr = new Date().toLocaleString(\"en-US\", {timeZone: \"Asia/Taipei\"});\nconst twNow = new Date(twNowStr);\nconst currentYear = twNow.getFullYear();\n// 取得今天 00:00:00 的時間戳\nconst today = new Date(currentYear, twNow.getMonth(), twNow.getDate()).getTime();\n\nconst getTimestamp = (ds) => {\n  if (!ds || ds === \"空白\") return null;\n  const d = new Date(ds);\n  if (isNaN(d.getTime())) return null;\n  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();\n};\n\nconst formatCleanDate = (dateStr) => {\n  if (!dateStr || dateStr === \"空白\") return \"\";\n  const d = new Date(dateStr);\n  if (isNaN(d.getTime())) return dateStr;\n  const year = d.getFullYear();\n  const month = (d.getMonth() + 1).toString().padStart(2, '0');\n  const day = d.getDate().toString().padStart(2, '0');\n  const weekDays = [\"週日\", \"週一\", \"週二\", \"週三\", \"週四\", \"週五\", \"週六\"];\n  const weekday = weekDays[d.getDay()];\n  return (year === currentYear) ? `${month}/${day} (${weekday})` : `${year}/${month}/${day} (${weekday})`;\n};\n\n// --- 2. 排序邏輯：依據活動日期 (Date) ---\nallItems.sort((a, b) => {\n  const dateA = getTimestamp(a.json.Date) || getTimestamp(a.json.Send_Day) || 9999999999999;\n  const dateB = getTimestamp(b.json.Date) || getTimestamp(b.json.Send_Day) || 9999999999999;\n  const isFutureA = dateA >= today;\n  const isFutureB = dateB >= today;\n  if (isFutureA && !isFutureB) return -1;\n  if (!isFutureA && isFutureB) return 1;\n  return dateA - dateB;\n});\n\n// 3. 小工具：產生按鈕\nconst getButtonsFromContent = (content) => {\n  const urlRegex = /(https?:\\/\\/[^\\s]+)/g;\n  const urls = content.match(urlRegex) || [];\n  return urls.map(url => {\n    let label = \"開啟連結\", color = \"#888888\"; \n    if (url.includes(\"spreadsheets\")) { label = \"開啟 Google 試算表\"; color = \"#4F772D\"; }\n    else if (url.includes(\"forms\")) { label = \"填寫 Google 表單\"; color = \"#778DA9\"; }\n    else if (url.includes(\"document\")) { label = \"查看 Google 文檔\"; color = \"#6B9080\"; }\n    else if (url.includes(\"canva.com\")) { label = \"在 Canva 中開啟\"; color = \"#4895EF\"; }\n    return {\n      \"type\": \"box\", \"layout\": \"vertical\", \"justifyContent\": \"center\", \"alignItems\": \"center\",\n      \"contents\": [{ \"type\": \"text\", \"text\": label, \"color\": color, \"size\": \"sm\", \"weight\": \"bold\", \"align\": \"center\" }],\n      \"borderWidth\": \"1px\", \"borderColor\": color, \"cornerRadius\": \"md\", \"height\": \"40px\", \"margin\": \"sm\",\n      \"action\": { \"type\": \"uri\", \"label\": label, \"uri\": url }\n    };\n  });\n};\n\n// 4. 建立 Flex Message 卡片\nconst bubbles = allItems.slice(0, 12).map(item => {\n  const row = item.json;\n  const toName = row.To_Name || \"未知接收者\";\n  \n  const dateTimestamp = getTimestamp(row.Date);\n  const dateDisplay = formatCleanDate(row.Date);\n  const sdTimestamp = getTimestamp(row.Send_Day || row['Send Date']);\n  const sdDisplay = formatCleanDate(row.Send_Day || row['Send Date']) || \"今日\";\n  \n  // --- A. 活動倒數 (活動日 vs 今天) ---\n  let diff = (dateTimestamp !== null) ? Math.round((dateTimestamp - today) / 86400000) : null;\n  \n  let dateRowBgColor = \"#ffffff\";\n  let dateTextColor = \"#333333\";\n  let countdownText = \"\";\n  let countdownColor = \"#E67E22\"; \n  \n  if (diff === 0) {\n    dateRowBgColor = \"#FFF3E0\";   \n    countdownText = \"就是今天\";\n  } else if (diff !== null && diff < 0) {\n    dateTextColor = \"#BBBBBB\";    \n    countdownText = \"活動已結束\";\n    countdownColor = \"#BBBBBB\";\n  } else if (diff !== null && diff > 0) {\n    countdownText = `還剩 ${diff} 天`;\n  }\n\n  // --- B. 提醒倒數規則 ---\n  let remindLeadText = \"\";\n  if (sdTimestamp !== null) {\n    // 優先判斷：提醒日是否晚於活動日 (未來人邏輯)\n    if (dateTimestamp !== null && sdTimestamp > dateTimestamp) {\n      const futureDiff = Math.round((sdTimestamp - dateTimestamp) / 86400000);\n      remindLeadText = `來自 ${futureDiff} 天後未來人`;\n    } else {\n      // 一般邏輯：計算距離今天還有幾天發送提醒\n      const sdDiff = Math.round((sdTimestamp - today) / 86400000);\n      if (sdDiff > 0) {\n        remindLeadText = `${sdDiff} 天後提醒`;\n      } else if (sdDiff === 0) {\n        remindLeadText = \"今天提醒\";\n      } else {\n        remindLeadText = \"已發送提醒\";\n      }\n    }\n  }\n\n  const buttons = getButtonsFromContent(row.Content || \"\");\n  const cleanContent = (row.Content || \"\").replace(/(https?:\\/\\/[^\\s]+)/g, \"\").trim() || \"(暫無詳細內容)\";\n\n  // --- 動態組合文字元件 (防止空字串報錯) ---\n  const dateRowHorizontalContents = [\n    { \"type\": \"text\", \"text\": dateDisplay || sdDisplay, \"weight\": \"bold\", \"size\": \"md\", \"color\": dateTextColor, \"flex\": 4 }\n  ];\n  if (countdownText) {\n    dateRowHorizontalContents.push({ \"type\": \"text\", \"text\": countdownText, \"size\": \"xs\", \"color\": countdownColor, \"align\": \"end\", \"gravity\": \"bottom\", \"flex\": 2, \"weight\": \"bold\" });\n  }\n\n  const remindRowHorizontalContents = [\n    { \"type\": \"text\", \"text\": `⏰${sdDisplay}`, \"size\": \"xs\", \"color\": \"#999999\", \"flex\": 4 }\n  ];\n  if (remindLeadText) {\n    remindRowHorizontalContents.push({ \"type\": \"text\", \"text\": remindLeadText, \"size\": \"xxs\", \"color\": \"#BBBBBB\", \"align\": \"end\", \"flex\": 3 });\n  }\n\n  return {\n    \"type\": \"bubble\",\n    \"size\": \"mega\",\n    \"header\": {\n      \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"16px\", \n      \"backgroundColor\": \"#7EB2D1\",\n      \"contents\": [{ \"type\": \"text\", \"text\": toName, \"weight\": \"bold\", \"size\": \"lg\", \"color\": \"#ffffff\" }]\n    },\n    \"body\": {\n      \"type\": \"box\", \"layout\": \"vertical\", \"paddingAll\": \"0px\",\n      \"action\": { \"type\": \"message\", \"label\": \"Reply\", \"text\": `📣${dateDisplay || sdDisplay}\\n\\n${row.Content}`.substring(0, 300) },\n      \"contents\": [\n        {\n          \"type\": \"box\",\n          \"layout\": \"vertical\",\n          \"paddingAll\": \"16px\",\n          \"backgroundColor\": dateRowBgColor,\n          \"contents\": [\n            { \"type\": \"box\", \"layout\": \"horizontal\", \"contents\": dateRowHorizontalContents }\n          ]\n        },\n        { \"type\": \"separator\", \"color\": \"#F0F0F0\" },\n        {\n          \"type\": \"box\",\n          \"layout\": \"vertical\",\n          \"paddingAll\": \"16px\",\n          \"paddingTop\": \"12px\",\n          \"contents\": [\n            { \"type\": \"box\", \"layout\": \"horizontal\", \"contents\": remindRowHorizontalContents },\n            {\n              \"type\": \"text\", \"text\": cleanContent, \"size\": \"md\", \"color\": (diff !== null && diff < 0) ? \"#AAAAAA\" : \"#555555\", \n              \"wrap\": true, \"margin\": \"lg\", \"weight\": \"bold\", \"maxLines\": 8, \"lineSpacing\": \"4px\"\n            }\n          ]\n        }\n      ]\n    },\n    \"footer\": buttons.length > 0 ? {\n      \"type\": \"box\", \"layout\": \"vertical\", \"spacing\": \"xs\", \"paddingAll\": \"12px\", \"contents\": buttons\n    } : undefined\n  };\n});\n\nreturn [{\n  json: {\n    replyToken: replyToken,\n    flexMessage: {\n      \"type\": \"flex\",\n      \"altText\": \"任務提醒清單已更新\",\n      \"contents\": { \"type\": \"carousel\", \"contents\": bubbles }\n    }\n  }\n}];"
+      },
+      "id": "137842d4-17b5-4114-8153-a07731ab1eeb",
+      "name": "Prepare Message_Acolor2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4512,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## /a 指令回覆模板備份",
+        "height": 448,
+        "width": 880
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4416,
+        384
+      ],
+      "typeVersion": 1,
+      "id": "5c68e80f-0b14-40eb-a01c-2368884048d0",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## /d 指令回覆模板備份",
+        "height": 416,
+        "width": 592
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4416,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "4a0e72bc-210d-4c66-9d46-c8a6cee3655b",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## 定時自動提醒流程",
+        "height": 80,
+        "width": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2128,
+        -512
+      ],
+      "typeVersion": 1,
+      "id": "62a7e5b9-fa18-495f-a960-41124179db09",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## 指令模式流程",
+        "height": 112
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1712,
+        192
+      ],
+      "typeVersion": 1,
+      "id": "fe8a1bb7-5b97-47f6-8f0e-343d0c8733ab",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: {\n    // 這裡準備好 LINE Push API 要用的 JSON 結構\n    linePayload: {\n      \"to\": row.To,\n      \"messages\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"🛑無法讀取 Google Sheet\"\n        }\n      ]\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4432,
+        -320
+      ],
+      "id": "32c4791e-6db4-4f38-9c91-46c9c7ec0f36",
+      "name": "Prepare Push Payload1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.linePayload }}",
+        "options": {}
+      },
+      "id": "6a16ae01-fb44-428a-8812-e812ebebebf8",
+      "name": "Sheet Error Push Message1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4608,
+        -320
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ulgW7xZ6mo7AXDHRDCJWVQmlqgYNlhNxdSuDkSIqx6c",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "DashB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ulgW7xZ6mo7AXDHRDCJWVQmlqgYNlhNxdSuDkSIqx6c/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Admin",
+              "lookupValue": "={{ $('Edit Fields').item.json.groupId || $('Edit Fields').item.json.userId }}"
+            },
+            {
+              "lookupColumn": "Date",
+              "lookupValue": "={{ $now.setZone('Asia/Taipei').toFormat('yyyy/MM/dd') || \"\"}}"
+            }
+          ]
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "FORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "id": "52757a73-4c55-420f-9e45-ff01c88f84c6",
+      "name": "Read GSheet Today",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2752,
+        272
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1ulgW7xZ6mo7AXDHRDCJWVQmlqgYNlhNxdSuDkSIqx6c"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "DashB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ulgW7xZ6mo7AXDHRDCJWVQmlqgYNlhNxdSuDkSIqx6c/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Admin",
+              "lookupValue": "={{ $('Edit Fields').item.json.groupId || $('Edit Fields').item.json.userId }}"
+            }
+          ]
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "FORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "id": "42d7cda3-b10a-4e99-ad72-44cc4adbe301",
+      "name": "Read GSheet Admin Task",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2752,
+        464
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.chatInput }}",
+                    "rightValue": "send",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "7edb4aae-75dc-40d6-b7e5-7abf1b9dab60"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "bc1e5096-fb87-4682-b6d5-71cd26a349a1",
+                    "leftValue": "={{ $json.chatInput }}",
+                    "rightValue": "test",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        -256
+      ],
+      "id": "ebc8651b-dda8-490c-b51c-c8a785645270",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1ulgW7xZ6mo7AXDHRDCJWVQmlqgYNlhNxdSuDkSIqx6c"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "DashB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ulgW7xZ6mo7AXDHRDCJWVQmlqgYNlhNxdSuDkSIqx6c/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Send_Day",
+              "lookupValue": "={{ $now.setZone('Asia/Taipei').toFormat('yyyy/MM/dd') }}"
+            }
+          ]
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "FORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "id": "e3246d3a-308b-4270-a2d4-c379f9ab15f7",
+      "name": "Read GSheet DashB Send",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2640,
+        -432
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1ulgW7xZ6mo7AXDHRDCJWVQmlqgYNlhNxdSuDkSIqx6c"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 823894105,
+          "mode": "list",
+          "cachedResultName": "TestB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ulgW7xZ6mo7AXDHRDCJWVQmlqgYNlhNxdSuDkSIqx6c/edit#gid=823894105"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Send_Day",
+              "lookupValue": "={{ $now.setZone('Asia/Taipei').toFormat('yyyy/MM/dd') }}"
+            }
+          ]
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "FORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "id": "b83eac38-7d2e-4e02-9a7e-a121781a8c9d",
+      "name": "Read GSheet TestB Send",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2640,
+        -240
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "11d75c73-b436-4544-952c-21f4d04ed004",
+              "leftValue": "={{ $json.cmd }}",
+              "rightValue": "PLEASE_RESEND_ALL_NOTIFYCATION",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1808,
+        464
+      ],
+      "id": "82f9ad57-2427-4c3a-8c5b-49ec83a6f1f5",
+      "name": "ReSend_Notify"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: {\n    linePayload: {\n      \"to\": \"Uecf32ca9a231240f09f161d700b0e0a7\", \n      \"messages\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"🛑 無法讀取 Google Sheet\\n\\n錯誤代碼: \" + ($input.item.json.errorDetails?.httpCode || \"未知\") + \"\\n或請檢查 Google 授權憑證是否過期。\\n修復後請重新執行以下命令:\\nPLEASE_RESEND_ALL_NOTIFYCATION\"\n        },\n        {\n          \"type\": \"text\",\n          \"text\": \"PLEASE_RESEND_ALL_NOTIFYCATION\"\n        }\n      ]\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3312,
+        -272
+      ],
+      "id": "0e25e501-c731-40e8-bb83-709bbb73b059",
+      "name": "Prepare Push ERRMSG"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $json.replyToken }}\",\n  \"messages\": [{\n    \"type\": \"text\",\n    \"text\": \"🛑無法讀取Google Sheet\"\n  }\n]\n}",
+        "options": {}
+      },
+      "id": "31617f5d-71e9-4475-8b74-bc13a4775c36",
+      "name": "Read Sheet Error⚠️",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3232,
+        784
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.linePayload }}",
+        "options": {}
+      },
+      "id": "5e7c876b-c0f8-4830-a8f5-76132e4f9c53",
+      "name": "Sheet Error Push Message ⚠️",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3504,
+        -272
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $json.replyToken }}\",\n  \"messages\": [{\n    \"type\": \"text\",\n    \"text\": \"🛑無法讀取DisplayName\"\n  }\n]\n}",
+        "options": {}
+      },
+      "id": "154db49c-2820-4bf8-80a5-2dd966791d5f",
+      "name": "Read Display Error⚠️",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3232,
+        608
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $json.replyToken }}\",\n  \"messages\": [\n    {{ JSON.stringify($json.flexMessage) }}\n  ]\n}",
+        "options": {}
+      },
+      "id": "27b3e275-1bee-434f-a25d-2948092492e7",
+      "name": "Reply Task List",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3616,
+        192
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $json.replyToken }}\",\n  \"messages\": [{\n    \"type\": \"text\",\n    \"text\": \"🛑Task List Send Error\"\n  }\n]\n}",
+        "options": {}
+      },
+      "id": "625f9d39-ef61-46ba-aa03-2106665e788d",
+      "name": "Task List Send Error⚠️1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3824,
+        304
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "10apbOSvpG06ENPky2DuIzZFB_e3j3oQlF7jGYe7rpCk",
+          "mode": "list",
+          "cachedResultName": "Asst_logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10apbOSvpG06ENPky2DuIzZFB_e3j3oQlF7jGYe7rpCk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "logs_curr",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10apbOSvpG06ENPky2DuIzZFB_e3j3oQlF7jGYe7rpCk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "group_name": "={{ $json.group_name }}",
+            "message_id": "={{ $json.message_id }}",
+            "timestamp": "={{ $json.timestamp }}",
+            "date": "={{ $json.date }}",
+            "time": "={{ $json.time }}",
+            "sender_id": "={{ $('Webhook 入口').item.json.body.events[0].source.userId }}",
+            "message_type": "={{ $json.message_type }}",
+            "content": "={{ $json.content }}",
+            "content_length": "={{ $json.content_length }}",
+            "media_url": "={{ $json.media_url }}",
+            "media_type": "={{ $json.media_type }}",
+            "file_name": "={{ $json.file_name }}",
+            "file_size": "={{ $json.file_size }}",
+            "reply_to_id": "={{ $json.reply_to_id }}",
+            "reply_to_sender": "={{ $json.reply_to_sender }}",
+            "mentions": "={{ $json.mentions }}",
+            "has_url": "={{ $json.has_url }}",
+            "urls": "={{ $json.urls }}",
+            "has_mention": "={{ $json.has_mention }}",
+            "has_media": "={{ $json.has_media }}",
+            "is_forwarded": "={{ $json.is_forwarded }}",
+            "processed": "={{ $json.processed }}",
+            "processed_date": "={{ $json.processed_date }}",
+            "batch_id": "={{ $json.batch_id }}",
+            "created_at": "={{ $json.created_at }}",
+            "source": "={{ $json.source }}",
+            "sender_type": "={{ $json.sender_type }}",
+            "group_id": "={{ $json.group_id }}",
+            "sender_name": "={{ $json.sender_name }}",
+            "raw_json": "={{ $json.raw_json }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "time",
+              "displayName": "time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_name",
+              "displayName": "group_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender_id",
+              "displayName": "sender_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender_name",
+              "displayName": "sender_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender_type",
+              "displayName": "sender_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_type",
+              "displayName": "message_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content_length",
+              "displayName": "content_length",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_url",
+              "displayName": "media_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_type",
+              "displayName": "media_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "file_size",
+              "displayName": "file_size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reply_to_id",
+              "displayName": "reply_to_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reply_to_sender",
+              "displayName": "reply_to_sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mentions",
+              "displayName": "mentions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "has_url",
+              "displayName": "has_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urls",
+              "displayName": "urls",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "has_mention",
+              "displayName": "has_mention",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "has_media",
+              "displayName": "has_media",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "is_forwarded",
+              "displayName": "is_forwarded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processed",
+              "displayName": "processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processed_date",
+              "displayName": "processed_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "batch_id",
+              "displayName": "batch_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "raw_json",
+              "displayName": "raw_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1104,
+        704
+      ],
+      "id": "9ece6ec8-4bc4-4e6a-ad8f-ecd44321ccaf",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 取得 HTTP Request 傳過來的 LINE 資料\nconst lineItems = $input.all();\n\n// 2. 取得 Read GSheet 節點的所有資料 (使用 $() 語法)\n// 這是解決轉圈圈的關鍵\nconst sheetItems = $(\"Read GSheet Today\").all();\n\nconst results = [];\n\n// 3. 使用 for 迴圈逐一合併，這樣比 map 更穩定\nfor (let i = 0; i < lineItems.length; i++) {\n  const line = lineItems[i].json;\n  const sheet = sheetItems[i] ? sheetItems[i].json : {};\n\n  // 確保 To 欄位存在，避免 substring 報錯\n  const toId = sheet.To || \"\";\n  const name = line.displayName || line.groupName || `👤 未加好友(${toId.substring(0, 5)})`;\n\n  results.push({\n    json: {\n      ...sheet, // 把原始 Google Sheet 欄位帶過來\n      To_Name: name\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "129afd5d-3b8b-4a6d-a8f7-d2c41b087803",
+      "name": "Get Display Names (Today)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3184,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 取得 HTTP Request 傳過來的 LINE 資料\nconst lineItems = $input.all();\n\n// 2. 取得 Read GSheet 節點的所有資料 (使用 $() 語法)\n// 這是解決轉圈圈的關鍵\nconst sheetItems = $(\"Read GSheet Admin Task\").all();\n\nconst results = [];\n\n// 3. 使用 for 迴圈逐一合併，這樣比 map 更穩定\nfor (let i = 0; i < lineItems.length; i++) {\n  const line = lineItems[i].json;\n  const sheet = sheetItems[i] ? sheetItems[i].json : {};\n\n  // 確保 To 欄位存在，避免 substring 報錯\n  const toId = sheet.To || \"\";\n  const name = line.displayName || line.groupName || `👤 未加好友(${toId.substring(0, 5)})`;\n\n  results.push({\n    json: {\n      ...sheet, // 把原始 Google Sheet 欄位帶過來\n      To_Name: name\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "487b65f9-a951-4188-b5aa-1d158ddf7d0e",
+      "name": "Get Display Names (ALL)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3184,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "10apbOSvpG06ENPky2DuIzZFB_e3j3oQlF7jGYe7rpCk",
+          "mode": "list",
+          "cachedResultName": "Asst_logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10apbOSvpG06ENPky2DuIzZFB_e3j3oQlF7jGYe7rpCk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "logs_curr",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10apbOSvpG06ENPky2DuIzZFB_e3j3oQlF7jGYe7rpCk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "group_name": "={{ $json.group_name || $('Extract Message Data').item.json.group_name || '' }}",
+            "message_id": "={{\"err_\"+$now}}",
+            "timestamp": "={{$now.format('yyyy-MM-dd')+\"_\"+$now.format('HH:mm:ss')}}",
+            "date": "={{$now.format('yyyy-MM-dd')}}",
+            "time": "={{$now.format('HH:mm:ss')}}",
+            "message_type": "text",
+            "content": "={{ $json.error.message }}",
+            "content_length": "=",
+            "media_url": "=",
+            "media_type": "=",
+            "file_name": "=",
+            "file_size": "=",
+            "reply_to_id": "=",
+            "reply_to_sender": "=",
+            "mentions": "=",
+            "has_url": "=",
+            "urls": "=",
+            "has_mention": "=",
+            "has_media": "=",
+            "is_forwarded": "=",
+            "processed": "=",
+            "processed_date": "=",
+            "batch_id": "=",
+            "created_at": "={{ $json.created_at || $('Extract Message Data').item.json.created_at || '' }}",
+            "source": "LINE",
+            "sender_type": "=bot",
+            "group_id": "={{ $json.group_id || $('Extract Message Data').item.json.group_id || '' }}",
+            "sender_id": "Asst.",
+            "sender_name": "Asst."
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "time",
+              "displayName": "time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_name",
+              "displayName": "group_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender_id",
+              "displayName": "sender_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender_name",
+              "displayName": "sender_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender_type",
+              "displayName": "sender_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_type",
+              "displayName": "message_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content_length",
+              "displayName": "content_length",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_url",
+              "displayName": "media_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_type",
+              "displayName": "media_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "file_size",
+              "displayName": "file_size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reply_to_id",
+              "displayName": "reply_to_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reply_to_sender",
+              "displayName": "reply_to_sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mentions",
+              "displayName": "mentions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "has_url",
+              "displayName": "has_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urls",
+              "displayName": "urls",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "has_mention",
+              "displayName": "has_mention",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "has_media",
+              "displayName": "has_media",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "is_forwarded",
+              "displayName": "is_forwarded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processed",
+              "displayName": "processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processed_date",
+              "displayName": "processed_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "batch_id",
+              "displayName": "batch_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "raw_json",
+              "displayName": "raw_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3680,
+        672
+      ],
+      "id": "2065c7eb-d964-4271-8009-5b3527698d86",
+      "name": "Append row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 接收 Line Webhook 資料\nconst event = $input.first().json.body.events[0];\n// const event = $input.item.json.events[0];\n// const item = $input.first();\n// const event = item.json.events[0];\nconst message = event.message;\n\n// 產生唯一 message_id\n// const timestamp = event.timestamp;\nconst messageId = event.message.id;\n\n// 提取內容\nlet content = '';\nlet messageType = message.type;\nlet mediaUrl = '';\nlet mediaType = '';\nlet fileName = '';\nlet fileSize = 0;\n\nif (message.type === 'text') {\n  content = message.text;\n} else if (message.type === 'image') {\n  mediaUrl = message.contentUrl || '';\n  mediaType = 'image/jpeg';\n} else if (message.type === 'video') {\n  mediaUrl = message.contentUrl || '';\n  mediaType = 'video/mp4';\n} else if (message.type === 'file') {\n  fileName = message.fileName || '';\n  fileSize = message.fileSize || 0;\n  mediaUrl = message.contentUrl || '';\n}\n\n// 檢查是否有 URL\nconst urlRegex = \"/(https?:\\\\/\\\\/[^\\\\s]+)/g\";\nconst urls = content.match(urlRegex);\nconst hasUrl = urls && urls.length > 0;\n\n// 檢查是否有 mention\nconst hasMention = content.includes('@');\nconst mentions = content.match(/@\\\\w+/g) || [];\n\n// 檢查是否為回覆\nconst replyToId = message.quotedMessageId || '';\n\n// 格式化時間\n// const now = new Date(timestamp);\n// const now = new Date();\nconst dateStr = $input.first().json.ymdString; // YYYY-MM-DD\nconst timeStr = $input.first().json.hmsString; // HH:mm:ss\nconst timestampStr = \"\"+dateStr+\"_\"+timeStr;\n\n// 回傳結構化資料\nreturn {\n  json: {\n    message_id: messageId,\n    timestamp: timestampStr,\n    date: dateStr,\n    time: timeStr,\n    group_id: $input.first().json.groupId || '',\n    group_name: $input.first().json.groupDisplayName || '', \n    sender_id: $input.first().json.userId,\n    sender_name: $input.first().json.userDisplayName || '', \n    sender_type: $input.first().json.ChannelType,\n    message_type: messageType,\n    content: content,\n    content_length: content.length,\n    media_url: mediaUrl,\n    media_type: mediaType,\n    file_name: fileName,\n    file_size: fileSize,\n    reply_to_id: replyToId,\n    reply_to_sender: '',\n    mentions: mentions.join(','),\n    has_url: hasUrl,\n    urls: urls ? urls.join(',') : '',\n    has_mention: hasMention,\n    has_media: ['image', 'video', 'file', 'audio'].includes(messageType),\n    is_forwarded: false,\n    processed: false,\n    processed_date: '',\n    batch_id: '',\n    created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),\n    source: 'LINE',\n    raw_json: JSON.stringify(event)\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        704
+      ],
+      "id": "ef4c1b0f-99db-4eaa-8143-f0e04c943bc7",
+      "name": "Extract Message Data"
+    },
+    {
+      "parameters": {
+        "url": "={{\n  $('Webhook 入口').item.json.body.events[0].source.type === 'group'\n    ? `https://api.line.me/v2/bot/group/${$('Webhook 入口').item.json.body.events[0].source.groupId}/member/${$('Webhook 入口').item.json.body.events[0].source.userId}`\n    : (\n        $('Webhook 入口').item.json.body.events[0].source.type === 'room'\n          ? `https://api.line.me/v2/bot/room/${$('Webhook 入口').item.json.body.events[0].source.roomId}/member/${$('Webhook 入口').item.json.body.events[0].source.userId}`\n          : `https://api.line.me/v2/bot/profile/${$('Webhook 入口').item.json.body.events[0].source.userId}`\n      )\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        480,
+        704
+      ],
+      "id": "901c703e-360f-48d0-b026-e6663888d9bc",
+      "name": "Get_LINE_UserProfile",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{\n  $node[\"Webhook 入口\"].json.body.events[0].source.type === 'group'\n    ? \"https://api.line.me/v2/bot/group/\" + $node[\"Webhook 入口\"].json.body.events[0].source.groupId + \"/summary\"\n    : \"\"\n}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        256,
+        704
+      ],
+      "id": "1e5b6e5c-8591-4a8b-aef7-50f607effb3b",
+      "name": "Get_LINE_GroupProfile",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "EjIXKmEH5XMx8Iwd",
+          "name": "Bearer Auth (Line Asst)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2a720f57-d22b-4b65-99d5-3014f1b35013",
+              "name": "body",
+              "value": "={{ $('Webhook 入口').item.json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "25ff7887-3b7c-40ba-bba3-55626efb312c",
+              "name": "messageText",
+              "value": "={{ $('Webhook 入口').item.json.body.events[0].message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5f801c04-0a71-44c4-bc53-25d19491b7a5",
+              "name": "groupId",
+              "value": "={{ $('Webhook 入口').item.json.body.events[0].source.groupId }}",
+              "type": "string"
+            },
+            {
+              "id": "614110df-79c1-4875-85b3-2c2c13e2c731",
+              "name": "userId",
+              "value": "={{ $('Webhook 入口').item.json.body.events[0].source.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "954e8e30-ad59-497f-bf66-f63806b59724",
+              "name": "replyToken",
+              "value": "={{ $('Webhook 入口').item.json.body.events[0].replyToken }}",
+              "type": "string"
+            },
+            {
+              "id": "7507508d-c79e-41e2-be98-d8f865935dca",
+              "name": "ChannelType",
+              "value": "={{ $('Webhook 入口').item.json.body.events[0].source.type }}",
+              "type": "string"
+            },
+            {
+              "id": "373bb41d-c772-47b7-9924-b816dc4285dd",
+              "name": "userDisplayName",
+              "value": "={{ \n  $node[\"Get_LINE_UserProfile\"].json.displayName\n    || $node[\"Get_LINE_UserProfile\"].json.body?.displayName\n    || \"\"\n}}",
+              "type": "string"
+            },
+            {
+              "id": "f6bbcda7-3f7c-4d74-a52e-b85adadc47a4",
+              "name": "groupDisplayName",
+              "value": "={{ \n  $node[\"Webhook 入口\"].json.body.events[0].source.type === 'group'\n    ? ($node[\"Get_LINE_GroupProfile\"].json.groupName || $node[\"Get_LINE_GroupProfile\"].json.body?.groupName || \"\")\n    : \"\"\n}}",
+              "type": "string"
+            },
+            {
+              "id": "e65fc5a1-0e11-4310-8ccd-cf1e47737df0",
+              "name": "timestamp",
+              "value": "={{$now.format('yyyy-MM-dd')+\"_\"+$now.format('HH:mm:ss')}}",
+              "type": "string"
+            },
+            {
+              "id": "23459cd2-3873-4595-bc01-b237b89476cd",
+              "name": "ymdString",
+              "value": "={{$now.format('yyyy-MM-dd')}}",
+              "type": "string"
+            },
+            {
+              "id": "38a3ce8f-b548-41b7-a628-81d3ab7e1059",
+              "name": "hmsString",
+              "value": "={{$now.format('HH:mm:ss')}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        688,
+        704
+      ],
+      "id": "1d2c1c2e-ad2d-4ac7-9a8e-7d55cd08d8f4",
+      "name": "Edit Fields log"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2a720f57-d22b-4b65-99d5-3014f1b35013",
+              "name": "body",
+              "value": "={{ $('Webhook 入口').item.json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "25ff7887-3b7c-40ba-bba3-55626efb312c",
+              "name": "messageText",
+              "value": "={{ $('Webhook 入口').item.json.body.events[0].message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "5f801c04-0a71-44c4-bc53-25d19491b7a5",
+              "name": "groupId",
+              "value": "={{ $('Webhook 入口').item.json.body.events[0].source.groupId }}",
+              "type": "string"
+            },
+            {
+              "id": "614110df-79c1-4875-85b3-2c2c13e2c731",
+              "name": "userId",
+              "value": "={{ $('Webhook 入口').item.json.body.events[0].source.userId }}",
+              "type": "string"
+            },
+            {
+              "id": "954e8e30-ad59-497f-bf66-f63806b59724",
+              "name": "replyToken",
+              "value": "={{ $('Webhook 入口').item.json.body.events[0].replyToken }}",
+              "type": "string"
+            },
+            {
+              "id": "7507508d-c79e-41e2-be98-d8f865935dca",
+              "name": "ChannelType",
+              "value": "={{ $('Webhook 入口').item.json.body.events[0].source.type }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1344,
+        464
+      ],
+      "id": "960989d4-819a-472a-a130-164b03136e6c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "abb8ade8-64ff-4a1d-87b9-17f5f6333542",
+              "leftValue": "={{ $json.cmd }}",
+              "rightValue": "summarize",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2192,
+        560
+      ],
+      "id": "25c1e38b-0586-4bb6-899e-7b8d74265bcf",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://fisher.zeabur.app/webhook/line-summarize",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "trigger",
+              "value": "manual"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2400,
+        464
+      ],
+      "id": "2ff2d06a-0748-4a34-bc07-b890e2723424",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "line-summarize",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "摘要觸發 Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        1600
+      ],
+      "id": "5197c419-5d20-4086-addb-8b39d621b476",
+      "webhookId": "line-summarize-webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "summarize triggered",
+        "options": {}
+      },
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        1456
+      ],
+      "id": "f44cb1e8-c357-415a-ba5b-ac5554aa428f"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Nu_vQRu238XzC4Ln9iwM9nBe4WHxsiR12sZJMiLtXd0",
+          "mode": "list",
+          "cachedResultName": "LineAssistant_Sheets_Template",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Nu_vQRu238XzC4Ln9iwM9nBe4WHxsiR12sZJMiLtXd0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "logs",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "processed",
+              "lookupValue": "="
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "name": "讀取所有未處理訊息",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1408,
+        1600
+      ],
+      "id": "617a0501-04cd-488a-8f5d-bc037f22c29d",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 接收觸發參數\nconst triggerGroupId = $input.first().json?.body?.group_id || '';\nconst trigger = $input.first().json?.body?.trigger || 'threshold';\n\n// 讀取所有未處理訊息\nconst allRows = $('讀取所有未處理訊息').all().map(r => r.json);\n\nif (allRows.length === 0) {\n  return [{ json: { skip: true, reason: 'no unprocessed messages', groups: [] } }];\n}\n\n// 按群組分組\nconst groupMap = {};\nallRows.forEach(r => {\n  const gid = r.group_id || 'unknown';\n  if (!groupMap[gid]) groupMap[gid] = [];\n  groupMap[gid].push(r);\n});\n\n// 決定要處理哪些群組\n// 手動觸發且沒有指定群組 → 處理所有群組\n// 手動觸發且有指定群組 → 只處理該群組\n// 閾值觸發 → 只處理指定群組\nlet groupsToProcess = Object.keys(groupMap);\nif (triggerGroupId) {\n  groupsToProcess = groupsToProcess.filter(gid => gid === triggerGroupId);\n}\n\nif (groupsToProcess.length === 0) {\n  return [{ json: { skip: true, reason: 'no matching group', groups: [] } }];\n}\n\n// 每個群組產出一筆資料\nreturn groupsToProcess.map(gid => {\n  const rows = groupMap[gid];\n  const groupName = rows[0].group_name || gid;\n\n  const messages = rows\n    .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''))\n    .map(r => `[${r.created_at}] ${r.sender_name}: ${r.content}`)\n    .join('\\n');\n\n  const urls = rows\n    .filter(r => r.has_url && r.urls)\n    .flatMap(r => String(r.urls).split(',').map(u => u.trim()))\n    .filter(Boolean);\n\n  return {\n    json: {\n      skip: false,\n      trigger,\n      group_id: gid,\n      group_name: groupName,\n      message_count: rows.length,\n      messages,\n      urls: [...new Set(urls)]\n    }\n  };\n});"
+      },
+      "name": "按群組分組打包",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1648,
+        1600
+      ],
+      "id": "3e03dee1-8002-4601-81f2-04e78a455648"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "有訊息可以摘要？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        1600
+      ],
+      "id": "d4976839-57ba-4581-9aba-ecb1a44ddf3c"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json?.choices?.[0]?.message?.content || '';\n\n// 清理 markdown code block\nconst cleaned = raw\n  .replace(/```json\\s*/gi, '')\n  .replace(/```\\s*/gi, '')\n  .trim();\n\nlet parsed;\ntry {\n  const match = cleaned.match(/\\{[\\s\\S]*\\}/);\n  if (!match) throw new Error('No JSON found in response');\n  parsed = JSON.parse(match[0]);\n} catch (e) {\n  return [{\n    json: {\n      error: true,\n      message: e.message,\n      raw,\n      group_name: $('按群組分組打包').item.json.group_name,\n      group_id: $('按群組分組打包').item.json.group_id\n    }\n  }];\n}\n\nconst now = new Date().toISOString().replace('T', ' ').slice(0, 19);\nconst packed = $('按群組分組打包').item.json;\n\nreturn [{\n  json: {\n    error: false,\n    created_at: now,\n    group_name: packed.group_name,\n    group_id: packed.group_id,\n    message_count: packed.message_count,\n    summary: parsed.summary || '',\n    topics: JSON.stringify(parsed.topics || []),\n    notes: JSON.stringify(parsed.notes || []),\n    people_count: parsed.people_count || 0,\n    todos: parsed.todos || [],\n    finance: parsed.finance || [],\n    headcount: parsed.headcount || [],\n    urls: packed.urls || []\n  }\n}];"
+      },
+      "name": "解析 AI 回應",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2496,
+        1152
+      ],
+      "id": "112e1a77-185a-4961-a5a5-8f312e41ea4e"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.error }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "解析成功？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2608,
+        1600
+      ],
+      "id": "af3ba8c0-8171-4bbd-a244-f23c65453723"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Nu_vQRu238XzC4Ln9iwM9nBe4WHxsiR12sZJMiLtXd0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "summary",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "created_at": "={{ $json.created_at }}",
+            "group_name": "={{ $json.group_name }}",
+            "summary": "={{ $json.summary }}",
+            "topics": "={{ $json.topics }}",
+            "notes": "={{ $json.notes }}",
+            "urls": "={{ $json.urls.length }}",
+            "todos": "={{ $json.todos.length }}",
+            "people": "={{ $json.people_count }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_name",
+              "displayName": "group_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "topics",
+              "displayName": "topics",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notes",
+              "displayName": "notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urls",
+              "displayName": "urls",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "todos",
+              "displayName": "todos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "people",
+              "displayName": "people",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_ref",
+              "displayName": "event_ref",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "寫入 summary",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2848,
+        1392
+      ],
+      "id": "82558057-1492-484a-958d-ef72873a3f9d",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  const data = item.json;\n  if (!data.todos || data.todos.length === 0) continue;\n  \n  for (const t of data.todos) {\n    results.push({\n      json: {\n        created_at: data.created_at,\n        group_name: data.group_name,\n        todo: t.todo || '',\n        priority: t.priority || '中',\n        due_date: t.due_date || '',\n        done: false,\n        done_at: '',\n        event_ref: ''\n      }\n    });\n  }\n}\n\nreturn results.length ? results : [{ json: { _skip: true } }];"
+      },
+      "name": "展開 todos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2848,
+        1552
+      ],
+      "id": "87aa4742-52d6-4cb8-bb2c-12d76464581e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  const data = item.json;\n  if (!data.finance || data.finance.length === 0) continue;\n  \n  for (const f of data.finance) {\n    results.push({\n      json: {\n        created_at: data.created_at,\n        group_name: data.group_name,\n        description: f.description || '',\n        amount: f.amount || 0,\n        direction: f.direction || '支出',\n        payer: f.payer || '',\n        payees: Array.isArray(f.payees) ? f.payees.join(',') : (f.payees || ''),\n        split_note: f.split_note || '',\n        confidence: f.confidence || '中',\n        event_ref: ''\n      }\n    });\n  }\n}\n\nreturn results.length ? results : [{ json: { _skip: true } }];"
+      },
+      "name": "展開 finance",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2848,
+        1712
+      ],
+      "id": "b23868e0-83e5-4fa0-805e-0290616b1463"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  const data = item.json;\n  if (!data.headcount || data.headcount.length === 0) continue;\n  \n  for (const ev of data.headcount) {\n    for (const p of (ev.persons || [])) {\n      results.push({\n        json: {\n          created_at: data.created_at,\n          group_name: data.group_name,\n          event_name: ev.event_name || '',\n          event_date: ev.event_date || '',\n          person_name: p.name || '',\n          rsvp_status: p.status || '未確認',\n          rsvp_time: p.rsvp_time || '',\n          note: p.note || '',\n          event_ref: ''\n        }\n      });\n    }\n  }\n}\n\nreturn results.length ? results : [{ json: { _skip: true } }];"
+      },
+      "name": "展開 headcount",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2848,
+        1872
+      ],
+      "id": "acd0d34f-de83-4ccf-8b6b-a7b3bc1eef41"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  const data = item.json;\n  if (!data.urls || data.urls.length === 0) continue;\n  \n  for (const url of data.urls) {\n    results.push({\n      json: {\n        created_at: data.created_at,\n        group_name: data.group_name,\n        sender: '',\n        url: url,\n        timestamp: data.created_at,\n        event_ref: ''\n      }\n    });\n  }\n}\n\nreturn results.length ? results : [{ json: { _skip: true } }];"
+      },
+      "name": "展開 links",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2848,
+        2032
+      ],
+      "id": "bd9c3353-b4e1-4021-ae9d-51bcc9ff9eee"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Nu_vQRu238XzC4Ln9iwM9nBe4WHxsiR12sZJMiLtXd0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "todos",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "created_at": "={{ $json.created_at }}",
+            "group_name": "={{ $json.group_name }}",
+            "todo": "={{ $json.todo }}",
+            "priority": "={{ $json.priority }}",
+            "due_date": "={{ $json.due_date }}",
+            "done": "={{ $json.done }}",
+            "done_at": "={{ $json.done_at }}",
+            "event_ref": "={{ $json.event_ref }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_name",
+              "displayName": "group_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "todo",
+              "displayName": "todo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "done",
+              "displayName": "done",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "done_at",
+              "displayName": "done_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_ref",
+              "displayName": "event_ref",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "寫入 todos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3088,
+        1552
+      ],
+      "id": "bbfec1f0-38b0-46d5-a36d-38b51a290d74",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Nu_vQRu238XzC4Ln9iwM9nBe4WHxsiR12sZJMiLtXd0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "finance",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "created_at": "={{ $json.created_at }}",
+            "group_name": "={{ $json.group_name }}",
+            "description": "={{ $json.description }}",
+            "amount": "={{ $json.amount }}",
+            "direction": "={{ $json.direction }}",
+            "payer": "={{ $json.payer }}",
+            "payees": "={{ $json.payees }}",
+            "split_note": "={{ $json.split_note }}",
+            "confidence": "={{ $json.confidence }}",
+            "event_ref": "={{ $json.event_ref }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_name",
+              "displayName": "group_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "direction",
+              "displayName": "direction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "payer",
+              "displayName": "payer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "payees",
+              "displayName": "payees",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "split_note",
+              "displayName": "split_note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "confidence",
+              "displayName": "confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_ref",
+              "displayName": "event_ref",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "寫入 finance",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3088,
+        1712
+      ],
+      "id": "75155481-89d4-4251-a308-28539e21a19f",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Nu_vQRu238XzC4Ln9iwM9nBe4WHxsiR12sZJMiLtXd0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "headcount",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "created_at": "={{ $json.created_at }}",
+            "group_name": "={{ $json.group_name }}",
+            "event_name": "={{ $json.event_name }}",
+            "event_date": "={{ $json.event_date }}",
+            "person_name": "={{ $json.person_name }}",
+            "rsvp_status": "={{ $json.rsvp_status }}",
+            "rsvp_time": "={{ $json.rsvp_time }}",
+            "note": "={{ $json.note }}",
+            "event_ref": "={{ $json.event_ref }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_name",
+              "displayName": "group_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_name",
+              "displayName": "event_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_date",
+              "displayName": "event_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "person_name",
+              "displayName": "person_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rsvp_status",
+              "displayName": "rsvp_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rsvp_time",
+              "displayName": "rsvp_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "note",
+              "displayName": "note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_ref",
+              "displayName": "event_ref",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "寫入 headcount",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3088,
+        1872
+      ],
+      "id": "30ac288e-2762-458e-b8d5-ce2c2869f070",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Nu_vQRu238XzC4Ln9iwM9nBe4WHxsiR12sZJMiLtXd0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "links",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "created_at": "={{ $json.created_at }}",
+            "group_name": "={{ $json.group_name }}",
+            "sender": "={{ $json.sender }}",
+            "url": "={{ $json.url }}",
+            "timestamp": "={{ $json.timestamp }}",
+            "event_ref": "={{ $json.event_ref }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_name",
+              "displayName": "group_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender",
+              "displayName": "sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_ref",
+              "displayName": "event_ref",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "寫入 links",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3088,
+        2032
+      ],
+      "id": "0c5ac9f5-8b59-48eb-b9b7-e0800b08fc86",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toLocaleString('sv', {timeZone: 'Asia/Taipei'}).replace('T', ' ');\n\nreturn $input.all()\n  .filter(item => !item.json.error && item.json.group_id)\n  .map(item => ({\n    json: {\n      group_id: item.json.group_id,\n      group_name: item.json.group_name,\n      processed: true,\n      processed_date: now\n    }\n  }));"
+      },
+      "name": "準備更新 processed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2848,
+        1168
+      ],
+      "id": "d80d4d16-2821-4f97-9627-4cb26b12c5f1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Nu_vQRu238XzC4Ln9iwM9nBe4WHxsiR12sZJMiLtXd0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "logs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "processed": "=TRUE",
+            "row_number": 0
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "group_name",
+              "displayName": "group_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sender_id",
+              "displayName": "sender_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sender_name",
+              "displayName": "sender_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sender_type",
+              "displayName": "sender_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message_type",
+              "displayName": "message_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "has_url",
+              "displayName": "has_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "urls",
+              "displayName": "urls",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "processed",
+              "displayName": "processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_ref",
+              "displayName": "event_ref",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "更新 processed 狀態",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3088,
+        1168
+      ],
+      "id": "359aac9a-456c-428f-bf0b-9501c9122698",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Nu_vQRu238XzC4Ln9iwM9nBe4WHxsiR12sZJMiLtXd0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "summary",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "created_at": "={{ $now.toISO().slice(0,19).replace('T',' ') }}",
+            "group_name": "={{ $json.group_name }}",
+            "summary": "AI 解析失敗，請手動檢查",
+            "topics": "[]",
+            "notes": "=[\"請手動檢查原始 log\"]",
+            "urls": "=0",
+            "todos": "=0",
+            "people": "=0",
+            "event_ref": "ERROR"
+          }
+        },
+        "options": {}
+      },
+      "name": "記錄錯誤",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2848,
+        1824
+      ],
+      "id": "a7c91832-082f-4f9e-81b2-2968289ca0bd",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hnd1.aihub.zeabur.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "kimi-k2.5"
+            },
+            {
+              "name": "max_tokens",
+              "value": "=8000"
+            },
+            {
+              "name": "messages",
+              "value": "={{ [{\"role\":\"system\",\"content\":\"你是一個 Line 群組對話分析助手。請分析對話並輸出結構化 JSON。只輸出 JSON，不要任何前綴、解釋文字或 markdown code block。\"},{\"role\":\"user\",\"content\":\"以下是 Line 群組「\" + $json.group_name + \"」的對話紀錄（共 \" + $json.message_count + \" 則）：\\n\\n\" + $json.messages + \"\\n\\n請用繁體中文分析並輸出以下格式的 JSON（只輸出 JSON，不要 markdown code block）：\\n{\\n  \\\"summary\\\": \\\"一段話總結本次對話重點\\\",\\n  \\\"topics\\\": [\\\"主題1\\\", \\\"主題2\\\"],\\n  \\\"notes\\\": [\\\"注意事項1\\\"],\\n  \\\"people_count\\\": 0,\\n  \\\"todos\\\": [{\\\"todo\\\": \\\"代辦內容\\\", \\\"priority\\\": \\\"高\\\", \\\"due_date\\\": \\\"\\\"}],\\n  \\\"finance\\\": [{\\\"description\\\": \\\"說明\\\", \\\"amount\\\": 0, \\\"direction\\\": \\\"支出\\\", \\\"payer\\\": \\\"\\\", \\\"payees\\\": [], \\\"split_note\\\": \\\"\\\", \\\"confidence\\\": \\\"高\\\"}],\\n  \\\"headcount\\\": [{\\\"event_name\\\": \\\"活動名稱\\\", \\\"event_date\\\": \\\"\\\", \\\"persons\\\": [{\\\"name\\\": \\\"\\\", \\\"status\\\": \\\"確認\\\", \\\"rsvp_time\\\": \\\"\\\", \\\"note\\\": \\\"\\\"}]}]\\n}\"}] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Kimi AI 摘要1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2256,
+        1168
+      ],
+      "id": "29922e5b-4875-450c-a40e-ff2aa162ebdc",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "zt51YhfpzBcBetNa",
+          "name": "Zeabur AI Hub"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 把每個群組的資料準備好，同時保留 group 資訊給後續節點用\nreturn $input.all().map(item => {\n  const groupName = item.json.group_name;\n  const groupId = item.json.group_id;\n  const messageCount = item.json.message_count;\n  const messages = item.json.messages;\n  const urls = item.json.urls || [];\n\n  const prompt = `以下是 Line 群組「${groupName}」的對話紀錄（共 ${messageCount} 則）：\\n\\n${messages}\\n\\n請用繁體中文分析並輸出以下格式的 JSON（只輸出 JSON，不要 markdown code block）：\\n{\\n  \"summary\": \"一段話總結本次對話重點\",\\n  \"topics\": [\"主題1\", \"主題2\"],\\n  \"notes\": [\"注意事項1\"],\\n  \"people_count\": 0,\\n  \"todos\": [\\n    {\"todo\": \"代辦內容\", \"priority\": \"高\", \"due_date\": \"\"}\\n  ],\\n  \"finance\": [\\n    {\"description\": \"說明\", \"amount\": 0, \"direction\": \"支出\", \"payer\": \"\", \"payees\": [], \"split_note\": \"\", \"confidence\": \"高\"}\\n  ],\\n  \"headcount\": [\\n    {\"event_name\": \"活動名稱\", \"event_date\": \"\", \"persons\": [{\"name\": \"\", \"status\": \"確認\", \"rsvp_time\": \"\", \"note\": \"\"}]}\\n  ]\\n}`;\n\n  return {\n    json: {\n      _group_name: groupName,\n      _group_id: groupId,\n      _message_count: messageCount,\n      _urls: urls,\n      model: 'gpt-4.1',\n      max_tokens: 8000,\n      messages: [\n        {\n          role: 'system',\n          content: '你是一個 Line 群組對話分析助手。請分析對話並輸出結構化 JSON。只輸出 JSON，不要任何前綴、解釋文字或 markdown code block。'\n        },\n        {\n          role: 'user',\n          content: prompt\n        }\n      ]\n    }\n  };\n});"
+      },
+      "name": "準備 Kimi 請求",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1952,
+        1952
+      ],
+      "id": "9a6ca111-4c19-4a2f-8292-e898d3fe3c39"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hnd1.aihub.zeabur.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "={{ $json.model }}"
+            },
+            {
+              "name": "max_tokens",
+              "value": "={{ $json.max_tokens }}"
+            },
+            {
+              "name": "messages",
+              "value": "={{ $json.messages }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Kimi AI 摘要",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2176,
+        1952
+      ],
+      "id": "a5f6f5a1-564d-438b-a67a-1880bde875c0",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "zt51YhfpzBcBetNa",
+          "name": "Zeabur AI Hub"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\nconst kimiResponses = $input.all();\nconst originalRequests = $('準備 Kimi 請求').all();\n\nfor (let i = 0; i < kimiResponses.length; i++) {\n  const item = kimiResponses[i];\n  const original = originalRequests[i] ? originalRequests[i].json : {};\n\n  const raw = item.json?.choices?.[0]?.message?.content || '';\n\n  const cleaned = raw\n    .replace(/```json\\s*/gi, '')\n    .replace(/```\\s*/gi, '')\n    .trim();\n\n  let parsed;\n  try {\n    const match = cleaned.match(/\\{[\\s\\S]*\\}/);\n    if (!match) throw new Error('No JSON found in response');\n    parsed = JSON.parse(match[0]);\n  } catch (e) {\n    results.push({\n      json: {\n        error: true,\n        message: e.message,\n        raw,\n        group_name: original._group_name || '',\n        group_id: original._group_id || ''\n      }\n    });\n    continue;\n  }\n\n  const now = new Date().toLocaleString('sv', {timeZone: 'Asia/Taipei'}).replace('T', ' ');\n\n  results.push({\n    json: {\n      error: false,\n      created_at: now,\n      group_name: original._group_name || '',\n      group_id: original._group_id || '',\n      message_count: original._message_count || 0,\n      summary: parsed.summary || '',\n      topics: JSON.stringify(parsed.topics || []),\n      notes: JSON.stringify(parsed.notes || []),\n      people_count: parsed.people_count || 0,\n      todos: parsed.todos || [],\n      finance: parsed.finance || [],\n      headcount: parsed.headcount || [],\n      urls: original._urls || []\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "解析 AI 回應1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        1952
+      ],
+      "id": "eb32e62b-8bb1-4d9a-9d7e-c0e6979e671a"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "10apbOSvpG06ENPky2DuIzZFB_e3j3oQlF7jGYe7rpCk",
+          "mode": "list",
+          "cachedResultName": "Asst_logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10apbOSvpG06ENPky2DuIzZFB_e3j3oQlF7jGYe7rpCk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "logs_curr",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10apbOSvpG06ENPky2DuIzZFB_e3j3oQlF7jGYe7rpCk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "group_name": "=",
+            "message_id": "={{\"notify_\"+$now}}",
+            "timestamp": "={{$now.format('yyyy-MM-dd')+\"_\"+$now.format('HH:mm:ss')}}",
+            "date": "={{$now.format('yyyy-MM-dd')}}",
+            "time": "={{$now.format('HH:mm:ss')}}",
+            "message_type": "text",
+            "content": "={{ $('Prepare Message_Acolor').item.json.flexMessage.altText }}",
+            "content_length": "=",
+            "media_url": "=",
+            "media_type": "=",
+            "file_name": "=",
+            "file_size": "=",
+            "reply_to_id": "=",
+            "reply_to_sender": "=",
+            "mentions": "=",
+            "has_url": "=",
+            "urls": "=",
+            "has_mention": "=",
+            "has_media": "=",
+            "is_forwarded": "=",
+            "processed": "=",
+            "processed_date": "=",
+            "batch_id": "=",
+            "created_at": "={{$now.format('yyyy-MM-dd HH:mm:ss')}}",
+            "source": "LINE",
+            "sender_type": "=bot",
+            "group_id": "={{ $('Edit Fields').item.json.groupId || '' }}",
+            "sender_id": "Asst.",
+            "sender_name": "Asst."
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "time",
+              "displayName": "time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "group_name",
+              "displayName": "group_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender_id",
+              "displayName": "sender_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender_name",
+              "displayName": "sender_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sender_type",
+              "displayName": "sender_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_type",
+              "displayName": "message_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content_length",
+              "displayName": "content_length",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_url",
+              "displayName": "media_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "media_type",
+              "displayName": "media_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "file_size",
+              "displayName": "file_size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reply_to_id",
+              "displayName": "reply_to_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reply_to_sender",
+              "displayName": "reply_to_sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mentions",
+              "displayName": "mentions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "has_url",
+              "displayName": "has_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urls",
+              "displayName": "urls",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "has_mention",
+              "displayName": "has_mention",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "has_media",
+              "displayName": "has_media",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "is_forwarded",
+              "displayName": "is_forwarded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processed",
+              "displayName": "processed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processed_date",
+              "displayName": "processed_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "batch_id",
+              "displayName": "batch_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "raw_json",
+              "displayName": "raw_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3984,
+        176
+      ],
+      "id": "e57afc89-ba58-4f31-9321-cd7d8987b3f1",
+      "name": "Append row in sheet (Bot)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "k7DIRySKcmdeYQNS",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook 入口": {
+      "main": [
+        [
+          {
+            "node": "Get_LINE_GroupProfile",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Command Router": {
+      "main": [
+        [
+          {
+            "node": "ReSend_Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch CMD": {
+      "main": [
+        [
+          {
+            "node": "Read GSheet Today",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read GSheet Admin Task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply My ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply Group ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_LINE_Name": {
+      "main": [
+        [
+          {
+            "node": "Get Display Names (Today)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read Display Error⚠️",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "每天早上六點觸發": {
+      "main": [
+        [
+          {
+            "node": "Read GSheet DashB Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Push Payload": {
+      "main": [
+        [
+          {
+            "node": "自動提醒 Push Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_LINE_Name1": {
+      "main": [
+        [
+          {
+            "node": "Get Display Names (ALL)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "If help info": {
+      "main": [
+        [
+          {
+            "node": "Reply Debug List2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Message_D": {
+      "main": [
+        [
+          {
+            "node": "Reply Debug List TODAY1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Message_Dbk": {
+      "main": [
+        [
+          {
+            "node": "Reply Debug List TODAY",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Message_Abk": {
+      "main": [
+        [
+          {
+            "node": "Reply Debug List ALL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Message_A": {
+      "main": [
+        []
+      ]
+    },
+    "Prepare Message_Acolor": {
+      "main": [
+        [
+          {
+            "node": "Reply Task List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Push Payload1": {
+      "main": [
+        [
+          {
+            "node": "Sheet Error Push Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read GSheet Today": {
+      "main": [
+        [
+          {
+            "node": "Get_LINE_Name",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read Sheet Error⚠️",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read GSheet Admin Task": {
+      "main": [
+        [
+          {
+            "node": "Get_LINE_Name1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read Sheet Error⚠️",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Read GSheet DashB Send",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read GSheet TestB Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read GSheet DashB Send": {
+      "main": [
+        [
+          {
+            "node": "Prepare Push Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Push ERRMSG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read GSheet TestB Send": {
+      "main": [
+        [
+          {
+            "node": "Prepare Push Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Push ERRMSG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReSend_Notify": {
+      "main": [
+        [
+          {
+            "node": "Read GSheet DashB Send",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If help info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "自動提醒 Push Message": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Prepare Push ERRMSG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Push ERRMSG": {
+      "main": [
+        [
+          {
+            "node": "Sheet Error Push Message ⚠️",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply Task List": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet (Bot)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Task List Send Error⚠️1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheet Error Push Message ⚠️": {
+      "main": [
+        []
+      ]
+    },
+    "Task List Send Error⚠️1": {
+      "main": [
+        []
+      ]
+    },
+    "Read Display Error⚠️": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Append row in sheet (Bot)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sheet Error⚠️": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet (Bot)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Display Names (Today)": {
+      "main": [
+        [
+          {
+            "node": "Prepare Message_Acolor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Display Names (ALL)": {
+      "main": [
+        [
+          {
+            "node": "Prepare Message_Acolor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Message Data": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_LINE_UserProfile": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields log",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Get_LINE_GroupProfile": {
+      "main": [
+        [
+          {
+            "node": "Get_LINE_UserProfile",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Edit Fields log": {
+      "main": [
+        [
+          {
+            "node": "Extract Message Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Command Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch CMD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "摘要觸發 Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "讀取所有未處理訊息",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "讀取所有未處理訊息": {
+      "main": [
+        [
+          {
+            "node": "按群組分組打包",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "按群組分組打包": {
+      "main": [
+        [
+          {
+            "node": "有訊息可以摘要？",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "有訊息可以摘要？": {
+      "main": [
+        [
+          {
+            "node": "準備 Kimi 請求",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析 AI 回應": {
+      "main": [
+        []
+      ]
+    },
+    "解析成功？": {
+      "main": [
+        [
+          {
+            "node": "寫入 summary",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "展開 todos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "展開 finance",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "展開 headcount",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "展開 links",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "記錄錯誤",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "展開 todos": {
+      "main": [
+        [
+          {
+            "node": "寫入 todos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "展開 finance": {
+      "main": [
+        [
+          {
+            "node": "寫入 finance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "展開 headcount": {
+      "main": [
+        [
+          {
+            "node": "寫入 headcount",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "展開 links": {
+      "main": [
+        [
+          {
+            "node": "寫入 links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "準備更新 processed": {
+      "main": [
+        [
+          {
+            "node": "更新 processed 狀態",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kimi AI 摘要1": {
+      "main": [
+        [
+          {
+            "node": "解析 AI 回應",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "準備 Kimi 請求": {
+      "main": [
+        [
+          {
+            "node": "Kimi AI 摘要",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kimi AI 摘要": {
+      "main": [
+        [
+          {
+            "node": "解析 AI 回應1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析 AI 回應1": {
+      "main": [
+        [
+          {
+            "node": "解析成功？",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "b8648271-b4aa-4e36-8ce8-54b951c23bea",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "734879d36ad7d8592bbca2a43ac511a7147323087a5e881e5a4c47f1ba632fa6"
+  },
+  "id": "MrMDNhPUnlLTEg7n",
+  "tags": []
+}
