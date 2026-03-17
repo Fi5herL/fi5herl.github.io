@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Line Dashboard - Version 0.0.4</title>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="card">
+            <div class="card-header">
+                <button class="copy-button">Copy</button>
+                <h2>Dashboard Header</h2>
+            </div>
+            <div class="card-body">
+                <div class="ev-section">
+                    <h3 class="ev-section-title">Description</h3>
+                    <p>Description content goes here.</p>
+                </div>
+                <div class="ev-section">
+                    <h3 class="ev-section-title">Tasks List</h3>
+                    <ul class="ev-tasks">
+                        <li>Task 1</li>
+                        <li>Task 2</li>
+                    </ul>
+                </div>
+                <div class="ev-section">
+                    <h3 class="ev-section-title">Changelog</h3>
+                    <p>Changelog details...</p>
+                </div>
+                <div class="ev-section">
+                    <h3 class="ev-section-title">Participants</h3>
+                    <p>List of participants...</p>
+                </div>
+                <div class="ev-section">
+                    <h3 class="ev-section-title">Related Links</h3>
+                    <ul>
+                        <li><a href="#">Link 1</a></li>
+                        <li><a href="#">Link 2</a></li>
+                    </ul>
+                </div>
+                <div class="ev-section">
+                    <h3 class="ev-section-title">Budget</h3>
+                    <p>Budget details go here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // JavaScript for expand/collapse functionality
+        document.querySelectorAll('.card-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const body = this.nextElementSibling;
+                const isExpanded = body.style.display === 'block';
+                body.style.display = isExpanded ? 'none' : 'block';
+                // Save state in DOM
+                this.dataset.isExpanded = !isExpanded;
+            });
+        });
+
+        // Restore expand state after re-render
+        document.querySelectorAll('.card').forEach(card => {
+            const header = card.querySelector('.card-header');
+            const isExpanded = header.dataset.isExpanded === 'true';
+            header.nextElementSibling.style.display = isExpanded ? 'block' : 'none';
+        });
+
+        function copyToClipboard() {
+            // Logic to copy all details in compact plain text format
+        }
+    </script>
+</body>
+</html>
