@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>參數化記憶體故障模擬器 (修正版)</title>
+    <title>參數化記憶體故障模擬器</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; display: flex; gap: 20px; padding: 20px; background-color: #f0f2f5; }
+        body { font-family: 'Segoe UI', sans-serif; display: flex; flex-wrap: wrap; gap: 20px; padding: 20px; background-color: #f0f2f5; }
         .main-panel, .side-panel { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); align-self: flex-start; }
-        .main-panel { flex-grow: 1; display: flex; flex-direction: column; }
+        .main-panel { flex-grow: 1; min-width: 320px; display: flex; flex-direction: column; }
         .side-panel { width: 380px; flex-shrink: 0; display: flex; flex-direction: column; gap: 20px; }
+        @media (max-width: 820px) { .side-panel { width: 100%; } body { flex-direction: column; } }
         h2, h3 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-top: 0; }
         h3 { font-size: 1.1em; text-align: center; }
         .control-group { margin-bottom: 15px; }
@@ -17,16 +18,19 @@
         input, select, button, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-top: 4px; }
         button { background-color: #007bff; color: white; border: none; cursor: pointer; transition: background-color 0.3s; margin-top: 10px; }
         #btn-add-algo { background-color: #28a745; }
+        #btn-clear-faults { background-color: #dc3545; }
         button:hover { filter: brightness(90%); }
         button:disabled { background-color: #ccc; cursor: not-allowed; filter: none; }
         .run-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        #memory-views-container { display: flex; gap: 20px; }
-        .memory-view-wrapper { flex: 1; }
+        #memory-views-container { display: flex; gap: 20px; flex-wrap: wrap; }
+        .memory-view-wrapper { flex: 1; min-width: 200px; }
         .memory-view { display: flex; flex-direction: column; gap: 10px; font-family: 'Courier New', Courier, monospace; border: 1px solid #ddd; padding: 10px; border-radius: 4px; }
         .addr-row { display: flex; align-items: center; gap: 10px; padding: 5px; border-radius: 4px; transition: background-color 0.2s; }
         .addr-row.active { background-color: #fff3cd; outline: 2px solid #fd7e14; }
         .addr-label { font-weight: bold; width: 80px; flex-shrink: 0;}
-        .word-bits { display: flex; gap: 4px; }
+        .word-bits { display: flex; gap: 4px; flex-wrap: wrap; }
+        .bit-header { display: flex; gap: 4px; justify-content: flex-end; padding-left: 90px; margin-bottom: 2px; }
+        .bit-index-label { width: 25px; text-align: center; font-size: 0.7em; color: #888; font-family: monospace; }
         .bit { width: 25px; height: 25px; line-height: 25px; text-align: center; border: 1px solid #ccc; border-radius: 3px; font-weight: bold; position: relative; }
         .bit-0 { background-color: #f8d7da; color: #721c24; } .bit-1 { background-color: #d4edda; color: #155724; }
         .bit.fault-sa0 { border: 2px solid #dc3545; } .bit.fault-sa1 { border: 2px solid #28a745; } .bit.fault-bf { box-shadow: 0 0 0 2px #17a2b8 inset; }
@@ -35,29 +39,66 @@
         #timeline-container { padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px; }
         #timeline { width: 100%; }
         #timeline-label { text-align: center; font-family: monospace; }
+        #progress-bar-container { height: 6px; background: #e9ecef; border-radius: 3px; margin-top: 6px; display: none; }
+        #progress-bar { height: 100%; background: #007bff; border-radius: 3px; width: 0%; transition: width 0.1s; }
         #log-container { flex-grow: 1; height: 200px; background-color: #333; color: #eee; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; padding: 10px; overflow-y: scroll; border-radius: 4px; margin-top: 20px;}
         .log-ok { color: #28a745; } .log-fail { color: #dc3545; font-weight: bold; } .log-op { color: #17a2b8; } .log-info { color: #ffc107; }
         #algorithm-code { height: 150px; }
         #results { padding: 10px; background: #e2e3e5; border-radius: 4px; margin-top: 10px; }
         #results h3, #results h4 { border: none; }
         .range-container { border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px; }
+        /* Legend */
+        .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; font-size: 0.82em; }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-swatch { width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0; }
+        /* Fault list */
+        #fault-list-container { max-height: 120px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 6px; background: #f8f9fa; font-size: 0.85em; font-family: monospace; }
+        #fault-list-container p { margin: 0; color: #888; }
+        .fault-list-item { padding: 2px 0; }
+        .fault-list-item.detected { color: #28a745; }
+        .fault-list-item.undetected { color: #6c757d; }
+        /* Algorithm info */
+        .algo-label-row { display: flex; align-items: center; gap: 6px; }
+        .algo-info-btn { width: auto; padding: 2px 8px; margin: 0; font-size: 0.8em; background: #6c757d; }
+        #algo-info-box { display: none; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px; font-size: 0.82em; color: #495057; margin-top: 6px; line-height: 1.5; }
     </style>
 </head>
 <body>
-    <!-- HTML part is unchanged -->
+    <!-- Side panel -->
     <div class="side-panel">
         <div class="controls">
             <h3>控制面板</h3>
-            <div class="control-group"><label for="mem-addr-count">位址數量</label><input type="number" id="mem-addr-count" value="8" min="2" max="64"><label for="mem-data-width">資料寬度 (bits)</label><input type="number" id="mem-data-width" value="4" min="2" max="16"><button id="btn-set-size">設定 & 重置</button></div>
-            <div class="control-group"><label>注入故障</label><select id="fault-type"><option value="SA0">Stuck-at-0</option><option value="SA1">Stuck-at-1</option><option value="BF_InIn">Bridging (輸入-輸入)</option><option value="BF_OutIn">Bridging (輸出-輸入)</option><option value="BF_OutOut">Bridging (輸出-輸出)</option></select><div class="input-pair"><input type="number" id="fault-addr1" placeholder="位址 1" min="0"><input type="number" id="fault-bit1" placeholder="位元 1" min="0"></div><div class="input-pair" id="fault-cell2" style="display: none;"><input type="number" id="fault-addr2" placeholder="位址 2" min="0"><input type="number" id="fault-bit2" placeholder="位元 2" min="0"></div><button id="btn-inject-fault">注入故障</button></div>
+            <div class="control-group"><label for="mem-addr-count">位址數量</label><input type="number" id="mem-addr-count" value="8" min="2" max="64"><label for="mem-data-width">資料寬度 (bits)</label><input type="number" id="mem-data-width" value="4" min="2" max="16"><button id="btn-set-size">設定 &amp; 重置</button></div>
+            <div class="control-group"><label>注入故障</label><select id="fault-type"><option value="SA0">Stuck-at-0 (SA0)</option><option value="SA1">Stuck-at-1 (SA1)</option><option value="BF_InIn">Bridging (輸入-輸入)</option><option value="BF_OutIn">Bridging (輸出-輸入)</option><option value="BF_OutOut">Bridging (輸出-輸出)</option></select><div class="input-pair"><input type="number" id="fault-addr1" placeholder="位址 1" min="0"><input type="number" id="fault-bit1" placeholder="位元 1" min="0"></div><div class="input-pair" id="fault-cell2" style="display: none;"><input type="number" id="fault-addr2" placeholder="位址 2" min="0"><input type="number" id="fault-bit2" placeholder="位元 2" min="0"></div><button id="btn-inject-fault">注入故障</button></div>
+            <div class="control-group">
+                <label>已注入故障清單 <small style="font-weight:normal;color:#888;">(偵測狀態)</small></label>
+                <div id="fault-list-container"><p>尚未注入故障</p></div>
+                <button id="btn-clear-faults">清除所有故障</button>
+            </div>
+            <!-- Legend -->
+            <div class="legend">
+                <span style="font-weight:bold;width:100%">圖例：</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#f8d7da;border:1px solid #ccc;"></span>位元 0</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#d4edda;border:1px solid #ccc;"></span>位元 1</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#f8d7da;border:2px solid #dc3545;"></span>SA0 故障</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#d4edda;border:2px solid #28a745;"></span>SA1 故障</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#e2e3e5;box-shadow:0 0 0 2px #17a2b8 inset;"></span>Bridging 故障</span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#fff3cd;outline:2px solid #fd7e14;"></span>當前操作位址</span>
+            </div>
         </div>
         <div class="algorithm-runner">
             <h3>演算法驗證</h3>
-            <div class="control-group"><label for="algorithm-select">選擇演算法</label><select id="algorithm-select"></select><button id="btn-add-algo">新增自訂演算法</button></div>
+            <div class="control-group">
+                <div class="algo-label-row"><label for="algorithm-select" style="margin:0">選擇演算法</label><button class="algo-info-btn" id="btn-algo-info">ℹ 說明</button></div>
+                <select id="algorithm-select"></select>
+                <div id="algo-info-box"></div>
+                <button id="btn-add-algo">新增自訂演算法</button>
+            </div>
             <div class="control-group range-container"><label for="range-mode-select">測試範圍</label><select id="range-mode-select"><option value="full">全部區塊</option><option value="addr">僅位址範圍</option><option value="bit">僅位元範圍</option></select><div id="addr-range-inputs" style="display:none;"><div class="input-pair"><input type="number" id="start-addr" min="0" placeholder="起始位址"><input type="number" id="end-addr" min="0" placeholder="結束位址"></div></div><div id="bit-range-inputs" style="display:none;"><div class="input-pair"><input type="number" id="start-bit" min="0" placeholder="起始位元"><input type="number" id="end-bit" min="0" placeholder="結束位元"></div></div></div>
             <div class="control-group"><label for="algorithm-code">演算法程式碼</label><textarea id="algorithm-code"></textarea></div>
             <div class="control-group"><label for="op-delay">自動執行延遲 (ms)</label><input type="number" id="op-delay" value="50" min="0"></div>
             <div class="control-group run-controls"><button id="btn-run-auto">自動執行</button><button id="btn-run-step">單步模式</button><button id="btn-next-step" disabled>下一步</button></div>
+            <div id="progress-bar-container"><div id="progress-bar"></div></div>
         </div>
     </div>
     <div class="main-panel">
@@ -83,35 +124,57 @@ class Memory { /* Memory class is unchanged */
 
 const UI = {
     // Selectors
-    memAddrCountInput: document.getElementById('mem-addr-count'), memDataWidthInput: document.getElementById('mem-data-width'), btnSetSize: document.getElementById('btn-set-size'), viewEffective: document.getElementById('view-effective'), viewPhysical: document.getElementById('view-physical'), faultTypeSelect: document.getElementById('fault-type'), faultCell2Div: document.getElementById('fault-cell2'), faultAddr1Input: document.getElementById('fault-addr1'), faultBit1Input: document.getElementById('fault-bit1'), faultAddr2Input: document.getElementById('fault-addr2'), faultBit2Input: document.getElementById('fault-bit2'), btnInjectFault: document.getElementById('btn-inject-fault'), btnRunAuto: document.getElementById('btn-run-auto'), btnRunStep: document.getElementById('btn-run-step'), btnNextStep: document.getElementById('btn-next-step'), btnAddAlgo: document.getElementById('btn-add-algo'), opDelayInput: document.getElementById('op-delay'), logContainer: document.getElementById('log-container'), resultsDiv: document.getElementById('results'), algoSelect: document.getElementById('algorithm-select'), algoCode: document.getElementById('algorithm-code'), timeline: document.getElementById('timeline'), timelineLabel: document.getElementById('timeline-label'),
+    memAddrCountInput: document.getElementById('mem-addr-count'), memDataWidthInput: document.getElementById('mem-data-width'), btnSetSize: document.getElementById('btn-set-size'), viewEffective: document.getElementById('view-effective'), viewPhysical: document.getElementById('view-physical'), faultTypeSelect: document.getElementById('fault-type'), faultCell2Div: document.getElementById('fault-cell2'), faultAddr1Input: document.getElementById('fault-addr1'), faultBit1Input: document.getElementById('fault-bit1'), faultAddr2Input: document.getElementById('fault-addr2'), faultBit2Input: document.getElementById('fault-bit2'), btnInjectFault: document.getElementById('btn-inject-fault'), btnClearFaults: document.getElementById('btn-clear-faults'), btnRunAuto: document.getElementById('btn-run-auto'), btnRunStep: document.getElementById('btn-run-step'), btnNextStep: document.getElementById('btn-next-step'), btnAddAlgo: document.getElementById('btn-add-algo'), btnAlgoInfo: document.getElementById('btn-algo-info'), algoInfoBox: document.getElementById('algo-info-box'), opDelayInput: document.getElementById('op-delay'), logContainer: document.getElementById('log-container'), resultsDiv: document.getElementById('results'), algoSelect: document.getElementById('algorithm-select'), algoCode: document.getElementById('algorithm-code'), timeline: document.getElementById('timeline'), timelineLabel: document.getElementById('timeline-label'), faultListContainer: document.getElementById('fault-list-container'), progressBarContainer: document.getElementById('progress-bar-container'), progressBar: document.getElementById('progress-bar'),
     rangeModeSelect: document.getElementById('range-mode-select'), addrRangeInputs: document.getElementById('addr-range-inputs'), bitRangeInputs: document.getElementById('bit-range-inputs'), startAddrInput: document.getElementById('start-addr'), endAddrInput: document.getElementById('end-addr'), startBitInput: document.getElementById('start-bit'), endBitInput: document.getElementById('end-bit'),
     // State
-    memory: null, algorithms: {}, defaultAlgorithms: {}, executionGenerator: null, executionHistory: [], executionState: 'idle',
+    memory: null, algorithms: {}, defaultAlgorithms: {}, executionGenerator: null, executionHistory: [], executionState: 'idle', totalSteps: 0,
 
-    init() { /* unchanged */
+    init() {
         this.btnAddAlgo.addEventListener('click', () => this.addCustomAlgorithm());
-        this.btnSetSize.addEventListener('click', () => this.createMemory()); this.btnInjectFault.addEventListener('click', () => this.injectFault()); this.btnRunAuto.addEventListener('click', () => this.prepareAndRun(false)); this.btnRunStep.addEventListener('click', () => this.prepareAndRun(true)); this.btnNextStep.addEventListener('click', () => this.executeNextStep()); this.timeline.addEventListener('input', () => this.renderStateFromHistory(parseInt(this.timeline.value))); this.faultTypeSelect.addEventListener('change', () => this.toggleFaultInputs());
-        this.algoSelect.addEventListener('change', () => this.loadSelectedAlgorithm());
+        this.btnSetSize.addEventListener('click', () => this.createMemory()); this.btnInjectFault.addEventListener('click', () => this.injectFault()); this.btnClearFaults.addEventListener('click', () => this.clearFaults()); this.btnRunAuto.addEventListener('click', () => this.prepareAndRun(false)); this.btnRunStep.addEventListener('click', () => this.prepareAndRun(true)); this.btnNextStep.addEventListener('click', () => this.executeNextStep()); this.timeline.addEventListener('input', () => this.renderStateFromHistory(parseInt(this.timeline.value))); this.faultTypeSelect.addEventListener('change', () => this.toggleFaultInputs());
+        this.algoSelect.addEventListener('change', () => this.onAlgoSelectChange());
+        this.btnAlgoInfo.addEventListener('click', () => { const box = this.algoInfoBox; box.style.display = box.style.display === 'none' ? 'block' : 'none'; });
         this.rangeModeSelect.addEventListener('change', () => this.updateRangeUI());
         this.loadAlgorithms();
         this.createMemory();
     },
     
-    loadAlgorithms() { /* unchanged */
+    loadAlgorithms() {
         this.defaultAlgorithms = {
             "Write/Read 0x00": `log('寫入/讀取 0x00...');\nfor(let i=startAddr; i<=endAddr; i++) { yield* mem.write(i, 0); }\nfor(let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, 0); }`,
             "Write/Read 0xFF..": `const ALL_ONES = mem.allOnes();\nlog('寫入/讀取 All 1s...');\nfor(let i=startAddr; i<=endAddr; i++) { yield* mem.write(i, ALL_ONES); }\nfor(let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, ALL_ONES); }`,
             "Write/Read 0x55..": `const DW = mem.dataWidth(); let p=0; for (let i=0;i<DW;i+=2){p|=(1<<i);}\nlog('寫入/讀取 0x55 pattern...');\nfor(let i=startAddr; i<=endAddr; i++) { yield* mem.write(i, p); }\nfor(let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, p); }`,
             "Write/Read 0xAA..": `const DW = mem.dataWidth(); let p=0; for (let i=1;i<DW;i+=2){p|=(1<<i);}\nlog('寫入/讀取 0xAA pattern...');\nfor(let i=startAddr; i<=endAddr; i++) { yield* mem.write(i, p); }\nfor(let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, p); }`,
-            "March C- (Word)": `const ALL_ONES = mem.allOnes();\nlog('M0'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.write(i, 0); }\nlog('M1'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, 0); yield* mem.write(i, ALL_ONES); }\nlog('M2'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, ALL_ONES); yield* mem.write(i, 0); }\nlog('M3'); for (let i=endAddr; i>=startAddr; i--) { yield* mem.readAndCheck(i, 0); yield* mem.write(i, ALL_ONES); }\nlog('M4'); for (let i=endAddr; i>=startAddr; i--) { yield* mem.readAndCheck(i, ALL_ONES); yield* mem.write(i, 0); }\nlog('M5'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, 0); }`,
-            "March C- (Bit)": `const ALL_ONES = mem.allOnes();\nfor (let k = startBit; k <= endBit; k++) {\n    log(\`-- Testing bit \${k} --\`);\n    const base = (1 << k); const inv = ALL_ONES & ~base;\n    log('M0'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.write(i, inv); }\n    log('M1'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, inv); yield* mem.write(i, base); }\n    log('M2'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, base); yield* mem.write(i, inv); }\n    log('M3'); for (let i=endAddr; i>=startAddr; i--) { yield* mem.readAndCheck(i, inv); yield* mem.write(i, base); }\n    log('M4'); for (let i=endAddr; i>=startAddr; i--) { yield* mem.readAndCheck(i, base); yield* mem.write(i, inv); }\n    log('M5'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, inv); }\n}`,
-            "March C (Word)": `const ALL_ONES = mem.allOnes();\nlog('M0'); for(let i=startAddr;i<=endAddr;i++){yield* mem.write(i,0);}\nlog('M1'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,0);yield* mem.write(i,ALL_ONES);}\nlog('M2'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,ALL_ONES);yield* mem.write(i,0);}\nlog('M3'); for(let i=endAddr;i>=startAddr;i--){yield* mem.readAndCheck(i,0);yield* mem.write(i,ALL_ONES);}\nlog('M4'); for(let i=endAddr;i>=startAddr;i--){yield* mem.readAndCheck(i,ALL_ONES);yield* mem.write(i,0);}\nlog('M5'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,0);}`,
-            "March C (Bit)": `const ALL_ONES = mem.allOnes();\nfor (let k = startBit; k <= endBit; k++) {\n    log(\`-- Testing bit \${k} --\`);\n    const base = (1 << k); const inv = ALL_ONES & ~base;\n    log('M0'); for(let i=startAddr;i<=endAddr;i++){yield* mem.write(i,base);}\n    log('M1'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,base);yield* mem.write(i,inv);}\n    log('M2'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,inv);yield* mem.write(i,base);}\n    log('M3'); for(let i=endAddr;i>=startAddr;i--){yield* mem.readAndCheck(i,base);yield* mem.write(i,inv);}\n    log('M4'); for(let i=endAddr;i>=startAddr;i--){yield* mem.readAndCheck(i,inv);yield* mem.write(i,base);}\n    log('M5'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,base);}\n}`,
-            "Checkerboard": `const ALL_ONES = mem.allOnes(); const P1=0xAAAAAAAAAAAAAAA&ALL_ONES; const P2=0x5555555555555555&ALL_ONES;\nlog('Checkerboard...');\nfor(let i=startAddr;i<=endAddr;i++){yield* mem.write(i, (i%2===0)?P1:P2);}\nfor(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i, (i%2===0)?P1:P2);}`,
-            "Walkpat (Word)": `const ALL_ONES = mem.allOnes();\nlog('Word-Walk...');\nfor(let i=startAddr;i<=endAddr;i++){for(let j=startAddr;j<=endAddr;j++){yield* mem.write(j,0);}};\nfor(let i=startAddr;i<=endAddr;i++){\nlog(\`-- W1 @A\${i} --\`);yield* mem.write(i,ALL_ONES);\nfor(let j=startAddr;j<=endAddr;j++){yield* mem.readAndCheck(j,i===j?ALL_ONES:0);}\nyield* mem.write(i,0);}`,
+            // March C-: {⇕(w0); ↑(r0,w1); ↑(r1,w0); ↓(r0,w1); ↓(r1,w0)} — 8N ops, NO final read step
+            "March C- (Word)": `const ALL_ONES = mem.allOnes();\nlog('M0 ⇕(w0)'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.write(i, 0); }\nlog('M1 ↑(r0,w1)'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, 0); yield* mem.write(i, ALL_ONES); }\nlog('M2 ↑(r1,w0)'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, ALL_ONES); yield* mem.write(i, 0); }\nlog('M3 ↓(r0,w1)'); for (let i=endAddr; i>=startAddr; i--) { yield* mem.readAndCheck(i, 0); yield* mem.write(i, ALL_ONES); }\nlog('M4 ↓(r1,w0)'); for (let i=endAddr; i>=startAddr; i--) { yield* mem.readAndCheck(i, ALL_ONES); yield* mem.write(i, 0); }`,
+            "March C- (Bit)": `const ALL_ONES = mem.allOnes();\nfor (let k = startBit; k <= endBit; k++) {\n    log(\`-- Testing bit \${k} --\`);\n    const base = (1 << k); const inv = ALL_ONES & ~base;\n    log('M0 ⇕(w0)'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.write(i, inv); }\n    log('M1 ↑(r0,w1)'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, inv); yield* mem.write(i, base); }\n    log('M2 ↑(r1,w0)'); for (let i=startAddr; i<=endAddr; i++) { yield* mem.readAndCheck(i, base); yield* mem.write(i, inv); }\n    log('M3 ↓(r0,w1)'); for (let i=endAddr; i>=startAddr; i--) { yield* mem.readAndCheck(i, inv); yield* mem.write(i, base); }\n    log('M4 ↓(r1,w0)'); for (let i=endAddr; i>=startAddr; i--) { yield* mem.readAndCheck(i, base); yield* mem.write(i, inv); }\n}`,
+            // March C: {⇕(w0); ↑(r0,w1); ↑(r1,w0); ↓(r0,w1); ↓(r1,w0); ⇕(r0)} — 10N ops, WITH final read step
+            "March C (Word)": `const ALL_ONES = mem.allOnes();\nlog('M0 ⇕(w0)'); for(let i=startAddr;i<=endAddr;i++){yield* mem.write(i,0);}\nlog('M1 ↑(r0,w1)'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,0);yield* mem.write(i,ALL_ONES);}\nlog('M2 ↑(r1,w0)'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,ALL_ONES);yield* mem.write(i,0);}\nlog('M3 ↓(r0,w1)'); for(let i=endAddr;i>=startAddr;i--){yield* mem.readAndCheck(i,0);yield* mem.write(i,ALL_ONES);}\nlog('M4 ↓(r1,w0)'); for(let i=endAddr;i>=startAddr;i--){yield* mem.readAndCheck(i,ALL_ONES);yield* mem.write(i,0);}\nlog('M5 ⇕(r0)'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,0);}`,
+            "March C (Bit)": `const ALL_ONES = mem.allOnes();\nfor (let k = startBit; k <= endBit; k++) {\n    log(\`-- Testing bit \${k} --\`);\n    const base = (1 << k); const inv = ALL_ONES & ~base;\n    log('M0 ⇕(w0)'); for(let i=startAddr;i<=endAddr;i++){yield* mem.write(i,inv);}\n    log('M1 ↑(r0,w1)'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,inv);yield* mem.write(i,base);}\n    log('M2 ↑(r1,w0)'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,base);yield* mem.write(i,inv);}\n    log('M3 ↓(r0,w1)'); for(let i=endAddr;i>=startAddr;i--){yield* mem.readAndCheck(i,inv);yield* mem.write(i,base);}\n    log('M4 ↓(r1,w0)'); for(let i=endAddr;i>=startAddr;i--){yield* mem.readAndCheck(i,base);yield* mem.write(i,inv);}\n    log('M5 ⇕(r0)'); for(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i,inv);}\n}`,
+            // Checkerboard: write alternating 0101/1010, read back; then write inverse, read back
+            "Checkerboard": `const ALL_ONES = mem.allOnes();\nconst DW = mem.dataWidth();\nlet P1=0,P2=0; for(let b=0;b<DW;b++){if(b%2===0)P1|=(1<<b);else P2|=(1<<b);}\nlog('棋盤格 Pass 1: 寫入交替圖樣...');\nfor(let i=startAddr;i<=endAddr;i++){yield* mem.write(i, (i%2===0)?P1:P2);}\nfor(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i, (i%2===0)?P1:P2);}\nlog('棋盤格 Pass 2: 寫入反相圖樣...');\nfor(let i=startAddr;i<=endAddr;i++){yield* mem.write(i, (i%2===0)?P2:P1);}\nfor(let i=startAddr;i<=endAddr;i++){yield* mem.readAndCheck(i, (i%2===0)?P2:P1);}`,
+            // Walkpat: O(n) init (not O(n²))
+            "Walkpat (Word)": `const ALL_ONES = mem.allOnes();\nlog('Word-Walk: 初始化...');\nfor(let j=startAddr;j<=endAddr;j++){yield* mem.write(j,0);}\nfor(let i=startAddr;i<=endAddr;i++){\nlog(\`-- W1 @A\${i} --\`);yield* mem.write(i,ALL_ONES);\nfor(let j=startAddr;j<=endAddr;j++){yield* mem.readAndCheck(j,i===j?ALL_ONES:0);}\nyield* mem.write(i,0);}`,
             "Walkpat (Bit)": `const DW = mem.dataWidth();\nlog('Bit-Walk...');\nfor (let i = startAddr; i <= endAddr; i++) {\nfor (let k = startBit; k <= endBit; k++) {\nlog(\`-- W1 @A\${i}B\${k} --\`);\nfor(let j=startAddr;j<=endAddr;j++){yield* mem.write(j,0);}\nconst p=(1<<k);yield* mem.write(i,p);\nfor(let j=startAddr;j<=endAddr;j++){yield* mem.readAndCheck(j, i===j?p:0);}\n}}`,
             "Galpat (Word)": `const ALL_ONES = mem.allOnes();\nlog('Word-Galpat...');\nfor(let i=startAddr;i<=endAddr;i++){yield* mem.write(i,0);}\nfor(let i=startAddr;i<=endAddr;i++){\nlog(\`-- Base @A\${i} --\`);\nyield* mem.write(i,ALL_ONES);\nfor(let j=startAddr;j<=endAddr;j++){\nif(i!==j){yield* mem.readAndCheck(j,0);yield* mem.readAndCheck(i,ALL_ONES);}}\nyield* mem.write(i,0);}`,
-            "Galpat (Bit)": `const DW = mem.dataWidth();\nlog('Bit-Galpat...');\nfor (let i=startAddr;i<=endAddr;i++){\nfor (let k=startBit;k<=endBit;k++) {\nlog(\`-- Base @A\${i}B\${k} --\`);\nfor(let j=startAddr;j<=endAddr;j++){yield* mem.write(j,0);}\nconst p=(1<<k);yield* mem.write(i,p);\nfor(let j=startAddr;j<=endAddr;j++){\nfor (let l=startBit;l<=endBit;l++){\nif(i===j&&k===l)continue;\nyield* mem.readAndCheck(j,0);\nyield* mem.readAndCheck(i,p);}}}}`,
+            // Galpat (Bit): when j===i read expected value is p (not 0)
+            "Galpat (Bit)": `const DW = mem.dataWidth();\nlog('Bit-Galpat...');\nfor (let i=startAddr;i<=endAddr;i++){\nfor (let k=startBit;k<=endBit;k++) {\nlog(\`-- Base @A\${i}B\${k} --\`);\nfor(let j=startAddr;j<=endAddr;j++){yield* mem.write(j,0);}\nconst p=(1<<k);yield* mem.write(i,p);\nfor(let j=startAddr;j<=endAddr;j++){\nfor (let l=startBit;l<=endBit;l++){\nif(i===j&&k===l)continue;\nyield* mem.readAndCheck(j, j===i ? p : 0);\nyield* mem.readAndCheck(i,p);}}}}`,
+        };
+        // Algorithm descriptions for info panel
+        this.algoDescriptions = {
+            "Write/Read 0x00": "簡單寫全0再讀回。可偵測: SA1 (stuck-at-1)。複雜度: O(2n)。",
+            "Write/Read 0xFF..": "簡單寫全1再讀回。可偵測: SA0 (stuck-at-0)。複雜度: O(2n)。",
+            "Write/Read 0x55..": "寫入 0101...圖樣再讀回。可偵測 SA 故障。複雜度: O(2n)。",
+            "Write/Read 0xAA..": "寫入 1010...圖樣再讀回。可偵測 SA 故障。複雜度: O(2n)。",
+            "March C- (Word)": "標準 March C− 演算法 (8N 操作): {⇕(w0); ↑(r0,w1); ↑(r1,w0); ↓(r0,w1); ↓(r1,w0)}。可偵測: SAF, TF, AF, 大部分 CF。比 March C 少一個 M5 最終讀取步驟。",
+            "March C- (Bit)": "位元導向的 March C− (8N/bit)。每次針對一個位元，其餘位元為背景值，可精確分離位元間耦合故障。",
+            "March C (Word)": "完整 March C 演算法 (10N 操作): {⇕(w0); ↑(r0,w1); ↑(r1,w0); ↓(r0,w1); ↓(r1,w0); ⇕(r0)}。比 March C− 多一個最終 M5 讀取步驟，故障覆蓋率略高。",
+            "March C (Bit)": "位元導向的完整 March C (10N/bit)。包含最終 M5 讀取步驟。",
+            "Checkerboard": "棋盤格測試 (2 Pass): 先寫交替 0101/1010 圖樣再讀回，再寫反相圖樣再讀回。可偵測: SA, 鄰近位元耦合。複雜度: O(4n)。",
+            "Walkpat (Word)": "Walking Pattern (字元級): 每次只有一個地址為全1，其餘為全0，逐一「走過」所有地址並讀回。可偵測: AF, 部分 CF。複雜度: O(n²)。",
+            "Walkpat (Bit)": "Walking Pattern (位元級): 逐位元「走過」，可更精細偵測位元間耦合故障。複雜度: O(n²×dataWidth)。",
+            "Galpat (Word)": "Galloping Pattern (字元級): 設定一個「基底」地址後，交替讀取所有其他地址與基底，偵測長程耦合。複雜度: O(n²)。",
+            "Galpat (Bit)": "Galloping Pattern (位元級): 以單一位元為基底，交替讀取所有其他位元，偵測位元間長程耦合故障。複雜度: O(n²×dataWidth²)。",
         };
         const customAlgos = JSON.parse(localStorage.getItem('customMemoryAlgorithms')) || {};
         this.algorithms = { ...this.defaultAlgorithms, ...customAlgos };
@@ -129,6 +192,46 @@ const UI = {
                 this.algoSelect.appendChild(option);
             }
         }
+    },
+
+    onAlgoSelectChange() {
+        const currentName = this.algoSelect.value;
+        if (this._hasUnsavedCodeChanges()) {
+            if (!confirm('演算法程式碼已修改但尚未儲存，確定要切換嗎？')) {
+                this.algoSelect.value = this._previousAlgoName;
+                return;
+            }
+        }
+        this.loadSelectedAlgorithm();
+    },
+
+    _hasUnsavedCodeChanges() {
+        const previousCode = this._previousAlgoCode;
+        if (previousCode === undefined) return false;
+        const currentCode = this.algoCode.value;
+        const originalCode = this.algorithms[this._previousAlgoName] || '';
+        return currentCode !== previousCode && previousCode !== originalCode;
+    },
+
+    clearFaults() {
+        if (this.executionState === 'running' || this.executionState === 'paused') return;
+        if (this.memory.faults.length === 0) return;
+        if (!confirm('確定要清除所有已注入的故障嗎？')) return;
+        this.memory.faults = [];
+        this.log('系統', '已清除所有故障。', 'info');
+        this.renderStateFromHistory(0);
+        this.updateFaultList();
+    },
+
+    updateFaultList() {
+        const faults = this.memory ? this.memory.faults : [];
+        if (faults.length === 0) {
+            this.faultListContainer.innerHTML = '<p>尚未注入故障</p>';
+            return;
+        }
+        this.faultListContainer.innerHTML = faults.map(f =>
+            `<div class="fault-list-item ${f.detected ? 'detected' : 'undetected'}">${f.detected ? '✔' : '○'} ${f.id}</div>`
+        ).join('');
     },
     
     addCustomAlgorithm() {
@@ -181,20 +284,39 @@ const UI = {
         }
     },
     
-    loadSelectedAlgorithm() { this.algoCode.value = this.algorithms[this.algoSelect.value] || ''; this.updateRangeUI(); },
+    loadSelectedAlgorithm() {
+        const name = this.algoSelect.value;
+        this.algoCode.value = this.algorithms[name] || '';
+        this._previousAlgoName = name;
+        this._previousAlgoCode = this.algoCode.value;
+        // Update info box
+        const desc = this.algoDescriptions && this.algoDescriptions[name];
+        this.algoInfoBox.textContent = desc || '(無說明)';
+        this.updateRangeUI();
+    },
     createMemory() { this.resetSimulation(true); this.updateRangeUI(); },
     
     // ... (The rest of the UI object is UNCHANGED) ...
-    resetSimulation(isNewMemory) { if (isNewMemory) { const addrCount = parseInt(this.memAddrCountInput.value); const dataWidth = parseInt(this.memDataWidthInput.value); if (isNaN(addrCount) || addrCount <= 0 || isNaN(dataWidth) || dataWidth <= 0) { alert('請輸入有效參數'); return; } this.memory = new Memory(addrCount, dataWidth); this.startAddrInput.max = addrCount-1; this.endAddrInput.max = addrCount-1; this.startBitInput.max = dataWidth-1; this.endBitInput.max = dataWidth-1; } else { this.memory.cells.fill(0); this.memory.faults.forEach(f => f.detected = false); } this.executionHistory = [{ step: 0, physicalState: [...this.memory.cells], log: [], activeAddress: null }]; this.executionGenerator = null; this.executionState = 'idle'; this.logContainer.innerHTML = ''; this.resultsDiv.innerHTML = '等待演算法執行...'; this.renderStateFromHistory(0); this.updateUIState(); },
-    prepareAndRun(isSingleStep) { this.resetSimulation(false); const GeneratorFunction = Object.getPrototypeOf(function*(){}).constructor; const rangeMode = this.rangeModeSelect.value; let startAddr = 0, endAddr = this.memory.addressCount - 1; let startBit = 0, endBit = this.memory.dataWidth - 1; if (rangeMode === 'addr') { startAddr = parseInt(this.startAddrInput.value); endAddr = parseInt(this.endAddrInput.value); if (isNaN(startAddr) || isNaN(endAddr) || startAddr > endAddr || endAddr >= this.memory.addressCount) { alert('無效的位址範圍！'); return; } } else if (rangeMode === 'bit') { startBit = parseInt(this.startBitInput.value); endBit = parseInt(this.endBitInput.value); if (isNaN(startBit) || isNaN(endBit) || startBit > endBit || endBit >= this.memory.dataWidth) { alert('無效的位元範圍！'); return; } } const memApi = { size: () => this.memory.addressCount, allOnes: () => this.memory.allOnesValue, dataWidth: () => this.memory.dataWidth, write: function* (addr, val) { const logEntry = {op: 'WRITE', msg: `寫入 ${val.toString(2).padStart(UI.memory.dataWidth, '0')} 到 Addr ${addr}`, type: 'ok'}; yield { addr, logEntry }; UI.memory.write(addr, val); }, readAndCheck: function* (addr, expectedVal) { const actualVal = UI.memory.read(addr); const expectedStr = expectedVal.toString(2).padStart(UI.memory.dataWidth, '0'); const actualStr = actualVal.toString(2).padStart(UI.memory.dataWidth, '0'); let message = `讀取 Addr ${addr}，預期: ${expectedStr}, 實際: ${actualStr}`; let logType = 'ok'; if (actualVal !== expectedVal) { message += ' -> 偵測到故障！'; logType = 'fail'; UI.detectFaults(addr, expectedVal, actualVal); } const logEntry = {op: 'CHECK', msg: message, type: logType}; yield { addr, logEntry }; } }; try { const algoCodeToRun = this.algoCode.value; this.algorithms[this.algoSelect.value] = algoCodeToRun; if (!this.defaultAlgorithms[this.algoSelect.value]) { this.saveCustomAlgorithms(); } const algoGenerator = new GeneratorFunction('mem', 'log', 'startAddr', 'endAddr', 'startBit', 'endBit', algoCodeToRun); this.executionGenerator = algoGenerator(memApi, (msg) => this.log('ALGO', msg, 'info'), startAddr, endAddr, startBit, endBit); this.executionState = isSingleStep ? 'paused' : 'running'; this.updateUIState(); if (isSingleStep) { this.log('系統', '進入單步模式。'); } else { this.autoStepLoop(); } } catch(e) { this.log('錯誤', `演算法編譯失敗: ${e.message}`, 'fail'); this.executionState = 'idle'; this.updateUIState(); } },
-    executeNextStep() { if (!this.executionGenerator || this.executionState === 'finished') return; const result = this.executionGenerator.next(); if (result.done) { this.executionState = 'finished'; this.log('系統', '演算法執行完畢。'); this.analyzeResults(); this.updateUIState(); return; } const { addr, logEntry } = result.value; const newLogHistory = [...(this.executionHistory[this.executionHistory.length - 1].log || []), logEntry]; this.executionHistory.push({ step: this.executionHistory.length, physicalState: [...this.memory.cells], log: newLogHistory, activeAddress: addr }); this.renderStateFromHistory(this.executionHistory.length - 1); },
+    resetSimulation(isNewMemory) { if (isNewMemory) { const addrCount = parseInt(this.memAddrCountInput.value); const dataWidth = parseInt(this.memDataWidthInput.value); if (isNaN(addrCount) || addrCount <= 0 || isNaN(dataWidth) || dataWidth <= 0) { alert('請輸入有效參數'); return; } this.memory = new Memory(addrCount, dataWidth); this.startAddrInput.max = addrCount-1; this.endAddrInput.max = addrCount-1; this.startBitInput.max = dataWidth-1; this.endBitInput.max = dataWidth-1; } else { this.memory.cells.fill(0); this.memory.faults.forEach(f => f.detected = false); } this.executionHistory = [{ step: 0, physicalState: [...this.memory.cells], log: [], activeAddress: null }]; this.executionGenerator = null; this.executionState = 'idle'; this.totalSteps = 0; this.logContainer.innerHTML = ''; this.resultsDiv.innerHTML = '等待演算法執行...'; this.progressBarContainer.style.display = 'none'; this.progressBar.style.width = '0%'; this.renderStateFromHistory(0); this.updateUIState(); this.updateFaultList(); },
+    prepareAndRun(isSingleStep) { this.resetSimulation(false); const GeneratorFunction = Object.getPrototypeOf(function*(){}).constructor; const rangeMode = this.rangeModeSelect.value; let startAddr = 0, endAddr = this.memory.addressCount - 1; let startBit = 0, endBit = this.memory.dataWidth - 1; if (rangeMode === 'addr') { startAddr = parseInt(this.startAddrInput.value); endAddr = parseInt(this.endAddrInput.value); if (isNaN(startAddr) || isNaN(endAddr) || startAddr > endAddr || endAddr >= this.memory.addressCount) { alert('無效的位址範圍！'); return; } } else if (rangeMode === 'bit') { startBit = parseInt(this.startBitInput.value); endBit = parseInt(this.endBitInput.value); if (isNaN(startBit) || isNaN(endBit) || startBit > endBit || endBit >= this.memory.dataWidth) { alert('無效的位元範圍！'); return; } } const memApi = { size: () => this.memory.addressCount, allOnes: () => this.memory.allOnesValue, dataWidth: () => this.memory.dataWidth, write: function* (addr, val) { const logEntry = {op: 'WRITE', msg: `寫入 ${val.toString(2).padStart(UI.memory.dataWidth, '0')} 到 Addr ${addr}`, type: 'ok'}; yield { addr, logEntry }; UI.memory.write(addr, val); }, readAndCheck: function* (addr, expectedVal) { const actualVal = UI.memory.read(addr); const expectedStr = expectedVal.toString(2).padStart(UI.memory.dataWidth, '0'); const actualStr = actualVal.toString(2).padStart(UI.memory.dataWidth, '0'); let message = `讀取 Addr ${addr}，預期: ${expectedStr}, 實際: ${actualStr}`; let logType = 'ok'; if (actualVal !== expectedVal) { message += ' -> 偵測到故障！'; logType = 'fail'; UI.detectFaults(addr, expectedVal, actualVal); } const logEntry = {op: 'CHECK', msg: message, type: logType}; yield { addr, logEntry }; } }; try { const algoCodeToRun = this.algoCode.value; this.algorithms[this.algoSelect.value] = algoCodeToRun; if (!this.defaultAlgorithms[this.algoSelect.value]) { this.saveCustomAlgorithms(); } const algoGenerator = new GeneratorFunction('mem', 'log', 'startAddr', 'endAddr', 'startBit', 'endBit', algoCodeToRun); this.executionGenerator = algoGenerator(memApi, (msg) => this.log('ALGO', msg, 'info'), startAddr, endAddr, startBit, endBit); this.executionState = isSingleStep ? 'paused' : 'running'; this.progressBarContainer.style.display = 'block'; this.updateUIState(); if (isSingleStep) { this.log('系統', '進入單步模式。'); } else { this.autoStepLoop(); } } catch(e) { this.log('錯誤', `演算法編譯失敗: ${e.message}`, 'fail'); this.log('提示', '請檢查語法錯誤，確認使用 yield* mem.write() 和 yield* mem.readAndCheck()', 'info'); this.executionState = 'idle'; this.updateUIState(); } },
+    executeNextStep() { if (!this.executionGenerator || this.executionState === 'finished') return; let result; try { result = this.executionGenerator.next(); } catch(e) { this.log('錯誤', `演算法執行時發生錯誤: ${e.message}`, 'fail'); this.executionState = 'finished'; this.updateUIState(); this.progressBarContainer.style.display = 'none'; return; } if (result.done) { this.executionState = 'finished'; this.log('系統', '演算法執行完畢。'); this.analyzeResults(); this.updateUIState(); this.progressBarContainer.style.display = 'none'; this.updateFaultList(); return; } const { addr, logEntry } = result.value; const newLogHistory = [...(this.executionHistory[this.executionHistory.length - 1].log || []), logEntry]; this.executionHistory.push({ step: this.executionHistory.length, physicalState: [...this.memory.cells], log: newLogHistory, activeAddress: addr }); this.renderStateFromHistory(this.executionHistory.length - 1); this.updateFaultList();
+        // Progress is an approximation: we track the highest step count seen as a rolling
+        // denominator, capping display at 99% until the generator signals done.
+        this.totalSteps = Math.max(this.totalSteps, this.executionHistory.length);
+        const pct = Math.min(99, Math.round((this.executionHistory.length / (this.totalSteps + 1)) * 100));
+        this.progressBar.style.width = pct + '%'; },
     autoStepLoop() { if (this.executionState !== 'running') return; this.executeNextStep(); if (this.executionState === 'running') { setTimeout(() => this.autoStepLoop(), this.opDelayInput.value); } },
     renderStateFromHistory(stepIndex) { if (!this.executionHistory[stepIndex]) return; const state = this.executionHistory[stepIndex]; this.memory.cells = [...state.physicalState]; this.viewEffective.innerHTML = ''; this.viewPhysical.innerHTML = ''; this._renderSingleView(this.viewEffective, false, state.activeAddress); this._renderSingleView(this.viewPhysical, true, state.activeAddress); this.logContainer.innerHTML = ''; (state.log || []).forEach(l => this.log(l.op, l.msg, l.type, false)); this.timeline.max = this.executionHistory.length - 1; this.timeline.value = stepIndex; this.timelineLabel.textContent = `Step ${stepIndex} / ${this.executionHistory.length - 1}`; },
-    _renderSingleView(container, isPhysical, activeAddress) { const { addressCount, dataWidth, faults } = this.memory; for (let i = 0; i < addressCount; i++) { const row = document.createElement('div'); row.className = 'addr-row'; if (i === activeAddress) row.classList.add('active'); const label = document.createElement('div'); label.className = 'addr-label'; label.textContent = `Addr ${i}:`; row.appendChild(label); const bitsContainer = document.createElement('div'); bitsContainer.className = 'word-bits'; const wordValue = isPhysical ? this.memory.cells[i] : this.memory.read(i); for (let j = 0; j < dataWidth; j++) { const bit = document.createElement('div'); bit.className = 'bit'; const bitValue = (wordValue >> j) & 1; bit.textContent = bitValue; bit.classList.add(bitValue === 0 ? 'bit-0' : 'bit-1'); const bitFaults = faults.filter(f => (f.addr1 === i && f.bit1 === j) || (f.addr2 === i && f.bit2 === j)); if (bitFaults.length > 0) { bitFaults.forEach(f => { if (f.type.startsWith('SA')) bit.classList.add(`fault-${f.type.toLowerCase()}`); else bit.classList.add('fault-bf'); }); const tooltip = document.createElement('span'); tooltip.className = 'fault-tooltip'; tooltip.textContent = bitFaults.map(f => f.id).join(', '); bit.appendChild(tooltip); } bitsContainer.insertBefore(bit, bitsContainer.firstChild); } row.appendChild(bitsContainer); container.appendChild(row); } },
-    updateUIState() { const state = this.executionState; this.btnRunAuto.disabled = (state === 'running' || state === 'paused'); this.btnRunStep.disabled = (state === 'running' || state === 'paused'); this.btnNextStep.disabled = (state !== 'paused'); this.btnInjectFault.disabled = (state === 'running' || state === 'paused'); this.btnSetSize.disabled = (state === 'running' || state === 'paused'); this.timeline.disabled = (state !== 'finished' || this.executionHistory.length <= 1); },
+    _renderSingleView(container, isPhysical, activeAddress) { const { addressCount, dataWidth, faults } = this.memory;
+        // Add bit-index header (MSB on left)
+        const header = document.createElement('div'); header.className = 'bit-header';
+        for (let j = dataWidth - 1; j >= 0; j--) { const lbl = document.createElement('div'); lbl.className = 'bit-index-label'; lbl.textContent = `b${j}`; header.appendChild(lbl); }
+        container.appendChild(header);
+        for (let i = 0; i < addressCount; i++) { const row = document.createElement('div'); row.className = 'addr-row'; if (i === activeAddress) row.classList.add('active'); const label = document.createElement('div'); label.className = 'addr-label'; label.textContent = `Addr ${i}:`; row.appendChild(label); const bitsContainer = document.createElement('div'); bitsContainer.className = 'word-bits'; const wordValue = isPhysical ? this.memory.cells[i] : this.memory.read(i); for (let j = 0; j < dataWidth; j++) { const bit = document.createElement('div'); bit.className = 'bit'; const bitValue = (wordValue >> j) & 1; bit.textContent = bitValue; bit.classList.add(bitValue === 0 ? 'bit-0' : 'bit-1'); const bitFaults = faults.filter(f => (f.addr1 === i && f.bit1 === j) || (f.addr2 === i && f.bit2 === j)); if (bitFaults.length > 0) { bitFaults.forEach(f => { if (f.type.startsWith('SA')) bit.classList.add(`fault-${f.type.toLowerCase()}`); else bit.classList.add('fault-bf'); }); const tooltip = document.createElement('span'); tooltip.className = 'fault-tooltip'; tooltip.textContent = bitFaults.map(f => f.id).join(', '); bit.appendChild(tooltip); } bitsContainer.insertBefore(bit, bitsContainer.firstChild); } row.appendChild(bitsContainer); container.appendChild(row); } },
+    updateUIState() { const state = this.executionState; this.btnRunAuto.disabled = (state === 'running' || state === 'paused'); this.btnRunStep.disabled = (state === 'running' || state === 'paused'); this.btnNextStep.disabled = (state !== 'paused'); this.btnInjectFault.disabled = (state === 'running' || state === 'paused'); this.btnClearFaults.disabled = (state === 'running' || state === 'paused'); this.btnSetSize.disabled = (state === 'running' || state === 'paused'); this.timeline.disabled = (state !== 'finished' || this.executionHistory.length <= 1); },
     detectFaults(addr, expectedVal, actualVal) { const changedBits = expectedVal ^ actualVal; for(let i=0; i<this.memory.dataWidth; i++) { if((changedBits >> i) & 1) { this.memory.faults.forEach(fault => { if (!fault.detected && ((fault.addr1 === addr && fault.bit1 === i) || (fault.addr2 === addr && fault.bit2 === i))) { fault.detected = true; this.log('SYSTEM', `故障 ${fault.id} 被標記為已偵測`); } }); } } },
     toggleFaultInputs() { const type = this.faultTypeSelect.value; const isBf = type.startsWith('BF_'); this.faultCell2Div.style.display = isBf ? 'grid' : 'none'; if (type === 'BF_OutIn') { this.faultAddr1Input.placeholder = '攻擊者 Addr'; this.faultBit1Input.placeholder = '攻擊者 Bit'; this.faultAddr2Input.placeholder = '受害者 Addr'; this.faultBit2Input.placeholder = '受害者 Bit'; } else { this.faultAddr1Input.placeholder = '位址 1'; this.faultBit1Input.placeholder = '位元 1'; this.faultAddr2Input.placeholder = '位址 2'; this.faultBit2Input.placeholder = '位元 2'; } },
-    injectFault() { const type = this.faultTypeSelect.value; const addr1 = parseInt(this.faultAddr1Input.value); const bit1 = parseInt(this.faultBit1Input.value); if (isNaN(addr1) || addr1 >= this.memory.addressCount || isNaN(bit1) || bit1 >= this.memory.dataWidth) { alert('請輸入有效的 (位址1, 位元1)'); return; } let faultInfo = { type, addr1, bit1 }; if (type.startsWith('BF_')) { const addr2 = parseInt(this.faultAddr2Input.value); const bit2 = parseInt(this.faultBit2Input.value); if (isNaN(addr2) || addr2 >= this.memory.addressCount || isNaN(bit2) || bit2 >= this.memory.dataWidth) { alert('請輸入有效的 (位址2, 位元2)'); return; } if (addr1 === addr2 && bit1 === bit2) { alert('兩個位元不能相同'); return; } faultInfo = { ...faultInfo, addr2, bit2 }; } this.memory.injectFault(faultInfo); this.log('系統', `注入故障: ${this.memory.faults[this.memory.faults.length-1].id}`); this.renderStateFromHistory(0); },
+    injectFault() { const type = this.faultTypeSelect.value; const addr1 = parseInt(this.faultAddr1Input.value); const bit1 = parseInt(this.faultBit1Input.value); if (isNaN(addr1) || addr1 >= this.memory.addressCount || isNaN(bit1) || bit1 >= this.memory.dataWidth) { alert('請輸入有效的 (位址1, 位元1)'); return; } let faultInfo = { type, addr1, bit1 }; if (type.startsWith('BF_')) { const addr2 = parseInt(this.faultAddr2Input.value); const bit2 = parseInt(this.faultBit2Input.value); if (isNaN(addr2) || addr2 >= this.memory.addressCount || isNaN(bit2) || bit2 >= this.memory.dataWidth) { alert('請輸入有效的 (位址2, 位元2)'); return; } if (addr1 === addr2 && bit1 === bit2) { alert('兩個位元不能相同'); return; } faultInfo = { ...faultInfo, addr2, bit2 }; } this.memory.injectFault(faultInfo); this.log('系統', `注入故障: ${this.memory.faults[this.memory.faults.length-1].id}`); this.renderStateFromHistory(0); this.updateFaultList(); },
     log(op, msg, type = 'ok', scroll = true) { const logLine = document.createElement('div'); logLine.innerHTML = `<span class="log-op">[${op}]</span> <span class="log-${type}">${msg}</span>`; this.logContainer.appendChild(logLine); if(scroll) {this.logContainer.scrollTop = this.logContainer.scrollHeight;} },
     analyzeResults() { const totalFaults = this.memory.faults.length; if (totalFaults === 0) { this.resultsDiv.innerHTML = '<h3>結果分析</h3><p>沒有注入故障。</p>'; return; } const detectedFaults = this.memory.faults.filter(f => f.detected).length; const coverage = (detectedFaults / totalFaults) * 100; let summary = `<h3>結果分析</h3><p>偵測到的故障: ${detectedFaults} / ${totalFaults}</p><p>故障覆蓋率: <strong>${coverage.toFixed(2)}%</strong></p>`; summary += '<h4>詳細清單:</h4><ul style="padding-left: 20px;">'; this.memory.faults.forEach(f => { summary += `<li>故障 ${f.id}: <span style="color:${f.detected ? '#28a745' : '#dc3545'}; font-weight:bold;">${f.detected ? '已偵測' : '未偵測'}</span></li>`; }); summary += '</ul>'; this.resultsDiv.innerHTML = summary; },
 };
