@@ -42,12 +42,6 @@
 }
 html,body{height:100%;overflow:hidden;}
 body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
-/* ── Desktop outer container ── */
-@media(min-width:768px){
-  body{background:var(--outer-bg);align-items:center;justify-content:center;}
-  #app-shell{background:var(--bg);max-width:520px;width:100%;max-height:calc(100vh - 48px);border-radius:18px;border:1px solid var(--b2);overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.45);}
-  .login{max-width:520px;width:100%;border-radius:18px;border:1px solid var(--b2);overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.45);}
-}
 
 /* ── topbar ── */
 .topbar{flex-shrink:0;padding:10px 16px 8px;background:var(--bg);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:8px;}
@@ -322,7 +316,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
 
 /* ── responsive card grid ── */
 @media (min-width: 768px) {
-  .login{position:relative;inset:auto;border-radius:18px;}
   #summary-list,
   #events-list,
   #hc-list,
@@ -331,9 +324,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
   #links-list,
   #logs-list {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 8px;
     padding: 0 16px;
+    align-items: start;
   }
   /* Remove individual card side margins; grid gap takes over */
   #summary-list .card,
@@ -355,17 +349,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
   #logs-list .loading-msg,
   #logs-list .log-more {
     grid-column: 1 / -1;
-  }
-}
-@media (min-width: 1200px) {
-  #summary-list,
-  #events-list,
-  #hc-list,
-  #todos-list,
-  #finance-list,
-  #links-list,
-  #logs-list {
-    grid-template-columns: repeat(3, 1fr);
   }
 }
 </style>
