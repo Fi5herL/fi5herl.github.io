@@ -3,72 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
     <title>Line Dashboard - Version 0.0.4</title>
+    <style>
+        /* Add your custom styles here */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .expanded-content {
+            display: block;
+            /* Ensure all sections are expanded */
+        }
+    </style>
 </head>
 <body>
-    <div class="dashboard">
+    <div class="line-dashboard">
         <div class="card">
             <div class="card-header">
-                <button class="copy-button">Copy</button>
-                <h2>Dashboard Header</h2>
+                <h2>Line Dashboard</h2>
+                <button id="copy-button">Copy</button>
             </div>
-            <div class="card-body">
-                <div class="ev-section">
-                    <h3 class="ev-section-title">Description</h3>
-                    <p>Description content goes here.</p>
-                </div>
-                <div class="ev-section">
-                    <h3 class="ev-section-title">Tasks List</h3>
-                    <ul class="ev-tasks">
-                        <li>Task 1</li>
-                        <li>Task 2</li>
-                    </ul>
-                </div>
-                <div class="ev-section">
-                    <h3 class="ev-section-title">Changelog</h3>
-                    <p>Changelog details...</p>
-                </div>
-                <div class="ev-section">
-                    <h3 class="ev-section-title">Participants</h3>
-                    <p>List of participants...</p>
-                </div>
-                <div class="ev-section">
-                    <h3 class="ev-section-title">Related Links</h3>
-                    <ul>
-                        <li><a href="#">Link 1</a></li>
-                        <li><a href="#">Link 2</a></li>
-                    </ul>
-                </div>
-                <div class="ev-section">
-                    <h3 class="ev-section-title">Budget</h3>
-                    <p>Budget details go here.</p>
-                </div>
+            <div class="expanded-content">
+                <div class="description">Description Section</div>
+                <div class="tasks">Tasks Section</div>
+                <div class="changelog">Changelog Section</div>
+                <div class="participants">Participants Section</div>
+                <div class="related_links">Related Links Section</div>
+                <div class="budget">Budget Section</div>
             </div>
         </div>
     </div>
     <script>
-        // JavaScript for expand/collapse functionality
-        document.querySelectorAll('.card-header').forEach(header => {
-            header.addEventListener('click', function() {
-                const body = this.nextElementSibling;
-                const isExpanded = body.style.display === 'block';
-                body.style.display = isExpanded ? 'none' : 'block';
-                // Save state in DOM
-                this.dataset.isExpanded = !isExpanded;
+        // JavaScript to preserve expand state in the DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            const expandedContent = document.querySelector('.expanded-content');
+            const copyButton = document.getElementById('copy-button');
+
+            // Logic to handle the expand state
+            // E.g., storing in local storage if necessary
+
+            copyButton.addEventListener('click', () => {
+                // Logic to copy content
             });
         });
-
-        // Restore expand state after re-render
-        document.querySelectorAll('.card').forEach(card => {
-            const header = card.querySelector('.card-header');
-            const isExpanded = header.dataset.isExpanded === 'true';
-            header.nextElementSibling.style.display = isExpanded ? 'block' : 'none';
-        });
-
-        function copyToClipboard() {
-            // Logic to copy all details in compact plain text format
-        }
     </script>
 </body>
 </html>
