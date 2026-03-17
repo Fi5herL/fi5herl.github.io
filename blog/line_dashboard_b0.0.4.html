@@ -5,6 +5,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Line Assistant b0.0.4</title>
+<script>
+// Apply saved/system theme immediately to avoid flash
+(function(){
+  var s=localStorage.getItem('theme');
+  if(!s){s=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+  document.documentElement.setAttribute('data-theme',s);
+})();
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -15,9 +23,31 @@
   --fn:-apple-system,'Helvetica Neue','PingFang TC','Microsoft JhengHei',sans-serif;
   --mo:'SF Mono','Fira Code','Consolas',monospace;
   --r:14px;--r2:10px;--nav:56px;
+  --outer-bg:#1e2130;
+}
+/* ── Light theme ── */
+[data-theme="light"]{
+  --bg:#f5f6fa;--bg2:#ffffff;--bg3:#eef0f6;--bg4:#e2e5ef;
+  --b1:rgba(0,0,0,.07);--b2:rgba(0,0,0,.13);
+  --t1:#1a1e2a;--t2:#4a5270;--t3:#8b93b0;
+  --outer-bg:#d8dce8;
+}
+@media(prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --bg:#f5f6fa;--bg2:#ffffff;--bg3:#eef0f6;--bg4:#e2e5ef;
+    --b1:rgba(0,0,0,.07);--b2:rgba(0,0,0,.13);
+    --t1:#1a1e2a;--t2:#4a5270;--t3:#8b93b0;
+    --outer-bg:#d8dce8;
+  }
 }
 html,body{height:100%;overflow:hidden;}
 body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
+/* ── Desktop outer container ── */
+@media(min-width:768px){
+  body{background:var(--outer-bg);align-items:center;justify-content:center;}
+  #app-shell{background:var(--bg);max-width:520px;width:100%;max-height:calc(100vh - 48px);border-radius:18px;border:1px solid var(--b2);overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.45);}
+  .login{max-width:520px;width:100%;border-radius:18px;border:1px solid var(--b2);overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.45);}
+}
 
 /* ── topbar ── */
 .topbar{flex-shrink:0;padding:10px 16px 8px;background:var(--bg);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;gap:8px;}
@@ -288,10 +318,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
 .login-btn{width:100%;margin-top:12px;padding:12px;border-radius:10px;background:var(--ac);color:#fff;font-size:14px;font-weight:600;border:none;cursor:pointer;}
 .login-btn:active{opacity:.85;}
 .login-status{margin-top:12px;font-size:12px;text-align:center;min-height:18px;font-family:var(--mo);}
-#app-shell{display:none;flex-direction:column;height:100%;}
+#app-shell{display:none;flex-direction:column;height:100%;min-height:0;}
 
 /* ── responsive card grid ── */
 @media (min-width: 768px) {
+  .login{position:relative;inset:auto;border-radius:18px;}
   #summary-list,
   #events-list,
   #hc-list,
@@ -371,6 +402,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
     <div class="tl-sub" id="psub">載入中...</div>
   </div>
   <div class="ta">
+    <div class="hbtn" id="btn-theme" onclick="toggleTheme()" title="切換主題">
+      <svg id="theme-icon-dark" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M14 9.5A6 6 0 017 2.5a6.5 6.5 0 100 11 6 6 0 007-4z"/></svg>
+      <svg id="theme-icon-light" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16" style="display:none"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13"/></svg>
+    </div>
     <div class="hbtn" id="btn-cal" onclick="toggleCal()">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="1" y="2.5" width="14" height="12" rx="2"/><path d="M1 6.5h14M5 1v3M11 1v3"/></svg>
     </div>
@@ -679,6 +714,24 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────────
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzdTgOVhd9YmAvFgZn57Pva2e_afh_PU6ktCu-kUjXKlsERaCTaViREUa-oceMNPs-r5w/exec';
+
+// ── THEME ────────────────────────────────────────────────────────────────
+function updateThemeIcon(theme){
+  const dark  = document.getElementById('theme-icon-dark');
+  const light = document.getElementById('theme-icon-light');
+  if(!dark || !light) return;
+  if(theme === 'light'){ dark.style.display='none'; light.style.display='inline'; }
+  else                 { dark.style.display='inline'; light.style.display='none'; }
+}
+// Sync icon with already-applied theme
+updateThemeIcon(document.documentElement.getAttribute('data-theme') || 'dark');
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  updateThemeIcon(next);
+}
 
 // ── STATE ────────────────────────────────────────────────────────────────
 let TOKEN = '';
