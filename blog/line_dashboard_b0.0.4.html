@@ -197,6 +197,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
 
 /* ── events ── */
 .ev-notice{margin:0 16px 8px;padding:9px 12px;background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.12);border-radius:9px;font-size:12px;color:var(--te);display:flex;align-items:center;gap:7px;}
+.ev-notice-dismiss{margin-left:auto;cursor:pointer;opacity:.6;font-size:13px;line-height:1;flex-shrink:0;}
 .ev-card{margin:0 16px 8px;background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r);overflow:hidden;transition:border-color .15s;}
 .ev-hdr{padding:12px 14px 10px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
 .ev-hdr:active{opacity:.8;}
@@ -586,9 +587,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
       <div class="chip ev-status-chip" data-s="upcoming">即將到來</div>
       <div class="chip ev-status-chip" data-s="completed">已結束</div>
     </div>
-    <div class="ev-notice">
+    <div class="ev-notice" id="ev-notice" style="display:none">
       <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v3.5l2 2"/></svg>
       點擊卡片展開詳細內容
+      <span onclick="dismissEvNotice()" class="ev-notice-dismiss">✕</span>
     </div>
     <div class="slbl-row">
       <span class="slbl" id="events-lbl">載入中...</span>
@@ -598,7 +600,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
       </button>
     </div>
     <div id="events-list"><div class="loading-msg">載入中...</div></div>
-    <div class="ev-add" onclick="alert('請直接在 Google Sheet events 分頁新增')">
+    <div class="ev-add" onclick="showToast('請直接在 Google Sheet events 分頁新增', 'var(--te)')">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v6M5 8h6"/></svg>手動新增活動
     </div>
   </div>
@@ -1330,7 +1332,6 @@ function renderEvents(q) {
           ${r.organizer?`<div class="ev-row"><span class="ev-lbl">主辦</span><span class="ev-val">${esc(r.organizer)}</span></div>`:''}
           ${r.status_note?`<div class="ev-row"><span class="ev-lbl">狀態</span><span class="ev-val" style="color:var(--am)">${esc(r.status_note)}</span></div>`:''}
           ${groups.length?`<div class="ev-row"><span class="ev-lbl">群組</span><span class="ev-val">${groups.map(g=>esc(g)).join(', ')}</span></div>`:''}
-          ${description?`<div class="ev-row"><span class="ev-lbl">描述</span><span class="ev-val">${esc(description)}</span></div>`:''}
           ${budget?`<div class="ev-row"><span class="ev-lbl">預算</span><span class="ev-val">${esc(budget)}</span></div>`:''}
           ${participants.length?`<div class="ev-row"><span class="ev-lbl">參與者</span><span class="ev-val ev-participants">${participants.map(p=>esc(p)).join(', ')}</span></div>`:''}
           ${preItems.length?`<div class="ev-row"><span class="ev-lbl">準備事項</span><span class="ev-val">${preItems.map(p=>esc(p)).join(' · ')}</span></div>`:''}
@@ -1526,6 +1527,17 @@ function doLogout() {
   setLoginStatus('', '');
 }
 
+// ── EV-NOTICE ─────────────────────────────────────────────────────────────
+function dismissEvNotice() {
+  document.getElementById('ev-notice').style.display = 'none';
+  localStorage.setItem('ev_notice_dismissed', '1');
+}
+function initEvNotice() {
+  if (!localStorage.getItem('ev_notice_dismissed')) {
+    document.getElementById('ev-notice').style.display = 'flex';
+  }
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -1573,6 +1585,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   renderCal();
+  initEvNotice();
 
   // Auto-login from session
   const saved = sessionStorage.getItem('las_token');
