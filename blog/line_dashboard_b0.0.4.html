@@ -1,52 +1,1501 @@
 <!DOCTYPE html>
-<html lang="en">
+
+<html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Line Dashboard - Version 0.0.4</title>
-    <style>
-        /* Add your custom styles here */
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .expanded-content {
-            display: block;
-            /* Ensure all sections are expanded */
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Line Assistant b0.0.4</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0c0e14;--bg2:#13161f;--bg3:#1a1e2a;--bg4:#222736;
+  --b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.11);
+  --t1:#e4e6ef;--t2:#7c849e;--t3:#3d4258;
+  --ac:#5b8dee;--gr:#3ecf8e;--am:#f5a623;--re:#f0546a;--te:#2dd4bf;
+  --fn:-apple-system,'Helvetica Neue','PingFang TC','Microsoft JhengHei',sans-serif;
+  --mo:'SF Mono','Fira Code','Consolas',monospace;
+  --r:14px;--r2:10px;--nav:56px;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;}
+
+/* ── topbar ── */
+.topbar{flex-shrink:0;padding:10px 16px 8px;background:var(–bg);border-bottom:1px solid var(–b1);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.tl h1{font-size:18px;font-weight:700;letter-spacing:-.02em;}
+.tl-sub{font-size:11px;color:var(–t2);margin-top:1px;font-family:var(–mo);}
+.ta{display:flex;gap:7px;}
+.hbtn{width:36px;height:36px;border-radius:10px;background:var(–bg3);border:1px solid var(–b2);display:flex;align-items:center;justify-content:center;color:var(–t2);cursor:pointer;user-select:none;flex-shrink:0;transition:all .15s;}
+.hbtn:active{opacity:.7;}
+.hbtn.cal-on{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.25);color:var(–am);}
+.hbtn.grp-on{background:rgba(91,141,238,.1);border-color:rgba(91,141,238,.25);color:var(–ac);}
+
+/* ── snap pill ── */
+.snap{display:none;margin:5px 16px 0;align-self:flex-start;align-items:center;gap:5px;padding:3px 9px;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);border-radius:20px;font-size:11px;color:var(–am);font-family:var(–mo);}
+.snap.on{display:inline-flex;}
+
+/* ── content ── */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(–b2) transparent;}
+.content::-webkit-scrollbar{width:3px;}
+.content::-webkit-scrollbar-thumb{background:var(–b2);border-radius:2px;}
+
+/* ── panels ── */
+.panel{display:none;padding-bottom:16px;}
+.panel.on{display:block;animation:fi .15s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── bottom nav ── */
+.bnav{flex-shrink:0;height:var(–nav);background:var(–bg2);border-top:1px solid var(–b1);display:flex;align-items:center;justify-content:space-around;padding:0 4px;}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;cursor:pointer;border-radius:10px;transition:background .15s;position:relative;user-select:none;}
+.ni.on{background:rgba(91,141,238,.1);}
+.ni:active{opacity:.7;}
+.ni-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:var(–t3);}
+.ni.on .ni-icon{color:var(–ac);}
+.ni-lbl{font-size:10px;color:var(–t3);font-weight:500;}
+.ni.on .ni-lbl{color:var(–ac);}
+.nbadge{position:absolute;top:2px;right:calc(50% - 20px);min-width:16px;height:16px;border-radius:8px;background:var(–re);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+
+/* ── common ── */
+.slbl-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 6px;}
+.slbl{font-size:11px;font-weight:600;color:var(–t2);letter-spacing:.07em;text-transform:uppercase;}
+.copy-all{font-size:10px;font-weight:500;color:var(–t3);padding:3px 9px;border-radius:8px;background:var(–bg3);border:1px solid var(–b1);cursor:pointer;font-family:var(–mo);transition:all .15s;display:flex;align-items:center;gap:4px;}
+.copy-all:active{color:var(–gr);border-color:var(–gr);}
+
+.tag{font-size:11px;padding:2px 7px;border-radius:20px;font-weight:500;}
+.bl{background:rgba(91,141,238,.15);color:var(–ac);}
+.gr{background:rgba(62,207,142,.15);color:var(–gr);}
+.am{background:rgba(245,166,35,.15);color:var(–am);}
+.re{background:rgba(240,84,106,.15);color:var(–re);}
+.gy{background:var(–bg3);color:var(–t2);}
+
+/* ── search ── */
+.sbar{margin:0 16px 6px;background:var(–bg3);border:1px solid var(–b2);border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:8px;color:var(–t3);font-size:13px;}
+
+/* ── sort bar ── */
+.sort-bar{display:flex;align-items:center;gap:5px;padding:0 16px 8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
+.sort-bar::-webkit-scrollbar{display:none;}
+.sort-lbl{font-size:10px;color:var(–t3);white-space:nowrap;font-family:var(–mo);margin-right:2px;}
+.sb{padding:3px 9px;border-radius:12px;font-size:11px;font-weight:500;white-space:nowrap;border:1px solid var(–b1);background:var(–bg3);color:var(–t3);cursor:pointer;flex-shrink:0;transition:all .15s;display:inline-flex;align-items:center;gap:2px;}
+.sb.on{background:rgba(91,141,238,.1);border-color:rgba(91,141,238,.25);color:var(–ac);}
+.sb:active{opacity:.7;}
+.sa{font-size:10px;}
+
+/* ── filter chips ── */
+.fbar{display:flex;gap:6px;padding:0 16px 8px;overflow-x:auto;scrollbar-width:none;}
+.fbar::-webkit-scrollbar{display:none;}
+.chip{padding:5px 11px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap;border:1px solid var(–b2);background:var(–bg2);color:var(–t2);cursor:pointer;flex-shrink:0;user-select:none;transition:all .15s;}
+.chip.on{background:rgba(91,141,238,.15);border-color:rgba(91,141,238,.3);color:var(–ac);}
+.chip:active{opacity:.7;}
+
+/* ── stats ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 4px;}
+.stat{background:var(–bg2);border:1px solid var(–b1);border-radius:var(–r2);padding:10px 8px;text-align:center;}
+.sv{font-family:var(–mo);font-size:18px;font-weight:500;line-height:1;margin-bottom:3px;}
+.sl{font-size:10px;color:var(–t2);}
+
+/* ── copy icon btn ── */
+.ic{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(–t3);flex-shrink:0;cursor:pointer;transition:all .15s;}
+.ic:active{color:var(–gr);}
+
+/* ── summary card ── */
+.card{margin:0 16px 8px;background:var(–bg2);border:1px solid var(–b1);border-radius:var(–r);overflow:hidden;transition:border-color .15s;}
+.card:active{background:var(–bg3);}
+.ch{padding:12px 14px 8px;display:flex;align-items:flex-start;gap:8px;}
+.cm{flex:1;min-width:0;}
+.cr{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.cn{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;}
+.cd{font-family:var(–mo);font-size:10px;color:var(–t3);flex-shrink:0;}
+.ctags{display:flex;gap:4px;flex-wrap:wrap;}
+.cb{padding:0 14px 10px;font-size:13px;color:var(–t2);line-height:1.55;}
+.cnote{margin:0 14px 10px;padding:7px 10px;background:rgba(245,166,35,.07);border-radius:8px;font-size:12px;color:var(–am);}
+.cf{padding:8px 14px 10px;border-top:1px solid var(–b1);display:flex;gap:14px;align-items:center;}
+.cs{font-size:12px;color:var(–t2);}
+.cs strong{color:var(–t1);}
+
+/* ── todo ── */
+.ti{margin:0 16px 7px;background:var(–bg2);border:1px solid var(–b1);border-radius:var(–r2);padding:11px 13px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:background .15s;}
+.ti:active{background:var(–bg3);}
+.chk{width:20px;height:20px;border-radius:6px;border:2px solid var(–b2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.chk.done{background:var(–gr);border-color:var(–gr);}
+.tb{flex:1;min-width:0;}
+.tt{font-size:13px;color:var(–t1);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tt.done{text-decoration:line-through;color:var(–t3);}
+.tm{display:flex;gap:7px;align-items:center;}
+.tg{font-size:10px;color:var(–t2);background:var(–bg3);padding:1px 6px;border-radius:4px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.td-date{font-family:var(–mo);font-size:10px;color:var(–t3);}
+.pd{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+/* ── finance ── */
+.fsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px 4px;}
+.fst{background:var(–bg2);border:1px solid var(–b1);border-radius:var(–r2);padding:10px 8px;text-align:center;}
+.fv{font-family:var(–mo);font-size:16px;font-weight:500;line-height:1;margin-bottom:3px;}
+.fl{font-size:10px;color:var(–t2);}
+.fi{margin:0 16px 7px;background:var(–bg2);border:1px solid var(–b1);border-radius:var(–r2);padding:11px 13px;display:flex;align-items:center;gap:11px;}
+.fic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+.fic.out{background:rgba(240,84,106,.12);}
+.fic.in{background:rgba(62,207,142,.12);}
+.fbody{flex:1;min-width:0;}
+.fdesc{font-size:13px;color:var(–t1);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fsub{font-size:11px;color:var(–t2);}
+.famt{font-family:var(–mo);font-size:14px;font-weight:500;flex-shrink:0;}
+.famt.out{color:var(–re);}
+.famt.in{color:var(–gr);}
+
+/* ── headcount ── */
+.hcc{margin:0 16px 8px;background:var(–bg2);border:1px solid var(–b1);border-radius:var(–r);overflow:hidden;}
+.hch{padding:12px 14px 8px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.hce{font-size:13px;font-weight:600;margin-bottom:2px;}
+.hcd{font-family:var(–mo);font-size:10px;color:var(–t3);}
+.hcp{padding:0 14px 10px;}
+.pl{display:flex;justify-content:space-between;font-size:11px;color:var(–t2);margin-bottom:5px;}
+.pb{height:4px;background:var(–bg4);border-radius:2px;overflow:hidden;}
+.pf{height:100%;border-radius:2px;}
+.hca{padding:0 14px 12px;display:flex;gap:5px;flex-wrap:wrap;}
+.av{padding:3px 8px;border-radius:6px;font-size:11px;font-weight:500;}
+.av.ok{background:rgba(62,207,142,.12);color:var(–gr);}
+.av.q{background:rgba(245,166,35,.12);color:var(–am);}
+.av.no{background:rgba(240,84,106,.12);color:var(–re);}
+.hc-copy{padding:0 14px 10px;display:flex;justify-content:flex-end;}
+
+/* ── links ── */
+.li{margin:0 16px 7px;background:var(–bg2);border:1px solid var(–b1);border-radius:var(–r2);padding:11px 13px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;}
+.li:active{background:var(–bg3);}
+.lf{width:30px;height:30px;border-radius:7px;background:var(–bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.lb{flex:1;min-width:0;}
+.lu{font-family:var(–mo);font-size:11px;color:var(–ac);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px;}
+.lm{font-size:11px;color:var(–t2);}
+
+/* ── more ── */
+.mi{background:var(–bg2);border:1px solid var(–b1);border-radius:var(–r2);padding:12px 14px;display:flex;align-items:center;gap:11px;margin:0 16px 7px;cursor:pointer;transition:background .15s;}
+.mi:active{background:var(–bg3);}
+.mic{width:34px;height:34px;border-radius:9px;background:var(–bg3);display:flex;align-items:center;justify-content:center;color:var(–t2);flex-shrink:0;}
+.ml{flex:1;font-size:13px;}
+.mb{font-family:var(–mo);font-size:11px;padding:2px 7px;border-radius:8px;background:var(–bg3);color:var(–t2);}
+
+/* ── events ── */
+.ev-notice{margin:0 16px 8px;padding:9px 12px;background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.12);border-radius:9px;font-size:12px;color:var(–te);display:flex;align-items:center;gap:7px;}
+.ev-card{margin:0 16px 8px;background:var(–bg2);border:1px solid var(–b1);border-radius:var(–r);overflow:hidden;transition:border-color .15s;}
+.ev-hdr{padding:12px 14px 10px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.ev-hdr:active{opacity:.8;}
+.ev-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.ev-main{flex:1;min-width:0;}
+.ev-name{font-size:13px;font-weight:600;margin-bottom:2px;}
+.ev-sub{font-size:11px;color:var(–t3);font-family:var(–mo);}
+.ev-chevron{width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(–t3);transition:transform .2s;flex-shrink:0;}
+.ev-chevron.open{transform:rotate(180deg);}
+/* expand area */
+.ev-detail{display:none;border-top:1px solid var(–b1);}
+.ev-detail.open{display:block;animation:fi .15s ease;}
+.ev-body{padding:10px 14px;display:flex;flex-direction:column;gap:6px;}
+.ev-row{display:flex;gap:8px;font-size:12px;}
+.ev-lbl{color:var(–t2);flex-shrink:0;width:52px;}
+.ev-val{color:var(–t1);flex:1;line-height:1.4;}
+.ev-foot{padding:0 14px 12px;}
+.ev-actions{padding:0 14px 12px;display:flex;gap:8px;}
+.ev-add{margin:0 16px 8px;border:1px dashed var(–b2);border-radius:var(–r2);padding:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(–t2);cursor:pointer;}
+.ev-add:active{background:var(–bg3);}
+.ev-section{margin-top:6px;padding-top:8px;border-top:1px solid var(--b1);}
+.ev-section-title{font-size:10px;font-weight:600;color:var(--t2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+.ev-tasks,.ev-changelog{list-style:none;margin:0;padding:0 0 0 10px;font-size:12px;color:var(--t1);line-height:1.7;}
+.ev-tasks li::before,.ev-changelog li::before{content:"• ";color:var(--ac);font-weight:700;margin-right:4px;}
+.ev-participants{font-size:12px;color:var(--t1);}
+
+/* ── logs ── */
+.log-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 4px;}
+.lst{background:var(–bg2);border:1px solid var(–b1);border-radius:var(–r2);padding:10px 8px;text-align:center;}
+.lsv{font-family:var(–mo);font-size:18px;font-weight:500;line-height:1;margin-bottom:3px;}
+.lsl{font-size:10px;color:var(–t2);}
+.log-item{margin:0 16px 7px;background:var(–bg2);border:1px solid var(–b1);border-radius:var(–r2);padding:11px 13px;}
+.log-hdr{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap;}
+.log-sender{font-size:12px;font-weight:600;color:var(–t1);}
+.log-group{font-size:10px;color:var(–t2);background:var(–bg3);padding:1px 6px;border-radius:4px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.log-time{font-family:var(–mo);font-size:10px;color:var(–t3);margin-left:auto;}
+.log-msg{font-size:13px;color:var(–t2);line-height:1.5;margin-bottom:7px;}
+.log-foot{display:flex;align-items:center;gap:6px;}
+.log-tags{display:flex;gap:5px;flex:1;}
+.ltag{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:500;}
+.ltag.raw{background:rgba(240,84,106,.12);color:var(–re);}
+.ltag.bot{background:rgba(91,141,238,.12);color:var(–ac);}
+.ltag.url{background:rgba(45,212,191,.12);color:var(–te);}
+.ltag.done{background:rgba(62,207,142,.12);color:var(–gr);}
+.log-more{margin:4px 16px 8px;padding:10px;text-align:center;font-size:12px;color:var(–t2);border:1px solid var(–b2);border-radius:var(–r2);cursor:pointer;}
+.log-more:active{background:var(–bg3);}
+
+/* ── more page ── */
+.gbanner{margin:8px 16px;padding:8px 12px;background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.12);border-radius:9px;font-size:12px;color:var(–te);display:flex;align-items:center;gap:7px;}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(–te);flex-shrink:0;animation:p 2s infinite;}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── loading bar ── */
+.loading-bar{position:fixed;top:0;left:0;height:2px;background:var(–ac);border-radius:1px;z-index:9999;width:0;transition:opacity .3s;}
+.loading-bar.active{animation:lbar 1.4s ease-in-out infinite;}
+@keyframes lbar{0%{width:0;left:0;opacity:1}60%{width:70%;left:15%}100%{width:0;left:100%;opacity:0}}
+
+/* ── toast ── */
+#toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:rgba(20,24,36,.95);color:var(–gr);border:1px solid rgba(62,207,142,.25);padding:8px 18px;border-radius:20px;font-size:12px;font-family:var(–mo);z-index:9998;pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap;}
+
+/* ── loading msg ── */
+.loading-msg{text-align:center;padding:40px 20px;color:var(–t3);font-size:13px;}
+
+/* ── overlays ── */
+.ov{position:fixed;inset:0;z-index:400;display:none;}
+.ov.on{display:flex;}
+.bd{position:absolute;inset:0;background:rgba(0,0,0,.65);}
+
+/* ── calendar overlay ── */
+.cov{flex-direction:column;align-items:center;justify-content:flex-start;padding-top:70px;}
+.csh{position:relative;width:calc(100% - 32px);max-width:340px;background:var(–bg2);border:1px solid var(–b2);border-radius:18px;padding:18px;z-index:1;box-shadow:0 20px 60px rgba(0,0,0,.7);}
+.ch2{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cnv{width:30px;height:30px;border-radius:8px;background:var(–bg3);border:1px solid var(–b2);display:flex;align-items:center;justify-content:center;color:var(–t2);cursor:pointer;}
+.cml{font-size:14px;font-weight:600;}
+.cl{width:100%;padding:7px;border-radius:9px;border:1px solid var(–b2);background:none;color:var(–t2);font-size:12px;font-family:var(–fn);cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;}
+.cl.on{background:rgba(91,141,238,.1);border-color:rgba(91,141,238,.3);color:var(–ac);}
+.cwds{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+.cwd{text-align:center;font-size:10px;color:var(–t3);padding:2px 0;}
+.cdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cday{aspect-ratio:1;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.cday.has{color:var(–t1);cursor:pointer;}
+.cday.has:active{background:var(–bg3);}
+.cday.sel{background:var(–ac)!important;}
+.cday.sel .cdn{color:#fff!important;}
+.cday.today .cdn{font-weight:700;color:var(–ac);}
+.cday.sel .cdot{background:rgba(255,255,255,.7)!important;}
+.cdn{font-size:12px;line-height:1;color:var(–t3);}
+.cdots{display:flex;gap:2px;}
+.cdot{width:3px;height:3px;border-radius:50%;background:var(–ac);}
+
+/* ── group overlay ── */
+.gov{flex-direction:column;justify-content:flex-end;}
+.gsh{position:relative;background:var(–bg2);border-radius:18px 18px 0 0;padding:16px 16px 32px;border-top:1px solid var(–b2);z-index:1;max-height:70vh;overflow-y:auto;}
+.ghdl{width:32px;height:4px;background:var(–b2);border-radius:2px;margin:0 auto 14px;}
+.gt{font-size:15px;font-weight:700;margin-bottom:12px;}
+.git{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(–b1);cursor:pointer;user-select:none;}
+.git:last-child{border-bottom:none;}
+.git:active{opacity:.7;}
+.gdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.gn{flex:1;font-size:13px;}
+.gc{font-family:var(–mo);font-size:11px;color:var(–t2);}
+.gck{color:var(–ac);flex-shrink:0;}
+
+/* ── login ── */
+.login{position:fixed;inset:0;background:var(–bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;}
+.login-logo{font-size:36px;margin-bottom:8px;}
+.login-title{font-size:20px;font-weight:700;margin-bottom:4px;}
+.login-sub{font-size:12px;color:var(–t2);margin-bottom:28px;font-family:var(–mo);}
+.login-box{width:100%;max-width:320px;background:var(–bg2);border:1px solid var(–b2);border-radius:14px;padding:20px;}
+.login-lbl{font-size:12px;color:var(–t2);margin-bottom:8px;}
+.login-inp{width:100%;background:var(–bg3);border:1px solid var(–b2);border-radius:10px;padding:11px 13px;color:var(–t1);font-size:14px;font-family:var(–mo);outline:none;}
+.login-inp:focus{border-color:var(–ac);}
+.login-btn{width:100%;margin-top:12px;padding:12px;border-radius:10px;background:var(–ac);color:#fff;font-size:14px;font-weight:600;border:none;cursor:pointer;}
+.login-btn:active{opacity:.85;}
+.login-status{margin-top:12px;font-size:12px;text-align:center;min-height:18px;font-family:var(–mo);}
+#app-shell{display:none;flex-direction:column;height:100%;}
+</style>
+
 </head>
 <body>
-    <div class="line-dashboard">
-        <div class="card">
-            <div class="card-header">
-                <h2>Line Dashboard</h2>
-                <button id="copy-button">Copy</button>
-            </div>
-            <div class="expanded-content">
-                <div class="description">Description Section</div>
-                <div class="tasks">Tasks Section</div>
-                <div class="changelog">Changelog Section</div>
-                <div class="participants">Participants Section</div>
-                <div class="related_links">Related Links Section</div>
-                <div class="budget">Budget Section</div>
-            </div>
-        </div>
+
+<div class="loading-bar" id="loading-bar"></div>
+<div id="toast"></div>
+
+<!-- ── LOGIN ── -->
+
+<div class="login" id="login-screen">
+  <div class="login-logo">⬡</div>
+  <div class="login-title">Line Assistant</div>
+  <div class="login-sub">Dashboard · Private</div>
+  <div class="login-box">
+    <div class="login-lbl">密碼（SHA-256 後送出）</div>
+    <input class="login-inp" id="token-input" type="password" placeholder="輸入密碼..." autocomplete="current-password">
+    <button class="login-btn" onclick="doLogin()">登入</button>
+    <div class="login-status" id="login-status"></div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+
+<div id="app-shell">
+
+<!-- TOPBAR -->
+
+<div class="topbar">
+  <div class="tl">
+    <h1 id="ptitle">⬡ Line Asst</h1>
+    <div class="tl-sub" id="psub">載入中...</div>
+  </div>
+  <div class="ta">
+    <div class="hbtn" id="btn-cal" onclick="toggleCal()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="1" y="2.5" width="14" height="12" rx="2"/><path d="M1 6.5h14M5 1v3M11 1v3"/></svg>
     </div>
-    <script>
-        // JavaScript to preserve expand state in the DOM
-        document.addEventListener('DOMContentLoaded', () => {
-            const expandedContent = document.querySelector('.expanded-content');
-            const copyButton = document.getElementById('copy-button');
+    <div class="hbtn" id="btn-grp" onclick="toggleGrp()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/><circle cx="12" cy="5" r="2"/><path d="M14 13c0-2-1.3-3.6-3-4.2"/></svg>
+    </div>
+  </div>
+</div>
+<div class="snap" id="snap">
+  <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6"/><polyline points="7 4 7 7 9 9"/></svg>
+  <span id="snap-lbl">—</span>
+</div>
 
-            // Logic to handle the expand state
-            // E.g., storing in local storage if necessary
+<!-- CONTENT -->
 
-            copyButton.addEventListener('click', () => {
-                // Logic to copy content
-            });
-        });
-    </script>
+<div class="content">
+
+  <!-- ── SUMMARY ── -->
+
+  <div class="panel on" id="p-summary">
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-summary" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋摘要...">
+    </div>
+    <div class="sort-bar">
+      <span class="sort-lbl">排序</span>
+      <div class="sb on" data-tab="summary" data-f="created_at">日期<span class="sa">↓</span></div>
+      <div class="sb" data-tab="summary" data-f="group_name">群組<span class="sa"></span></div>
+      <div class="sb" data-tab="summary" data-f="todos">Todos<span class="sa"></span></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="sv" id="stat-groups" style="color:var(--ac)">—</div><div class="sl">Groups</div></div>
+      <div class="stat"><div class="sv" id="stat-todos" style="color:var(--am)">—</div><div class="sl">Todos</div></div>
+      <div class="stat"><div class="sv" id="stat-links" style="color:var(--te)">—</div><div class="sl">Links</div></div>
+      <div class="stat"><div class="sv" id="stat-people" style="color:var(--gr)">—</div><div class="sl">People</div></div>
+    </div>
+    <div class="slbl-row">
+      <span class="slbl" id="summary-lbl">載入中...</span>
+      <button class="copy-all" onclick="copyAll('summary')">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+        全部複製
+      </button>
+    </div>
+    <div id="summary-list"></div>
+  </div>
+
+  <!-- ── TODOS ── -->
+
+  <div class="panel" id="p-todos">
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-todos" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋待辦...">
+    </div>
+    <div class="sort-bar">
+      <span class="sort-lbl">排序</span>
+      <div class="sb on" data-tab="todos" data-f="priority">優先<span class="sa">↓</span></div>
+      <div class="sb" data-tab="todos" data-f="created_at">日期<span class="sa"></span></div>
+      <div class="sb" data-tab="todos" data-f="group_name">群組<span class="sa"></span></div>
+      <div class="sb" data-tab="todos" data-f="due_date">到期<span class="sa"></span></div>
+    </div>
+    <div class="fbar">
+      <div class="chip priority-chip on" data-p="">全部</div>
+      <div class="chip priority-chip" data-p="高">高優先</div>
+      <div class="chip priority-chip" data-p="中">中優先</div>
+      <div class="chip priority-chip" data-p="低">低優先</div>
+    </div>
+    <div class="slbl-row">
+      <span class="slbl" id="todos-lbl">載入中...</span>
+      <button class="copy-all" onclick="copyAll('todos')">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+        全部複製
+      </button>
+    </div>
+    <div id="todos-list"><div class="loading-msg">載入中...</div></div>
+  </div>
+
+  <!-- ── FINANCE ── -->
+
+  <div class="panel" id="p-finance">
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-finance" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋財務...">
+    </div>
+    <div class="sort-bar">
+      <span class="sort-lbl">排序</span>
+      <div class="sb on" data-tab="finance" data-f="created_at">日期<span class="sa">↓</span></div>
+      <div class="sb" data-tab="finance" data-f="amount">金額<span class="sa"></span></div>
+      <div class="sb" data-tab="finance" data-f="direction">收支<span class="sa"></span></div>
+      <div class="sb" data-tab="finance" data-f="group_name">群組<span class="sa"></span></div>
+    </div>
+    <div class="fsum">
+      <div class="fst"><div class="fv" id="fin-expense" style="color:var(--re)">$0</div><div class="fl">支出</div></div>
+      <div class="fst"><div class="fv" id="fin-income" style="color:var(--gr)">$0</div><div class="fl">收入</div></div>
+      <div class="fst"><div class="fv" id="fin-net" style="color:var(--gr)">$0</div><div class="fl">Net</div></div>
+    </div>
+    <div class="slbl-row">
+      <span class="slbl" id="finance-lbl">載入中...</span>
+      <button class="copy-all" onclick="copyAll('finance')">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+        全部複製
+      </button>
+    </div>
+    <div id="finance-list"><div class="loading-msg">載入中...</div></div>
+  </div>
+
+  <!-- ── HEADCOUNT ── -->
+
+  <div class="panel" id="p-hc">
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-hc" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋活動或人名...">
+    </div>
+    <div class="sort-bar">
+      <span class="sort-lbl">排序</span>
+      <div class="sb on" data-tab="hc" data-f="event_date">日期<span class="sa">↓</span></div>
+      <div class="sb" data-tab="hc" data-f="attendance">出席率<span class="sa"></span></div>
+      <div class="sb" data-tab="hc" data-f="event_name">名稱<span class="sa"></span></div>
+      <div class="sb" data-tab="hc" data-f="group_name">群組<span class="sa"></span></div>
+    </div>
+    <div class="slbl-row">
+      <span class="slbl" id="hc-lbl">載入中...</span>
+      <button class="copy-all" onclick="copyAll('hc')">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+        全部複製
+      </button>
+    </div>
+    <div id="hc-list"><div class="loading-msg">載入中...</div></div>
+  </div>
+
+  <!-- ── MORE ── -->
+
+  <div class="panel" id="p-more">
+    <div class="gbanner"><div class="pulse"></div>已連接 GAS API · <span id="more-groups">—</span> groups</div>
+    <div class="slbl-row"><span class="slbl">其他分頁</span></div>
+    <div class="mi" onclick="go('links')">
+      <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M6 9a4 4 0 005.7 0l1.5-1.5a4 4 0 00-5.7-5.7L6 3.4"/><path d="M10 7a4 4 0 00-5.7 0L2.8 8.5a4 4 0 005.7 5.7l1.5-1.5"/></svg></div>
+      <span class="ml">Links</span><span class="mb" id="more-links-cnt">—</span>
+    </div>
+    <div class="mi" onclick="go('events')">
+      <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="1" y="2.5" width="14" height="12" rx="2"/><path d="M1 6.5h14M5 1v3M11 1v3"/></svg></div>
+      <span class="ml">Events（活動主檔）</span><span class="mb" id="more-events-cnt">—</span>
+    </div>
+    <div class="mi" onclick="go('logs')">
+      <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M2 4h12M2 8h8M2 12h5"/></svg></div>
+      <span class="ml">Raw Logs</span><span class="mb" id="more-logs-cnt">—</span>
+    </div>
+    <div class="slbl-row"><span class="slbl">操作</span></div>
+    <div class="mi" onclick="loadAll()">
+      <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M13.5 8A5.5 5.5 0 112.5 5"/><polyline points="2.5 1 2.5 5 6.5 5"/></svg></div>
+      <span class="ml">重新同步資料</span>
+    </div>
+    <div class="mi" onclick="doLogout()">
+      <div class="mic" style="color:var(--re)"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="2" y="7" width="12" height="8" rx="2"/><path d="M5 7V5a3 3 0 016 0v2"/></svg></div>
+      <span class="ml" style="color:var(--re)">登出</span>
+    </div>
+  </div>
+
+  <!-- ── LINKS ── -->
+
+  <div class="panel" id="p-links">
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-links" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋連結...">
+    </div>
+    <div class="sort-bar">
+      <span class="sort-lbl">排序</span>
+      <div class="sb on" data-tab="links" data-f="created_at">日期<span class="sa">↓</span></div>
+      <div class="sb" data-tab="links" data-f="group_name">群組<span class="sa"></span></div>
+    </div>
+    <div class="slbl-row">
+      <span class="slbl" id="links-lbl">載入中...</span>
+      <button class="copy-all" onclick="copyAll('links')">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+        全部複製
+      </button>
+    </div>
+    <div id="links-list"><div class="loading-msg">載入中...</div></div>
+  </div>
+
+  <!-- ── EVENTS ── -->
+
+  <div class="panel" id="p-events">
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-events" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋活動...">
+    </div>
+    <div class="sort-bar">
+      <span class="sort-lbl">排序</span>
+      <div class="sb on" data-tab="events" data-f="event_date">日期<span class="sa">↓</span></div>
+      <div class="sb" data-tab="events" data-f="event_name">名稱<span class="sa"></span></div>
+      <div class="sb" data-tab="events" data-f="status">狀態<span class="sa"></span></div>
+    </div>
+    <div class="fbar">
+      <div class="chip ev-status-chip on" data-s="all">全部</div>
+      <div class="chip ev-status-chip" data-s="upcoming">即將到來</div>
+      <div class="chip ev-status-chip" data-s="completed">已結束</div>
+    </div>
+    <div class="ev-notice">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v3.5l2 2"/></svg>
+      點擊卡片展開詳細內容
+    </div>
+    <div class="slbl-row">
+      <span class="slbl" id="events-lbl">載入中...</span>
+      <button class="copy-all" onclick="copyAll('events')">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+        全部複製
+      </button>
+    </div>
+    <div id="events-list"><div class="loading-msg">載入中...</div></div>
+    <div class="ev-add" onclick="alert('請直接在 Google Sheet events 分頁新增')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path d="M8 5v6M5 8h6"/></svg>手動新增活動
+    </div>
+  </div>
+
+  <!-- ── LOGS ── -->
+
+  <div class="panel" id="p-logs">
+    <div class="sbar">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      <input id="search-logs" style="background:none;border:none;outline:none;color:var(--t1);font-size:13px;flex:1;font-family:var(--fn);" placeholder="搜尋訊息內容...">
+    </div>
+    <div class="sort-bar">
+      <span class="sort-lbl">排序</span>
+      <div class="sb on" data-tab="logs" data-f="created_at">時間<span class="sa">↓</span></div>
+      <div class="sb" data-tab="logs" data-f="sender_name">寄件人<span class="sa"></span></div>
+      <div class="sb" data-tab="logs" data-f="group_name">群組<span class="sa"></span></div>
+    </div>
+    <div class="log-stats">
+      <div class="lst"><div class="lsv" id="log-stat-total" style="color:var(--t1)">—</div><div class="lsl">全部</div></div>
+      <div class="lst"><div class="lsv" id="log-stat-raw" style="color:var(--re)">—</div><div class="lsl">未處理</div></div>
+      <div class="lst"><div class="lsv" id="log-stat-done" style="color:var(--gr)">—</div><div class="lsl">已處理</div></div>
+      <div class="lst"><div class="lsv" id="log-stat-groups" style="color:var(--am)">—</div><div class="lsl">群組</div></div>
+    </div>
+    <div class="slbl-row">
+      <span class="slbl" id="logs-lbl">載入中...</span>
+      <button class="copy-all" onclick="copyAll('logs')">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
+        全部複製
+      </button>
+    </div>
+    <div id="logs-list"><div class="loading-msg">載入中...</div></div>
+  </div>
+
+</div><!-- end .content -->
+
+<!-- BOTTOM NAV -->
+
+<div class="bnav">
+  <div class="ni on" id="n-summary" onclick="go('summary')">
+    <div class="ni-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><rect x="2" y="3" width="7" height="7" rx="2"/><rect x="11" y="3" width="7" height="7" rx="2"/><rect x="2" y="12" width="7" height="7" rx="2"/><rect x="11" y="12" width="7" height="7" rx="2"/></svg></div>
+    <span class="ni-lbl">摘要</span>
+  </div>
+  <div class="ni" id="n-todos" onclick="go('todos')">
+    <div class="ni-icon" style="position:relative">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="6" cy="10" r="1.5"/><path d="M10 10h6M10 6h6M10 14h4"/></svg>
+      <div class="nbadge" id="todos-badge" style="display:none">0</div>
+    </div>
+    <span class="ni-lbl">Todos</span>
+  </div>
+  <div class="ni" id="n-finance" onclick="go('finance')">
+    <div class="ni-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 6v8M7 8.5h4a1.5 1.5 0 010 3H7m0 0h5"/></svg></div>
+    <span class="ni-lbl">Finance</span>
+  </div>
+  <div class="ni" id="n-hc" onclick="go('hc')">
+    <div class="ni-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="8" cy="7" r="3"/><path d="M2 18c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M14 5c1 .5 2 1.5 2 3s-1 2.5-2 3"/><path d="M17 17c0-1.5-.8-2.8-2-3.5"/></svg></div>
+    <span class="ni-lbl">人數</span>
+  </div>
+  <div class="ni" id="n-more" onclick="go('more')">
+    <div class="ni-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="5" cy="10" r="1.5" fill="currentColor"/><circle cx="10" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/></svg></div>
+    <span class="ni-lbl">更多</span>
+  </div>
+</div>
+
+<!-- CALENDAR OVERLAY -->
+
+<div class="ov cov" id="ov-cal">
+  <div class="bd" onclick="closeOv('cal')"></div>
+  <div class="csh">
+    <div class="ch2">
+      <div class="cnv" onclick="nm(-1)"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 10 10"><polyline points="7 2 3 5 7 8"/></svg></div>
+      <div class="cml" id="cml"></div>
+      <div class="cnv" onclick="nm(1)"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 10 10"><polyline points="3 2 7 5 3 8"/></svg></div>
+    </div>
+    <button class="cl on" id="cl-btn" onclick="selLatest()">
+      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6"/><polyline points="7 4 7 7 9 9"/></svg>
+      Latest（每組最新）
+    </button>
+    <div class="cwds"><div class="cwd">Su</div><div class="cwd">Mo</div><div class="cwd">Tu</div><div class="cwd">We</div><div class="cwd">Th</div><div class="cwd">Fr</div><div class="cwd">Sa</div></div>
+    <div class="cdays" id="cdays"></div>
+  </div>
+</div>
+
+<!-- GROUP OVERLAY -->
+
+<div class="ov gov" id="ov-grp">
+  <div class="bd" onclick="closeOv('grp')"></div>
+  <div class="gsh">
+    <div class="ghdl"></div>
+    <div class="gt">篩選群組</div>
+    <div id="grp-list"></div>
+  </div>
+</div>
+
+</div><!-- end #app-shell -->
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzdTgOVhd9YmAvFgZn57Pva2e_afh_PU6ktCu-kUjXKlsERaCTaViREUa-oceMNPs-r5w/exec';
+
+// ── STATE ────────────────────────────────────────────────────────────────
+let TOKEN = '';
+let DB = { summary:[], todos:[], finance:[], headcount:[], links:[], events:[], logs:[] };
+let activeGroup  = '';
+let activeDate   = 'latest';
+let currentTab   = 'summary';
+let searchQ      = { summary:'', todos:'', finance:'', hc:'', links:'', events:'', logs:'' };
+let filterPriority  = '';
+let filterEvStatus  = 'all';
+
+// Sort state per tab
+const sortState = {
+  summary:  { field:'created_at', dir:'desc' },
+  todos:    { field:'priority',   dir:'desc' },
+  finance:  { field:'created_at', dir:'desc' },
+  hc:       { field:'event_date', dir:'desc' },
+  links:    { field:'created_at', dir:'desc' },
+  events:   { field:'event_date', dir:'desc' },
+  logs:     { field:'created_at', dir:'desc' },
+};
+
+// Event expand state (by key = name|date)
+const expandedEvKeys = new Set();
+
+// ── LOADING ──────────────────────────────────────────────────────────────
+function setLoading(on) {
+  document.getElementById('loading-bar').classList.toggle('active', on);
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────────
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.color = color || 'var(--gr)';
+  t.style.opacity = '1';
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.style.opacity = '0'; }, 1800);
+}
+
+// ── COPY ─────────────────────────────────────────────────────────────────
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  showToast('已複製 ✓');
+}
+
+function copyAll(tab) {
+  let lines = [];
+  const now = new Date().toISOString().slice(0,10);
+  switch(tab) {
+    case 'summary':
+      lines = applyFilters(DB.summary).map(r =>
+        `【${r.group_name}】${(r.created_at||'').slice(0,10)}\n${r.summary||''}`
+      );
+      break;
+    case 'todos':
+      lines = applyFilters(DB.todos)
+        .filter(r => !isDone(r))
+        .map(r => `[${r.priority||'—'}] ${r.todo||r.task||''} (${r.group_name}${r.due_date?' · '+r.due_date:''})`);
+      break;
+    case 'finance':
+      lines = applyFilters(DB.finance).map(r =>
+        `${r.direction} $${r.amount} ${r.description} (${r.group_name})`
+      );
+      break;
+    case 'hc': {
+      const evMap = buildEvMap(applyFilters(DB.headcount));
+      lines = Object.values(evMap).map(ev => {
+        const names = ev.persons.map(p => `${p.person_name}(${p.rsvp_status||'?'})`).join(', ');
+        return `${ev.name} · ${ev.date} · ${ev.group}\n${names}`;
+      });
+      break;
+    }
+    case 'links':
+      lines = applyFilters(DB.links).map(r => r.url || '');
+      break;
+    case 'events':
+      lines = DB.events.map(r => {
+        const name = r.event_name||r.name||'';
+        const date = r.event_date||r.date||'';
+        return `${name} · ${date}\n${r.organizer||''} ${r.status_note||''}`.trim();
+      });
+      break;
+    case 'logs':
+      lines = applyFilters(DB.logs).slice(0,60).map(r =>
+        `[${r.group_name}] ${r.sender_name||'?'}: ${(r.content||r.message||'').slice(0,200)}`
+      );
+      break;
+  }
+  const text = lines.filter(Boolean).join('\n\n');
+  if (text) copyText(text);
+  else showToast('沒有資料', 'var(--t3)');
+}
+
+// ── SHA-256 LOGIN ─────────────────────────────────────────────────────────
+// GAS Script Property API_TOKEN 應存 SHA-256(密碼) 的十六進位字串
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-shell').style.display = 'none';
+}
+function hideLogin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'flex';
+}
+function setLoginStatus(msg, color) {
+  const el = document.getElementById('login-status');
+  el.textContent = msg;
+  el.style.color = color || 'var(--t2)';
+}
+
+async function doLogin() {
+  const raw = document.getElementById('token-input').value.trim();
+  if (!raw) return;
+  setLoginStatus('計算 SHA-256...', 'var(--te)');
+  TOKEN = await sha256(raw);
+  await loadAll();
+}
+
+// ── FETCH ─────────────────────────────────────────────────────────────────
+async function fetchSheet(sheet) {
+  let url = `${GAS_URL}?token=${encodeURIComponent(TOKEN)}&action=${sheet}`;
+  if (sheet === 'logs') {
+    url += '&limit=500';
+    if (activeGroup) url += `&group=${encodeURIComponent(activeGroup)}`;
+  } else if (sheet === 'events') {
+    // events: no date filter, all records
+  } else {
+    url += `&created_at=${activeDate}`;
+    if (activeGroup) url += `&group=${encodeURIComponent(activeGroup)}`;
+  }
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || '認證失敗，請確認密碼或 GAS API_TOKEN');
+  return data.data || [];
+}
+
+async function fetchDates() {
+  const url = `${GAS_URL}?token=${encodeURIComponent(TOKEN)}&action=dates`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.ok ? (data.data || []) : [];
+}
+
+// ── LOAD ALL ──────────────────────────────────────────────────────────────
+async function loadAll() {
+  setLoading(true);
+  setLoginStatus('載入資料中...', 'var(--te)');
+  try {
+    const sheets = ['summary','todos','finance','headcount','links','events','logs'];
+    const results = await Promise.all(sheets.map(s => fetchSheet(s)));
+    sheets.forEach((s, i) => { DB[s] = results[i]; });
+
+    const dateData = await fetchDates();
+    window._calDots = {};
+    dateData.forEach(d => { window._calDots[d.created_at] = (d.groups||[]).length || 1; });
+
+    sessionStorage.setItem('las_token', TOKEN);
+    hideLogin();
+    setLoginStatus('', '');
+    updateMoreBadges();
+    buildGroupFilter();
+    updateTodoBadge();
+    go('summary');
+  } catch(e) {
+    setLoginStatus('❌ ' + (e.message || '連線失敗'), 'var(--re)');
+    TOKEN = '';
+    sessionStorage.removeItem('las_token');
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function reloadDateSheets() {
+  setLoading(true);
+  try {
+    const sheets = ['summary','todos','finance','headcount','links'];
+    const results = await Promise.all(sheets.map(s => fetchSheet(s)));
+    sheets.forEach((s, i) => { DB[s] = results[i]; });
+    updateTodoBadge();
+    updateMoreBadges();
+  } catch(e) { console.error(e); }
+  finally { setLoading(false); }
+}
+
+function updateMoreBadges() {
+  const grpCount = new Set(DB.summary.map(r=>r.group_name).filter(Boolean)).size;
+  document.getElementById('more-groups').textContent      = grpCount;
+  document.getElementById('more-links-cnt').textContent   = DB.links.length;
+  document.getElementById('more-logs-cnt').textContent    = DB.logs.length;
+  document.getElementById('more-events-cnt').textContent  = DB.events.length;
+}
+
+function updateTodoBadge() {
+  const n = DB.todos.filter(r => !isDone(r)).length;
+  const b = document.getElementById('todos-badge');
+  b.textContent = n > 99 ? '99+' : n;
+  b.style.display = n > 0 ? 'flex' : 'none';
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+const TABS = ['summary','todos','finance','hc','more','links','events','logs'];
+
+function go(t) {
+  currentTab = t;
+  TABS.forEach(x => {
+    document.getElementById('p-'+x)?.classList.remove('on');
+    document.getElementById('n-'+x)?.classList.remove('on');
+  });
+  document.getElementById('p-'+t)?.classList.add('on');
+  if (['summary','todos','finance','hc','more'].includes(t))
+    document.getElementById('n-'+t)?.classList.add('on');
+  document.querySelector('.content').scrollTop = 0;
+  closeOv('cal'); closeOv('grp');
+  renderTab(t);
+}
+
+function renderTab(t) {
+  const q = (searchQ[t] || '').toLowerCase();
+  switch(t) {
+    case 'summary': renderSummary(q); break;
+    case 'todos':   renderTodos(q);   break;
+    case 'finance': renderFinance(q); break;
+    case 'hc':      renderHC(q);      break;
+    case 'links':   renderLinks(q);   break;
+    case 'logs':    renderLogs(q);    break;
+    case 'events':  renderEvents(q);  break;
+  }
+}
+
+// ── SORT ──────────────────────────────────────────────────────────────────
+const PRIO_VAL = { '高':3, '中':2, '低':1 };
+
+function setSort(tab, field) {
+  const s = sortState[tab];
+  if (s.field === field) s.dir = s.dir === 'desc' ? 'asc' : 'desc';
+  else { s.field = field; s.dir = 'desc'; }
+  updateSortBtns(tab);
+  renderTab(tab);
+}
+
+function updateSortBtns(tab) {
+  const { field, dir } = sortState[tab];
+  document.querySelectorAll(`.sb[data-tab="${tab}"]`).forEach(btn => {
+    const active = btn.dataset.f === field;
+    btn.classList.toggle('on', active);
+    const arr = btn.querySelector('.sa');
+    if (arr) arr.textContent = active ? (dir === 'desc' ? '↓' : '↑') : '';
+  });
+}
+
+function sortRows(rows, tab, extraField) {
+  const { field, dir } = sortState[tab];
+  const f = extraField || field;
+  const mul = dir === 'desc' ? -1 : 1;
+  return [...rows].sort((a, b) => {
+    let av = a[f] ?? '', bv = b[f] ?? '';
+    if (f === 'priority')  { av = PRIO_VAL[av]||0; bv = PRIO_VAL[bv]||0; return (av-bv)*mul; }
+    if (f === 'amount')    { av = parseFloat(av)||0; bv = parseFloat(bv)||0; return (av-bv)*mul; }
+    if (f === 'attendance'){ av = a._pct||0; bv = b._pct||0; return (av-bv)*mul; }
+    return String(av).localeCompare(String(bv), 'zh-TW') * mul;
+  });
+}
+
+// ── FILTER HELPERS ────────────────────────────────────────────────────────
+function filteredByGroup(arr) {
+  if (!activeGroup) return arr;
+  return arr.filter(r => r.group_name === activeGroup);
+}
+function applyFilters(arr) { return filteredByGroup(arr); }
+function matchQ(obj, q) {
+  if (!q) return true;
+  return Object.values(obj).some(v => String(v).toLowerCase().includes(q));
+}
+function tryJSON(s, fallback) {
+  try { return typeof s === 'string' ? JSON.parse(s) : (s || fallback); }
+  catch { return fallback; }
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escJs(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+function fmtDate(s) {
+  if (!s) return '—';
+  const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[2]}/${m[3]}` : String(s).slice(0,10);
+}
+function empty(msg) { return `<div class="loading-msg">${msg}</div>`; }
+function isDone(r) { return r.done === true || r.done === 'TRUE'; }
+
+function updateMeta(tab, count, unit) {
+  const titles = { summary:'⬡ Line Asst', todos:'Todos', finance:'Finance', hc:'人數統計', more:'更多', links:'Links', events:'Events', logs:'Raw Logs' };
+  document.getElementById('ptitle').textContent = titles[tab] || tab;
+  const grpLabel = activeGroup ? activeGroup.slice(0,14) : (new Set(DB.summary.map(r=>r.group_name).filter(Boolean)).size) + ' groups';
+  const dateLabel = activeDate === 'latest' ? 'latest' : activeDate;
+  document.getElementById('psub').textContent = `${count} ${unit} · ${grpLabel} · ${dateLabel}`;
+}
+
+// Copy icon SVG
+const COPY_SVG = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>`;
+
+// ── RENDER SUMMARY ────────────────────────────────────────────────────────
+function renderSummary(q) {
+  let rows = applyFilters(DB.summary).filter(r => matchQ(r, q));
+  if (activeDate === 'latest') {
+    const seen = new Set();
+    rows = rows.filter(r => { if (seen.has(r.group_name)) return false; seen.add(r.group_name); return true; });
+  }
+  rows = sortRows(rows, 'summary');
+
+  document.getElementById('stat-groups').textContent = new Set(DB.summary.map(r=>r.group_name).filter(Boolean)).size;
+  document.getElementById('stat-todos').textContent  = DB.todos.filter(r=>!isDone(r)).length;
+  document.getElementById('stat-links').textContent  = DB.links.length;
+  document.getElementById('stat-people').textContent = DB.headcount.length;
+  document.getElementById('summary-lbl').textContent = `${rows.length} 個群組摘要`;
+
+  const el = document.getElementById('summary-list');
+  if (!el) return;
+  if (!rows.length) { el.innerHTML = empty('沒有符合的摘要'); updateMeta('summary',0,'摘要'); return; }
+
+  el.innerHTML = rows.map(r => {
+    const topics = tryJSON(r.topics, []);
+    const notes  = tryJSON(r.notes, []);
+    const noteText = notes.find(n => /元|基金|盈餘|費用/.test(n)) || '';
+    const summaryText = r.summary || '';
+    return `<div class="card">
+      <div class="ch">
+        <div class="cm">
+          <div class="cr"><span class="cn">${esc(r.group_name)}</span><span class="cd">${fmtDate(r.created_at)}</span></div>
+          <div class="ctags">${topics.slice(0,4).map(t=>`<span class="tag bl">${esc(t)}</span>`).join('')}</div>
+        </div>
+        <div class="ic" title="複製摘要" onclick="event.stopPropagation();copyText(${JSON.stringify(summaryText)})">${COPY_SVG}</div>
+      </div>
+      <div class="cb">${esc(summaryText)}</div>
+      ${noteText?`<div class="cnote">⚠ ${esc(noteText)}</div>`:''}
+      <div class="cf">
+        <div class="cs">📋 <strong>${r.todos||0}</strong></div>
+        <div class="cs">💰 <strong>${r.finance||0}</strong></div>
+        <div class="cs">👥 <strong>${r.people||0}</strong></div>
+      </div>
+    </div>`;
+  }).join('');
+  updateMeta('summary', rows.length, '摘要');
+}
+
+// ── RENDER TODOS ──────────────────────────────────────────────────────────
+function renderTodos(q) {
+  let rows = applyFilters(DB.todos).filter(r => matchQ(r, q));
+  if (filterPriority) rows = rows.filter(r => r.priority === filterPriority);
+  rows = sortRows(rows, 'todos');
+
+  const undoneCount = rows.filter(r => !isDone(r)).length;
+  document.getElementById('todos-lbl').textContent = `${undoneCount} 未完成 / ${rows.length} 筆`;
+
+  const el = document.getElementById('todos-list');
+  if (!rows.length) { el.innerHTML = empty('沒有符合的待辦'); updateMeta('todos',0,'待辦'); return; }
+
+  const pColors = { '高':'var(--re)', '中':'var(--am)', '低':'var(--t3)' };
+  el.innerHTML = rows.map(r => {
+    const done  = isDone(r);
+    const rowId = escJs(String(r.row_number||r.id||''));
+    const txt   = r.todo || r.task || '';
+    const color = pColors[r.priority] || 'var(--t3)';
+    return `<div class="ti" onclick="toggleTodo(this,'${rowId}')">
+      <div class="chk${done?' done':''}">
+        ${done?`<svg width="11" height="11" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg>`:''}
+      </div>
+      <div class="tb">
+        <div class="tt${done?' done':''}">${esc(txt)}</div>
+        <div class="tm">
+          <span class="tg">${esc(r.group_name||'')}</span>
+          ${r.due_date?`<span class="td-date">${esc(r.due_date)}</span>`:''}
+        </div>
+      </div>
+      <div class="ic" title="複製" onclick="event.stopPropagation();copyText(${JSON.stringify(`[${r.priority||'—'}] ${txt} (${r.group_name})`)})">${COPY_SVG}</div>
+      <div class="pd" style="background:${color}"></div>
+    </div>`;
+  }).join('');
+  updateMeta('todos', undoneCount, '未完成');
+}
+
+function toggleTodo(el, rowId) {
+  const chk  = el.querySelector('.chk');
+  const tt   = el.querySelector('.tt');
+  const done = chk.classList.toggle('done');
+  tt.classList.toggle('done', done);
+  chk.innerHTML = done ? `<svg width="11" height="11" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="2 6 5 9 10 3"/></svg>` : '';
+  const item = DB.todos.find(r => String(r.row_number||r.id) === rowId);
+  if (item) item.done = done;
+  updateTodoBadge();
+  if (rowId) fetch(`${GAS_URL}?token=${encodeURIComponent(TOKEN)}&action=updateTodo&row=${rowId}&done=${done}`).catch(()=>{});
+}
+
+// ── RENDER FINANCE ────────────────────────────────────────────────────────
+function renderFinance(q) {
+  let rows = applyFilters(DB.finance).filter(r => matchQ(r, q));
+  rows = sortRows(rows, 'finance');
+
+  const income  = rows.filter(r=>r.direction==='收入').reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const expense = rows.filter(r=>r.direction==='支出').reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const net     = income - expense;
+  document.getElementById('fin-expense').textContent = `$${expense.toLocaleString()}`;
+  document.getElementById('fin-income').textContent  = `$${income.toLocaleString()}`;
+  document.getElementById('fin-net').textContent     = `${net>=0?'+':''}$${net.toLocaleString()}`;
+  document.getElementById('fin-net').style.color     = net >= 0 ? 'var(--gr)' : 'var(--re)';
+  document.getElementById('finance-lbl').textContent = `${rows.length} 筆紀錄`;
+
+  const el = document.getElementById('finance-list');
+  if (!rows.length) { el.innerHTML = empty('沒有財務紀錄'); updateMeta('finance',0,'紀錄'); return; }
+
+  el.innerHTML = rows.map(r => {
+    const out = r.direction === '支出';
+    const payees = tryJSON(r.payees, r.payees);
+    const payStr = Array.isArray(payees) ? payees.join(', ') : (payees||'');
+    const copyStr = `${r.direction} $${r.amount} ${r.description} (${r.group_name})`;
+    return `<div class="fi">
+      <div class="fic ${out?'out':'in'}">${out?'💸':'💰'}</div>
+      <div class="fbody">
+        <div class="fdesc">${esc(r.description||'')}</div>
+        <div class="fsub">${esc(r.group_name||'')} · ${esc(r.payer||'')}${payStr?` → ${esc(payStr)}`:''}</div>
+      </div>
+      <div class="famt ${out?'out':'in'}">${out?'-':'+'}$${parseFloat(r.amount||0).toLocaleString()}</div>
+      <div class="ic" title="複製" onclick="copyText(${JSON.stringify(copyStr)})">${COPY_SVG}</div>
+    </div>`;
+  }).join('');
+  updateMeta('finance', rows.length, '紀錄');
+}
+
+// ── RENDER HEADCOUNT ──────────────────────────────────────────────────────
+function buildEvMap(rows) {
+  const map = {};
+  rows.forEach(r => {
+    const key = (r.event_name||'')+'|'+(r.event_date||'')+'|'+(r.group_name||'');
+    if (!map[key]) map[key] = { name:r.event_name, date:r.event_date, group:r.group_name, persons:[], _pct:0 };
+    if (r.person_name) map[key].persons.push(r);
+  });
+  Object.values(map).forEach(ev => {
+    const total = ev.persons.length;
+    const confirmed = ev.persons.filter(p=>p.rsvp_status==='確認').length;
+    ev._pct = total ? Math.round(confirmed/total*100) : 0;
+  });
+  return map;
+}
+
+function renderHC(q) {
+  let rows = applyFilters(DB.headcount).filter(r => matchQ(r, q));
+  const evMap = buildEvMap(rows);
+  let evList = Object.values(evMap);
+
+  // Attach sort field to each item for sortRows
+  evList = evList.map(ev => ({
+    ...ev,
+    event_date: ev.date||'',
+    event_name: ev.name||'',
+    group_name: ev.group||'',
+    attendance: ev._pct,
+  }));
+  evList = sortRows(evList, 'hc');
+
+  const el = document.getElementById('hc-list');
+  document.getElementById('hc-lbl').textContent = `${evList.length} 個活動`;
+  if (!evList.length) { el.innerHTML = empty('沒有人數紀錄'); updateMeta('hc',0,'活動'); return; }
+
+  const now = new Date().toISOString().slice(0,10);
+  el.innerHTML = evList.map(ev => {
+    const confirmed = ev.persons.filter(p=>p.rsvp_status==='確認').length;
+    const total     = ev.persons.length;
+    const upcoming  = (ev.date||'') >= now;
+    const chips     = ev.persons.slice(0,8).map(p => {
+      const cls = p.rsvp_status==='確認'?'ok':p.rsvp_status==='請假'?'no':'q';
+      return `<div class="av ${cls}">${{ok:'✓',no:'✗',q:'?'}[cls]} ${esc(p.person_name)}</div>`;
+    }).join('') + (ev.persons.length>8?`<div class="av q">+${ev.persons.length-8}</div>`:'');
+    const copyStr = `${ev.name} · ${ev.date}\n${ev.persons.map(p=>`${p.person_name}(${p.rsvp_status||'?'})`).join(', ')}`;
+    return `<div class="hcc">
+      <div class="hch">
+        <div><div class="hce">${esc(ev.name)}</div><div class="hcd">${esc(ev.group)} · ${ev.date}</div></div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="tag ${upcoming?'am':'gy'}">${upcoming?'upcoming':'completed'}</span>
+          <div class="ic" title="複製" onclick="copyText(${JSON.stringify(copyStr)})">${COPY_SVG}</div>
+        </div>
+      </div>
+      <div class="hcp">
+        <div class="pl"><span>出席確認</span><span style="color:var(--t1)">${confirmed} / ${total}</span></div>
+        <div class="pb"><div class="pf" style="width:${ev._pct}%;background:${upcoming?'var(--ac)':'var(--gr)'}"></div></div>
+      </div>
+      <div class="hca">${chips}</div>
+    </div>`;
+  }).join('');
+  updateMeta('hc', evList.length, '活動');
+}
+
+// ── RENDER LINKS ──────────────────────────────────────────────────────────
+function renderLinks(q) {
+  let rows = applyFilters(DB.links).filter(r => matchQ(r, q));
+  rows = sortRows(rows, 'links');
+  document.getElementById('links-lbl').textContent = `${rows.length} 個連結`;
+
+  const el = document.getElementById('links-list');
+  if (!rows.length) { el.innerHTML = empty('沒有連結'); updateMeta('links',0,'連結'); return; }
+
+  const icons = { 'docs.google':'📊','forms.gle':'📝','github':'🐙','youtube':'▶️','drive.google':'📁','notion':'📒','figma':'🎨','line':'💬' };
+  el.innerHTML = rows.map(r => {
+    const url   = r.url || '';
+    const ico   = Object.entries(icons).find(([k])=>url.toLowerCase().includes(k))?.[1] || '🔗';
+    const short = url.replace(/^https?:\/\//,'').slice(0,52);
+    return `<div class="li" onclick="window.open(${JSON.stringify(url)},'_blank')">
+      <div class="lf">${ico}</div>
+      <div class="lb">
+        <div class="lu">${esc(short)}</div>
+        <div class="lm">${esc(r.sender_name||r.sender||r.group_name||'')} · ${esc(r.group_name||'')} · ${fmtDate(r.created_at)}</div>
+      </div>
+      <div class="ic" title="複製連結" onclick="event.stopPropagation();copyText(${JSON.stringify(url)})">${COPY_SVG}</div>
+    </div>`;
+  }).join('');
+  updateMeta('links', rows.length, '連結');
+}
+
+// ── RENDER EVENTS (with expand/collapse) ─────────────────────────────────
+function renderEvents(q) {
+  let rows = DB.events.filter(r => matchQ(r, q));
+  const now = new Date().toISOString().slice(0,10);
+
+  if (filterEvStatus === 'upcoming')  rows = rows.filter(r => (r.event_date||r.date||'') >= now);
+  if (filterEvStatus === 'completed') rows = rows.filter(r => (r.event_date||r.date||'') < now);
+  if (activeGroup) {
+    rows = rows.filter(r => {
+      const gs = tryJSON(r.groups, [r.group_name]);
+      return Array.isArray(gs) ? gs.includes(activeGroup) : String(gs).includes(activeGroup);
+    });
+  }
+  rows = sortRows(rows, 'events');
+  document.getElementById('events-lbl').textContent = `${rows.length} 個活動`;
+
+  const el = document.getElementById('events-list');
+  if (!rows.length) { el.innerHTML = empty('沒有活動紀錄'); return; }
+
+  // Save currently expanded keys from DOM before re-render
+  document.querySelectorAll('.ev-card').forEach(card => {
+    if (card.querySelector('.ev-detail.open')) {
+      const rawKey = card.dataset.evKey;
+      if (rawKey) expandedEvKeys.add(rawKey);
+    }
+  });
+
+  el.innerHTML = rows.map(r => {
+    const evDate      = r.event_date || r.date || '';
+    const evName      = r.event_name || r.name || '（無名稱）';
+    const upcoming    = evDate >= now;
+    const pct         = parseInt(r.progress || r.completion || 0);
+    const groups      = tryJSON(r.groups, [r.group_name]).filter(Boolean);
+    const preItems    = tryJSON(r.pre, []);
+    const postItems   = tryJSON(r.post, []);
+    const signups     = tryJSON(r.signup_urls, []);
+    const tasks       = tryJSON(r.tasks, []);
+    const changelog   = tryJSON(r.changelog, []);
+    const participants= tryJSON(r.participants, []);
+    const relatedLinks= tryJSON(r.related_links, []);
+    const description = r.description || r.summary || '';
+    const budget      = r.budget || '';
+    const key         = escJs(evName + '|' + evDate);
+    const isOpen      = expandedEvKeys.has(evName + '|' + evDate);
+    const location    = r.location || '';
+
+    // Build compact plain-text copy string with all details
+    const copyParts = [`【${evName}】 ${evDate}`];
+    if (location)           copyParts.push(`地點：${location}`);
+    if (r.organizer)        copyParts.push(`主辦：${r.organizer}`);
+    if (r.status_note)      copyParts.push(`狀態：${r.status_note}`);
+    if (description)        copyParts.push(`描述：${description}`);
+    if (budget)             copyParts.push(`預算：${budget}`);
+    if (groups.length)      copyParts.push(`群組：${groups.join(', ')}`);
+    if (participants.length)copyParts.push(`參與者：${participants.join(', ')}`);
+    if (preItems.length)    copyParts.push(`準備：${preItems.join(' · ')}`);
+    if (postItems.length)   copyParts.push(`後續：${postItems.join(' · ')}`);
+    if (tasks.length)       copyParts.push(`任務：\n  · ${tasks.join('\n  · ')}`);
+    if (changelog.length)   copyParts.push(`歷程：\n  · ${changelog.join('\n  · ')}`);
+    if (signups.length)     copyParts.push(`報名：${signups.join(', ')}`);
+    if (relatedLinks.length)copyParts.push(`文件：${relatedLinks.map(l=>l.name?`${l.name} (${l.url})`:l.url||l).join(', ')}`);
+    if (r.note)             copyParts.push(`備註：${r.note}`);
+    if (pct>0)              copyParts.push(`進度：${pct}%`);
+    const copyStr = copyParts.join('\n');
+
+    return `<div class="ev-card" data-ev-key="${esc(evName + '|' + evDate)}">
+      <div class="ev-hdr" onclick="toggleEvExpand('${key}')">
+        <div class="ev-dot" style="background:${upcoming?'var(--ac)':'var(--gr)'}"></div>
+        <div class="ev-main">
+          <div class="ev-name">${esc(evName)}</div>
+          <div class="ev-sub">${esc(location)}${location&&evDate?' · ':''}${evDate}</div>
+        </div>
+        <span class="tag ${upcoming?'am':'gy'}" style="flex-shrink:0">${upcoming?'即將':'已結束'}</span>
+        <div class="ic" title="複製詳情" onclick="event.stopPropagation();copyText(${JSON.stringify(copyStr)})" style="flex-shrink:0">${COPY_SVG}</div>
+        <div class="ev-chevron${isOpen?' open':''}">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 12 12"><polyline points="2 4 6 8 10 4"/></svg>
+        </div>
+      </div>
+      <div class="ev-detail${isOpen?' open':''}">
+        <div class="ev-body">
+          ${r.organizer?`<div class="ev-row"><span class="ev-lbl">主辦</span><span class="ev-val">${esc(r.organizer)}</span></div>`:''}
+          ${r.status_note?`<div class="ev-row"><span class="ev-lbl">狀態</span><span class="ev-val" style="color:var(--am)">${esc(r.status_note)}</span></div>`:''}
+          ${groups.length?`<div class="ev-row"><span class="ev-lbl">群組</span><span class="ev-val">${groups.map(g=>esc(g)).join(', ')}</span></div>`:''}
+          ${description?`<div class="ev-row"><span class="ev-lbl">描述</span><span class="ev-val">${esc(description)}</span></div>`:''}
+          ${budget?`<div class="ev-row"><span class="ev-lbl">預算</span><span class="ev-val">${esc(budget)}</span></div>`:''}
+          ${participants.length?`<div class="ev-row"><span class="ev-lbl">參與者</span><span class="ev-val ev-participants">${participants.map(p=>esc(p)).join(', ')}</span></div>`:''}
+          ${preItems.length?`<div class="ev-row"><span class="ev-lbl">準備事項</span><span class="ev-val">${preItems.map(p=>esc(p)).join(' · ')}</span></div>`:''}
+          ${postItems.length?`<div class="ev-row"><span class="ev-lbl">後續事項</span><span class="ev-val">${postItems.map(p=>esc(p)).join(' · ')}</span></div>`:''}
+          ${tasks.length?`<div class="ev-section"><div class="ev-section-title">相關任務</div><ul class="ev-tasks">${tasks.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`:''}
+          ${changelog.length?`<div class="ev-section"><div class="ev-section-title">版本歷程</div><ul class="ev-changelog">${changelog.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>`:''}
+          ${signups.length?`<div class="ev-row"><span class="ev-lbl">報名連結</span><span class="ev-val">${signups.map(u=>`<a href="${esc(u)}" target="_blank" style="color:var(--ac)">${esc(u.slice(0,40))}</a>`).join('<br>')}</span></div>`:''}
+          ${relatedLinks.length?`<div class="ev-row"><span class="ev-lbl">相關文件</span><span class="ev-val">${relatedLinks.map(l=>{const url=l.url||l;const name=l.name||url;return`<a href="${esc(url)}" target="_blank" style="color:var(--te)">${esc(name)}</a>`;}).join(' · ')}</span></div>`:''}
+          ${r.note?`<div class="ev-row"><span class="ev-lbl">備註</span><span class="ev-val">${esc(r.note)}</span></div>`:''}
+        </div>
+        ${pct>0?`<div class="ev-foot">
+          <div class="pl"><span>準備進度</span><span style="color:${upcoming?'var(--am)':'var(--gr)'}">${pct}%</span></div>
+          <div class="pb"><div class="pf" style="width:${pct}%;background:${upcoming?'var(--am)':'var(--gr)'}"></div></div>
+        </div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleEvExpand(key) {
+  const rawKey = key.replace(/\\'/g, "'");
+  if (expandedEvKeys.has(rawKey)) expandedEvKeys.delete(rawKey);
+  else expandedEvKeys.add(rawKey);
+  // Use data-ev-key attribute for reliable card lookup
+  const card = Array.from(document.querySelectorAll('.ev-card')).find(c => c.dataset.evKey === rawKey);
+  if (card) {
+    const isNowOpen = expandedEvKeys.has(rawKey);
+    card.querySelector('.ev-detail')?.classList.toggle('open', isNowOpen);
+    card.querySelector('.ev-chevron')?.classList.toggle('open', isNowOpen);
+  }
+}
+
+// ── RENDER LOGS ──────────────────────────────────────────────────────────
+function renderLogs(q) {
+  let rows = applyFilters(DB.logs).filter(r => matchQ(r, q));
+  rows = sortRows(rows, 'logs');
+
+  const total     = DB.logs.length;
+  const processed = DB.logs.filter(r=>r.processed===true||r.processed==='TRUE').length;
+  const groups    = new Set(DB.logs.map(r=>r.group_name).filter(Boolean)).size;
+  document.getElementById('log-stat-total').textContent  = total;
+  document.getElementById('log-stat-raw').textContent    = total - processed;
+  document.getElementById('log-stat-done').textContent   = processed;
+  document.getElementById('log-stat-groups').textContent = groups;
+  document.getElementById('logs-lbl').textContent        = `${rows.length} 筆`;
+
+  const el = document.getElementById('logs-list');
+  const show = rows.slice(0, 60);
+  if (!show.length) { el.innerHTML = empty('沒有訊息紀錄'); return; }
+
+  el.innerHTML = show.map(r => {
+    const isProc = r.processed === true || r.processed === 'TRUE';
+    const isBot  = r.sender_type === 'bot' || /Bot|Asst/.test(r.sender_name||'');
+    const hasUrl = r.has_url === true || r.has_url === 'TRUE';
+    const content = (r.content||r.message||'').slice(0,300);
+    return `<div class="log-item">
+      <div class="log-hdr">
+        <span class="log-sender">${esc(r.sender_name||'Unknown')}</span>
+        <span class="log-group">${esc(r.group_name||'')}</span>
+        <span class="log-time">${fmtDate(r.created_at||r.timestamp)}</span>
+      </div>
+      <div class="log-msg">${esc(content)}</div>
+      <div class="log-foot">
+        <div class="log-tags">
+          ${isProc?'<span class="ltag done">已處理</span>':'<span class="ltag raw">未處理</span>'}
+          ${isBot?'<span class="ltag bot">Bot</span>':''}
+          ${hasUrl?'<span class="ltag url">URL</span>':''}
+        </div>
+        <div class="ic" title="複製" onclick="copyText(${JSON.stringify(`[${r.group_name}] ${r.sender_name||'?'}: ${content}`)})">${COPY_SVG}</div>
+      </div>
+    </div>`;
+  }).join('');
+  if (rows.length > 60) el.innerHTML += `<div class="log-more">顯示前 60 筆，共 ${rows.length} 筆符合</div>`;
+}
+
+// ── GROUP FILTER ──────────────────────────────────────────────────────────
+function buildGroupFilter() {
+  const groups = [...new Set(DB.summary.map(r=>r.group_name).filter(Boolean))];
+  const container = document.getElementById('grp-list');
+  if (!container) return;
+  const colors = ['#5b8dee','#f0546a','#3ecf8e','#f5a623','#e879f9','#2dd4bf','#f59e0b','#a78bfa'];
+
+  let html = `<div class="git" data-g="">
+    <div class="gdot" style="background:var(--ac)"></div>
+    <div class="gn">所有群組</div>
+    <div class="gc">${groups.length} groups</div>
+    ${!activeGroup?`<svg class="gck" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 14"><polyline points="2 7 5 10 12 3"/></svg>`:''}
+  </div>`;
+  groups.forEach((g, i) => {
+    const cnt = DB.logs.filter(r=>r.group_name===g).length;
+    html += `<div class="git" data-g="${esc(g)}">
+      <div class="gdot" style="background:${colors[i%colors.length]}"></div>
+      <div class="gn">${esc(g)}</div>
+      <div class="gc">${cnt} msgs</div>
+      ${activeGroup===g?`<svg class="gck" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 14 14"><polyline points="2 7 5 10 12 3"/></svg>`:''}
+    </div>`;
+  });
+  container.innerHTML = html;
+
+  // ✅ FIX: use event delegation with data-g attribute (no inline onclick with quotes)
+  container.onclick = e => {
+    const item = e.target.closest('[data-g]');
+    if (!item) return;
+    selGrp(item.dataset.g);
+  };
+}
+
+function selGrp(g) {
+  activeGroup = g;
+  document.getElementById('btn-grp').classList.toggle('grp-on', g !== '');
+  closeOv('grp');
+  buildGroupFilter(); // refresh checkmarks
+  renderTab(currentTab);
+}
+
+// ── CALENDAR ──────────────────────────────────────────────────────────────
+const _today = new Date();
+let cy = _today.getFullYear(), cm = _today.getMonth();
+
+function toggleCal() {
+  const on = document.getElementById('ov-cal').classList.toggle('on');
+  document.getElementById('btn-cal').classList.toggle('cal-on', on);
+  if (on) { closeOv('grp'); renderCal(); }
+}
+function closeOv(x) {
+  document.getElementById('ov-'+x)?.classList.remove('on');
+  if (x==='cal') document.getElementById('btn-cal')?.classList.remove('cal-on');
+  if (x==='grp') document.getElementById('btn-grp')?.classList.remove('grp-on');
+}
+function nm(d) {
+  cm += d;
+  if (cm>11){cm=0;cy++;} if (cm<0){cm=11;cy--;}
+  renderCal();
+}
+function renderCal() {
+  const M = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cml').textContent = M[cm]+' '+cy;
+  document.getElementById('cl-btn').classList.toggle('on', activeDate==='latest');
+  const fd = new Date(cy,cm,1).getDay(), dim = new Date(cy,cm+1,0).getDate();
+  let h = '';
+  for (let i=0;i<fd;i++) h += '<div class="cday"></div>';
+  for (let d=1;d<=dim;d++) {
+    const ds = `${cy}-${String(cm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const n  = (window._calDots||{})[ds]||0;
+    const dots = Array(Math.min(n,4)).fill('<div class="cdot"></div>').join('');
+    const sel     = activeDate === ds;
+    const isToday = _today.getFullYear()===cy && _today.getMonth()===cm && _today.getDate()===d;
+    h += `<div class="cday${n?' has':''}${sel?' sel':''}${isToday?' today':''}" ${n?`data-ds="${ds}"`:''}>
+            <span class="cdn">${d}</span><div class="cdots">${dots}</div>
+          </div>`;
+  }
+  document.getElementById('cdays').innerHTML = h;
+
+  // Delegation for calendar days
+  document.getElementById('cdays').onclick = e => {
+    const day = e.target.closest('[data-ds]');
+    if (day) selDate(day.dataset.ds);
+  };
+}
+
+async function selDate(ds) {
+  activeDate = ds;
+  document.getElementById('snap').classList.add('on');
+  document.getElementById('snap-lbl').textContent = ds;
+  renderCal();
+  closeOv('cal');
+  await reloadDateSheets();
+  renderTab(currentTab);
+}
+async function selLatest() {
+  activeDate = 'latest';
+  document.getElementById('snap').classList.remove('on');
+  document.getElementById('btn-cal').classList.remove('cal-on');
+  renderCal();
+  closeOv('cal');
+  await reloadDateSheets();
+  renderTab(currentTab);
+}
+
+function toggleGrp() {
+  const on = document.getElementById('ov-grp').classList.toggle('on');
+  document.getElementById('btn-grp').classList.toggle('grp-on', on);
+  if (on) { closeOv('cal'); buildGroupFilter(); }
+}
+
+// ── LOGOUT ────────────────────────────────────────────────────────────────
+function doLogout() {
+  TOKEN = '';
+  DB = { summary:[],todos:[],finance:[],headcount:[],links:[],events:[],logs:[] };
+  sessionStorage.removeItem('las_token');
+  showLogin();
+  document.getElementById('token-input').value = '';
+  setLoginStatus('', '');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Sort buttons delegation (one listener per sort-bar)
+  document.querySelectorAll('.sort-bar').forEach(bar => {
+    bar.addEventListener('click', e => {
+      const btn = e.target.closest('.sb');
+      if (!btn) return;
+      setSort(btn.dataset.tab, btn.dataset.f);
+    });
+  });
+
+  // Priority chips
+  document.querySelectorAll('.priority-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.priority-chip').forEach(x=>x.classList.remove('on'));
+      c.classList.add('on');
+      filterPriority = c.dataset.p || '';
+      renderTab('todos');
+    });
+  });
+
+  // Event status chips
+  document.querySelectorAll('.ev-status-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('.ev-status-chip').forEach(x=>x.classList.remove('on'));
+      c.classList.add('on');
+      filterEvStatus = c.dataset.s || 'all';
+      renderTab('events');
+    });
+  });
+
+  // Search wiring
+  const searches = { 'search-summary':'summary','search-todos':'todos','search-finance':'finance','search-hc':'hc','search-links':'links','search-events':'events','search-logs':'logs' };
+  Object.entries(searches).forEach(([id, tab]) => {
+    document.getElementById(id)?.addEventListener('input', e => {
+      searchQ[tab] = e.target.value;
+      renderTab(tab);
+    });
+  });
+
+  // Enter on login
+  document.getElementById('token-input')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  renderCal();
+
+  // Auto-login from session
+  const saved = sessionStorage.getItem('las_token');
+  if (saved) { TOKEN = saved; loadAll(); }
+  else showLogin();
+});
+</script>
+
 </body>
 </html>
