@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>系統故障情境模擬器 — IEC/UL 60730 微電子診斷</title>
+  <style>
+    /* ── Brand theme (electric-blue / navy / green / red / cyan) ── */
+    :root {
+      --primary:        #1565C0;
+      --primary-dark:   #0D47A1;
+      --primary-light:  #42A5F5;
+      --secondary:      #0A1628;
+      --accent:         #00BCD4;
+      --accent-dark:    #0097A7;
+      --success:        #2E7D32;
+      --success-light:  #4CAF50;
+      --success-bg:     #E8F5E9;
+      --warning:        #E65100;
+      --warning-light:  #FF8F00;
+      --warning-bg:     #FFF3E0;
+      --danger:         #B71C1C;
+      --danger-light:   #E53935;
+      --danger-bg:      #FFEBEE;
+      --failsafe:       #1A237E;
+      --failsafe-bg:    #E8EAF6;
+      --neutral-bg:     #EEF1F8;
+      --card-bg:        #FFFFFF;
+      --card-alt:       #F4F7FC;
+      --border:         #CDD5E0;
+      --border-light:   #E4EAF2;
+      --text-primary:   #0A1628;
+      --text-secondary: #374151;
+      --text-muted:     #6B7280;
+      --text-on-dark:   #E8ECF0;
+      --nav-h:          58px;
+      --r:              8px;
+      --r-sm:           5px;
+      --shadow:         0 2px 8px rgba(13,71,161,.10);
+      --shadow-md:      0 4px 16px rgba(13,71,161,.15);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+      background: var(--neutral-bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      position: sticky; top: 0; z-index: 200;
+      height: var(--nav-h);
+      background: var(--secondary);
+      color: var(--text-on-dark);
+      display: flex; align-items: center; gap: 14px;
+      padding: 0 20px;
+      box-shadow: 0 2px 14px rgba(0,0,0,.28);
+    }
+    .header-logo { font-size: 1.08em; font-weight: 700; color: var(--accent); white-space: nowrap; letter-spacing: .03em; }
+    .header-sub  { font-size: .76em; color: rgba(232,236,240,.55); }
+    .header-spacer { flex: 1; }
+    .header-badge {
+      font-size: .71em; white-space: nowrap;
+      background: rgba(0,188,212,.12); border: 1px solid var(--accent); color: var(--accent);
+      padding: 3px 10px; border-radius: 12px;
+    }
+    .btn-hdr-reset {
+      background: var(--danger); color: #fff; border: none;
+      padding: 6px 16px; border-radius: var(--r-sm);
+      cursor: pointer; font-size: .82em; font-weight: 600;
+      transition: background .2s; white-space: nowrap;
+    }
+    .btn-hdr-reset:hover { background: var(--danger-light); }
+
+    /* ── Layout grid ── */
+    .app-body {
+      display: grid;
+      grid-template-columns: 320px 1fr 310px;
+      gap: 14px; padding: 14px;
+    }
+    @media (max-width: 1120px) { .app-body { grid-template-columns: 280px 1fr 270px; } }
+    @media (max-width: 820px) {
+      .app-body { grid-template-columns: 1fr; }
+      .col-bottom { grid-column: 1; }
+    }
+    .col-left   { grid-column: 1; display: flex; flex-direction: column; gap: 12px; }
+    .col-center { grid-column: 2; display: flex; flex-direction: column; gap: 12px; }
+    .col-right  { grid-column: 3; display: flex; flex-direction: column; gap: 12px; }
+    .col-bottom { grid-column: 1 / -1; }
+
+    /* ── Card ── */
+    .card { background: var(--card-bg); border-radius: var(--r); border: 1px solid var(--border-light); box-shadow: var(--shadow); overflow: hidden; }
+    .card-header {
+      background: var(--primary-dark); color: var(--text-on-dark);
+      padding: 9px 16px; font-weight: 600; font-size: .87em;
+      display: flex; align-items: center; gap: 7px; letter-spacing: .02em;
+    }
+    .card-header .ch-spacer { flex: 1; }
+    .card-header .ch-badge {
+      background: var(--accent); color: var(--secondary);
+      font-size: .74em; font-weight: 700; padding: 1px 9px; border-radius: 10px;
+    }
+    .card-body { padding: 14px 16px; }
+    .section-title {
+      font-size: .74em; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--text-muted);
+      margin-bottom: 8px; padding-bottom: 5px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    /* ── Domain selector grid ── */
+    .domain-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
+    .domain-btn {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 9px 6px; gap: 3px; text-align: center;
+      border: 2px solid var(--border); border-radius: var(--r-sm);
+      cursor: pointer; background: var(--card-alt);
+      transition: all .18s;
+    }
+    .domain-btn:hover { border-color: var(--primary-light); background: #EBF5FB; }
+    .domain-btn.active { border-color: var(--primary); background: #DBEAFE; }
+    .domain-btn .di { font-size: 1.55em; }
+    .domain-btn .dl { font-size: .72em; font-weight: 600; color: var(--text-secondary); }
+    .domain-btn.active .dl { color: var(--primary-dark); }
+
+    /* ── Form fields ── */
+    .field-label {
+      display: block; font-size: .78em; font-weight: 600;
+      color: var(--text-secondary); margin-bottom: 4px;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .field-select, .field-input {
+      width: 100%; padding: 7px 10px;
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      background: #fff; font-size: .87em; color: var(--text-primary);
+      outline: none; transition: border .2s;
+    }
+    .field-select:focus, .field-input:focus { border-color: var(--primary); }
+    .mt6 { margin-top: 6px; }
+    .mt10 { margin-top: 10px; }
+
+    /* ── Severity chips ── */
+    .sev-row { display: flex; gap: 6px; margin-top: 6px; }
+    .sev-chip {
+      flex: 1; padding: 5px 4px; text-align: center;
+      border: 1.5px solid var(--border); border-radius: 4px;
+      font-size: .74em; font-weight: 600; cursor: pointer;
+      transition: all .15s;
+    }
+    .sev-chip.low  { color: #2E7D32; } .sev-chip.low.active  { background: #E8F5E9; border-color: #2E7D32; }
+    .sev-chip.med  { color: #E65100; } .sev-chip.med.active  { background: #FFF3E0; border-color: #E65100; }
+    .sev-chip.high { color: #B71C1C; } .sev-chip.high.active { background: #FFEBEE; border-color: #B71C1C; }
+
+    /* ── Inject button ── */
+    .btn-inject {
+      width: 100%; padding: 9px; margin-top: 10px;
+      background: var(--primary); color: #fff;
+      border: none; border-radius: var(--r-sm);
+      cursor: pointer; font-size: .87em; font-weight: 600;
+      letter-spacing: .02em; transition: background .2s, transform .1s;
+    }
+    .btn-inject:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-inject:active { transform: translateY(0); }
+
+    /* ── Active faults list ── */
+    .faults-list { display: flex; flex-direction: column; gap: 6px; max-height: 210px; overflow-y: auto; }
+    .fault-tag {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px; border-radius: var(--r-sm);
+      background: var(--card-alt); border-left: 3px solid var(--warning-light);
+      font-size: .81em; animation: slideIn .2s ease;
+    }
+    .fault-tag.detected  { border-left-color: var(--success-light); opacity: .75; }
+    .fault-tag.critical  { border-left-color: var(--danger-light); }
+    .ft-name   { flex: 1; font-weight: 500; }
+    .ft-sev    { font-size: .82em; }
+    .ft-ok     { color: var(--success); font-size: .9em; }
+    .ft-remove { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1em; padding: 0 3px; transition: color .2s; line-height: 1; }
+    .ft-remove:hover { color: var(--danger); }
+    .empty-notice { padding: 12px; text-align: center; color: var(--text-muted); font-size: .81em; font-style: italic; }
+
+    @keyframes slideIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── Protection toggles ── */
+    .prot-list { display: flex; flex-direction: column; gap: 7px; }
+    .prot-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; background: var(--card-alt);
+      border-radius: var(--r-sm); border: 1px solid var(--border-light);
+      cursor: pointer; transition: all .2s;
+    }
+    .prot-item:hover { border-color: var(--primary-light); }
+    .prot-item.on { background: var(--success-bg); border-color: var(--success-light); }
+    .tog { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+    .tog input { opacity:0; width:0; height:0; }
+    .tog-slider {
+      position: absolute; inset: 0; background: #CBD5E0; border-radius: 10px; transition: background .2s;
+    }
+    .tog-slider::before {
+      content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%;
+      background: #fff; top: 3px; left: 3px; transition: transform .2s;
+    }
+    .tog input:checked + .tog-slider { background: var(--success); }
+    .tog input:checked + .tog-slider::before { transform: translateX(16px); }
+    .prot-name { font-size: .83em; font-weight: 600; color: var(--text-secondary); }
+    .prot-desc { font-size: .73em; color: var(--text-muted); }
+    .prot-item.on .prot-name { color: var(--success); }
+
+    /* ── System block diagram ── */
+    .sys-diag {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    @media (max-width: 820px) { .sys-diag { grid-template-columns: repeat(2, 1fr); } }
+    .sys-block {
+      border: 2px solid var(--border); border-radius: var(--r);
+      padding: 12px 8px; text-align: center; background: var(--card-alt);
+      transition: all .3s; position: relative;
+    }
+    .sys-block.fault {
+      border-color: var(--danger-light); background: var(--danger-bg);
+      box-shadow: 0 0 0 3px rgba(183,28,28,.12);
+      animation: pulseFault 2s infinite;
+    }
+    .sys-block.ok {
+      border-color: var(--success-light); background: var(--success-bg);
+    }
+    @keyframes pulseFault {
+      0%,100% { box-shadow: 0 0 0 2px rgba(183,28,28,.12); }
+      50%      { box-shadow: 0 0 0 5px rgba(183,28,28,.22); }
+    }
+    .sb-icon   { font-size: 2.1em; }
+    .sb-name   { font-size: .79em; font-weight: 600; color: var(--text-secondary); margin-top: 4px; }
+    .sb-status {
+      display: inline-block; margin-top: 5px;
+      font-size: .7em; padding: 2px 7px; border-radius: 10px;
+      background: #E4EAF2; color: var(--text-muted);
+    }
+    .sys-block.fault .sb-status { background: var(--danger-bg); color: var(--danger); }
+    .sys-block.ok    .sb-status { background: var(--success-bg); color: var(--success); }
+
+    /* ── Risk meter ── */
+    .risk-track {
+      height: 11px;
+      background: linear-gradient(to right, var(--success), #FDD835, var(--danger));
+      border-radius: 6px; position: relative; margin: 4px 0;
+    }
+    .risk-needle {
+      position: absolute; top: -5px;
+      width: 21px; height: 21px; border-radius: 50%;
+      background: #fff; border: 3px solid var(--primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,.22);
+      transition: left .55s cubic-bezier(.34,1.56,.64,1);
+      left: 0%; margin-left: -10px;
+    }
+    .risk-labs { display: flex; justify-content: space-between; font-size: .71em; color: var(--text-muted); margin-top: 3px; }
+
+    /* ── State badge ── */
+    .state-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 16px; border-radius: 20px; font-weight: 700;
+      font-size: .9em; letter-spacing: .04em; transition: all .3s;
+    }
+    .state-badge.normal   { background: var(--success-bg);  color: var(--success);  border: 2px solid var(--success-light); }
+    .state-badge.warning  { background: var(--warning-bg);  color: var(--warning);  border: 2px solid var(--warning-light); }
+    .state-badge.danger   { background: var(--danger-bg);   color: var(--danger);   border: 2px solid var(--danger-light); }
+    .state-badge.failsafe { background: var(--failsafe-bg); color: var(--failsafe); border: 2px solid #7986CB; }
+    .s-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .state-badge.normal   .s-dot { background: var(--success); }
+    .state-badge.warning  .s-dot { background: var(--warning);  animation: blink 1.5s infinite; }
+    .state-badge.danger   .s-dot { background: var(--danger);   animation: blink .8s  infinite; }
+    .state-badge.failsafe .s-dot { background: var(--failsafe); }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.2;} }
+
+    /* ── Triggered protections ── */
+    .trig-list { display: flex; flex-direction: column; gap: 6px; }
+    .trig-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 7px 10px; border-radius: var(--r-sm);
+      font-size: .8em;
+      background: var(--success-bg); border: 1px solid #A5D6A7; color: var(--success);
+    }
+    .trig-item.miss { background: var(--danger-bg); border-color: #FFCDD2; color: var(--danger); }
+
+    /* ── Fail-safe action box ── */
+    .action-box {
+      padding: 10px 14px; border-radius: var(--r-sm);
+      background: var(--failsafe-bg); border: 1px solid #9FA8DA;
+      font-size: .83em; color: var(--failsafe); font-weight: 500;
+      line-height: 1.55;
+    }
+    .action-box.warn  { background: var(--warning-bg); border-color: var(--warning-light); color: var(--warning); }
+    .action-box.dang  { background: var(--danger-bg);  border-color: var(--danger-light);  color: var(--danger); }
+    .action-box.fsafe { background: var(--danger-bg);  border-color: var(--danger-light);  color: var(--danger); animation: pulseW 2s infinite; }
+    @keyframes pulseW { 0%,100%{opacity:1;} 50%{opacity:.65;} }
+
+    /* ── Event log ── */
+    .evt-log {
+      height: 190px; overflow-y: auto;
+      background: #060F1E; border-radius: var(--r-sm);
+      padding: 10px; font-family: 'Courier New', monospace;
+      font-size: .78em; color: #8899BB;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .le { display: flex; gap: 9px; line-height: 1.45; animation: fadeIn .3s; }
+    .le-t  { color: #3D5880; flex-shrink: 0; }
+    .le-m.info     { color: #8899BB; }
+    .le-m.warning  { color: #FFD166; }
+    .le-m.danger   { color: #FF6B6B; font-weight: bold; }
+    .le-m.success  { color: #64FFDA; }
+    .le-m.failsafe { color: #B39DDB; font-weight: bold; }
+    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+    /* ── IEC Reference panel tabs ── */
+    .tab-bar { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 2px solid var(--border-light); margin-bottom: 12px; }
+    .rtab {
+      padding: 7px 14px; font-size: .8em; font-weight: 600;
+      color: var(--text-muted); cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      border-radius: var(--r-sm) var(--r-sm) 0 0;
+      transition: all .18s; white-space: nowrap;
+    }
+    .rtab.active { color: var(--primary); border-bottom-color: var(--primary); background: #F0F5FF; }
+    .rtab:hover:not(.active) { color: var(--text-secondary); }
+
+    /* ── Reference card ── */
+    .ref-card { border: 1px solid var(--border-light); border-radius: var(--r-sm); overflow: hidden; }
+    .ref-card-head {
+      padding: 8px 12px; background: var(--primary-dark);
+      color: var(--text-on-dark); font-size: .82em; font-weight: 600;
+    }
+    .ref-card-body { padding: 10px 14px; background: #fff; }
+    .ref-row { display: grid; grid-template-columns: 130px 1fr; gap: 6px; margin-bottom: 7px; font-size: .8em; align-items: start; }
+    .ref-row:last-child { margin-bottom: 0; }
+    .rl { font-weight: 600; color: var(--text-muted); }
+    .rv { color: var(--text-secondary); }
+    .det-y { color: var(--success);  font-weight: 700; }
+    .det-n { color: var(--danger);   font-weight: 700; }
+    .det-p { color: var(--warning);  font-weight: 700; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align: center; padding: 22px 10px; color: var(--text-muted); font-size: .82em; }
+    .empty-state .ei { font-size: 2em; margin-bottom: 6px; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="app-header">
+  <span class="header-logo">⚡ SystemFaultSim</span>
+  <span class="header-sub">IEC/UL 60730 微電子故障情境模擬器</span>
+  <div class="header-spacer"></div>
+  <span class="header-badge">Class B Safety</span>
+  <button class="btn-hdr-reset" onclick="resetScenario()">↺ 重置情境</button>
+</header>
+
+<!-- ── Main body ── -->
+<div class="app-body">
+
+  <!-- ══ Left column ══ -->
+  <div class="col-left">
+
+    <!-- Fault injection -->
+    <div class="card">
+      <div class="card-header">🎯 故障注入控制台</div>
+      <div class="card-body">
+        <div class="section-title">選擇故障元件</div>
+        <div class="domain-grid" id="domain-grid"></div>
+
+        <div class="mt10">
+          <label class="field-label mt6">故障類型</label>
+          <select class="field-select" id="fault-type-sel">
+            <option value="">— 請先選擇元件 —</option>
+          </select>
+        </div>
+
+        <div class="mt10">
+          <label class="field-label">嚴重程度</label>
+          <div class="sev-row">
+            <div class="sev-chip low active" data-sev="LOW"  onclick="setSev(this)">低</div>
+            <div class="sev-chip med"        data-sev="MED"  onclick="setSev(this)">中</div>
+            <div class="sev-chip high"       data-sev="HIGH" onclick="setSev(this)">高</div>
+          </div>
+        </div>
+
+        <button class="btn-inject" onclick="injectFault()">⚡ 注入故障</button>
+      </div>
+    </div>
+
+    <!-- Active faults -->
+    <div class="card">
+      <div class="card-header">
+        ⚠️ 已注入故障
+        <span class="ch-spacer"></span>
+        <span class="ch-badge" id="fault-cnt">0</span>
+      </div>
+      <div class="card-body">
+        <div class="faults-list" id="faults-list">
+          <div class="empty-notice">尚無故障注入，請從上方控制台操作</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Protection toggles -->
+    <div class="card">
+      <div class="card-header">🛡️ 保護機制開關</div>
+      <div class="card-body">
+        <div class="prot-list" id="prot-list"></div>
+      </div>
+    </div>
+
+  </div><!-- /col-left -->
+
+  <!-- ══ Center column ══ -->
+  <div class="col-center">
+
+    <!-- System block diagram -->
+    <div class="card">
+      <div class="card-header">🖥️ 系統方塊圖（即時狀態）</div>
+      <div class="card-body">
+        <div class="sys-diag" id="sys-diag"></div>
+      </div>
+    </div>
+
+    <!-- Event log -->
+    <div class="card" style="flex:1;">
+      <div class="card-header">📋 事件日誌</div>
+      <div class="card-body">
+        <div class="evt-log" id="evt-log"></div>
+      </div>
+    </div>
+
+  </div><!-- /col-center -->
+
+  <!-- ══ Right column ══ -->
+  <div class="col-right">
+
+    <!-- System state + risk -->
+    <div class="card">
+      <div class="card-header">📊 即時系統狀態</div>
+      <div class="card-body">
+        <div style="text-align:center; margin-bottom:14px;">
+          <div id="state-badge" class="state-badge normal">
+            <span class="s-dot"></span>
+            <span id="state-txt">NORMAL</span>
+          </div>
+        </div>
+
+        <div class="section-title">風險等級</div>
+        <div class="risk-track">
+          <div class="risk-needle" id="risk-needle"></div>
+        </div>
+        <div class="risk-labs"><span>正常</span><span>警告</span><span>危險</span></div>
+        <div style="text-align:right; font-size:1.15em; font-weight:700; color:var(--primary); margin-top:4px;">
+          <span id="risk-pct">0</span>%
+        </div>
+      </div>
+    </div>
+
+    <!-- Triggered protections -->
+    <div class="card">
+      <div class="card-header">🔔 觸發保護</div>
+      <div class="card-body">
+        <div class="trig-list" id="trig-list">
+          <div class="empty-state"><div class="ei">✅</div>無異常觸發</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommended action -->
+    <div class="card">
+      <div class="card-header">💡 建議 Fail-safe 動作</div>
+      <div class="card-body">
+        <div class="action-box" id="action-box">
+          系統正常運作中，無需額外動作。繼續週期性自我測試。
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /col-right -->
+
+  <!-- ══ Bottom: IEC 60730 reference ══ -->
+  <div class="col-bottom">
+    <div class="card">
+      <div class="card-header">📚 IEC/UL 60730 教育參考面板（Annex H — Class B 自我測試）</div>
+      <div class="card-body">
+        <div class="tab-bar" id="ref-tabs"></div>
+        <div id="ref-content">
+          <div class="empty-state"><div class="ei">ℹ️</div>注入故障後將顯示對應的 IEC/UL 60730 參考資訊、危害分析與自我測試建議</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app-body -->
+
+<script>
+/* ============================================================
+   DATA — fault definitions
+   ============================================================ */
+const DOMAINS = {
+  RAM: {
+    label: 'RAM',
+    icon: '🧠',
+    faults: {
+      bit_flip: {
+        name: '位元翻轉 (Bit Flip)',
+        risk:    { LOW: 20, MED: 38, HIGH: 58 },
+        effects: { LOW: '偶發資料讀取錯誤', MED: '控制變數異常，可能造成邏輯錯誤', HIGH: '多個關鍵控制變數損毀，系統行為不可預測' },
+        detectedBy: ['ramMarch'],
+        ref: { hazard: '控制程式流程異常，輸出錯誤指令', method: 'RAM March 測試 (March C−/C)', selfTest: '上電時 March C−，週期性 March Y', annex: 'Annex H, Table H.1 — 資料記憶體診斷' }
+      },
+      stuck_at: {
+        name: 'Stuck-at 故障 (SA0/SA1)',
+        risk:    { LOW: 26, MED: 46, HIGH: 68 },
+        effects: { LOW: '特定位址值被鎖定', MED: '關鍵旗標 bit 無法更新', HIGH: '安全保護旗標固定，保護機制失效' },
+        detectedBy: ['ramMarch'],
+        ref: { hazard: '安全相關旗標無法清除或設置', method: 'SA0/SA1: 寫後讀驗證，March C−', selfTest: 'March C−/MATS+ 測試每個位元的 0→1 切換能力', annex: 'Annex H, Table H.1 — Stuck-at Fault' }
+      },
+      multi_bit: {
+        name: '多位元錯誤 (Multi-bit Error)',
+        risk:    { LOW: 42, MED: 62, HIGH: 88 },
+        effects: { LOW: '多個資料位元同時錯誤', MED: '重要資料結構損壞', HIGH: '堆疊/關鍵控制區域損毀，可能造成隨機執行' },
+        detectedBy: ['ramMarch'],
+        ref: { hazard: '程式流程跳轉錯誤，輸出控制失控', method: 'March B 或 March C，搭配 ECC（若有）', selfTest: '上電全區域 March 測試 + 奇偶校驗', annex: 'Annex H — 多位元錯誤超出單一 March 測試覆蓋範圍' }
+      }
+    }
+  },
+  Flash: {
+    label: 'Flash/ROM',
+    icon: '💾',
+    faults: {
+      crc_fail: {
+        name: 'CRC 校驗失敗',
+        risk:    { LOW: 38, MED: 58, HIGH: 82 },
+        effects: { LOW: '程式碼區段 CRC 不符', MED: '韌體映像損毀，可能載入錯誤指令', HIGH: '惡意或意外的程式碼修改，安全功能喪失' },
+        detectedBy: ['crc'],
+        ref: { hazard: '執行損毀程式碼，導致輸出錯誤或不安全狀態', method: 'CRC-16/CRC-32 程式記憶體完整性驗證', selfTest: '上電 CRC 驗證，週期性背景 CRC 掃描', annex: 'Annex H, Table H.1 — 程式記憶體診斷' }
+      },
+      bit_error: {
+        name: '位元錯誤 (Single Bit Error)',
+        risk:    { LOW: 30, MED: 50, HIGH: 72 },
+        effects: { LOW: '單一指令位元錯誤', MED: '函式邏輯判斷錯誤', HIGH: '安全相關判斷條件反轉' },
+        detectedBy: ['crc'],
+        ref: { hazard: '安全功能邏輯錯誤，條件判斷反轉', method: 'CRC 全程式碼區域校驗', selfTest: '定期 CRC 掃描 + Shadow register 比對', annex: 'Annex H — Flash 單位元錯誤偵測' }
+      },
+      erase_fail: {
+        name: '寫入/抹除異常',
+        risk:    { LOW: 24, MED: 44, HIGH: 62 },
+        effects: { LOW: '局部資料儲存失敗', MED: '設定值無法更新', HIGH: '補救程式無法更新，系統無法修復' },
+        detectedBy: ['crc'],
+        ref: { hazard: '關鍵參數永久錯誤，系統基於錯誤設定運作', method: '寫入驗證 (Write-Verify)，回讀比對', selfTest: '每次 Flash 寫入後立即回讀驗證', annex: 'Annex H — 非揮發記憶體可靠性' }
+      }
+    }
+  },
+  Clock: {
+    label: 'Clock',
+    icon: '⏱️',
+    faults: {
+      clock_stop: {
+        name: '時脈停止 (Clock Stop)',
+        risk:    { LOW: 55, MED: 72, HIGH: 96 },
+        effects: { LOW: 'CPU 暫停執行', MED: '系統完全停止響應', HIGH: '看門狗若依賴同一時脈則亦失效，輸出鎖定在最後狀態' },
+        detectedBy: ['clockMonitor', 'watchdog'],
+        ref: { hazard: '系統凍結於危險輸出狀態（如加熱器持續加熱）', method: '副時脈（RC 振盪器）交叉驗證主時脈', selfTest: '時脈監控 (Clock Monitor) + 獨立 WDT', annex: 'Annex H — 時脈頻率監控' }
+      },
+      clock_drift: {
+        name: '時脈漂移 (Clock Drift)',
+        risk:    { LOW: 20, MED: 42, HIGH: 66 },
+        effects: { LOW: '計時輕微不準確', MED: 'PWM 輸出頻率偏差，通訊協定錯誤', HIGH: '安全計時器超時計算錯誤，保護響應延遲' },
+        detectedBy: ['clockMonitor'],
+        ref: { hazard: '安全計時器響應延遲，導致保護機制失效', method: '頻率計數器與參考時脈比較', selfTest: '使用獨立 RC 振盪器交叉驗證晶體頻率', annex: 'Annex H — 時脈頻率容差監控' }
+      },
+      clock_jitter: {
+        name: '時脈抖動 (Clock Jitter)',
+        risk:    { LOW: 10, MED: 24, HIGH: 44 },
+        effects: { LOW: '資料取樣時序略有偏差', MED: 'SPI/I²C 通訊偶發錯誤', HIGH: '高速資料採集時序錯誤，ADC 取樣點偏移' },
+        detectedBy: ['clockMonitor'],
+        ref: { hazard: '通訊錯誤可能導致誤動作指令', method: '時脈品質監控，PLL 鎖定狀態檢查', selfTest: '通訊 CRC 校驗 + PLL 鎖定旗標監控', annex: 'Annex H — 時脈品質要求' }
+      }
+    }
+  },
+  Watchdog: {
+    label: 'Watchdog',
+    icon: '🐕',
+    faults: {
+      wdt_disabled: {
+        name: 'WDT 被停用',
+        risk:    { LOW: 46, MED: 66, HIGH: 92 },
+        effects: { LOW: 'WDT 保護暫時失效', MED: '軟體鎖死不會被重置', HIGH: '系統軟體無限迴圈，輸出鎖定在危險狀態' },
+        detectedBy: ['watchdog'],
+        ref: { hazard: '軟體鎖死導致輸出持續啟動（如加熱器不停止）', method: '確保 WDT 無法被軟體停用（硬體 WDT）', selfTest: '驗證 WDT 確實在運作：故意不喂狗看是否重置', annex: 'Annex H — 程式流程監控 (WDT)' }
+      },
+      wdt_not_kicked: {
+        name: 'WDT 未正常喂狗',
+        risk:    { LOW: 30, MED: 52, HIGH: 76 },
+        effects: { LOW: '偶發性系統重置', MED: '週期性任務中斷', HIGH: '關鍵安全計算被中斷，輸出進入未定義狀態' },
+        detectedBy: ['watchdog'],
+        ref: { hazard: '系統意外重置，輸出在重置期間可能觸發', method: 'Window WDT：在正確時間窗內喂狗', selfTest: '確認 WDT 喂狗程式碼在每個主循環結束時執行', annex: 'Annex H — 程式流程順序驗證' }
+      },
+      wdt_wrong_config: {
+        name: 'WDT 設定錯誤',
+        risk:    { LOW: 14, MED: 34, HIGH: 56 },
+        effects: { LOW: 'WDT 超時過短導致頻繁重置', MED: 'WDT 超時過長，保護反應慢', HIGH: 'WDT 響應時間遠超系統危險響應需求' },
+        detectedBy: ['watchdog'],
+        ref: { hazard: '保護響應時間不符合安全要求', method: '驗證 WDT 超時 ≤ 安全時間需求 (SRT)', selfTest: '在測試模式中驗證 WDT 超時行為', annex: 'Annex H — WDT 設定驗證' }
+      }
+    }
+  },
+  ADC: {
+    label: 'ADC',
+    icon: '📡',
+    faults: {
+      offset_error: {
+        name: 'ADC 偏移誤差 (Offset)',
+        risk:    { LOW: 14, MED: 30, HIGH: 52 },
+        effects: { LOW: '測量值有固定偏移', MED: '溫度/電壓保護閾值判斷偏差', HIGH: '安全相關模擬量長期偏差，過熱/過壓未被偵測' },
+        detectedBy: ['rangeCheck'],
+        ref: { hazard: '感測器讀值偏移，導致過溫/過壓未被偵測', method: '合理性檢查：定期校驗 ADC 基準值', selfTest: '使用內部參考電壓校驗 ADC 零點', annex: 'Annex H — 類比電路診斷' }
+      },
+      gain_error: {
+        name: 'ADC 增益誤差 (Gain)',
+        risk:    { LOW: 18, MED: 36, HIGH: 56 },
+        effects: { LOW: '測量值比例略有偏差', MED: '保護閾值因增益偏差而不準確', HIGH: '全量程誤差導致高溫時讀值偏低，保護失效' },
+        detectedBy: ['rangeCheck'],
+        ref: { hazard: '感測器讀值比例失真，高值端保護閾值失效', method: '兩點校驗 (Two-point calibration)', selfTest: '使用已知電壓源週期性驗證 ADC 增益', annex: 'Annex H — ADC 線性度診斷' }
+      },
+      stuck_value: {
+        name: 'ADC 輸出固定值 (Stuck)',
+        risk:    { LOW: 36, MED: 56, HIGH: 76 },
+        effects: { LOW: '感測器讀值固定不變', MED: '系統無法偵測溫度/壓力變化', HIGH: '危險狀態持續但系統誤判為正常' },
+        detectedBy: ['rangeCheck'],
+        ref: { hazard: '感測器失效後系統認為狀態正常，危險未被偵測', method: '動態合理性：讀值在時間上不能完全靜止', selfTest: '週期性驗證 ADC 值在合理範圍內有合理變化', annex: 'Annex H — 感測器合理性診斷' }
+      },
+      noise_exceed: {
+        name: '雜訊超出閾值',
+        risk:    { LOW: 10, MED: 24, HIGH: 44 },
+        effects: { LOW: '讀值有較大雜訊', MED: '控制迴路振盪', HIGH: '保護閾值頻繁誤觸發，安全判斷混亂' },
+        detectedBy: ['rangeCheck'],
+        ref: { hazard: '誤觸發可能導致輸出振盪，或保護被繞過', method: '數位低通濾波 + 合理性窗口檢查', selfTest: '多次取樣平均 + 離群值偵測', annex: 'Annex H — 訊號品質診斷' }
+      }
+    }
+  },
+  GPIO: {
+    label: 'GPIO/Output',
+    icon: '🔌',
+    faults: {
+      stuck_high: {
+        name: '輸出固定高電位 (Stuck-H)',
+        risk:    { LOW: 42, MED: 62, HIGH: 86 },
+        effects: { LOW: '特定 GPIO 無法拉低', MED: '繼電器/驅動器無法關閉', HIGH: '加熱器/電機無法停止，持續運作造成危險' },
+        detectedBy: ['rangeCheck'],
+        ref: { hazard: '安全相關輸出無法切換到安全狀態（如加熱器不停止）', method: '輸出回讀 (Read-back) 驗證：寫入後立即讀取比對', selfTest: '定期測試輸出能否切換：短暫切換後回讀', annex: 'Annex H — 輸出電路診斷' }
+      },
+      stuck_low: {
+        name: '輸出固定低電位 (Stuck-L)',
+        risk:    { LOW: 30, MED: 50, HIGH: 70 },
+        effects: { LOW: '特定 GPIO 無法拉高', MED: '警報/指示無法啟動', HIGH: '安全警報無法輸出，危險狀態無法通知' },
+        detectedBy: ['rangeCheck'],
+        ref: { hazard: '安全警報或保護輸出無法觸發', method: '輸出回讀驗證', selfTest: '定期測試輸出高低切換', annex: 'Annex H — 輸出電路診斷' }
+      },
+      open_circuit: {
+        name: '開路 (Open Circuit)',
+        risk:    { LOW: 26, MED: 46, HIGH: 66 },
+        effects: { LOW: '輸出電氣斷開', MED: '負載無法被控制', HIGH: '安全繼電器斷路，緊急停止無法執行' },
+        detectedBy: ['rangeCheck'],
+        ref: { hazard: '安全動作路徑斷開，緊急停止失效', method: '回讀 + 負載電流監測', selfTest: '定期測試輸出驅動能力', annex: 'Annex H — 輸出電路完整性' }
+      },
+      short_circuit: {
+        name: '短路 (Short Circuit)',
+        risk:    { LOW: 48, MED: 72, HIGH: 96 },
+        effects: { LOW: '輸出對地/電源短路', MED: '過電流保護觸發，GPIO 損毀', HIGH: '多路輸出短路，PCB 損毀，火災風險' },
+        detectedBy: ['rangeCheck'],
+        ref: { hazard: '電氣短路可能導致火災或電擊危險', method: '電流感測 + 短路偵測電路', selfTest: '過電流硬體保護 + 軟體電流監控', annex: 'Annex H — 輸出短路保護' }
+      }
+    }
+  }
+};
+
+const PROTECTIONS = [
+  { id: 'crc',          name: 'CRC / Checksum',      desc: '程式碼與常數區完整性驗證',       icon: '🔐', detects: ['Flash'] },
+  { id: 'ramMarch',     name: 'RAM March 自我測試',   desc: 'March C−/C 週期性記憶體測試',   icon: '🧪', detects: ['RAM'] },
+  { id: 'clockMonitor', name: '時脈監控 (Clock Mon)', desc: '主/副時脈交叉頻率驗證',           icon: '⏲️', detects: ['Clock'] },
+  { id: 'watchdog',     name: '看門狗計時器 (WDT)',   desc: '程式流程監控與自動重置',          icon: '🐕', detects: ['Watchdog', 'Clock'] },
+  { id: 'rangeCheck',   name: '合理性範圍檢查',       desc: 'ADC/輸出值合理性與回讀驗證',     icon: '📏', detects: ['ADC', 'GPIO'] }
+];
+
+/* ============================================================
+   APPLICATION STATE
+   ============================================================ */
+// Monotonically increasing counter for unique fault IDs, avoiding
+// potential timestamp collisions when multiple faults are injected quickly.
+let _faultSeq = 0;
+
+// Maximum number of entries kept in the event log to prevent memory growth.
+const MAX_LOG_ENTRIES = 120;
+
+// When a fault is detected by a protection mechanism, a small residual risk
+// (5 %) is retained to reflect that detection does not fully eliminate
+// hardware impairment; the protection response itself may introduce latency
+// or partial failure scenarios.
+const DETECTED_RESIDUAL = 0.05;
+
+// Each additional *undetected* fault beyond the first adds this fixed penalty
+// (percentage points) to model the increased likelihood of correlated or
+// compounding failure effects in a real system.
+const MULTI_FAULT_PENALTY = 10;
+
+const S = {
+  domain:    null,
+  severity:  'LOW',
+  faults:    [],     // injected fault objects
+  prot:      { crc: false, ramMarch: false, clockMonitor: false, watchdog: false, rangeCheck: false },
+  sysState:  'NORMAL',
+  risk:      0
+};
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init() {
+  renderDomainGrid();
+  renderProtList();
+  renderSysDiag();
+  updateUI();
+  log('info', '系統初始化完成，等待故障注入...');
+  log('info', '所有保護機制目前停用，請依需求開啟');
+}
+
+/* ── Domain grid ── */
+function renderDomainGrid() {
+  const g = document.getElementById('domain-grid');
+  g.innerHTML = '';
+  Object.entries(DOMAINS).forEach(([key, dom]) => {
+    const b = document.createElement('div');
+    b.className = 'domain-btn' + (S.domain === key ? ' active' : '');
+    b.innerHTML = `<span class="di">${dom.icon}</span><span class="dl">${dom.label}</span>`;
+    b.onclick = () => pickDomain(key);
+    g.appendChild(b);
+  });
+}
+
+function pickDomain(key) {
+  S.domain = key;
+  renderDomainGrid();
+  refreshFaultSel();
+}
+
+function refreshFaultSel() {
+  const sel = document.getElementById('fault-type-sel');
+  sel.innerHTML = '';
+  if (!S.domain) { sel.innerHTML = '<option value="">— 請先選擇元件 —</option>'; return; }
+  Object.entries(DOMAINS[S.domain].faults).forEach(([k, f]) => {
+    const o = document.createElement('option'); o.value = k; o.textContent = f.name; sel.appendChild(o);
+  });
+}
+
+function setSev(el) {
+  document.querySelectorAll('.sev-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  S.severity = el.dataset.sev;
+}
+
+/* ── Protection list ── */
+function renderProtList() {
+  const list = document.getElementById('prot-list');
+  list.innerHTML = '';
+  PROTECTIONS.forEach(p => {
+    const on = S.prot[p.id];
+    const item = document.createElement('div');
+    item.className = 'prot-item' + (on ? ' on' : '');
+    item.innerHTML = `
+      <label class="tog">
+        <input type="checkbox" id="pt-${p.id}" ${on ? 'checked' : ''}>
+        <span class="tog-slider"></span>
+      </label>
+      <div>
+        <div class="prot-name">${p.icon} ${p.name}</div>
+        <div class="prot-desc">${p.desc}</div>
+      </div>`;
+    item.querySelector('input').onchange = ev => toggleProt(p.id, ev.target.checked, item);
+    list.appendChild(item);
+  });
+}
+
+function toggleProt(id, on, el) {
+  S.prot[id] = on;
+  el.classList.toggle('on', on);
+  const p = PROTECTIONS.find(x => x.id === id);
+  log(on ? 'success' : 'warning', `保護機制${on ? '啟用' : '停用'}：${p.icon} ${p.name}`);
+  updateUI();
+}
+
+/* ── System block diagram ── */
+function renderSysDiag() {
+  const d = document.getElementById('sys-diag');
+  d.innerHTML = '';
+  Object.entries(DOMAINS).forEach(([key, dom]) => {
+    const active = S.faults.filter(f => f.domain === key);
+    const undetected = active.filter(f => !isDetected(f));
+    const detected   = active.filter(f =>  isDetected(f));
+    let cls = '', status = '正常';
+    if (undetected.length > 0) { cls = 'fault'; status = `${undetected.length} 故障`; }
+    else if (detected.length > 0) { cls = 'ok'; status = '已偵測'; }
+    const blk = document.createElement('div');
+    blk.className = `sys-block ${cls}`;
+    blk.innerHTML = `<div class="sb-icon">${dom.icon}</div><div class="sb-name">${dom.label}</div><span class="sb-status">${status}</span>`;
+    d.appendChild(blk);
+  });
+}
+
+/* ── Fault injection ── */
+function showInjectError(msg) {
+  // Display inline validation message instead of blocking alert()
+  const prev = document.getElementById('inject-err');
+  if (prev) prev.remove();
+  const err = document.createElement('p');
+  err.id = 'inject-err';
+  err.style.cssText = 'color:var(--danger);font-size:.8em;margin-top:6px;';
+  err.textContent = '⚠ ' + msg;
+  document.querySelector('.btn-inject').insertAdjacentElement('afterend', err);
+  setTimeout(() => err.remove(), 3500);
+}
+
+function injectFault() {
+  if (!S.domain) { showInjectError('請先選擇故障元件！'); return; }
+  const sel = document.getElementById('fault-type-sel');
+  const key = sel.value;
+  if (!key) { showInjectError('請選擇故障類型！'); return; }
+
+  const dom = DOMAINS[S.domain];
+  const fd  = dom.faults[key];
+  const sev = S.severity;
+
+  // Update if same fault already exists
+  const existing = S.faults.find(f => f.domain === S.domain && f.key === key);
+  if (existing) {
+    existing.severity = sev;
+    existing.risk     = fd.risk[sev];
+    existing.effect   = fd.effects[sev];
+    log('warning', `故障更新 [${dom.label}] ${fd.name} → 嚴重程度: ${sev}`);
+  } else {
+    S.faults.push({
+      id:        `${S.domain}_${key}_${++_faultSeq}`,
+      domain:    S.domain,
+      key,
+      name:      fd.name,
+      severity:  sev,
+      risk:      fd.risk[sev],
+      effect:    fd.effects[sev],
+      detectedBy:fd.detectedBy,
+      ref:       fd.ref,
+      detected:  false
+    });
+    log('danger', `故障注入 ⚡ [${dom.label}] ${fd.name}（嚴重程度: ${sev}）`);
+  }
+  updateUI();
+}
+
+function removeFault(id) {
+  const f = S.faults.find(x => x.id === id);
+  if (!f) return;
+  S.faults = S.faults.filter(x => x.id !== id);
+  log('info', `故障移除：[${f.domain}] ${f.name}`);
+  updateUI();
+}
+
+/* ── Risk engine ── */
+function isDetected(fault) {
+  const fd = DOMAINS[fault.domain].faults[fault.key];
+  return fd.detectedBy.some(pid => S.prot[pid]);
+}
+
+function calcRisk() {
+  if (!S.faults.length) return 0;
+  let total = 0;
+  S.faults.forEach(f => {
+    f.detected = isDetected(f);
+    total += f.detected ? f.risk * DETECTED_RESIDUAL : f.risk;
+  });
+  // Multi-fault stacking penalty
+  const undet = S.faults.filter(f => !f.detected).length;
+  if (undet > 1) total += (undet - 1) * MULTI_FAULT_PENALTY;
+  return Math.min(100, Math.round(total));
+}
+
+function stateFor(risk) {
+  if (risk >= 80) return 'FAIL_SAFE';
+  if (risk >= 50) return 'DANGER';
+  if (risk >= 20) return 'WARNING';
+  return 'NORMAL';
+}
+
+/* ── Full UI refresh ── */
+function updateUI() {
+  const risk = calcRisk();
+  const prev  = S.sysState;
+  const next  = stateFor(risk);
+  S.risk = risk; S.sysState = next;
+
+  if (prev !== next && S.faults.length > 0) {
+    const labels = { NORMAL:'正常', WARNING:'警告', DANGER:'危險', FAIL_SAFE:'失效安全' };
+    const t = next === 'NORMAL' ? 'success' : next === 'FAIL_SAFE' ? 'failsafe' : next.toLowerCase();
+    log(t, `系統狀態：${labels[prev] || prev} → ${labels[next]}`);
+  }
+
+  setStateBadge(next);
+  setRisk(risk);
+  renderFaultList();
+  renderTrigList();
+  setActionBox(next);
+  document.getElementById('fault-cnt').textContent = S.faults.length;
+  renderSysDiag();
+  renderRefPanel();
+}
+
+function setStateBadge(state) {
+  const cls = { NORMAL:'normal', WARNING:'warning', DANGER:'danger', FAIL_SAFE:'failsafe' };
+  const lbl = { NORMAL:'NORMAL', WARNING:'WARNING', DANGER:'DANGER', FAIL_SAFE:'FAIL-SAFE' };
+  const badge = document.getElementById('state-badge');
+  badge.className = `state-badge ${cls[state]}`;
+  document.getElementById('state-txt').textContent = lbl[state];
+}
+
+function setRisk(r) {
+  document.getElementById('risk-needle').style.left = r + '%';
+  const pct = document.getElementById('risk-pct');
+  pct.textContent = r;
+  pct.style.color = r >= 80 ? 'var(--danger)' : r >= 50 ? 'var(--warning)' : r >= 20 ? '#F57F17' : 'var(--success)';
+}
+
+function renderFaultList() {
+  const list = document.getElementById('faults-list');
+  if (!S.faults.length) {
+    list.innerHTML = '<div class="empty-notice">尚無故障注入，請從上方控制台操作</div>';
+    return;
+  }
+  const sevColor = { LOW:'#2E7D32', MED:'#E65100', HIGH:'#B71C1C' };
+  list.innerHTML = '';
+  S.faults.forEach(f => {
+    const tag = document.createElement('div');
+    tag.className = `fault-tag${f.detected ? ' detected' : f.severity === 'HIGH' ? ' critical' : ''}`;
+    tag.innerHTML = `
+      <span class="ft-name">${DOMAINS[f.domain].icon} ${f.name}</span>
+      <span class="ft-sev" style="color:${sevColor[f.severity] || '#999'}">[${f.severity}]</span>
+      ${f.detected ? '<span class="ft-ok" title="已被保護機制偵測">✓</span>' : ''}
+      <button class="ft-remove" onclick="removeFault('${f.id}')" title="移除此故障">✕</button>`;
+    list.appendChild(tag);
+  });
+}
+
+function renderTrigList() {
+  const list = document.getElementById('trig-list');
+  if (!S.faults.length) {
+    list.innerHTML = '<div class="empty-state"><div class="ei">✅</div>無異常觸發</div>';
+    return;
+  }
+  const map = new Map();
+  S.faults.forEach(f => {
+    DOMAINS[f.domain].faults[f.key].detectedBy.forEach(pid => {
+      if (!map.has(pid)) map.set(pid, { on: S.prot[pid], names: [] });
+      map.get(pid).names.push(f.name);
+    });
+  });
+  if (!map.size) {
+    list.innerHTML = '<div class="empty-state"><div class="ei">ℹ️</div>此故障組合無對應保護</div>';
+    return;
+  }
+  list.innerHTML = '';
+  map.forEach((v, pid) => {
+    const p = PROTECTIONS.find(x => x.id === pid);
+    const item = document.createElement('div');
+    item.className = `trig-item${v.on ? '' : ' miss'}`;
+    item.innerHTML = `<span>${v.on ? '✅' : '❌'}</span><span><strong>${p.icon} ${p.name}</strong><br><small style="opacity:.75">${v.on ? '偵測到：' : '未啟用，無法偵測：'}${v.names.join('、')}</small></span>`;
+    list.appendChild(item);
+  });
+}
+
+function setActionBox(state) {
+  const box  = document.getElementById('action-box');
+  const data = {
+    NORMAL:    { text: '系統正常運作中，無需額外動作。繼續週期性自我測試。',                                                                                                  cls: '' },
+    WARNING:   { text: '⚠️ 偵測到潛在故障風險。建議：啟用對應保護機制、增加診斷測試頻率、通知維護人員。',                                                                      cls: 'warn' },
+    DANGER:    { text: '🚨 高風險！建議立即：降低輸出功率至安全等級、啟動備援控制路徑、記錄故障碼、準備切換至 Fail-safe 狀態。',                                               cls: 'dang' },
+    FAIL_SAFE: { text: '🔴 FAIL-SAFE 觸發！系統應：立即切斷危險輸出（電暖器關閉、電機停止）、進入安全定義狀態、鎖定等待人工介入、記錄完整故障事件。', cls: 'fsafe' }
+  };
+  const d = data[state] || data.NORMAL;
+  box.className = `action-box${d.cls ? ' ' + d.cls : ''}`;
+  box.innerHTML = d.text;
+}
+
+/* ── IEC 60730 reference panel ── */
+function renderRefPanel() {
+  const tabs    = document.getElementById('ref-tabs');
+  const content = document.getElementById('ref-content');
+
+  if (!S.faults.length) {
+    tabs.innerHTML = '';
+    content.innerHTML = '<div class="empty-state"><div class="ei">ℹ️</div>注入故障後將顯示對應的 IEC/UL 60730 參考資訊</div>';
+    return;
+  }
+
+  tabs.innerHTML = '';
+  S.faults.forEach((f, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'rtab' + (i === 0 ? ' active' : '');
+    tab.dataset.fid = f.id;
+    tab.textContent = `${DOMAINS[f.domain].icon} ${f.name.split('(')[0].trim()}`;
+    tab.onclick = () => switchRefTab(f.id);
+    tabs.appendChild(tab);
+  });
+
+  renderRefCard(S.faults[0]);
+}
+
+function switchRefTab(fid) {
+  document.querySelectorAll('.rtab').forEach(t => t.classList.toggle('active', t.dataset.fid === fid));
+  const f = S.faults.find(x => x.id === fid);
+  if (f) renderRefCard(f);
+}
+
+function renderRefCard(f) {
+  const content = document.getElementById('ref-content');
+  const ref = f.ref;
+  const fd  = DOMAINS[f.domain].faults[f.key];
+  const det = f.detected
+    ? '<span class="det-y">✅ 是（當前設定可偵測）</span>'
+    : '<span class="det-n">❌ 否（請啟用對應保護機制）</span>';
+  const protNames = fd.detectedBy.map(id => {
+    const p = PROTECTIONS.find(x => x.id === id);
+    return p ? `${p.icon} ${p.name}` : id;
+  }).join('、');
+
+  content.innerHTML = `
+    <div class="ref-card">
+      <div class="ref-card-head">
+        ${DOMAINS[f.domain].icon} ${f.name}
+        &nbsp;·&nbsp; 嚴重程度：${f.severity}
+        &nbsp;·&nbsp; 元件：${DOMAINS[f.domain].label}
+      </div>
+      <div class="ref-card-body">
+        <div class="ref-row"><span class="rl">故障效應</span>      <span class="rv">${f.effect}</span></div>
+        <div class="ref-row"><span class="rl">可能危害</span>      <span class="rv">${ref.hazard}</span></div>
+        <div class="ref-row"><span class="rl">診斷方法</span>      <span class="rv">${ref.method}</span></div>
+        <div class="ref-row"><span class="rl">自我測試建議</span>  <span class="rv">${ref.selfTest}</span></div>
+        <div class="ref-row"><span class="rl">標準對應</span>      <span class="rv">${ref.annex}</span></div>
+        <div class="ref-row"><span class="rl">當前可偵測？</span>  <span class="rv">${det}</span></div>
+        <div class="ref-row"><span class="rl">對應保護機制</span>  <span class="rv">${protNames}</span></div>
+      </div>
+    </div>`;
+}
+
+/* ── Event log ── */
+function log(type, msg) {
+  const box = document.getElementById('evt-log');
+  const now = new Date();
+  const ts  = [now.getHours(), now.getMinutes(), now.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+  const entry = document.createElement('div');
+  entry.className = 'le';
+  entry.innerHTML = `<span class="le-t">[${ts}]</span><span class="le-m ${type}">${msg}</span>`;
+  box.appendChild(entry);
+  box.scrollTop = box.scrollHeight;
+  while (box.children.length > MAX_LOG_ENTRIES) box.removeChild(box.firstChild);
+}
+
+/* ── Reset ── */
+function resetScenario() {
+  const hasFaults = S.faults.length > 0;
+  const hasProt   = Object.values(S.prot).some(Boolean);
+  if ((hasFaults || hasProt) && !confirm('確定要重置所有故障情境和保護設定嗎？')) return;
+
+  S.faults   = [];
+  S.prot     = { crc: false, ramMarch: false, clockMonitor: false, watchdog: false, rangeCheck: false };
+  S.sysState = 'NORMAL';
+  S.risk     = 0;
+  S.domain   = null;
+  S.severity = 'LOW';
+
+  renderDomainGrid();
+  renderProtList();
+  refreshFaultSel();
+  document.querySelectorAll('.sev-chip').forEach(c => c.classList.remove('active'));
+  const lowChip = document.querySelector('.sev-chip.low');
+  if (lowChip) lowChip.classList.add('active');
+  document.getElementById('evt-log').innerHTML = '';
+  log('info', '情境已重置 — 所有故障與保護設定清除');
+  log('info', '系統恢復至初始狀態，準備新的模擬');
+  updateUI();
+}
+
+/* ── Start ── */
+init();
+</script>
+</body>
+</html>
