@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>晶片架構故障模擬器 — ARM Cortex-M / 8051</title>
+  <style>
+    :root {
+      --primary:       #1565C0;
+      --primary-dark:  #0D47A1;
+      --primary-light: #42A5F5;
+      --secondary:     #0A1628;
+      --accent:        #00BCD4;
+      --success:       #2E7D32;
+      --success-light: #4CAF50;
+      --success-bg:    #E8F5E9;
+      --warning:       #E65100;
+      --warning-light: #FF8F00;
+      --warning-bg:    #FFF3E0;
+      --danger:        #B71C1C;
+      --danger-light:  #E53935;
+      --danger-bg:     #FFEBEE;
+      --neutral-bg:    #EEF1F8;
+      --card-bg:       #FFFFFF;
+      --card-alt:      #F4F7FC;
+      --border:        #CDD5E0;
+      --border-light:  #E4EAF2;
+      --text-primary:  #0A1628;
+      --text-secondary:#374151;
+      --text-muted:    #6B7280;
+      --text-on-dark:  #E8ECF0;
+      --r:    8px;
+      --r-sm: 5px;
+      --shadow:    0 2px 8px rgba(13,71,161,.10);
+      --shadow-md: 0 4px 16px rgba(13,71,161,.15);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+      background: var(--neutral-bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      position: sticky; top: 0; z-index: 200;
+      height: 58px;
+      background: var(--secondary);
+      color: var(--text-on-dark);
+      display: flex; align-items: center; gap: 14px;
+      padding: 0 20px;
+      box-shadow: 0 2px 14px rgba(0,0,0,.28);
+    }
+    .header-logo { font-size: 1.08em; font-weight: 700; color: var(--accent); white-space: nowrap; }
+    .header-sub  { font-size: .76em; color: rgba(232,236,240,.55); }
+    .header-spacer { flex: 1; }
+    .arch-switcher { display: flex; gap: 4px; }
+    .arch-btn {
+      padding: 5px 16px; border-radius: var(--r-sm);
+      border: 1.5px solid rgba(255,255,255,.2); background: transparent;
+      color: rgba(232,236,240,.7); cursor: pointer; font-size: .82em; font-weight: 600;
+      transition: all .2s; white-space: nowrap;
+    }
+    .arch-btn.active { background: var(--accent); border-color: var(--accent); color: var(--secondary); }
+    .arch-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+    .btn-hdr-reset {
+      background: var(--danger); color: #fff; border: none;
+      padding: 6px 14px; border-radius: var(--r-sm);
+      cursor: pointer; font-size: .82em; font-weight: 600;
+      transition: background .2s; white-space: nowrap;
+    }
+    .btn-hdr-reset:hover { background: var(--danger-light); }
+
+    /* ── Layout ── */
+    .app-body {
+      display: grid;
+      grid-template-columns: 290px 1fr 280px;
+      gap: 12px; padding: 12px;
+      align-items: start;
+    }
+    @media (max-width: 1100px) { .app-body { grid-template-columns: 260px 1fr 250px; } }
+    @media (max-width: 800px)  { .app-body { grid-template-columns: 1fr; } }
+    .col-left   { display: flex; flex-direction: column; gap: 10px; }
+    .col-center { display: flex; flex-direction: column; gap: 10px; }
+    .col-right  { display: flex; flex-direction: column; gap: 10px; }
+
+    /* ── Card ── */
+    .card { background: var(--card-bg); border-radius: var(--r); border: 1px solid var(--border-light); box-shadow: var(--shadow); overflow: hidden; }
+    .card-header {
+      background: var(--primary-dark); color: var(--text-on-dark);
+      padding: 8px 14px; font-weight: 600; font-size: .86em;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .ch-spacer { flex: 1; }
+    .ch-badge {
+      background: var(--accent); color: var(--secondary);
+      font-size: .74em; font-weight: 700; padding: 1px 9px; border-radius: 10px;
+    }
+    .card-body { padding: 12px 14px; }
+
+    /* ── Form ── */
+    .field-label {
+      display: block; font-size: .77em; font-weight: 600;
+      color: var(--text-secondary); margin-bottom: 4px;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .field-select, .field-input {
+      width: 100%; padding: 6px 9px;
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      background: #fff; font-size: .86em; color: var(--text-primary);
+      outline: none; transition: border .2s;
+    }
+    .field-select:focus, .field-input:focus { border-color: var(--primary); }
+    .mt8 { margin-top: 8px; }
+    .mt4 { margin-top: 4px; }
+    .section-title {
+      font-size: .73em; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--text-muted);
+      margin-bottom: 7px; padding-bottom: 4px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    /* ── Fault type chips ── */
+    .ftype-row { display: flex; gap: 5px; margin-top: 6px; }
+    .ftype-chip {
+      flex: 1; padding: 5px 4px; text-align: center;
+      border: 1.5px solid var(--border); border-radius: 4px;
+      font-size: .73em; font-weight: 700; cursor: pointer; transition: all .15s;
+    }
+    .ftype-chip.sa0       { color: var(--danger); }
+    .ftype-chip.sa0.active{ background: var(--danger-bg); border-color: var(--danger); }
+    .ftype-chip.sa1       { color: var(--success); }
+    .ftype-chip.sa1.active{ background: var(--success-bg); border-color: var(--success-light); }
+    .ftype-chip.bf        { color: #5C6BC0; }
+    .ftype-chip.bf.active { background: #E8EAF6; border-color: #5C6BC0; }
+
+    /* ── Inject button ── */
+    .btn-inject {
+      width: 100%; padding: 8px; margin-top: 9px;
+      background: var(--primary); color: #fff;
+      border: none; border-radius: var(--r-sm);
+      cursor: pointer; font-size: .86em; font-weight: 600;
+      transition: background .2s, transform .1s;
+    }
+    .btn-inject:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-inject:active { transform: translateY(0); }
+
+    /* ── Fault list ── */
+    .faults-list { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
+    .fault-tag {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 9px; border-radius: var(--r-sm);
+      background: var(--card-alt); border-left: 3px solid var(--warning-light);
+      font-size: .8em; animation: slideIn .2s ease;
+    }
+    .fault-tag.detected { border-left-color: var(--success-light); opacity: .75; }
+    .ft-name { flex: 1; font-weight: 500; }
+    .ft-type { font-size: .78em; font-weight: 700; }
+    .ft-type.sa0 { color: var(--danger); }
+    .ft-type.sa1 { color: var(--success); }
+    .ft-type.bf  { color: #5C6BC0; }
+    .ft-remove { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1em; padding: 0 3px; transition: color .2s; line-height: 1; }
+    .ft-remove:hover { color: var(--danger); }
+    .empty-notice { padding: 10px; text-align: center; color: var(--text-muted); font-size: .8em; font-style: italic; }
+    @keyframes slideIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── Architecture banner ── */
+    .arch-banner {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-radius: var(--r-sm);
+      background: linear-gradient(135deg, var(--secondary) 0%, #1a2744 100%);
+      color: var(--text-on-dark);
+    }
+    .arch-banner .arch-icon { font-size: 2em; }
+    .arch-banner .arch-name { font-size: 1.05em; font-weight: 700; color: var(--accent); }
+    .arch-banner .arch-desc { font-size: .76em; color: rgba(232,236,240,.65); margin-top: 2px; }
+    .arch-banner .arch-badge {
+      margin-left: auto; font-size: .72em; font-weight: 700;
+      padding: 3px 10px; border-radius: 10px;
+      background: rgba(0,188,212,.15); border: 1px solid var(--accent); color: var(--accent);
+    }
+
+    /* ── Register bank switcher (8051) ── */
+    .bank-switcher { display: flex; gap: 5px; margin-bottom: 10px; }
+    .bank-btn {
+      flex: 1; padding: 5px; text-align: center;
+      border: 1.5px solid var(--border); border-radius: var(--r-sm);
+      font-size: .77em; font-weight: 700; cursor: pointer;
+      background: var(--card-alt); color: var(--text-secondary);
+      transition: all .15s;
+    }
+    .bank-btn.active { background: #E8EAF6; border-color: #5C6BC0; color: #3949AB; }
+
+    /* ── Register file grid ── */
+    .reg-grid {
+      display: flex; flex-direction: column; gap: 6px;
+      max-height: 420px; overflow-y: auto;
+      padding-right: 2px;
+    }
+    .reg-group-label {
+      font-size: .7em; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--text-muted);
+      margin: 4px 0 2px; padding-left: 2px;
+      border-left: 2px solid var(--accent);
+      padding-left: 6px;
+    }
+    .reg-row-wrap { display: grid; gap: 5px; }
+    .reg-row-wrap.cols4 { grid-template-columns: repeat(4, 1fr); }
+    .reg-row-wrap.cols2 { grid-template-columns: repeat(2, 1fr); }
+    .reg-row-wrap.cols3 { grid-template-columns: repeat(3, 1fr); }
+    .reg-row-wrap.cols1 { grid-template-columns: 1fr; }
+
+    .reg-cell {
+      background: var(--card-alt); border: 1.5px solid var(--border-light);
+      border-radius: var(--r-sm); padding: 5px 7px;
+      transition: all .2s; cursor: default;
+      position: relative;
+    }
+    .reg-cell.active { border-color: var(--warning-light); background: var(--warning-bg); }
+    .reg-cell.pass   { border-color: var(--success-light); background: var(--success-bg); }
+    .reg-cell.fail   { border-color: var(--danger-light);  background: var(--danger-bg); }
+    .reg-cell.has-fault { border-color: var(--danger-light); }
+
+    .reg-name {
+      font-size: .72em; font-weight: 700; color: var(--primary-dark);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .reg-alias { font-size: .68em; color: var(--text-muted); font-weight: 400; }
+    .reg-hex {
+      font-family: 'Courier New', monospace; font-size: .82em;
+      font-weight: 700; color: var(--text-primary); margin: 3px 0 4px;
+    }
+    .reg-bits { display: flex; gap: 2px; flex-wrap: nowrap; }
+    .rbit {
+      width: 14px; height: 14px; line-height: 14px; text-align: center;
+      font-size: .62em; font-family: monospace; font-weight: 700;
+      border-radius: 2px; border: 1px solid transparent;
+      position: relative; flex-shrink: 0; cursor: default;
+    }
+    .rbit-0 { background: #F3E5F5; color: #6A1B9A; border-color: #CE93D8; }
+    .rbit-1 { background: #E3F2FD; color: #0D47A1; border-color: #90CAF9; }
+    .rbit.fault-sa0 { border: 2px solid var(--danger) !important; background: var(--danger-bg) !important; }
+    .rbit.fault-sa1 { border: 2px solid var(--success) !important; background: var(--success-bg) !important; }
+    .rbit.fault-bf  { border: 2px solid #5C6BC0 !important; background: #E8EAF6 !important; }
+
+    /* 32-bit ARM register: show bytes + bits more compactly */
+    .reg-bytes { display: flex; gap: 3px; margin-top: 2px; }
+    .reg-byte-cell {
+      flex: 1; background: #F0F5FF; border: 1px solid var(--border-light);
+      border-radius: 3px; padding: 2px 4px;
+      font-family: 'Courier New', monospace; font-size: .7em; text-align: center;
+    }
+    .reg-byte-label { font-size: .6em; color: var(--text-muted); display: block; }
+    .reg-byte-val   { font-weight: 700; color: var(--primary-dark); }
+
+    /* 32-bit bit row (tiny) */
+    .reg-bits-32 { display: flex; gap: 1px; flex-wrap: nowrap; margin-top: 3px; }
+    .rbit32 {
+      width: 11px; height: 11px;
+      border-radius: 1px; border: 1px solid transparent;
+      flex-shrink: 0; cursor: default;
+    }
+    .rbit32-0 { background: #EDE7F6; border-color: #CE93D8; }
+    .rbit32-1 { background: #BBDEFB; border-color: #90CAF9; }
+    .rbit32.fault-sa0 { border: 1.5px solid var(--danger) !important; background: var(--danger-bg) !important; }
+    .rbit32.fault-sa1 { border: 1.5px solid var(--success) !important; background: var(--success-bg) !important; }
+    .rbit32.fault-bf  { border: 1.5px solid #5C6BC0 !important; background: #E8EAF6 !important; }
+
+    /* ARM register cell larger */
+    .reg-cell.arm-wide { min-width: 0; }
+
+    /* ── Test runner controls ── */
+    .run-row { display: flex; gap: 6px; }
+    .btn-run {
+      flex: 1; padding: 7px 6px; border: none; border-radius: var(--r-sm);
+      cursor: pointer; font-size: .82em; font-weight: 600; transition: all .15s;
+    }
+    .btn-run.auto  { background: var(--primary); color: #fff; }
+    .btn-run.step  { background: #5C6BC0; color: #fff; }
+    .btn-run.next  { background: #00897B; color: #fff; }
+    .btn-run:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-run:disabled { background: #ccc !important; color: #888 !important; cursor: not-allowed; transform: none !important; }
+
+    .progress-wrap { height: 5px; background: var(--border-light); border-radius: 3px; margin: 6px 0; }
+    .progress-bar  { height: 100%; background: var(--primary); border-radius: 3px; width: 0%; transition: width .1s; }
+
+    .timeline-wrap { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+    .timeline-wrap label { font-size: .74em; color: var(--text-muted); white-space: nowrap; }
+    .timeline-wrap input { flex: 1; }
+
+    /* ── Event log ── */
+    .evt-log {
+      height: 180px; overflow-y: auto;
+      background: #060F1E; border-radius: var(--r-sm);
+      padding: 8px; font-family: 'Courier New', monospace;
+      font-size: .77em; color: #8899BB;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .le { display: flex; gap: 8px; line-height: 1.4; }
+    .le-t { color: #3D5880; flex-shrink: 0; }
+    .le-m.info    { color: #8899BB; }
+    .le-m.ok      { color: #64FFDA; }
+    .le-m.fail    { color: #FF6B6B; font-weight: bold; }
+    .le-m.warning { color: #FFD166; }
+    .le-m.system  { color: #B39DDB; font-weight: bold; }
+
+    /* ── Algorithm selector ── */
+    .algo-info-btn {
+      padding: 2px 8px; border: 1px solid var(--border); border-radius: 4px;
+      background: var(--card-alt); cursor: pointer; font-size: .77em; color: var(--text-muted);
+    }
+    .algo-info-box {
+      display: none; background: var(--card-alt); border: 1px solid var(--border-light);
+      border-radius: var(--r-sm); padding: 8px; font-size: .8em;
+      color: var(--text-secondary); margin-top: 5px; line-height: 1.5;
+    }
+    .algo-code {
+      width: 100%; height: 130px; padding: 7px; border: 1px solid var(--border);
+      border-radius: var(--r-sm); font-family: 'Courier New', monospace; font-size: .8em;
+      background: #1C1F2E; color: #A8B9C8; resize: vertical;
+      outline: none; transition: border .2s;
+    }
+    .algo-code:focus { border-color: var(--primary); }
+
+    /* ── Results ── */
+    .results-area {
+      background: var(--card-alt); border: 1px solid var(--border-light);
+      border-radius: var(--r-sm); padding: 10px; font-size: .82em;
+      min-height: 60px;
+    }
+    .res-row { display: flex; justify-content: space-between; margin: 3px 0; }
+    .res-label { color: var(--text-muted); }
+    .res-val { font-weight: 700; }
+    .res-val.ok   { color: var(--success); }
+    .res-val.fail { color: var(--danger); }
+    .res-val.warn { color: var(--warning); }
+    .res-detail { margin-top: 6px; max-height: 120px; overflow-y: auto; }
+    .res-item { display: flex; gap: 6px; padding: 2px 0; font-size: .9em; }
+    .res-item.ok   { color: var(--success); }
+    .res-item.fail { color: var(--danger); }
+
+    /* ── Coverage meter ── */
+    .cov-bar-wrap { height: 8px; background: var(--border-light); border-radius: 4px; margin: 5px 0; }
+    .cov-bar { height: 100%; border-radius: 4px; background: var(--success); transition: width .4s; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+  <span class="header-logo">⚙️ ChipArchSim</span>
+  <span class="header-sub">晶片架構暫存器故障模擬器</span>
+  <div class="header-spacer"></div>
+  <div class="arch-switcher">
+    <button class="arch-btn active" id="btn-arm" onclick="switchArch('arm')">ARM Cortex-M</button>
+    <button class="arch-btn"        id="btn-8051" onclick="switchArch('i8051')">8051 MCU</button>
+  </div>
+  <button class="btn-hdr-reset" onclick="resetAll()">↺ 重置</button>
+</header>
+
+<div class="app-body">
+
+  <!-- ══ Left: Fault injection ══ -->
+  <div class="col-left">
+    <div class="card">
+      <div class="card-header">⚡ 故障注入</div>
+      <div class="card-body">
+        <div class="section-title">目標暫存器</div>
+        <select class="field-select" id="sel-reg"></select>
+
+        <div class="mt8">
+          <label class="field-label">位元位置</label>
+          <select class="field-select" id="sel-bit"></select>
+        </div>
+
+        <div class="mt8">
+          <label class="field-label">故障類型</label>
+          <div class="ftype-row">
+            <div class="ftype-chip sa0 active" onclick="setFType(this,'SA0')">SA0</div>
+            <div class="ftype-chip sa1"        onclick="setFType(this,'SA1')">SA1</div>
+            <div class="ftype-chip bf"         onclick="setFType(this,'BF')">位元翻轉</div>
+          </div>
+        </div>
+        <p id="inject-err" style="display:none;color:var(--danger);font-size:.79em;margin-top:6px;"></p>
+        <button class="btn-inject" onclick="doInject()">⚡ 注入故障</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        ⚠️ 已注入故障
+        <span class="ch-spacer"></span>
+        <span class="ch-badge" id="fault-cnt">0</span>
+      </div>
+      <div class="card-body">
+        <div class="faults-list" id="faults-list">
+          <div class="empty-notice">尚無故障注入</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fault type legend -->
+    <div class="card">
+      <div class="card-header">📖 圖例說明</div>
+      <div class="card-body" style="font-size:.8em;line-height:2;">
+        <div style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border:2px solid var(--danger);background:var(--danger-bg);display:inline-block;border-radius:2px;"></span> SA0 — Stuck-at-0 (讀出永遠為 0)</div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border:2px solid var(--success);background:var(--success-bg);display:inline-block;border-radius:2px;"></span> SA1 — Stuck-at-1 (讀出永遠為 1)</div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;border:2px solid #5C6BC0;background:#E8EAF6;display:inline-block;border-radius:2px;"></span> BF — Bit-flip (讀出時翻轉)</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;"><span style="width:14px;height:14px;background:var(--warning-bg);border:1.5px solid var(--warning-light);display:inline-block;border-radius:2px;"></span> 當前操作暫存器</div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;background:var(--success-bg);border:1.5px solid var(--success-light);display:inline-block;border-radius:2px;"></span> 測試通過</div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;background:var(--danger-bg);border:1.5px solid var(--danger-light);display:inline-block;border-radius:2px;"></span> 測試失敗</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Center: Register file + test runner ══ -->
+  <div class="col-center">
+    <!-- Architecture info -->
+    <div class="card">
+      <div class="card-body" style="padding:10px 14px;">
+        <div class="arch-banner" id="arch-banner">
+          <span class="arch-icon">🦾</span>
+          <div>
+            <div class="arch-name" id="arch-name">ARM Cortex-M3</div>
+            <div class="arch-desc" id="arch-desc">32-bit RISC 微處理器 · Thumb-2 指令集 · Cortex-M 架構</div>
+          </div>
+          <span class="arch-badge" id="arch-badge">32-bit</span>
+        </div>
+        <!-- 8051 bank switcher (hidden for ARM) -->
+        <div id="bank-switch-row" style="display:none;margin-top:8px;">
+          <label class="field-label" style="margin-bottom:4px;">8051 暫存器組 (RS1:RS0)</label>
+          <div class="bank-switcher">
+            <div class="bank-btn active" id="bank0" onclick="selectBank(0)">Bank 0<br><small style="font-weight:400;font-size:.85em;">00h–07h</small></div>
+            <div class="bank-btn"        id="bank1" onclick="selectBank(1)">Bank 1<br><small style="font-weight:400;font-size:.85em;">08h–0Fh</small></div>
+            <div class="bank-btn"        id="bank2" onclick="selectBank(2)">Bank 2<br><small style="font-weight:400;font-size:.85em;">10h–17h</small></div>
+            <div class="bank-btn"        id="bank3" onclick="selectBank(3)">Bank 3<br><small style="font-weight:400;font-size:.85em;">18h–1Fh</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Register file display -->
+    <div class="card">
+      <div class="card-header">🗂️ 暫存器檔案 (Register File)</div>
+      <div class="card-body">
+        <div class="reg-grid" id="reg-grid"></div>
+      </div>
+    </div>
+
+    <!-- Test runner -->
+    <div class="card">
+      <div class="card-header">🏃 測試執行器</div>
+      <div class="card-body">
+        <div class="run-row">
+          <button class="btn-run auto" id="btn-auto" onclick="runAuto()">▶ 自動執行</button>
+          <button class="btn-run step" id="btn-step" onclick="runStep()">⏸ 單步模式</button>
+          <button class="btn-run next" id="btn-next" onclick="nextStep()" disabled>▶ 下一步</button>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar" id="prog-bar"></div></div>
+        <div class="timeline-wrap">
+          <label>時間軸</label>
+          <input type="range" id="timeline" min="0" max="0" value="0" disabled>
+          <span id="timeline-lbl" style="font-size:.74em;color:var(--text-muted);white-space:nowrap;">0/0</span>
+        </div>
+        <div class="evt-log" id="evt-log" style="margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Right: Algorithms + results ══ -->
+  <div class="col-right">
+    <div class="card">
+      <div class="card-header">🧪 測試演算法</div>
+      <div class="card-body">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <label class="field-label" style="margin:0;flex:1;">選擇演算法</label>
+          <button class="algo-info-btn" onclick="toggleAlgoInfo()">ℹ 說明</button>
+        </div>
+        <select class="field-select" id="sel-algo" onchange="onAlgoChange()"></select>
+        <div class="algo-info-box" id="algo-info-box"></div>
+        <div class="mt8">
+          <label class="field-label">演算法程式碼</label>
+          <textarea class="algo-code" id="algo-code"></textarea>
+        </div>
+        <div class="mt8">
+          <label class="field-label">執行延遲 (ms)</label>
+          <input class="field-input" type="number" id="op-delay" value="60" min="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        📊 測試結果
+        <span class="ch-spacer"></span>
+        <span class="ch-badge" id="res-badge">—</span>
+      </div>
+      <div class="card-body">
+        <div class="results-area" id="results-area">
+          <div style="color:var(--text-muted);font-size:.85em;">等待測試執行...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IEC reference -->
+    <div class="card">
+      <div class="card-header">📚 IEC/UL 60730 參考</div>
+      <div class="card-body" style="font-size:.8em;line-height:1.7;color:var(--text-secondary);">
+        <div id="iec-ref-body">
+          <strong>CPU 暫存器診斷 (Annex H, Table H.1)</strong>
+          <ul style="padding-left:16px;margin-top:4px;">
+            <li>診斷方法：寫後讀驗證 (Write-Verify)</li>
+            <li>覆蓋目標：SA0/SA1 + 部分 Bridging</li>
+            <li>建議頻率：上電時 + 週期性背景測試</li>
+            <li>ARM：R0–R12 可用標準 Fill/March</li>
+            <li>8051：ACC/B/PSW 為安全關鍵 SFR</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app-body -->
+
+<script>
+/* ============================================================
+   ARCHITECTURE DEFINITIONS
+   ============================================================ */
+
+const ARCH = {
+  arm: {
+    id: 'arm',
+    name: 'ARM Cortex-M3',
+    desc: '32-bit RISC 微處理器 · Thumb-2 指令集 · Cortex-M 架構',
+    badge: '32-bit',
+    icon: '🦾',
+    wordBits: 32,
+    mask: 0xFFFFFFFF,
+    groups: [
+      { id: 'gpr', label: '通用暫存器 (General Purpose Registers)' },
+      { id: 'sys', label: '系統暫存器 (System Registers)' },
+      { id: 'psr', label: '狀態/控制暫存器 (Status / Control)' }
+    ],
+    regs: [
+      { id:'R0',  alias:'a1',  init:0x00000000, group:'gpr', desc:'通用/參數1/回傳值' },
+      { id:'R1',  alias:'a2',  init:0x00000000, group:'gpr', desc:'通用/參數2' },
+      { id:'R2',  alias:'a3',  init:0x00000000, group:'gpr', desc:'通用/參數3' },
+      { id:'R3',  alias:'a4',  init:0x00000000, group:'gpr', desc:'通用/參數4' },
+      { id:'R4',  alias:'v1',  init:0x00000000, group:'gpr', desc:'通用/變數1' },
+      { id:'R5',  alias:'v2',  init:0x00000000, group:'gpr', desc:'通用/變數2' },
+      { id:'R6',  alias:'v3',  init:0x00000000, group:'gpr', desc:'通用/變數3' },
+      { id:'R7',  alias:'v4',  init:0x00000000, group:'gpr', desc:'通用/變數4' },
+      { id:'R8',  alias:'v5',  init:0x00000000, group:'gpr', desc:'通用/變數5' },
+      { id:'R9',  alias:'v6',  init:0x00000000, group:'gpr', desc:'通用/SB (靜態基址)' },
+      { id:'R10', alias:'v7',  init:0x00000000, group:'gpr', desc:'通用/變數7' },
+      { id:'R11', alias:'FP',  init:0x00000000, group:'gpr', desc:'通用/Frame Pointer' },
+      { id:'R12', alias:'IP',  init:0x00000000, group:'gpr', desc:'暫時/Intra-call scratch' },
+      { id:'SP',  alias:'R13', init:0x20002000, group:'sys', desc:'堆疊指標 Stack Pointer (Banked MSP/PSP)' },
+      { id:'LR',  alias:'R14', init:0xFFFFFFFF, group:'sys', desc:'連結暫存器 Link Register' },
+      { id:'PC',  alias:'R15', init:0x08000000, group:'sys', desc:'程式計數器 Program Counter' },
+      { id:'xPSR',     alias:'',  init:0x01000000, group:'psr', desc:'程式狀態暫存器 (N/Z/C/V/Q/T flags + ISR number)' },
+      { id:'CONTROL',  alias:'',  init:0x00000000, group:'psr', desc:'控制暫存器 (SPSEL / nPRIV / FPCA)' },
+      { id:'PRIMASK',  alias:'',  init:0x00000000, group:'psr', desc:'優先遮罩暫存器 (PM bit — 全域中斷遮罩)' }
+    ],
+    algos: {
+      '全暫存器填充測試': {
+        desc: '依序將 0x00000000 / 0xFFFFFFFF / 0x55555555 / 0xAAAAAAAA 寫入 R0–R12，立即讀回比對。可偵測 SA0/SA1。複雜度 O(4×13)。',
+        code: `const GPRS = ['R0','R1','R2','R3','R4','R5','R6','R7','R8','R9','R10','R11','R12'];
+const PATS = [0x00000000, 0xFFFFFFFF, 0x55555555, 0xAAAAAAAA];
+for (const pat of PATS) {
+  log('寫入圖樣 0x' + pat.toString(16).toUpperCase().padStart(8,'0'));
+  for (const r of GPRS) { yield* cpu.write(r, pat); }
+  for (const r of GPRS) { yield* cpu.readAndCheck(r, pat); }
+}`
+      },
+      'March-R (暫存器 March C-)': {
+        desc: 'March C- 應用於暫存器：{⇕(w0); ↑(r0,w1); ↑(r1,w0); ↓(r0,w1); ↓(r1,w0)}。可偵測 SA0/SA1/BF。複雜度 O(10×n)。',
+        code: `const GPRS = ['R0','R1','R2','R3','R4','R5','R6','R7','R8','R9','R10','R11','R12'];
+const ALL1 = 0xFFFFFFFF;
+log('M0 ⇕(w0)');
+for (const r of GPRS) { yield* cpu.write(r, 0); }
+log('M1 ↑(r0,w1)');
+for (const r of GPRS) { yield* cpu.readAndCheck(r, 0); yield* cpu.write(r, ALL1); }
+log('M2 ↑(r1,w0)');
+for (const r of GPRS) { yield* cpu.readAndCheck(r, ALL1); yield* cpu.write(r, 0); }
+log('M3 ↓(r0,w1)');
+for (let i=GPRS.length-1;i>=0;i--) { yield* cpu.readAndCheck(GPRS[i], 0); yield* cpu.write(GPRS[i], ALL1); }
+log('M4 ↓(r1,w0)');
+for (let i=GPRS.length-1;i>=0;i--) { yield* cpu.readAndCheck(GPRS[i], ALL1); yield* cpu.write(GPRS[i], 0); }`
+      },
+      'Walking Ones (R0–R12)': {
+        desc: '每次只有一個 bit 為 1，逐位元「走過」R0–R12 的每個位元位置，並讀回比對。複雜度 O(32×13)。',
+        code: `const GPRS = ['R0','R1','R2','R3','R4','R5','R6','R7','R8','R9','R10','R11','R12'];
+log('初始化 — 全部清零');
+for (const r of GPRS) { yield* cpu.write(r, 0); }
+for (let bit=0; bit<32; bit++) {
+  const mask = (1 << bit) >>> 0;
+  for (let ri=0; ri<GPRS.length; ri++) {
+    yield* cpu.write(GPRS[ri], mask);
+    for (let rj=0; rj<GPRS.length; rj++) {
+      yield* cpu.readAndCheck(GPRS[rj], ri===rj ? mask : 0);
+    }
+    yield* cpu.write(GPRS[ri], 0);
+  }
+}`
+      },
+      'SP/LR/PC 完整性測試': {
+        desc: '對 SP/LR 執行 Fill 測試。PC 完整性依賴程式流程驗證 (僅示意)。',
+        code: `const PATS = [0x00000000, 0xFFFFFFFF, 0x55555555, 0xAAAAAAAA];
+log('--- SP 測試 ---');
+const SP_ORIG = 0x20002000;
+for (const p of PATS) { yield* cpu.write('SP', p); yield* cpu.readAndCheck('SP', p); }
+yield* cpu.write('SP', SP_ORIG);
+log('SP 已恢復至 0x' + SP_ORIG.toString(16).toUpperCase());
+log('--- LR 測試 ---');
+const LR_ORIG = 0xFFFFFFFF;
+for (const p of PATS) { yield* cpu.write('LR', p); yield* cpu.readAndCheck('LR', p); }
+yield* cpu.write('LR', LR_ORIG);
+log('--- xPSR 旗標測試 ---');
+yield* cpu.readAndCheck('xPSR', 0x01000000);`
+      }
+    }
+  },
+
+  i8051: {
+    id: 'i8051',
+    name: '8051 MCU',
+    desc: '8-bit CISC 微控制器 · 1980年 Intel 原始架構 · 衍生品遍佈嵌入式',
+    badge: '8-bit',
+    icon: '🖥️',
+    wordBits: 8,
+    mask: 0xFF,
+    groups: [
+      { id: 'core',  label: '核心 SFR (Core SFRs)' },
+      { id: 'port',  label: '並列埠 (I/O Ports)' },
+      { id: 'int',   label: '中斷 (Interrupt)' },
+      { id: 'timer', label: '計時器 (Timer)' },
+      { id: 'serial',label: '串列 (Serial)' },
+      { id: 'gpr',   label: '通用暫存器 (GPR — Bank 0)' }
+    ],
+    regs: [
+      { id:'ACC',  alias:'A',   init:0x00, sfr:0xE0, group:'core',  desc:'累加器 Accumulator — 所有算術/邏輯運算核心' },
+      { id:'B',    alias:'',    init:0x00, sfr:0xF0, group:'core',  desc:'B 暫存器 — MUL/DIV 輔助暫存器' },
+      { id:'PSW',  alias:'',    init:0x00, sfr:0xD0, group:'core',  desc:'程式狀態字 Program Status Word', bitNames:['P','-','OV','RS0','RS1','F0','AC','CY'] },
+      { id:'SP',   alias:'',    init:0x07, sfr:0x81, group:'core',  desc:'堆疊指標 Stack Pointer (初始 0x07，向上增長)' },
+      { id:'DPL',  alias:'',    init:0x00, sfr:0x82, group:'core',  desc:'資料指標低位 DPTR[7:0]' },
+      { id:'DPH',  alias:'',    init:0x00, sfr:0x83, group:'core',  desc:'資料指標高位 DPTR[15:8]' },
+      { id:'PCON', alias:'',    init:0x00, sfr:0x87, group:'core',  desc:'電源控制 Power Control (SMOD/GF1/GF0/PD/IDL)' },
+      { id:'P0',   alias:'',    init:0xFF, sfr:0x80, group:'port',  desc:'Port 0 — 8-bit 開漏雙向 I/O (AD0–AD7 外部總線)' },
+      { id:'P1',   alias:'',    init:0xFF, sfr:0x90, group:'port',  desc:'Port 1 — 8-bit 準雙向 I/O' },
+      { id:'P2',   alias:'',    init:0xFF, sfr:0xA0, group:'port',  desc:'Port 2 — 8-bit 準雙向 I/O (A8–A15 外部總線)' },
+      { id:'P3',   alias:'',    init:0xFF, sfr:0xB0, group:'port',  desc:'Port 3 — 8-bit 準雙向 (RXD/TXD/INT0/INT1/T0/T1/WR/RD)' },
+      { id:'IE',   alias:'',    init:0x00, sfr:0xA8, group:'int',   desc:'中斷致能 Interrupt Enable (EA/ET2/ES/ET1/EX1/ET0/EX0)' },
+      { id:'IP',   alias:'',    init:0x00, sfr:0xB8, group:'int',   desc:'中斷優先 Interrupt Priority' },
+      { id:'TCON', alias:'',    init:0x00, sfr:0x88, group:'timer', desc:'計時器控制 Timer Control (TF1/TR1/TF0/TR0/IE1/IT1/IE0/IT0)' },
+      { id:'TMOD', alias:'',    init:0x00, sfr:0x89, group:'timer', desc:'計時器模式 Timer Mode (GATE/C_T/M1/M0 × 2)' },
+      { id:'SCON', alias:'',    init:0x00, sfr:0x98, group:'serial',desc:'串列控制 Serial Control (SM0/SM1/SM2/REN/TB8/RB8/TI/RI)' },
+      { id:'SBUF', alias:'',    init:0x00, sfr:0x99, group:'serial',desc:'串列緩衝 Serial Buffer' },
+      { id:'R0',   alias:'',    init:0x00, sfr:null,  group:'gpr',   desc:'通用暫存器 R0 (Bank 0: 0x00)' },
+      { id:'R1',   alias:'',    init:0x00, sfr:null,  group:'gpr',   desc:'通用暫存器 R1 (Bank 0: 0x01)' },
+      { id:'R2',   alias:'',    init:0x00, sfr:null,  group:'gpr',   desc:'通用暫存器 R2 (Bank 0: 0x02)' },
+      { id:'R3',   alias:'',    init:0x00, sfr:null,  group:'gpr',   desc:'通用暫存器 R3 (Bank 0: 0x03)' },
+      { id:'R4',   alias:'',    init:0x00, sfr:null,  group:'gpr',   desc:'通用暫存器 R4 (Bank 0: 0x04)' },
+      { id:'R5',   alias:'',    init:0x00, sfr:null,  group:'gpr',   desc:'通用暫存器 R5 (Bank 0: 0x05)' },
+      { id:'R6',   alias:'',    init:0x00, sfr:null,  group:'gpr',   desc:'通用暫存器 R6 (Bank 0: 0x06)' },
+      { id:'R7',   alias:'',    init:0x00, sfr:null,  group:'gpr',   desc:'通用暫存器 R7 (Bank 0: 0x07)' }
+    ],
+    algos: {
+      'ACC/B 基本填充測試': {
+        desc: '向 ACC 和 B 依序寫入 0x00/0xFF/0x55/0xAA，立即讀回比對。可偵測 SA0/SA1。',
+        code: `const REGS = ['ACC','B'];
+const PATS = [0x00, 0xFF, 0x55, 0xAA];
+for (const r of REGS) {
+  log('測試 ' + r);
+  for (const p of PATS) {
+    yield* cpu.write(r, p);
+    yield* cpu.readAndCheck(r, p);
+  }
+}`
+      },
+      'PSW 旗標位元測試': {
+        desc: '逐一測試 PSW 的每個可寫位元 (CY/AC/F0/RS1/RS0/OV)。可偵測 SA0/SA1。',
+        code: `log('PSW 位元測試 (可寫位元: b7 CY, b6 AC, b5 F0, b4 RS1, b3 RS0, b2 OV)');
+const WRITABLE = [0x80,0x40,0x20,0x10,0x08,0x04];
+for (const mask of WRITABLE) {
+  log('測試位元 mask=0x' + mask.toString(16).toUpperCase());
+  yield* cpu.write('PSW', mask);
+  yield* cpu.readAndCheck('PSW', mask);
+  yield* cpu.write('PSW', 0x00);
+  yield* cpu.readAndCheck('PSW', 0x00);
+}`
+      },
+      '暫存器組全測試 (Bank 0–3)': {
+        desc: '切換 PSW RS1:RS0 依序選取 Bank 0–3，對 R0–R7 執行 0x00/0xFF/0x55/0xAA 填充測試。可偵測 SA0/SA1。',
+        code: `const GPRS = ['R0','R1','R2','R3','R4','R5','R6','R7'];
+const PATS = [0x00, 0xFF, 0x55, 0xAA];
+const BANKS = [{rs:'00',mask:0x00},{rs:'01',mask:0x08},{rs:'10',mask:0x10},{rs:'11',mask:0x18}];
+for (const bank of BANKS) {
+  log('切換至 Bank RS1:RS0=' + bank.rs);
+  yield* cpu.write('PSW', bank.mask);
+  yield* cpu.readAndCheck('PSW', bank.mask);
+  for (const pat of PATS) {
+    for (const r of GPRS) { yield* cpu.write(r, pat); }
+    for (const r of GPRS) { yield* cpu.readAndCheck(r, pat); }
+  }
+}
+yield* cpu.write('PSW', 0x00);
+log('已恢復至 Bank 0');`
+      },
+      'SFR Port I/O 測試': {
+        desc: '對 P0–P3 埠依序寫入 0xFF/0x00/0x55/0xAA，立即讀回比對。可偵測輸出 stuck 故障。',
+        code: `const PORTS = ['P0','P1','P2','P3'];
+const PATS  = [0xFF, 0x00, 0x55, 0xAA];
+for (const p of PORTS) {
+  log('測試 ' + p);
+  for (const pat of PATS) {
+    yield* cpu.write(p, pat);
+    yield* cpu.readAndCheck(p, pat);
+  }
+}`
+      },
+      'SP 完整性測試': {
+        desc: '測試 SP (Stack Pointer) 的讀寫完整性，並於完成後恢復原始值 0x07。',
+        code: `const SP_ORIG = 0x07;
+const PATS = [0x00, 0xFF, 0x55, 0xAA, 0x07];
+log('SP 完整性測試 (注意: SP 影響執行堆疊，實際系統須謹慎)');
+for (const p of PATS) {
+  yield* cpu.write('SP', p);
+  yield* cpu.readAndCheck('SP', p);
+}
+yield* cpu.write('SP', SP_ORIG);
+log('SP 已恢復至 0x07');`
+      }
+    }
+  }
+};
+
+/* ============================================================
+   REGISTER FILE MODEL (Physical fault injection)
+   ============================================================ */
+class RegFile {
+  constructor(archDef) {
+    this.archDef = archDef;
+    this.regs = {};   // id -> { physVal, faults:[] }
+    this.results = {}; // id -> 'pass' | 'fail' | null
+    this._init();
+  }
+
+  _init() {
+    this.regs = {};
+    this.results = {};
+    for (const r of this.archDef.regs) {
+      this.regs[r.id] = { physVal: r.init, faults: [] };
+      this.results[r.id] = null;
+    }
+  }
+
+  _applyFaultsOnRead(id, rawVal) {
+    const reg = this.regs[id];
+    let val = rawVal;
+    for (const f of reg.faults) {
+      if      (f.type === 'SA0') val &= ~(1 << f.bit);
+      else if (f.type === 'SA1') val |= (1 << f.bit);
+      else if (f.type === 'BF')  val ^= (1 << f.bit);
+    }
+    return val & this.archDef.mask;
+  }
+
+  _applyFaultsOnWrite(id, val) {
+    const reg = this.regs[id];
+    let pv = val & this.archDef.mask;
+    for (const f of reg.faults) {
+      if      (f.type === 'SA0') pv &= ~(1 << f.bit);
+      else if (f.type === 'SA1') pv |= (1 << f.bit);
+      // BF does not affect the stored value
+    }
+    return pv;
+  }
+
+  read(id) {
+    const reg = this.regs[id];
+    if (!reg) return 0;
+    return this._applyFaultsOnRead(id, reg.physVal);
+  }
+
+  write(id, val) {
+    const reg = this.regs[id];
+    if (!reg) return;
+    reg.physVal = this._applyFaultsOnWrite(id, val);
+  }
+
+  injectFault(id, bit, type) {
+    const reg = this.regs[id];
+    if (!reg) return;
+    // Remove existing fault on same bit first
+    reg.faults = reg.faults.filter(f => f.bit !== bit);
+    reg.faults.push({ bit, type, detected: false });
+    // Immediately apply SA faults to stored value
+    if (type === 'SA0') reg.physVal &= ~(1 << bit);
+    if (type === 'SA1') reg.physVal |= (1 << bit);
+  }
+
+  removeFault(id, bit) {
+    const reg = this.regs[id];
+    if (!reg) return;
+    reg.faults = reg.faults.filter(f => f.bit !== bit);
+  }
+
+  clearAllFaults() {
+    for (const id in this.regs) this.regs[id].faults = [];
+  }
+
+  allFaults() {
+    const list = [];
+    for (const id in this.regs) {
+      for (const f of this.regs[id].faults) list.push({ regId: id, ...f });
+    }
+    return list;
+  }
+
+  detectFault(id, bit) {
+    const reg = this.regs[id];
+    if (!reg) return;
+    const f = reg.faults.find(x => x.bit === bit);
+    if (f) f.detected = true;
+  }
+
+  setResult(id, result) {
+    this.results[id] = result;
+  }
+
+  snapshot() {
+    const snap = {};
+    for (const id in this.regs) {
+      snap[id] = { physVal: this.regs[id].physVal, faults: [...this.regs[id].faults] };
+    }
+    return snap;
+  }
+
+  restoreSnapshot(snap) {
+    for (const id in snap) {
+      if (this.regs[id]) {
+        this.regs[id].physVal = snap[id].physVal;
+        this.regs[id].faults  = [...snap[id].faults];
+      }
+    }
+  }
+}
+
+/* ============================================================
+   APPLICATION STATE
+   ============================================================ */
+let currentArch  = 'arm';
+let currentBank  = 0;       // 8051 register bank
+let currentFType = 'SA0';
+let regFile      = null;
+let testGen      = null;
+let testState    = 'idle';  // idle / running / paused / finished
+let testHistory  = [];
+let totalEstimatedSteps = 0;
+let _savedFaults = {};      // persists faults across arch switches
+
+function currentArchDef() { return ARCH[currentArch]; }
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init() {
+  regFile = new RegFile(currentArchDef());
+  populateRegSelect();
+  populateAlgoSelect();
+  renderRegGrid(null);
+  updateFaultList();
+  updateRunButtons();
+  log('info', '系統初始化完成 — ' + currentArchDef().name);
+}
+
+/* ============================================================
+   ARCHITECTURE SWITCHING
+   ============================================================ */
+function switchArch(id) {
+  if (id === currentArch) return;
+  // Persist current faults
+  _savedFaults[currentArch] = regFile.allFaults();
+
+  currentArch = id;
+  currentBank = 0;
+  regFile     = new RegFile(currentArchDef());
+
+  // Restore previously saved faults for this arch
+  if (_savedFaults[id]) {
+    for (const f of _savedFaults[id]) {
+      regFile.injectFault(f.regId, f.bit, f.type);
+    }
+  }
+
+  // Update header buttons
+  document.getElementById('btn-arm').classList.toggle('active', id === 'arm');
+  document.getElementById('btn-8051').classList.toggle('active', id === 'i8051');
+
+  // Update banner
+  const def = currentArchDef();
+  document.getElementById('arch-name').textContent  = def.name;
+  document.getElementById('arch-desc').textContent  = def.desc;
+  document.getElementById('arch-badge').textContent = def.badge;
+  document.getElementById('arch-banner').querySelector('.arch-icon').textContent = def.icon;
+
+  // 8051 bank switcher visibility
+  document.getElementById('bank-switch-row').style.display = (id === 'i8051') ? 'block' : 'none';
+  if (id === 'i8051') selectBank(0, true);
+
+  // Update IEC ref
+  updateIecRef();
+
+  // Rebuild UI
+  populateRegSelect();
+  populateAlgoSelect();
+  renderRegGrid(null);
+  updateFaultList();
+  resetTestState();
+  log('info', '架構切換 → ' + def.name);
+}
+
+/* ============================================================
+   8051 REGISTER BANK
+   ============================================================ */
+function selectBank(bank, silent) {
+  currentBank = bank;
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('bank' + i).classList.toggle('active', i === bank);
+  }
+  // Update the GPR group label in the arch definition
+  const bankBase = [0x00, 0x08, 0x10, 0x18][bank];
+  const gprs = ARCH.i8051.regs.filter(r => r.group === 'gpr');
+  gprs.forEach((r, i) => {
+    r.desc = `通用暫存器 R${i} (Bank ${bank}: 0x${(bankBase + i).toString(16).toUpperCase().padStart(2,'0')})`;
+  });
+  const groupObj = ARCH.i8051.groups.find(g => g.id === 'gpr');
+  if (groupObj) groupObj.label = `通用暫存器 (GPR — Bank ${bank})`;
+  renderRegGrid(null);
+  if (!silent) log('info', `8051 切換至 Register Bank ${bank} (RS1:RS0=${['00','01','10','11'][bank]})`);
+}
+
+/* ============================================================
+   REGISTER SELECTOR
+   ============================================================ */
+function populateRegSelect() {
+  const sel  = document.getElementById('sel-reg');
+  const selB = document.getElementById('sel-bit');
+  sel.innerHTML = '';
+  for (const r of currentArchDef().regs) {
+    const o = document.createElement('option');
+    o.value = r.id;
+    o.textContent = r.sfr != null
+      ? `${r.id} (SFR 0x${r.sfr.toString(16).toUpperCase()}) — ${r.desc.split(' ')[0]}`
+      : `${r.id}${r.alias ? ' / ' + r.alias : ''} — ${r.desc.split(' ').slice(0,3).join(' ')}`;
+    sel.appendChild(o);
+  }
+  sel.onchange = () => populateBitSelect();
+  populateBitSelect();
+}
+
+function populateBitSelect() {
+  const selB = document.getElementById('sel-bit');
+  selB.innerHTML = '';
+  const bits = currentArchDef().wordBits;
+  // For ARM PSR/CONTROL/PRIMASK give named bits
+  const regId = document.getElementById('sel-reg').value;
+  const bitNames = getNamedBits(regId);
+  for (let b = bits - 1; b >= 0; b--) {
+    const o = document.createElement('option');
+    o.value = b;
+    const bname = bitNames[b] || '';
+    o.textContent = `bit ${b}${bname ? ' (' + bname + ')' : ''}`;
+    selB.appendChild(o);
+  }
+}
+
+function getNamedBits(regId) {
+  const ARM_NAMED = {
+    xPSR:    {31:'N',30:'Z',29:'C',28:'V',27:'Q',24:'T',15:'GE3',14:'GE2',13:'GE1',12:'GE0',8:'ISR[8]',7:'ISR[7]',6:'ISR[6]',5:'ISR[5]',4:'ISR[4]',3:'ISR[3]',2:'ISR[2]',1:'ISR[1]',0:'ISR[0]'},
+    CONTROL: {2:'FPCA',1:'SPSEL',0:'nPRIV'},
+    PRIMASK: {0:'PM'}
+  };
+  const I51_NAMED = {
+    PSW:  {7:'CY',6:'AC',5:'F0',4:'RS1',3:'RS0',2:'OV',1:'-',0:'P'},
+    IE:   {7:'EA',5:'ET2',4:'ES',3:'ET1',2:'EX1',1:'ET0',0:'EX0'},
+    IP:   {5:'PT2',4:'PS',3:'PT1',2:'PX1',1:'PT0',0:'PX0'},
+    TCON: {7:'TF1',6:'TR1',5:'TF0',4:'TR0',3:'IE1',2:'IT1',1:'IE0',0:'IT0'},
+    SCON: {7:'SM0',6:'SM1',5:'SM2',4:'REN',3:'TB8',2:'RB8',1:'TI',0:'RI'},
+    P3:   {7:'RD',6:'WR',5:'T1',4:'T0',3:'INT1',2:'INT0',1:'TXD',0:'RXD'},
+    PCON: {7:'SMOD',2:'GF1',1:'GF0',0:'PD'}
+  };
+  return (currentArch === 'arm') ? (ARM_NAMED[regId] || {}) : (I51_NAMED[regId] || {});
+}
+
+/* ============================================================
+   FAULT TYPE CHIP
+   ============================================================ */
+function setFType(el, type) {
+  document.querySelectorAll('.ftype-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  currentFType = type;
+}
+
+/* ============================================================
+   INJECT / REMOVE FAULT
+   ============================================================ */
+function showInjectErr(msg) {
+  const e = document.getElementById('inject-err');
+  e.textContent = '⚠ ' + msg;
+  e.style.display = 'block';
+  clearTimeout(e._t);
+  e._t = setTimeout(() => { e.style.display = 'none'; }, 3500);
+}
+
+function doInject() {
+  if (testState === 'running' || testState === 'paused') { showInjectErr('測試執行中，請暫停後再注入'); return; }
+  const regId = document.getElementById('sel-reg').value;
+  const bit   = parseInt(document.getElementById('sel-bit').value);
+  if (!regId) { showInjectErr('請選擇暫存器'); return; }
+  regFile.injectFault(regId, bit, currentFType);
+  renderRegGrid(null);
+  updateFaultList();
+  log('warning', `故障注入: ${regId}[bit${bit}] = ${currentFType}`);
+}
+
+function removeFault(regId, bit) {
+  regFile.removeFault(regId, bit);
+  renderRegGrid(null);
+  updateFaultList();
+  log('info', `故障移除: ${regId}[bit${bit}]`);
+}
+
+function updateFaultList() {
+  const list  = document.getElementById('faults-list');
+  const cnt   = document.getElementById('fault-cnt');
+  const faults = regFile.allFaults();
+  cnt.textContent = faults.length;
+  if (!faults.length) {
+    list.innerHTML = '<div class="empty-notice">尚無故障注入</div>';
+    return;
+  }
+  list.innerHTML = '';
+  faults.forEach(f => {
+    const tag = document.createElement('div');
+    tag.className = 'fault-tag' + (f.detected ? ' detected' : '');
+    const typeClass = f.type.toLowerCase().replace(/-/g,'');
+    tag.innerHTML = `
+      <span class="ft-name">${f.regId}[b${f.bit}]</span>
+      <span class="ft-type ${typeClass}">${f.type}</span>
+      ${f.detected ? '<span style="color:var(--success);font-size:.85em;">✓</span>' : ''}
+      <button class="ft-remove" onclick="removeFault('${f.regId}',${f.bit})" title="移除">✕</button>`;
+    list.appendChild(tag);
+  });
+}
+
+/* ============================================================
+   REGISTER GRID RENDER
+   ============================================================ */
+function renderRegGrid(activeRegId) {
+  const grid = document.getElementById('reg-grid');
+  grid.innerHTML = '';
+  const def  = currentArchDef();
+  const is32 = def.wordBits === 32;
+
+  for (const group of def.groups) {
+    const regsInGroup = def.regs.filter(r => r.group === group.id);
+    if (!regsInGroup.length) continue;
+
+    const lbl = document.createElement('div');
+    lbl.className = 'reg-group-label';
+    lbl.textContent = group.label;
+    grid.appendChild(lbl);
+
+    // Choose columns based on group + arch
+    let cols;
+    if (is32) {
+      cols = (group.id === 'gpr') ? 4 : (group.id === 'sys' ? 3 : regsInGroup.length);
+    } else {
+      cols = (group.id === 'gpr') ? 4 : (regsInGroup.length <= 4 ? regsInGroup.length : 4);
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = `reg-row-wrap cols${cols}`;
+    grid.appendChild(wrap);
+
+    for (const r of regsInGroup) {
+      const cell = createRegCell(r, activeRegId, is32);
+      wrap.appendChild(cell);
+    }
+  }
+}
+
+function createRegCell(r, activeRegId, is32) {
+  const state     = regFile.regs[r.id];
+  const physVal   = state.physVal;
+  const effVal    = regFile.read(r.id);
+  const faults    = state.faults;
+  const result    = regFile.results[r.id];
+  const isActive  = r.id === activeRegId;
+
+  const cell = document.createElement('div');
+  cell.className = 'reg-cell' + (is32 ? ' arm-wide' : '');
+  if (isActive)       cell.classList.add('active');
+  else if (result === 'pass') cell.classList.add('pass');
+  else if (result === 'fail') cell.classList.add('fail');
+  else if (faults.length)     cell.classList.add('has-fault');
+
+  cell.title = r.desc;
+
+  // Header: name + alias
+  const nameDiv = document.createElement('div');
+  nameDiv.className = 'reg-name';
+  const sfr = r.sfr != null ? ` <span class="reg-alias" style="font-size:.6em;">0x${r.sfr.toString(16).toUpperCase()}</span>` : '';
+  nameDiv.innerHTML = `<span>${r.id}${sfr}</span>${r.alias ? `<span class="reg-alias">${r.alias}</span>` : ''}`;
+  cell.appendChild(nameDiv);
+
+  if (is32) {
+    // Hex value
+    const hexDiv = document.createElement('div');
+    hexDiv.className = 'reg-hex';
+    hexDiv.textContent = '0x' + effVal.toString(16).toUpperCase().padStart(8, '0');
+    cell.appendChild(hexDiv);
+
+    // Byte decomposition
+    const bytesDiv = document.createElement('div');
+    bytesDiv.className = 'reg-bytes';
+    for (let byte = 3; byte >= 0; byte--) {
+      const bval = (effVal >>> (byte * 8)) & 0xFF;
+      const bHasFault = faults.some(f => Math.floor(f.bit / 8) === byte);
+      const bc = document.createElement('div');
+      bc.className = 'reg-byte-cell' + (bHasFault ? ' has-fault' : '');
+      if (bHasFault) bc.style.borderColor = 'var(--danger-light)';
+      bc.innerHTML = `<span class="reg-byte-label">B${byte}</span><span class="reg-byte-val">${bval.toString(16).toUpperCase().padStart(2,'0')}</span>`;
+      bytesDiv.appendChild(bc);
+    }
+    cell.appendChild(bytesDiv);
+
+    // 32 tiny bit cells
+    const bitsDiv = document.createElement('div');
+    bitsDiv.className = 'reg-bits-32';
+    for (let b = 31; b >= 0; b--) {
+      const bv = (effVal >>> b) & 1;
+      const bspan = document.createElement('div');
+      const fault = faults.find(f => f.bit === b);
+      bspan.className = `rbit32 rbit32-${bv}`;
+      if (fault) bspan.classList.add('fault-' + fault.type.toLowerCase().replace(/-/g,''));
+      bspan.title = `bit${b}=${bv}${fault ? ' [' + fault.type + ']' : ''}`;
+      bitsDiv.appendChild(bspan);
+    }
+    cell.appendChild(bitsDiv);
+
+  } else {
+    // 8-bit: hex + 8 bit cells
+    const hexDiv = document.createElement('div');
+    hexDiv.className = 'reg-hex';
+    hexDiv.textContent = '0x' + effVal.toString(16).toUpperCase().padStart(2, '0');
+    cell.appendChild(hexDiv);
+
+    const bitsDiv = document.createElement('div');
+    bitsDiv.className = 'reg-bits';
+    const bitNames = getNamedBits(r.id);
+    for (let b = 7; b >= 0; b--) {
+      const bv = (effVal >> b) & 1;
+      const fault = faults.find(f => f.bit === b);
+      const bspan = document.createElement('div');
+      bspan.className = `rbit rbit-${bv}`;
+      if (fault) bspan.classList.add('fault-' + fault.type.toLowerCase().replace(/-/g,''));
+      const bname = bitNames[b];
+      bspan.title = `bit${b}${bname ? '(' + bname + ')' : ''}=${bv}${fault ? ' [' + fault.type + ']' : ''}`;
+      bspan.textContent = bv;
+      bitsDiv.appendChild(bspan);
+    }
+    cell.appendChild(bitsDiv);
+  }
+  return cell;
+}
+
+/* ============================================================
+   ALGORITHM SELECT
+   ============================================================ */
+function populateAlgoSelect() {
+  const sel = document.getElementById('sel-algo');
+  sel.innerHTML = '';
+  const algos = currentArchDef().algos;
+  for (const name in algos) {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name;
+    sel.appendChild(o);
+  }
+  onAlgoChange();
+}
+
+function onAlgoChange() {
+  const name  = document.getElementById('sel-algo').value;
+  const algos = currentArchDef().algos;
+  const algo  = algos[name];
+  if (!algo) return;
+  document.getElementById('algo-code').value    = algo.code;
+  document.getElementById('algo-info-box').textContent = algo.desc;
+}
+
+function toggleAlgoInfo() {
+  const box = document.getElementById('algo-info-box');
+  box.style.display = box.style.display === 'block' ? 'none' : 'block';
+}
+
+/* ============================================================
+   TEST ENGINE (generator-based, same pattern as MemoryTestParts)
+   ============================================================ */
+function resetTestState() {
+  testGen   = null;
+  testState = 'idle';
+  testHistory = [];
+  totalEstimatedSteps = 0;
+  for (const id in regFile.regs) regFile.results[id] = null;
+  document.getElementById('prog-bar').style.width = '0%';
+  document.getElementById('timeline').value = 0;
+  document.getElementById('timeline').max   = 0;
+  document.getElementById('timeline-lbl').textContent = '0/0';
+  document.getElementById('evt-log').innerHTML = '';
+  document.getElementById('results-area').innerHTML = '<div style="color:var(--text-muted);font-size:.85em;">等待測試執行...</div>';
+  document.getElementById('res-badge').textContent = '—';
+  renderRegGrid(null);
+  updateRunButtons();
+}
+
+function buildCpuApi() {
+  return {
+    write: function*(regId, val) {
+      const w = { regId, val, logEntry: {type:'info', msg:`W ${regId} ← 0x${val.toString(16).toUpperCase().padStart(currentArchDef().wordBits/4,'0')}`} };
+      yield w;
+      regFile.write(regId, val);
+    },
+    readAndCheck: function*(regId, expected) {
+      const actual   = regFile.read(regId);
+      const bits     = currentArchDef().wordBits;
+      const pad      = bits / 4;
+      const ok       = actual === (expected & currentArchDef().mask);
+      let   msg      = `R ${regId}: expect 0x${expected.toString(16).toUpperCase().padStart(pad,'0')} got 0x${actual.toString(16).toUpperCase().padStart(pad,'0')}`;
+      let   logType  = 'ok';
+      if (!ok) {
+        msg     += ' ← FAIL';
+        logType  = 'fail';
+        regFile.setResult(regId, 'fail');
+        // Mark faulted bits as detected
+        const diff = (expected ^ actual) & currentArchDef().mask;
+        for (let b = 0; b < bits; b++) {
+          if ((diff >> b) & 1) regFile.detectFault(regId, b);
+        }
+      } else {
+        if (regFile.results[regId] !== 'fail') regFile.setResult(regId, 'pass');
+      }
+      yield { regId, logEntry: {type: logType, msg} };
+    }
+  };
+}
+
+function prepareAndRun(stepMode) {
+  resetTestState();
+  const algoName = document.getElementById('sel-algo').value;
+  const algoCode = document.getElementById('algo-code').value;
+  const cpuApi   = buildCpuApi();
+
+  try {
+    const GF = Object.getPrototypeOf(function*(){}).constructor;
+    const gen = new GF('cpu', 'log', algoCode);
+    testGen  = gen(cpuApi, (msg) => log('info', msg));
+    testState = stepMode ? 'paused' : 'running';
+    testHistory.push({ snap: regFile.snapshot() });
+    updateRunButtons();
+    if (!stepMode) autoLoop();
+    else log('system', '進入單步模式 — 點擊「下一步」');
+  } catch(e) {
+    log('fail', '演算法編譯失敗：' + e.message);
+    testState = 'idle';
+    updateRunButtons();
+  }
+}
+
+function runAuto()  { prepareAndRun(false); }
+function runStep()  { prepareAndRun(true);  }
+function nextStep() { executeOneStep(); }
+
+function autoLoop() {
+  if (testState !== 'running') return;
+  executeOneStep();
+  if (testState === 'running') {
+    const delay = Math.max(0, parseInt(document.getElementById('op-delay').value) || 0);
+    setTimeout(autoLoop, delay);
+  }
+}
+
+function executeOneStep() {
+  if (!testGen || testState === 'finished') return;
+  let result;
+  try { result = testGen.next(); }
+  catch(e) { log('fail', '執行錯誤：' + e.message); testState = 'finished'; updateRunButtons(); return; }
+
+  if (result.done) {
+    testState = 'finished';
+    log('system', '測試完成');
+    analyzeResults();
+    renderRegGrid(null);
+    updateFaultList();
+    updateRunButtons();
+    return;
+  }
+
+  const { regId, logEntry } = result.value;
+  if (logEntry) log(logEntry.type, logEntry.msg);
+  renderRegGrid(regId);
+  updateFaultList();
+  testHistory.push({ snap: regFile.snapshot() });
+
+  totalEstimatedSteps = Math.max(totalEstimatedSteps, testHistory.length);
+  const pct = Math.min(99, Math.round((testHistory.length / (totalEstimatedSteps + 1)) * 100));
+  document.getElementById('prog-bar').style.width = pct + '%';
+  const tl = document.getElementById('timeline');
+  tl.max   = testHistory.length - 1;
+  tl.value = testHistory.length - 1;
+  document.getElementById('timeline-lbl').textContent = `${testHistory.length - 1} / ${testHistory.length - 1}`;
+}
+
+function updateRunButtons() {
+  const busy = testState === 'running' || testState === 'paused';
+  document.getElementById('btn-auto').disabled = busy;
+  document.getElementById('btn-step').disabled = busy;
+  document.getElementById('btn-next').disabled = testState !== 'paused';
+}
+
+function analyzeResults() {
+  const area    = document.getElementById('results-area');
+  const badge   = document.getElementById('res-badge');
+  const allF    = regFile.allFaults();
+  const total   = allF.length;
+  const detected= allF.filter(f => f.detected).length;
+  const coverage= total === 0 ? 100 : Math.round((detected / total) * 100);
+
+  // Count register pass/fail
+  const def = currentArchDef();
+  let passReg = 0, failReg = 0;
+  for (const r of def.regs) {
+    if      (regFile.results[r.id] === 'pass') passReg++;
+    else if (regFile.results[r.id] === 'fail') failReg++;
+  }
+
+  document.getElementById('prog-bar').style.width = '100%';
+  badge.textContent = failReg === 0 ? 'PASS' : `${failReg} FAIL`;
+  badge.style.background = failReg === 0 ? 'var(--success)' : 'var(--danger)';
+
+  let html = `
+    <div class="res-row"><span class="res-label">通過暫存器</span><span class="res-val ok">${passReg}</span></div>
+    <div class="res-row"><span class="res-label">失敗暫存器</span><span class="res-val ${failReg ? 'fail' : 'ok'}">${failReg}</span></div>`;
+
+  if (total > 0) {
+    html += `
+    <div class="res-row"><span class="res-label">注入故障數</span><span class="res-val">${total}</span></div>
+    <div class="res-row"><span class="res-label">偵測故障數</span><span class="res-val ok">${detected}</span></div>
+    <div class="res-row"><span class="res-label">故障覆蓋率</span><span class="res-val ${coverage>=80?'ok':'warn'}">${coverage}%</span></div>
+    <div class="cov-bar-wrap"><div class="cov-bar" style="width:${coverage}%;background:${coverage>=80?'var(--success)':coverage>=50?'var(--warning)':'var(--danger)'}"></div></div>`;
+  }
+
+  if (failReg > 0 || allF.some(f => !f.detected)) {
+    html += '<div class="res-detail">';
+    for (const r of def.regs) {
+      if (regFile.results[r.id] === 'fail') {
+        const hasFaults = regFile.regs[r.id].faults.length > 0;
+        const allDetected = regFile.regs[r.id].faults.every(f => f.detected);
+        const note = hasFaults && allDetected ? '故障已偵測' : hasFaults ? '存在未偵測故障' : '讀回值不符';
+        html += `<div class="res-item fail">✗ ${r.id} — ${note}</div>`;
+      }
+    }
+    allF.filter(f => !f.detected).forEach(f => {
+      html += `<div class="res-item fail">⚠ ${f.regId}[bit${f.bit}] ${f.type} 未被偵測</div>`;
+    });
+    html += '</div>';
+  }
+
+  area.innerHTML = html;
+}
+
+/* ============================================================
+   IEC REFERENCE UPDATE
+   ============================================================ */
+function updateIecRef() {
+  const box = document.getElementById('iec-ref-body');
+  if (currentArch === 'arm') {
+    box.innerHTML = `
+      <strong>ARM Cortex-M — CPU 暫存器診斷</strong>
+      <ul style="padding-left:16px;margin-top:4px;">
+        <li>診斷方法：寫後讀驗證 Write-Verify (Annex H, Table H.1)</li>
+        <li>覆蓋目標：SA0/SA1/BF (可偵測率依演算法而定)</li>
+        <li>建議：上電時執行 Register Fill + March-R</li>
+        <li>SP/LR 在 RTOS 下需謹慎操作，建議使用鏡像暫存器</li>
+        <li>PC 完整性由 Flash CRC + 程式流程監控保護</li>
+        <li>xPSR 旗標錯誤可能導致條件分支錯誤</li>
+      </ul>`;
+  } else {
+    box.innerHTML = `
+      <strong>8051 — SFR 暫存器診斷</strong>
+      <ul style="padding-left:16px;margin-top:4px;">
+        <li>診斷方法：寫後讀驗證 (IEC 60730 Annex H)</li>
+        <li>安全關鍵 SFR：ACC / PSW / SP / IE / TCON</li>
+        <li>PSW CY/OV 錯誤影響所有算術判斷</li>
+        <li>PSW RS1:RS0 錯誤導致 Register Bank 切換失敗</li>
+        <li>SP 損壞立即影響堆疊安全性 (LIFO 完整性)</li>
+        <li>Port SFR 異常需搭配 GPIO 回讀驗證</li>
+      </ul>`;
+  }
+}
+
+/* ============================================================
+   EVENT LOG
+   ============================================================ */
+const MAX_LOG = 200;
+function log(type, msg) {
+  const box = document.getElementById('evt-log');
+  const now = new Date();
+  const ts  = [now.getHours(), now.getMinutes(), now.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+  const le  = document.createElement('div');
+  le.className = 'le';
+  le.innerHTML = `<span class="le-t">[${ts}]</span><span class="le-m ${type}">${msg}</span>`;
+  box.appendChild(le);
+  box.scrollTop = box.scrollHeight;
+  while (box.children.length > MAX_LOG) box.removeChild(box.firstChild);
+}
+
+/* ============================================================
+   GLOBAL RESET
+   ============================================================ */
+function resetAll() {
+  if (regFile.allFaults().length > 0 || testState !== 'idle') {
+    if (!confirm('確定要重置所有暫存器值、故障注入和測試結果嗎？')) return;
+  }
+  _savedFaults = {};
+  regFile = new RegFile(currentArchDef());
+  resetTestState();
+  updateFaultList();
+  log('system', '已重置 — 所有暫存器恢復初始值，故障清除');
+}
+
+/* ── Bootstrap ── */
+document.getElementById('timeline').addEventListener('input', function() {
+  const idx = parseInt(this.value);
+  if (testHistory[idx]) {
+    regFile.restoreSnapshot(testHistory[idx].snap);
+    renderRegGrid(null);
+    document.getElementById('timeline-lbl').textContent = `${idx} / ${testHistory.length - 1}`;
+  }
+});
+
+init();
+</script>
+</body>
+</html>
