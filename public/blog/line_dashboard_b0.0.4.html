@@ -224,26 +224,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
 .ev-tasks,.ev-changelog{list-style:none;margin:0;padding:0 0 0 10px;font-size:12px;color:var(--t1);line-height:1.7;}
 .ev-tasks li::before,.ev-changelog li::before{content:"• ";color:var(--ac);font-weight:700;margin-right:4px;}
 .ev-participants{font-size:12px;color:var(--t1);}
-/* ── layout toggle ── */
-.ev-view-toggle{display:flex;gap:3px;margin-left:auto;margin-right:6px;}
-.evv{width:26px;height:26px;border-radius:7px;border:1px solid var(--b2);background:var(--bg3);color:var(--t3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;}
-.evv.on{background:rgba(91,141,238,.12);border-color:rgba(91,141,238,.3);color:var(--ac);}
-.evv:active{opacity:.7;}
-/* ── compact layout ── */
-.ev-compact-list{padding:0 16px;}
-.ev-compact-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);font-size:12px;}
-.ev-compact-row:last-child{border-bottom:none;}
-.ev-compact-date{font-family:var(--mo);font-size:11px;color:var(--t3);width:70px;flex-shrink:0;}
-.ev-compact-name{flex:1;font-weight:500;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ev-compact-loc{font-size:11px;color:var(--t3);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-/* ── table layout ── */
-.ev-table-wrap{overflow-x:auto;padding:0 16px 8px;}
-.ev-table{width:100%;border-collapse:collapse;font-size:12px;}
-.ev-table th{text-align:left;font-size:11px;font-weight:600;color:var(--t2);padding:6px 8px;border-bottom:2px solid var(--b2);white-space:nowrap;}
-.ev-table td{padding:7px 8px;border-bottom:1px solid var(--b1);color:var(--t1);vertical-align:middle;}
-.ev-table tr:last-child td{border-bottom:none;}
-.ev-table td.ev-td-date{font-family:var(--mo);font-size:11px;color:var(--t3);white-space:nowrap;}
-.ev-table td.ev-td-loc{font-size:11px;color:var(--t3);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* ── event progress bar ── */
+.ev-prog{padding:0 14px 10px;}
 
 /* ── logs ── */
 .log-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 4px;}
@@ -549,9 +531,9 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
       <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M6 9a4 4 0 005.7 0l1.5-1.5a4 4 0 00-5.7-5.7L6 3.4"/><path d="M10 7a4 4 0 00-5.7 0L2.8 8.5a4 4 0 005.7 5.7l1.5-1.5"/></svg></div>
       <span class="ml">Links</span><span class="mb" id="more-links-cnt">—</span>
     </div>
-    <div class="mi" onclick="go('events')">
-      <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><rect x="1" y="2.5" width="14" height="12" rx="2"/><path d="M1 6.5h14M5 1v3M11 1v3"/></svg></div>
-      <span class="ml">Events（活動主檔）</span><span class="mb" id="more-events-cnt">—</span>
+    <div class="mi" onclick="go('finance')">
+      <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 6v8M7 8.5h4a1.5 1.5 0 010 3H7m0 0h5"/></svg></div>
+      <span class="ml">Finance</span><span class="mb" id="more-finance-cnt">—</span>
     </div>
     <div class="mi" onclick="go('logs')">
       <div class="mic"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 16 16"><path d="M2 4h12M2 8h8M2 12h5"/></svg></div>
@@ -606,6 +588,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
     <div class="fbar">
       <div class="chip ev-status-chip on" data-s="all">全部</div>
       <div class="chip ev-status-chip" data-s="upcoming">即將到來</div>
+      <div class="chip ev-status-chip" data-s="ongoing">進行中</div>
       <div class="chip ev-status-chip" data-s="completed">已結束</div>
     </div>
     <div class="ev-notice" id="ev-notice" style="display:none">
@@ -615,17 +598,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
     </div>
     <div class="slbl-row">
       <span class="slbl" id="events-lbl">載入中...</span>
-      <div class="ev-view-toggle">
-        <button class="evv on" id="evv-card" onclick="setEvLayout('card')" title="卡片展開" aria-label="卡片展開視圖">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="5" rx="1.5"/><rect x="1" y="8" width="12" height="5" rx="1.5"/></svg>
-        </button>
-        <button class="evv" id="evv-compact" onclick="setEvLayout('compact')" title="精簡清單" aria-label="精簡清單視圖">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><line x1="1" y1="3" x2="13" y2="3"/><line x1="1" y1="7" x2="13" y2="7"/><line x1="1" y1="11" x2="13" y2="11"/></svg>
-        </button>
-        <button class="evv" id="evv-table" onclick="setEvLayout('table')" title="表格" aria-label="表格視圖">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1.5"/><line x1="1" y1="5" x2="13" y2="5"/><line x1="1" y1="9" x2="13" y2="9"/><line x1="5" y1="5" x2="5" y2="13"/></svg>
-        </button>
-      </div>
       <button class="copy-all" onclick="copyAll('events')">
         <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 14 14"><rect x="4" y="4" width="8" height="8" rx="2"/><path d="M2 10V3a1 1 0 011-1h7"/></svg>
         全部複製
@@ -682,9 +654,9 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px;-
     </div>
     <span class="ni-lbl">Todos</span>
   </div>
-  <div class="ni" id="n-finance" onclick="go('finance')">
-    <div class="ni-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 6v8M7 8.5h4a1.5 1.5 0 010 3H7m0 0h5"/></svg></div>
-    <span class="ni-lbl">Finance</span>
+  <div class="ni" id="n-events" onclick="go('events')">
+    <div class="ni-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><rect x="2" y="3" width="16" height="15" rx="2"/><path d="M2 8h16M7 1v4M13 1v4"/></svg></div>
+    <span class="ni-lbl">Events</span>
   </div>
   <div class="ni" id="n-hc" onclick="go('hc')">
     <div class="ni-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 20 20"><circle cx="8" cy="7" r="3"/><path d="M2 18c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M14 5c1 .5 2 1.5 2 3s-1 2.5-2 3"/><path d="M17 17c0-1.5-.8-2.8-2-3.5"/></svg></div>
@@ -774,18 +746,6 @@ const sortState = {
 // Event expand state (by key = name|date)
 const expandedEvKeys = new Set();
 
-// Event layout mode: 'card' | 'compact' | 'table'
-let evLayout = localStorage.getItem('evLayout') || 'card';
-
-function setEvLayout(mode) {
-  evLayout = mode;
-  localStorage.setItem('evLayout', mode);
-  ['card','compact','table'].forEach(m => {
-    document.getElementById('evv-' + m)?.classList.toggle('on', m === mode);
-  });
-  const q = searchQ.events || '';
-  renderEvents(q);
-}
 
 // ── LOADING ──────────────────────────────────────────────────────────────
 function setLoading(on) {
@@ -967,7 +927,7 @@ function updateMoreBadges() {
   document.getElementById('more-groups').textContent      = grpCount;
   document.getElementById('more-links-cnt').textContent   = DB.links.length;
   document.getElementById('more-logs-cnt').textContent    = DB.logs.length;
-  document.getElementById('more-events-cnt').textContent  = DB.events.length;
+  document.getElementById('more-finance-cnt').textContent = DB.finance.length;
 }
 
 function updateTodoBadge() {
@@ -987,7 +947,7 @@ function go(t) {
     document.getElementById('n-'+x)?.classList.remove('on');
   });
   document.getElementById('p-'+t)?.classList.add('on');
-  if (['summary','todos','finance','hc','more'].includes(t))
+  if (['summary','todos','events','hc','more'].includes(t))
     document.getElementById('n-'+t)?.classList.add('on');
   document.querySelector('.content').scrollTop = 0;
   closeOv('cal'); closeOv('grp');
@@ -1299,8 +1259,10 @@ function renderEvents(q) {
   let rows = DB.events.filter(r => matchQ(r, q));
   const now = new Date().toISOString().slice(0,10);
 
-  if (filterEvStatus === 'upcoming')  rows = rows.filter(r => (r.event_date||r.date||'') >= now);
-  if (filterEvStatus === 'completed') rows = rows.filter(r => (r.event_date||r.date||'') < now);
+  if (filterEvStatus !== 'all') rows = rows.filter(r => {
+    const s = r.status || ((r.event_date||r.date||'') >= now ? 'upcoming' : 'completed');
+    return s.toLowerCase() === filterEvStatus;
+  });
   if (activeGroup) {
     rows = rows.filter(r => {
       const gs = tryJSON(r.groups, [r.group_name]);
@@ -1313,49 +1275,11 @@ function renderEvents(q) {
   const el = document.getElementById('events-list');
   if (!rows.length) { el.innerHTML = empty('沒有活動紀錄'); return; }
 
-  if (evLayout === 'compact') {
-    el.innerHTML = `<div class="ev-compact-list">${rows.map(r => {
-      const evDate   = r.event_date || r.date || '';
-      const evName   = r.event_name || r.name || '（無名稱）';
-      const upcoming = evDate >= now;
-      const location = r.location || '';
-      const copyStr  = `【${evName}】 ${evDate}${location?' · '+location:''}`;
-      return `<div class="ev-compact-row">
-        <div class="ev-dot" style="background:${upcoming?'var(--ac)':'var(--gr)'}"></div>
-        <span class="ev-compact-date">${evDate}</span>
-        <span class="ev-compact-name">${esc(evName)}</span>
-        ${location?`<span class="ev-compact-loc">${esc(location)}</span>`:''}
-        <span class="tag ${upcoming?'am':'gy'}" style="flex-shrink:0">${upcoming?'即將':'已結束'}</span>
-        <div class="ic" title="複製" onclick="copyText(${esc(JSON.stringify(copyStr))})">${COPY_SVG}</div>
-      </div>`;
-    }).join('')}</div>`;
-    return;
-  }
+  // ── card layout ────────────────────────────────────────────────
+  const EV_SCOLOR = {upcoming:'var(--ac)', ongoing:'var(--am)', completed:'var(--t3)'};
+  const EV_STAG   = {upcoming:'bl', ongoing:'am', completed:'gy'};
+  const EV_SLABEL = {upcoming:'即將到來', ongoing:'進行中', completed:'已結束'};
 
-  if (evLayout === 'table') {
-    el.innerHTML = `<div class="ev-table-wrap"><table class="ev-table">
-      <thead><tr>
-        <th>日期</th><th>活動名稱</th><th>地點</th><th>狀態</th><th aria-label="操作"></th>
-      </tr></thead>
-      <tbody>${rows.map(r => {
-        const evDate   = r.event_date || r.date || '';
-        const evName   = r.event_name || r.name || '（無名稱）';
-        const upcoming = evDate >= now;
-        const location = r.location || '';
-        const copyStr  = `【${evName}】 ${evDate}${location?' · '+location:''}`;
-        return `<tr>
-          <td class="ev-td-date">${evDate}</td>
-          <td>${esc(evName)}</td>
-          <td class="ev-td-loc">${esc(location)}</td>
-          <td><span class="tag ${upcoming?'am':'gy'}">${upcoming?'即將':'已結束'}</span></td>
-          <td><div class="ic" title="複製" onclick="copyText(${esc(JSON.stringify(copyStr))})">${COPY_SVG}</div></td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table></div>`;
-    return;
-  }
-
-  // ── card layout (default) ────────────────────────────────────────────────
   // Save currently expanded keys from DOM before re-render
   document.querySelectorAll('.ev-card').forEach(card => {
     if (card.querySelector('.ev-detail.open')) {
@@ -1368,7 +1292,13 @@ function renderEvents(q) {
     const evDate      = r.event_date || r.date || '';
     const evName      = r.event_name || r.name || '（無名稱）';
     const upcoming    = evDate >= now;
-    const pct         = parseInt(r.progress || r.completion || 0);
+    const status      = r.status || (upcoming ? 'upcoming' : 'completed');
+    const dotColor    = EV_SCOLOR[status] || EV_SCOLOR.completed;
+    const tagCls      = EV_STAG[status]   || EV_STAG.completed;
+    const statusLabel = EV_SLABEL[status] || EV_SLABEL.completed;
+    const actualVal   = Number(r.actual) || 0;
+    const targetVal   = Number(r.target) || 0;
+    const progPct     = targetVal > 0 ? Math.min(100, Math.round(actualVal / targetVal * 100)) : 0;
     const groups      = tryJSON(r.groups, [r.group_name]).filter(Boolean);
     const preItems    = tryJSON(r.pre, []);
     const postItems   = tryJSON(r.post, []);
@@ -1399,27 +1329,31 @@ function renderEvents(q) {
     if (signups.length)     copyParts.push(`報名：${signups.join(', ')}`);
     if (relatedLinks.length)copyParts.push(`文件：${relatedLinks.map(l=>l.name?`${l.name} (${l.url})`:l.url||l).join(', ')}`);
     if (r.note)             copyParts.push(`備註：${r.note}`);
-    if (pct>0)              copyParts.push(`進度：${pct}%`);
+    if (targetVal > 0)      copyParts.push(`進度：${actualVal} / ${targetVal}（${progPct}%）`);
     const copyStr = copyParts.join('\n');
     const hasBodyContent = [description, r.organizer, r.status_note, budget, r.note].some(Boolean)
       || [groups, participants, preItems, postItems, tasks, changelog, signups, relatedLinks].some(a => a.length > 0);
 
     return `<div class="ev-card" data-ev-key="${esc(evName + '|' + evDate)}">
       <div class="ev-hdr" onclick="toggleEvExpand('${key}')">
-        <div class="ev-dot" style="background:${upcoming?'var(--ac)':'var(--gr)'}"></div>
+        <div class="ev-dot" style="background:${dotColor}"></div>
         <div class="ev-main">
           <div class="ev-name">${esc(evName)}</div>
           <div class="ev-sub">${esc(location)}${location&&evDate?' · ':''}${evDate}</div>
         </div>
-        <span class="tag ${upcoming?'am':'gy'}" style="flex-shrink:0">${upcoming?'即將':'已結束'}</span>
+        <span class="tag ${tagCls}" style="flex-shrink:0">${statusLabel}</span>
         <div class="ic" title="複製詳情" onclick="event.stopPropagation();copyText(${esc(JSON.stringify(copyStr))})" style="flex-shrink:0">${COPY_SVG}</div>
         <div class="ev-chevron${isOpen?' open':''}">
           <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 12 12"><polyline points="2 4 6 8 10 4"/></svg>
         </div>
       </div>
+      ${targetVal > 0 ? `<div class="ev-prog">
+        <div class="pl"><span>進度</span><span style="color:var(--t1)">${actualVal} / ${targetVal}</span></div>
+        <div class="pb"><div class="pf" style="width:${progPct}%;background:${dotColor}"></div></div>
+      </div>` : ''}
       <div class="ev-detail${isOpen?' open':''}">
         <div class="ev-body">
-          ${description?`<div class="ev-row"><span class="ev-lbl">描述</span><span class="ev-val">${esc(description)}</span></div>`:''}
+          ${description?`<div style="font-size:12px;color:var(--t2);line-height:1.5;white-space:pre-wrap;padding-bottom:4px">${esc(description)}</div>`:''}
           ${r.organizer?`<div class="ev-row"><span class="ev-lbl">主辦</span><span class="ev-val">${esc(r.organizer)}</span></div>`:''}
           ${r.status_note?`<div class="ev-row"><span class="ev-lbl">狀態</span><span class="ev-val" style="color:var(--am)">${esc(r.status_note)}</span></div>`:''}
           ${groups.length?`<div class="ev-row"><span class="ev-lbl">群組</span><span class="ev-val">${groups.map(g=>esc(g)).join(', ')}</span></div>`:''}
@@ -1434,10 +1368,6 @@ function renderEvents(q) {
           ${r.note?`<div class="ev-row"><span class="ev-lbl">備註</span><span class="ev-val">${esc(r.note)}</span></div>`:''}
           ${!hasBodyContent?`<div style="font-size:12px;color:var(--t3);padding:2px 0">尚無詳細內容</div>`:''}
         </div>
-        ${pct>0?`<div class="ev-foot">
-          <div class="pl"><span>準備進度</span><span style="color:${upcoming?'var(--am)':'var(--gr)'}">${pct}%</span></div>
-          <div class="pb"><div class="pf" style="width:${pct}%;background:${upcoming?'var(--am)':'var(--gr)'}"></div></div>
-        </div>`:''}
       </div>
     </div>`;
   }).join('');
@@ -1678,11 +1608,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderCal();
   initEvNotice();
-
-  // Init event layout toggle from saved preference
-  ['card','compact','table'].forEach(m => {
-    document.getElementById('evv-' + m)?.classList.toggle('on', m === evLayout);
-  });
 
   // Auto-login from session
   const saved = sessionStorage.getItem('las_token');
