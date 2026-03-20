@@ -1313,6 +1313,8 @@ function renderEvents(q) {
     if (r.note)             copyParts.push(`備註：${r.note}`);
     if (pct>0)              copyParts.push(`進度：${pct}%`);
     const copyStr = copyParts.join('\n');
+    const hasBodyContent = [description, r.organizer, r.status_note, budget, r.note].some(Boolean)
+      || [groups, participants, preItems, postItems, tasks, changelog, signups, relatedLinks].some(a => a.length > 0);
 
     return `<div class="ev-card" data-ev-key="${esc(evName + '|' + evDate)}">
       <div class="ev-hdr" onclick="toggleEvExpand('${key}')">
@@ -1329,6 +1331,7 @@ function renderEvents(q) {
       </div>
       <div class="ev-detail${isOpen?' open':''}">
         <div class="ev-body">
+          ${description?`<div class="ev-row"><span class="ev-lbl">描述</span><span class="ev-val">${esc(description)}</span></div>`:''}
           ${r.organizer?`<div class="ev-row"><span class="ev-lbl">主辦</span><span class="ev-val">${esc(r.organizer)}</span></div>`:''}
           ${r.status_note?`<div class="ev-row"><span class="ev-lbl">狀態</span><span class="ev-val" style="color:var(--am)">${esc(r.status_note)}</span></div>`:''}
           ${groups.length?`<div class="ev-row"><span class="ev-lbl">群組</span><span class="ev-val">${groups.map(g=>esc(g)).join(', ')}</span></div>`:''}
@@ -1341,6 +1344,7 @@ function renderEvents(q) {
           ${signups.length?`<div class="ev-row"><span class="ev-lbl">報名連結</span><span class="ev-val">${signups.map(u=>`<a href="${esc(u)}" target="_blank" style="color:var(--ac)">${esc(u.slice(0,40))}</a>`).join('<br>')}</span></div>`:''}
           ${relatedLinks.length?`<div class="ev-row"><span class="ev-lbl">相關文件</span><span class="ev-val">${relatedLinks.map(l=>{const url=l.url||l;const name=l.name||url;return`<a href="${esc(url)}" target="_blank" style="color:var(--te)">${esc(name)}</a>`;}).join(' · ')}</span></div>`:''}
           ${r.note?`<div class="ev-row"><span class="ev-lbl">備註</span><span class="ev-val">${esc(r.note)}</span></div>`:''}
+          ${!hasBodyContent?`<div style="font-size:12px;color:var(--t3);padding:2px 0">尚無詳細內容</div>`:''}
         </div>
         ${pct>0?`<div class="ev-foot">
           <div class="pl"><span>準備進度</span><span style="color:${upcoming?'var(--am)':'var(--gr)'}">${pct}%</span></div>
