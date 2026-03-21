@@ -1,0 +1,92 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Main from "@/layouts/Main.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import { SITE } from "@/config";
+import { TOOLS } from "@/data/tools";
+
+// Collect unique tags from all tools for the filter buttons
+const allTags = [...new Set(TOOLS.flatMap(t => t.tags))].sort();
+---
+
+<Layout title={`工具箱 | ${SITE.title}`}>
+  <Header />
+  <Main pageTitle="🧰 工具箱" pageDesc="Fi5her 製作的 HTML 小工具，點選即可使用。">
+
+    {/* Tag filter buttons */}
+    <div id="tag-filters" class="mb-6 flex flex-wrap gap-2">
+      <button
+        data-tag="all"
+        class="tag-btn active-tag rounded-full border border-border px-3 py-1 text-sm hover:text-accent"
+      >
+        全部
+      </button>
+      {allTags.map(tag => (
+        <button
+          data-tag={tag}
+          class="tag-btn rounded-full border border-border px-3 py-1 text-sm hover:text-accent"
+        >
+          {tag}
+        </button>
+      ))}
+    </div>
+
+    {/* Tool cards */}
+    <ul id="tool-list" class="grid gap-4 sm:grid-cols-2">
+      {TOOLS.map(tool => (
+        <li
+          class="tool-card rounded-lg border border-border p-4 transition-shadow hover:shadow-md"
+          data-tags={tool.tags.join(",")}
+        >
+          <a
+            href={tool.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block group"
+          >
+            <h2 class="text-lg font-semibold group-hover:text-accent">
+              {tool.name}
+            </h2>
+            <p class="mt-1 text-sm text-foreground/70">{tool.desc}</p>
+            <div class="mt-3 flex flex-wrap gap-1">
+              {tool.tags.map(tag => (
+                <span class="rounded-full bg-accent/10 px-2 py-0.5 text-xs text-accent">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </Main>
+  <Footer />
+</Layout>
+
+<script>
+  function initToolFilters() {
+    const buttons = document.querySelectorAll<HTMLButtonElement>(".tag-btn");
+    const cards = document.querySelectorAll<HTMLLIElement>(".tool-card");
+
+    buttons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const tag = btn.dataset.tag ?? "all";
+
+        // Update active state
+        buttons.forEach(b => b.classList.remove("active-tag", "text-accent"));
+        btn.classList.add("active-tag", "text-accent");
+
+        // Filter cards
+        cards.forEach(card => {
+          const cardTags = card.dataset.tags ?? "";
+          const visible = tag === "all" || cardTags.split(",").includes(tag);
+          card.style.display = visible ? "" : "none";
+        });
+      });
+    });
+  }
+
+  initToolFilters();
+  document.addEventListener("astro:after-swap", initToolFilters);
+</script>
