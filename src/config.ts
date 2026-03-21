@@ -11,6 +11,7 @@ export const SITE = {
   scheduledPostMargin: 15 * 60 * 1000, // 15 minutes
   showArchives: true,
   showBackButton: true,
+  showTools: true,
   editPost: {
     enabled: false,
     text: "Edit page",
@@ -20,4 +21,10 @@ export const SITE = {
   dir: "ltr",
   lang: "zh-TW",
   timezone: "Asia/Taipei",
+  /**
+   * Default sort order for blog posts.
+   * "date-desc"    — newest first (default)
+   * "pinned-date"  — pinned posts (sortOrder asc) first, then newest first
+   */
+  defaultSort: "pinned-date" as "date-desc" | "pinned-date",
 } as const;

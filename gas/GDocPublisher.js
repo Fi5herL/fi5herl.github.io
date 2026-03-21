@@ -33,6 +33,9 @@ const CONFIG = {
   // Path in repo where blog posts are stored
   BLOG_PATH: 'src/data/blog',
 
+  // Path in repo where blog images are stored (served as static assets)
+  IMAGE_PATH: 'public/blog/images',
+
   // Google Drive folder ID that contains the Google Docs to publish
   // Get it from the Drive folder URL: drive.google.com/drive/folders/<FOLDER_ID>
   FOLDER_ID: PropertiesService.getScriptProperties().getProperty('BLOG_FOLDER_ID') || '',
@@ -45,6 +48,9 @@ const CONFIG = {
 
   // Google Sheets ID for publish log (optional, set to '' to disable)
   LOG_SHEET_ID: PropertiesService.getScriptProperties().getProperty('LOG_SHEET_ID') || '',
+
+  // User-Agent header for GitHub API requests
+  USER_AGENT: 'Fi5herBlog-GAS-Publisher/1.0',
 };
 
 // ─── Entry Points ─────────────────────────────────────────────────────────────
@@ -111,20 +117,29 @@ function publishDoc(fileId) {
 function convertDocToMarkdown(doc, file) {
   const body = doc.getBody();
   const paragraphs = body.getParagraphs();
+  const slug = generateSlug(doc.getName(), file.getDateCreated());
 
   let title = doc.getName().replace(/^\d{4}-\d{2}-\d{2}[_-]?/, '').trim();
   let description = '';
   let tags = [...CONFIG.DEFAULT_TAGS];
   let featured = false;
   let draft = false;
+  let sortOrder = null;
   const lines = [];
+  const imgCounter = { n: 0 };  // mutable counter passed into paragraph converter
 
   paragraphs.forEach((para, idx) => {
     const text = para.getText().trim();
     const heading = para.getHeading();
 
+    // Paragraph is empty text but may still contain an inline image — handle below
     if (!text) {
-      lines.push('');
+      const imgMd = convertParagraphToMarkdown(para, slug, imgCounter);
+      if (imgMd) {
+        lines.push(imgMd);
+      } else {
+        lines.push('');
+      }
       return;
     }
 
@@ -140,6 +155,11 @@ function convertDocToMarkdown(doc, file) {
       }
       if (text.toLowerCase() === 'featured: true') { featured = true; return; }
       if (text.toLowerCase() === 'draft: true')    { draft = true; return; }
+      if (text.startsWith('sortOrder:')) {
+        const n = parseInt(text.replace('sortOrder:', '').trim(), 10);
+        if (!isNaN(n) && n >= 0) sortOrder = n;
+        return;
+      }
     }
 
     // Map headings
@@ -165,15 +185,15 @@ function convertDocToMarkdown(doc, file) {
       return;
     }
 
-    // Convert inline styles
-    lines.push(convertParagraphToMarkdown(para));
+    // Convert inline styles (may also include inline images)
+    lines.push(convertParagraphToMarkdown(para, slug, imgCounter));
   });
 
   // Extract description from first content line if not set
   if (!description) {
     for (const line of lines) {
       const clean = line.replace(/^#+\s*/, '').trim();
-      if (clean.length > 10) {
+      if (clean.length > 10 && !clean.startsWith('![')) {
         description = clean.slice(0, 120) + (clean.length > 120 ? '...' : '');
         break;
       }
@@ -184,15 +204,20 @@ function convertDocToMarkdown(doc, file) {
   const pubDatetime = new Date(file.getDateCreated()).toISOString();
   const tagYaml = tags.map(t => `  - ${t}`).join('\n');
 
+  const sortOrderLine = sortOrder !== null ? `\nsortOrder: ${sortOrder}` : '';
+
+  // Escape backslashes first, then double-quotes, to produce valid YAML double-quoted strings
+  const escapeYaml = s => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
   const frontmatter = `---
 author: ${CONFIG.DEFAULT_AUTHOR}
 pubDatetime: ${pubDatetime}
-title: "${title.replace(/"/g, '\\"')}"
+title: "${escapeYaml(title)}"
 featured: ${featured}
 draft: ${draft}
 tags:
 ${tagYaml}
-description: "${description.replace(/"/g, '\\"')}"
+description: "${escapeYaml(description)}"${sortOrderLine}
 ---`;
 
   return { frontmatter, body: lines.join('\n').replace(/\n{3,}/g, '\n\n').trim() };
@@ -200,14 +225,26 @@ description: "${description.replace(/"/g, '\\"')}"
 
 /**
  * Convert a single paragraph's inline styles to Markdown.
+ * Handles TEXT runs with bold/italic/code/link formatting and INLINE_IMAGE elements.
+ * Images are uploaded to GitHub and referenced as Markdown image tags.
+ *
+ * @param {GoogleAppsScript.Document.Paragraph} para
+ * @param {string} slug  - article slug, used to build unique image filenames
+ * @param {{n: number}}  imgCounter - mutable counter object shared across all paragraphs
  */
-function convertParagraphToMarkdown(para) {
+function convertParagraphToMarkdown(para, slug, imgCounter) {
   let md = '';
   const numChildren = para.getNumChildren();
 
   for (let i = 0; i < numChildren; i++) {
     const child = para.getChild(i);
-    if (child.getType() === DocumentApp.ElementType.TEXT) {
+
+    if (child.getType() === DocumentApp.ElementType.INLINE_IMAGE) {
+      // Upload image and emit Markdown image reference
+      const imgMd = uploadInlineImage(child.asInlineImage(), slug, imgCounter);
+      md += imgMd;
+
+    } else if (child.getType() === DocumentApp.ElementType.TEXT) {
       const textEl = child.asText();
       const text = textEl.getText();
 
@@ -243,6 +280,93 @@ function convertParagraphToMarkdown(para) {
   return md;
 }
 
+/**
+ * Upload an InlineImage from a Google Doc to the GitHub repo and return the
+ * Markdown image tag (on its own line).
+ *
+ * @param {GoogleAppsScript.Document.InlineImage} inlineImage
+ * @param {string} slug     - article slug for filename prefix
+ * @param {{n: number}} counter - shared mutable counter
+ * @returns {string}  Markdown image string, e.g. "\n![image](/blog/images/slug-1.png)\n"
+ */
+function uploadInlineImage(inlineImage, slug, counter) {
+  try {
+    counter.n += 1;
+    const blob = inlineImage.getBlob();
+    const mimeType = blob.getContentType() || 'image/png';
+
+    // Map MIME type to extension
+    const extMap = {
+      'image/png':  'png',
+      'image/jpeg': 'jpg',
+      'image/gif':  'gif',
+      'image/webp': 'webp',
+      'image/svg+xml': 'svg',
+    };
+    const ext = extMap[mimeType] || 'png';
+
+    const imageFilename = `${slug}-${counter.n}.${ext}`;
+    const repoPath = `${CONFIG.IMAGE_PATH}/${imageFilename}`;
+
+    // Commit image binary to GitHub
+    const imageBytes = blob.getBytes();
+    const base64Content = Utilities.base64Encode(imageBytes);
+    commitBinaryToGitHub(repoPath, base64Content, `image: ${imageFilename}`);
+
+    // Return Markdown image tag (wrapped in blank lines so it renders as a block)
+    return `\n![image](/blog/images/${imageFilename})\n`;
+  } catch (e) {
+    Logger.log(`Warning: Could not upload image in "${slug}": ${e.message}`);
+    return '';
+  }
+}
+
+/**
+ * Commit a binary file (base64-encoded) to the GitHub repo.
+ * Similar to commitFileToGitHub but accepts pre-encoded base64 content.
+ */
+function commitBinaryToGitHub(repoPath, base64Content, commitMessage) {
+  const token = CONFIG.GITHUB_TOKEN;
+  if (!token) throw new Error('GITHUB_TOKEN not set in Script Properties.');
+
+  const apiUrl = `https://api.github.com/repos/${CONFIG.REPO}/contents/${repoPath}`;
+
+  const headers = {
+    Authorization: `token ${token}`,
+    Accept: 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json',
+    'User-Agent': CONFIG.USER_AGENT,
+  };
+
+  // Check if file already exists (to get its SHA for update)
+  let sha = null;
+  try {
+    const checkResp = UrlFetchApp.fetch(apiUrl, { headers, muteHttpExceptions: true });
+    if (checkResp.getResponseCode() === 200) {
+      sha = JSON.parse(checkResp.getContentText()).sha;
+    }
+  } catch (e) { /* File doesn't exist yet */ }
+
+  const payload = {
+    message: commitMessage,
+    content: base64Content,
+    branch: CONFIG.BRANCH,
+  };
+  if (sha) payload.sha = sha;
+
+  const response = UrlFetchApp.fetch(apiUrl, {
+    method: 'PUT',
+    headers,
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  });
+
+  const code = response.getResponseCode();
+  if (code !== 200 && code !== 201) {
+    throw new Error(`GitHub API error ${code}: ${response.getContentText()}`);
+  }
+}
+
 // ─── GitHub API ───────────────────────────────────────────────────────────────
 
 /**
@@ -259,7 +383,7 @@ function commitFileToGitHub(filename, content, commitMessage) {
     Authorization: `token ${token}`,
     Accept: 'application/vnd.github.v3+json',
     'Content-Type': 'application/json',
-    'User-Agent': 'Fi5herBlog-GAS-Publisher/1.0',
+    'User-Agent': CONFIG.USER_AGENT,
   };
 
   // Check if file already exists (to get its SHA for update)

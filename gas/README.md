@@ -76,7 +76,19 @@ description: 這篇文章在說什麼...
 tags: 技術, 生活, 工具
 featured: true
 draft: true
+sortOrder: 1
 ```
+
+`sortOrder` 為整數，數字越小越靠前（當部落格設定 `defaultSort: "pinned-date"` 時生效）。
+
+### 圖片
+
+直接在 Google Docs 中插入圖片（**插入 → 圖片**）即可。
+腳本會自動：
+1. 將圖片上傳至 GitHub `public/blog/images/<slug>-<序號>.<副檔名>`
+2. 在 Markdown 中插入 `![image](/blog/images/...)` 圖片標籤
+
+> ⚠️ 每次重新發布文章時，圖片會被重新上傳覆蓋（不會累積舊圖片）。
 
 ### 跳過草稿
 
@@ -105,3 +117,53 @@ GET https://script.google.com/macros/s/<DEPLOY_ID>/exec?action=publishOne&fileId
 1. 前往 `https://github.com/Fi5herL/fi5herl.github.io/settings/pages`
 2. Source → 選擇 **GitHub Actions**
 3. 儲存後，下次 push 到 `main` 就會自動部署
+
+---
+
+## 工具箱頁面（Tools）
+
+部落格已內建 **工具箱** 頁面（`/tools`），可以在導覽列直接進入。
+
+### 新增工具
+
+編輯 `src/data/tools.ts`，在 `TOOLS` 陣列中加入一個物件：
+
+```ts
+{
+  name: "我的工具名稱",
+  desc: "工具的簡短說明",
+  href: "/blog/myTool.html",   // 靜態 HTML 放在 public/ 目錄下
+  tags: ["分類1", "分類2"],
+}
+```
+
+工具頁支援依標籤篩選，點選頁面上方的標籤按鈕即可過濾。
+
+---
+
+## 文章排序設定
+
+### 預設排序
+
+在 `src/config.ts` 的 `defaultSort` 欄位可設定：
+
+| 值 | 說明 |
+|---|---|
+| `"date-desc"` | 依日期新→舊排序（原始預設） |
+| `"pinned-date"` | 有 `sortOrder` 的文章優先（數字小→大），其餘依日期新→舊 |
+
+### 文章自訂排序
+
+在 Markdown frontmatter 加入 `sortOrder` 整數欄位：
+
+```yaml
+---
+sortOrder: 1   # 1 = 最優先；省略此欄表示不釘選
+---
+```
+
+透過 GAS 發布的文章，可在文件開頭加：
+
+```
+sortOrder: 1
+```
