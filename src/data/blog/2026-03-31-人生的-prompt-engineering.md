@@ -6,12 +6,10 @@ featured: false
 draft: false
 tags:
   - general
-description: "**人生的 Prompt Engineering —— 
-讀主的話與生命的替換**"
+description: "**人生的 Prompt Engineering —— 讀主的話與生命的替換**"
 ---
 
-**人生的 Prompt Engineering —— 
-讀主的話與生命的替換**
+**人生的 Prompt Engineering —— 讀主的話與生命的替換**
 
 今天我們越來越熟悉一件事，就是與 AI 對話。
 我們有一個共同的經驗：AI 不一定給我們想要的結果。很多時候，不是系統沒能力，而是我們給的指令不清楚、不準確，甚至方向本身就是錯的。
@@ -64,4 +62,4 @@ AI提醒我們一件事：
 
 照樣我們裡面的生命若不被替換，神再多的話，也難以顯出能力。願我們來到主話面前，不只是獲得知識，乃是用靈來接觸神的話；也願我們的禱告，不只是求幫助，乃是讓位。讓神的話有地位，讓神自己在我們裡面登寶座。
 
-![image](../../../public/blog/images/2026-03-31-人生的-prompt-engineering-1.png)
+![image](/blog/images/2026-03-31-人生的-prompt-engineering-1.png)
