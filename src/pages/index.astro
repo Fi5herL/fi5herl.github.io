@@ -53,15 +53,6 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
           README
         </LinkButton> for more info.
       </p>
-      {
-        // only display if at least one social link is enabled
-        SOCIALS.length > 0 && (
-          <div class="mt-4 flex max-sm:flex-col sm:items-center">
-            <div class="me-2 mb-1 whitespace-nowrap sm:mb-0">Social Links:</div>
-            <Socials />
-          </div>
-        )
-      }
     </section>
 
     {
