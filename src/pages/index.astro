@@ -42,16 +42,16 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
       </a>
 
       <p>
-        Plz feel free with my life record.
+        Feel free with my life record
       </p>
       <p class="mt-2">
-        Blog designed by AstroPaper structure.
+        Designed by AstroPaper
         <LinkButton
           class="underline decoration-dashed underline-offset-4 hover:text-accent"
           href="https://github.com/satnaing/astro-paper#readme"
         >
           README
-        </LinkButton> for more info.
+        </LinkButton>
       </p>
     </section>
 
@@ -77,7 +77,6 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
     {
       recentPosts.length > 0 && (
         <section id="recent-posts" class="pt-12 pb-6">
-          <h2 class="text-2xl font-semibold tracking-wide">Recent Posts</h2>
           <ul>
             {recentPosts.map(
               (data, index) =>
