@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Privacy Policy for the Flex Email Generator (Excel) Chrome extension."
+    />
+    <title>Privacy Policy - Flex Email Generator (Excel)</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f7fb;
+        --card: #ffffff;
+        --text: #1f2937;
+        --muted: #4b5563;
+        --border: #d9e2ec;
+        --accent: #1d4ed8;
+        --accent-soft: #eff6ff;
+        --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(
+          180deg,
+          #eef4ff 0%,
+          var(--bg) 220px,
+          var(--bg) 100%
+        );
+        color: var(--text);
+        line-height: 1.7;
+      }
+
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 48px 20px 72px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .hero {
+        padding: 40px 32px 28px;
+        background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+        color: #ffffff;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        font-size: 0.86rem;
+        letter-spacing: 0.02em;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+        margin: 0 0 12px;
+      }
+
+      h1 {
+        margin-top: 14px;
+        font-size: clamp(2rem, 4vw, 2.8rem);
+      }
+
+      h2 {
+        margin-top: 36px;
+        font-size: 1.5rem;
+        color: #0f172a;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+      }
+
+      .hero p,
+      .hero a {
+        color: rgba(255, 255, 255, 0.92);
+      }
+
+      .content {
+        padding: 8px 32px 36px;
+      }
+
+      .lang-section + .lang-section {
+        margin-top: 56px;
+        padding-top: 40px;
+        border-top: 1px solid var(--border);
+      }
+
+      .summary {
+        margin: 18px 0 0;
+        padding: 16px 18px;
+        border-left: 4px solid #93c5fd;
+        background: var(--accent-soft);
+        border-radius: 12px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 14px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+
+      th,
+      td {
+        padding: 14px 16px;
+        text-align: left;
+        vertical-align: top;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        width: 24%;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+
+      tr:last-child th,
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      .footer-note {
+        margin-top: 32px;
+        font-size: 0.95rem;
+      }
+
+      @media (max-width: 720px) {
+        .hero,
+        .content {
+          padding-left: 20px;
+          padding-right: 20px;
+        }
+
+        table,
+        tbody,
+        tr,
+        th,
+        td {
+          display: block;
+          width: 100%;
+        }
+
+        th {
+          border-bottom: 0;
+          padding-bottom: 6px;
+        }
+
+        td {
+          padding-top: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <article class="card">
+        <header class="hero">
+          <span class="badge">Chrome Extension Privacy Policy</span>
+          <h1>Flex Email Generator (Excel)</h1>
+          <p>
+            This page provides the privacy policy for the Flex Email Generator
+            (Excel) Chrome extension.
+          </p>
+          <p><strong>Last updated:</strong> 2026-05-12</p>
+        </header>
+
+        <section class="content">
+          <section class="lang-section" aria-labelledby="privacy-policy-en">
+            <h2 id="privacy-policy-en">Privacy Policy (English)</h2>
+            <p class="summary">
+              Flex Email Generator (Excel) is a single-purpose Chrome extension
+              that helps users generate Flex Project emails on portal.ul.com
+              from local .xlsx templates synchronized through OneDrive. The
+              extension does not collect personal data and does not send data to
+              external servers.
+            </p>
+
+            <h3>1. What the extension does</h3>
+            <p>
+              The extension adds an email generation interface to the
+              <code>portal.ul.com</code> project details page so the user can
+              create email content from locally available Excel templates. Its
+              single purpose is to support this email generation workflow.
+            </p>
+
+            <h3>2. Permissions requested and why</h3>
+            <table>
+              <tbody>
+                <tr>
+                  <th scope="row">storage</th>
+                  <td>
+                    Stores local user settings and preferences in the browser
+                    only. These settings are never sent to any server.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">clipboardWrite</th>
+                  <td>
+                    Copies generated email content to the clipboard for user
+                    convenience so it can be pasted into an email client.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">activeTab</th>
+                  <td>
+                    Interacts with the active <code>portal.ul.com</code> tab to
+                    inject the email generation UI when the user is on the
+                    relevant page.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Host permission</th>
+                  <td>
+                    Access to <code>https://portal.ul.com/*</code> is used only
+                    to inject content scripts, add the email generation button,
+                    and read project metadata needed to prepare the email. No
+                    data is transmitted externally.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>3. Data collection and transmission</h3>
+            <p>
+              No personal data is collected or transmitted. All data handled by
+              the extension stays local in the browser and is used only to
+              generate the requested email content for the user.
+            </p>
+
+            <h3>4. No remote code</h3>
+            <p>
+              All JavaScript used by the extension is bundled within the
+              extension package. No remote code is loaded at runtime.
+            </p>
+
+            <h3>5. Third-party sharing</h3>
+            <p>
+              The extension does not sell, share, or transfer user data to third
+              parties.
+            </p>
+
+            <h3>6. Contact information</h3>
+            <p>
+              For questions or updates, please refer to the GitHub repository:
+              <a href="https://github.com/Fi5herL/ULS-EmailGenerator"
+                >https://github.com/Fi5herL/ULS-EmailGenerator</a
+              >
+            </p>
+          </section>
+
+          <section class="lang-section" aria-labelledby="privacy-policy-zh">
+            <h2 id="privacy-policy-zh">隱私權政策（繁體中文）</h2>
+            <p class="summary">
+              Flex Email Generator (Excel) 是一個單一用途的 Chrome 擴充功能，
+              用於在 <code>portal.ul.com</code> 上，依據透過 OneDrive 同步的本機
+              .xlsx 範本產生 Flex Project
+              電子郵件內容。此擴充功能不蒐集個人資料，
+              也不會將資料傳送到任何外部伺服器。
+            </p>
+
+            <h3>1. 擴充功能用途</h3>
+            <p>
+              此擴充功能會在
+              <code>portal.ul.com</code> 的專案詳細頁面加入郵件產生介面，
+              讓使用者能根據本機可用的 Excel
+              範本建立電子郵件內容。其單一用途即為支援此郵件產生流程。
+            </p>
+
+            <h3>2. 申請的權限與用途說明</h3>
+            <table>
+              <tbody>
+                <tr>
+                  <th scope="row">storage</th>
+                  <td>
+                    僅用於在瀏覽器本機儲存使用者設定與偏好，不會傳送到任何伺服器。
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">clipboardWrite</th>
+                  <td>
+                    用於將產生的郵件內容複製到剪貼簿，方便使用者貼到郵件軟體中。
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">activeTab</th>
+                  <td>
+                    用於在使用者目前開啟的
+                    <code>portal.ul.com</code> 分頁上互動，
+                    並在相關頁面插入郵件產生介面。
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">網站權限</th>
+                  <td>
+                    <code>https://portal.ul.com/*</code>
+                    的權限僅用於注入內容腳本、
+                    新增郵件產生按鈕，以及讀取準備郵件所需的專案中繼資料；不會對外傳輸資料。
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>3. 資料蒐集與傳輸</h3>
+            <p>
+              本擴充功能不蒐集或傳輸任何個人資料。所有資料都保留在瀏覽器本機，
+              僅用於替使用者產生所需的郵件內容。
+            </p>
+
+            <h3>4. 不使用遠端程式碼</h3>
+            <p>
+              擴充功能使用的所有 JavaScript 都已打包在擴充功能套件內，
+              執行時不會載入任何遠端程式碼。
+            </p>
+
+            <h3>5. 不與第三方分享資料</h3>
+            <p>本擴充功能不會出售、分享或移轉使用者資料給任何第三方。</p>
+
+            <h3>6. 聯絡資訊</h3>
+            <p>
+              如有問題或需更新資訊，請參考 GitHub repository：
+              <a href="https://github.com/Fi5herL/ULS-EmailGenerator"
+                >https://github.com/Fi5herL/ULS-EmailGenerator</a
+              >
+            </p>
+          </section>
+
+          <p class="footer-note">
+            Public URL after deployment:
+            <a href="/privacy_policy_uls_email_generator.html"
+              >/privacy_policy_uls_email_generator.html</a
+            >
+          </p>
+        </section>
+      </article>
+    </main>
+  </body>
+</html>
