@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>離線點對點傳檔 · P2P Offline File Transfer</title>
+<style>
+  :root{
+    --bg:#0b0d10; --panel:#14181d; --line:#232a31; --txt:#e8edf2;
+    --muted:#8b97a3; --accent:#2fd27a; --accent2:#3aa0ff; --danger:#ff5a5a; --warn:#ffb020;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
+    -webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;
+    position:sticky;top:0;background:rgba(11,13,16,.92);backdrop-filter:blur(8px);z-index:5}
+  header .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);box-shadow:0 0 10px var(--muted);flex:none;transition:.3s}
+  header .dot.on{background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  header h1{font-size:15px;margin:0;font-weight:650;letter-spacing:.2px}
+  header small{color:var(--muted);font-weight:500}
+  main{padding:16px;max-width:760px;margin:0 auto}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+  h2{font-size:15px;margin:0 0 10px}
+  h3{font-size:13px;color:var(--muted);margin:0 0 8px;font-weight:600}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  button{appearance:none;border:1px solid var(--line);background:#1b2229;color:var(--txt);
+    padding:11px 16px;border-radius:11px;font-weight:650;font-size:14px;cursor:pointer;transition:.15s}
+  button:hover{border-color:var(--accent2)}
+  button.primary{background:linear-gradient(180deg,#2fd27a,#1fae62);border-color:#1fae62;color:#04160c}
+  button.blue{background:linear-gradient(180deg,#3aa0ff,#2b7fe0);border-color:#2b7fe0;color:#031224}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .role{padding:16px;border:1px solid var(--line);border-radius:12px;background:#0e141a;cursor:pointer;text-align:center;transition:.15s}
+  .role:hover{border-color:var(--accent2);transform:translateY(-1px)}
+  .role b{display:block;font-size:15px;margin-bottom:4px}
+  .role span{font-size:12px;color:var(--muted)}
+  .role .emoji{font-size:26px;display:block;margin-bottom:6px}
+  textarea{width:100%;min-height:74px;background:#0c1116;color:var(--txt);border:1px solid var(--line);
+    border-radius:10px;padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;resize:vertical;word-break:break-all}
+  .muted{color:var(--muted);font-size:13px;line-height:1.55}
+  .step{border-left:2px solid var(--line);padding:0 0 0 14px;margin:0 0 14px;position:relative}
+  .step::before{content:attr(data-n);position:absolute;left:-13px;top:0;width:24px;height:24px;border-radius:50%;
+    background:#1b2229;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .step.done::before{background:var(--accent);color:#04160c;border-color:var(--accent);content:"✓"}
+  .hidden{display:none}
+  .drop{border:2px dashed var(--line);border-radius:12px;padding:26px;text-align:center;color:var(--muted);transition:.15s;cursor:pointer}
+  .drop.hot{border-color:var(--accent);background:rgba(47,210,122,.06);color:var(--txt)}
+  .files{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .fitem{background:#0e141a;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .fitem .top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+  .fitem .name{font-size:13px;font-weight:600;word-break:break-all}
+  .fitem .meta{font-size:11px;color:var(--muted);white-space:nowrap}
+  .bar{height:8px;background:#0c1116;border:1px solid var(--line);border-radius:99px;overflow:hidden;margin-top:8px}
+  .bar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .1s}
+  a.dl{color:var(--accent);text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap}
+  .pill{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+  .pill.ok{color:var(--accent);border-color:var(--accent)}
+  .pill.err{color:var(--danger);border-color:var(--danger)}
+  .chatbox{max-height:180px;overflow:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+  .msg{padding:7px 10px;border-radius:10px;font-size:13px;max-width:85%;word-break:break-word}
+  .msg.me{align-self:flex-end;background:#1f3a2b;border:1px solid #2f6b4b}
+  .msg.you{align-self:flex-start;background:#1b2229;border:1px solid var(--line)}
+  input[type=text]{flex:1;min-width:0;background:#0c1116;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px}
+  details{margin-top:8px}
+  summary{cursor:pointer;color:var(--accent2);font-size:13px}
+  code{background:#0e141a;border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12px}
+  .copybtn{font-size:12px;padding:7px 12px}
+</style>
+</head>
+<body>
+<header>
+  <span class="dot" id="statusDot"></span>
+  <h1>離線點對點傳檔 <small id="statusText">· 尚未連線</small></h1>
+</header>
+
+<main>
+  <!-- STEP 0: role -->
+  <section id="roleCard" class="card">
+    <h2>選擇角色（兩台裝置各選一個）</h2>
+    <div class="roles">
+      <div class="role" id="roleA">
+        <span class="emoji">📨</span>
+        <b>建立連線</b>
+        <span>第一台裝置點這裡，產生「邀請碼」</span>
+      </div>
+      <div class="role" id="roleB">
+        <span class="emoji">🔗</span>
+        <b>加入連線</b>
+        <span>第二台裝置點這裡，貼上邀請碼</span>
+      </div>
+    </div>
+    <p class="muted" style="margin:12px 0 0">💡 兩台裝置只要在<b>同一個 WiFi</b>（或其中一台開熱點給另一台連）即可。完全不需要網路、不經過任何伺服器，檔案 P2P 直傳。</p>
+  </section>
+
+  <!-- ROLE A: creator -->
+  <section id="cardA" class="card hidden">
+    <h2>📨 建立連線（裝置 1）</h2>
+    <div class="step" data-n="1" id="a1">
+      <h3>步驟 1 · 產生邀請碼</h3>
+      <button class="primary" id="genOffer">產生邀請碼</button>
+      <div id="offerWrap" class="hidden" style="margin-top:10px">
+        <textarea id="offerOut" readonly></textarea>
+        <div class="row" style="margin-top:6px">
+          <button class="copybtn" id="copyOffer">📋 複製邀請碼</button>
+          <span class="muted">把這串碼傳給裝置 2（可用任何方式：訊息、記事本…）</span>
+        </div>
+      </div>
+    </div>
+    <div class="step" data-n="2" id="a2">
+      <h3>步驟 2 · 貼上裝置 2 回傳的「回應碼」</h3>
+      <textarea id="answerIn" placeholder="在此貼上裝置 2 產生的回應碼…"></textarea>
+      <button class="primary" id="acceptAnswer" style="margin-top:6px">完成連線</button>
+    </div>
+  </section>
+
+  <!-- ROLE B: joiner -->
+  <section id="cardB" class="card hidden">
+    <h2>🔗 加入連線（裝置 2）</h2>
+    <div class="step" data-n="1" id="b1">
+      <h3>步驟 1 · 貼上裝置 1 的邀請碼</h3>
+      <textarea id="offerIn" placeholder="在此貼上裝置 1 的邀請碼…"></textarea>
+      <button class="primary" id="makeAnswer" style="margin-top:6px">產生回應碼</button>
+    </div>
+    <div class="step" data-n="2" id="b2">
+      <h3>步驟 2 · 把回應碼傳回裝置 1</h3>
+      <div id="answerWrap" class="hidden">
+        <textarea id="answerOut" readonly></textarea>
+        <div class="row" style="margin-top:6px">
+          <button class="copybtn" id="copyAnswer">📋 複製回應碼</button>
+          <span class="muted">傳回裝置 1，對方按「完成連線」即接上。</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONNECTED: transfer -->
+  <section id="transferCard" class="card hidden">
+    <h2>✅ 已連線 — 開始傳檔</h2>
+    <div class="drop" id="drop">
+      <div style="font-size:28px">📁</div>
+      <div>點此選擇檔案，或把檔案拖進來</div>
+      <div class="muted" style="margin-top:4px">支援任意檔案、任意大小、可多選</div>
+      <input type="file" id="fileInput" multiple class="hidden">
+    </div>
+    <div class="files" id="fileList"></div>
+
+    <details open style="margin-top:14px">
+      <summary>💬 傳文字 / 訊息</summary>
+      <div style="margin-top:10px">
+        <div class="chatbox" id="chatbox"></div>
+        <div class="row">
+          <input type="text" id="chatInput" placeholder="輸入文字，Enter 傳送…">
+          <button class="blue" id="chatSend">傳送</button>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <div class="card">
+    <details>
+      <summary>ℹ️ 運作原理與注意事項</summary>
+      <div class="muted" style="margin-top:8px">
+        本頁用瀏覽器內建的 <b>WebRTC DataChannel</b> 在兩台裝置間建立<b>點對點</b>直連，檔案不經過任何伺服器或雲端。<br><br>
+        因為沒有牽線伺服器，兩邊需手動交換一次「邀請碼／回應碼」（裡面是加壓縮的連線資訊）。交換完成後即直接連上，之後傳檔全程走區網、吃滿 WiFi 速度。<br><br>
+        <b>需求：</b>兩台在同一 WiFi（或一台開熱點給另一台）。本頁只收集區網位址、<b>不連任何 STUN 伺服器</b>，真正零外連。<br>
+        <b>提示：</b>若公司網路開了「AP 隔離／用戶端隔離」或不同 VLAN，兩機可能無法直連；改用手機熱點最保險。<br>
+        <b>相容性：</b>桌機 Chrome/Edge 可直接開此檔（<code>file://</code>）；部分手機瀏覽器在 <code>file://</code> 下 WebRTC 受限，建議把此檔放到任一網頁空間（見先前的部署方式）再開會最穩。
+      </div>
+    </details>
+  </div>
+</main>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const setStatus = (txt, on) => { $('statusText').textContent = '· ' + txt; $('statusDot').classList.toggle('on', !!on); };
+
+/* ---------- signaling compression (offline, no libs) ---------- */
+async function packSignal(obj){
+  const json = JSON.stringify(obj);
+  const bytes = new TextEncoder().encode(json);
+  if (typeof CompressionStream === 'function'){
+    const cs = new CompressionStream('deflate-raw');
+    const w = cs.writable.getWriter(); w.write(bytes); w.close();
+    const buf = new Uint8Array(await new Response(cs.readable).arrayBuffer());
+    return 'D' + b64urlEncode(buf);
+  }
+  return 'J' + b64urlEncode(bytes);
+}
+async function unpackSignal(code){
+  code = (code||'').trim();
+  const tag = code[0]; const body = code.slice(1);
+  const buf = b64urlDecode(body);
+  let bytes;
+  if (tag === 'D' && typeof DecompressionStream === 'function'){
+    const ds = new DecompressionStream('deflate-raw');
+    const w = ds.writable.getWriter(); w.write(buf); w.close();
+    bytes = new Uint8Array(await new Response(ds.readable).arrayBuffer());
+  } else { bytes = buf; }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function b64urlEncode(u8){ let s=''; for(let i=0;i<u8.length;i++) s+=String.fromCharCode(u8[i]);
+  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function b64urlDecode(str){ str=str.replace(/-/g,'+').replace(/_/g,'/'); const pad=str.length%4?'='.repeat(4-str.length%4):'';
+  const bin=atob(str+pad); const u8=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i); return u8; }
+
+/* ---------- WebRTC core ---------- */
+let pc = null, dc = null, isCreator = false;
+const RTC_CONFIG = { iceServers: [] }; // LAN-only, no external STUN
+
+function newPeer(){
+  pc = new RTCPeerConnection(RTC_CONFIG);
+  pc.onconnectionstatechange = () => {
+    const st = pc.connectionState;
+    if (st === 'connected') onConnected();
+    else if (st === 'failed' || st === 'disconnected' || st === 'closed') setStatus('連線中斷（' + st + '）', false);
+    else setStatus(st + '…', false);
+  };
+  pc.ondatachannel = e => { dc = e.channel; setupChannel(); };
+}
+// wait until ICE gathering completes so the code is self-contained (non-trickle)
+function waitIce(){
+  return new Promise(res => {
+    if (pc.iceGatheringState === 'complete') return res();
+    const check = () => { if (pc.iceGatheringState === 'complete'){ pc.removeEventListener('icegatheringstatechange', check); res(); } };
+    pc.addEventListener('icegatheringstatechange', check);
+    setTimeout(res, 2500); // fallback: don't wait forever
+  });
+}
+
+/* ---------- role selection ---------- */
+$('roleA').onclick = () => { isCreator = true; $('roleCard').classList.add('hidden'); $('cardA').classList.remove('hidden'); };
+$('roleB').onclick = () => { isCreator = false; $('roleCard').classList.add('hidden'); $('cardB').classList.remove('hidden'); };
+
+/* ---------- creator (A) ---------- */
+$('genOffer').onclick = async () => {
+  $('genOffer').disabled = true; setStatus('產生邀請碼中…');
+  newPeer();
+  dc = pc.createDataChannel('file', { ordered: true });
+  setupChannel();
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await waitIce();
+  $('offerOut').value = await packSignal(pc.localDescription);
+  $('offerWrap').classList.remove('hidden');
+  $('a1').classList.add('done');
+  setStatus('等待裝置 2 回應…');
+};
+$('acceptAnswer').onclick = async () => {
+  try {
+    const ans = await unpackSignal($('answerIn').value);
+    await pc.setRemoteDescription(ans);
+    $('a2').classList.add('done');
+    setStatus('連線中…');
+  } catch(e){ alert('回應碼無效，請確認完整貼上。\n' + e.message); }
+};
+
+/* ---------- joiner (B) ---------- */
+$('makeAnswer').onclick = async () => {
+  try {
+    const offer = await unpackSignal($('offerIn').value);
+    newPeer();
+    await pc.setRemoteDescription(offer);
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    await waitIce();
+    $('answerOut').value = await packSignal(pc.localDescription);
+    $('answerWrap').classList.remove('hidden');
+    $('b1').classList.add('done');
+    setStatus('已產生回應碼，等待裝置 1 完成…');
+  } catch(e){ alert('邀請碼無效，請確認完整貼上。\n' + e.message); }
+};
+
+/* ---------- copy buttons ---------- */
+function bindCopy(btnId, taId){
+  $(btnId).onclick = async () => {
+    const ta = $(taId); ta.select();
+    try { await navigator.clipboard.writeText(ta.value); $(btnId).textContent='✅ 已複製'; }
+    catch { document.execCommand('copy'); $(btnId).textContent='✅ 已複製'; }
+    setTimeout(()=>{ $(btnId).textContent = btnId==='copyOffer'?'📋 複製邀請碼':'📋 複製回應碼'; }, 1500);
+  };
+}
+bindCopy('copyOffer','offerOut'); bindCopy('copyAnswer','answerOut');
+
+/* ---------- data channel & file transfer ---------- */
+const CHUNK = 16 * 1024;             // 16 KB chunks
+const LOW_WATER = 256 * 1024;        // resume sending under this buffer
+let incoming = null;                 // current receiving file state
+
+function setupChannel(){
+  dc.binaryType = 'arraybuffer';
+  dc.bufferedAmountLowThreshold = LOW_WATER;
+  dc.onopen = onConnected;
+  dc.onclose = () => setStatus('連線已關閉', false);
+  dc.onmessage = onMessage;
+}
+function onConnected(){
+  if ($('transferCard').classList.contains('hidden')){
+    $('cardA').classList.add('hidden'); $('cardB').classList.add('hidden');
+    $('transferCard').classList.remove('hidden');
+  }
+  setStatus('已連線 · 可傳檔', true);
+}
+
+/* -- receiving -- */
+function onMessage(e){
+  if (typeof e.data === 'string'){
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m.t === 'fstart'){
+      incoming = { name:m.name, size:m.size, mime:m.mime||'application/octet-stream', recv:0, parts:[], row:addFileRow(m.name, m.size, 'recv') };
+    } else if (m.t === 'fend'){
+      if (incoming){
+        const blob = new Blob(incoming.parts, { type: incoming.mime });
+        const url = URL.createObjectURL(blob);
+        finishFileRow(incoming.row, url, incoming.name);
+        incoming = null;
+      }
+    } else if (m.t === 'text'){
+      addChat(m.body, 'you');
+    }
+  } else {
+    if (!incoming) return;
+    incoming.parts.push(e.data);
+    incoming.recv += e.data.byteLength;
+    updateRow(incoming.row, incoming.recv / incoming.size);
+  }
+}
+
+/* -- sending -- */
+async function sendFile(file){
+  if (!dc || dc.readyState !== 'open'){ alert('尚未連線'); return; }
+  const row = addFileRow(file.name, file.size, 'send');
+  dc.send(JSON.stringify({ t:'fstart', name:file.name, size:file.size, mime:file.type }));
+  let offset = 0;
+  while (offset < file.size){
+    // backpressure: wait if send buffer too full
+    if (dc.bufferedAmount > LOW_WATER * 8){
+      await new Promise(res => { dc.onbufferedamountlow = () => { dc.onbufferedamountlow = null; res(); }; });
+    }
+    const slice = file.slice(offset, offset + CHUNK);
+    const buf = await slice.arrayBuffer();
+    dc.send(buf);
+    offset += buf.byteLength;
+    updateRow(row, offset / file.size);
+  }
+  dc.send(JSON.stringify({ t:'fend', name:file.name }));
+  finishFileRow(row, null, null, true);
+}
+
+/* ---------- file list UI ---------- */
+function fmtSize(n){ if(n<1024) return n+' B'; if(n<1048576) return (n/1024).toFixed(1)+' KB'; if(n<1073741824) return (n/1048576).toFixed(1)+' MB'; return (n/1073741824).toFixed(2)+' GB'; }
+function addFileRow(name, size, dir){
+  const el = document.createElement('div'); el.className='fitem';
+  el.innerHTML = `<div class="top">
+      <span class="name">${dir==='send'?'⬆️':'⬇️'} ${escapeHtml(name)}</span>
+      <span class="meta">${fmtSize(size)} <span class="pill">${dir==='send'?'傳送中':'接收中'}</span></span>
+    </div><div class="bar"><i></i></div>`;
+  $('fileList').prepend(el); return el;
+}
+function updateRow(row, ratio){ row.querySelector('.bar > i').style.width = Math.min(100, ratio*100).toFixed(1)+'%'; }
+function finishFileRow(row, url, name, sent){
+  row.querySelector('.bar > i').style.width='100%';
+  const meta = row.querySelector('.meta');
+  if (sent){ meta.querySelector('.pill').outerHTML = '<span class="pill ok">已送達</span>'; }
+  else if (url){ meta.querySelector('.pill').outerHTML = `<a class="dl" href="${url}" download="${escapeHtml(name)}">⬇ 下載</a>`;
+    // auto-trigger download on mobile-friendly click; keep manual for safety
+  }
+}
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------- drop zone ---------- */
+const drop = $('drop'), fileInput = $('fileInput');
+drop.onclick = () => fileInput.click();
+fileInput.onchange = () => { [...fileInput.files].forEach(sendFile); fileInput.value=''; };
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('hot'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('hot'); }));
+drop.addEventListener('drop', e => { [...e.dataTransfer.files].forEach(sendFile); });
+
+/* ---------- chat ---------- */
+function addChat(text, who){ const el=document.createElement('div'); el.className='msg '+who; el.textContent=text;
+  $('chatbox').appendChild(el); $('chatbox').scrollTop = $('chatbox').scrollHeight; }
+function sendChat(){ const v=$('chatInput').value.trim(); if(!v||!dc||dc.readyState!=='open') return;
+  dc.send(JSON.stringify({ t:'text', body:v })); addChat(v,'me'); $('chatInput').value=''; }
+$('chatSend').onclick = sendChat;
+$('chatInput').addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
+</script>
+</body>
+</html>
