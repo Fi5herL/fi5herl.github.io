@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>光學檔案傳輸 · Optical File Transfer</title>
+<style>
+  :root{
+    --bg:#0b0d10; --panel:#14181d; --line:#232a31; --txt:#e8edf2;
+    --muted:#8b97a3; --accent:#2fd27a; --accent2:#3aa0ff; --danger:#ff5a5a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;
+    -webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;
+    position:sticky;top:0;background:rgba(11,13,16,.9);backdrop-filter:blur(8px);z-index:5}
+  header h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.2px}
+  header .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+  .tabs{display:flex;gap:6px;padding:12px 16px 0}
+  .tab{flex:1;text-align:center;padding:11px;border:1px solid var(--line);border-bottom:none;
+    border-radius:12px 12px 0 0;background:var(--panel);color:var(--muted);cursor:pointer;font-weight:600;font-size:14px}
+  .tab.active{color:var(--txt);background:#1a2027;border-color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
+  main{padding:16px;max-width:720px;margin:0 auto}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  label{font-size:13px;color:var(--muted)}
+  button{appearance:none;border:1px solid var(--line);background:#1b2229;color:var(--txt);
+    padding:11px 16px;border-radius:11px;font-weight:650;font-size:14px;cursor:pointer}
+  button.primary{background:linear-gradient(180deg,#2fd27a,#1fae62);border-color:#1fae62;color:#04160c}
+  button.blue{background:linear-gradient(180deg,#3aa0ff,#2b7fe0);border-color:#2b7fe0;color:#031224}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  input[type=file]{color:var(--muted);font-size:13px;max-width:100%}
+  select,input[type=range]{background:#1b2229;color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:8px}
+  .grid-wrap{display:flex;justify-content:center;background:#fff;border-radius:12px;padding:12px;margin-top:8px}
+  canvas.code{image-rendering:pixelated;width:min(86vw,420px);height:auto;display:block}
+  .stat{font-variant-numeric:tabular-nums}
+  .bar{height:10px;background:#0c1116;border:1px solid var(--line);border-radius:99px;overflow:hidden;margin-top:8px}
+  .bar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .15s}
+  .videoBox{position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:1/1;max-width:520px;margin:8px auto 0}
+  video{width:100%;height:100%;object-fit:cover;display:block}
+  .guide{position:absolute;inset:6%;border:3px dashed rgba(47,210,122,.85);border-radius:10px;pointer-events:none}
+  .guide.lock{border-color:#fff;border-style:solid;box-shadow:0 0 0 3px rgba(47,210,122,.6) inset}
+  .muted{color:var(--muted);font-size:13px;line-height:1.55}
+  .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .kpi div{background:#0e141a;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+  .kpi b{display:block;font-size:20px}
+  .kpi span{font-size:11px;color:var(--muted)}
+  details{margin-top:10px}
+  summary{cursor:pointer;color:var(--accent2);font-size:13px}
+  .settings{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .settings .f{display:flex;flex-direction:column;gap:4px}
+  .hidden{display:none}
+  .ok{color:var(--accent)}.err{color:var(--danger)}
+  #preview img{max-width:100%;border-radius:10px;border:1px solid var(--line);margin-top:8px}
+  a.dl{display:inline-block;margin-top:10px}
+  code{background:#0e141a;border:1px solid var(--line);border-radius:6px;padding:1px 5px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <span class="dot"></span>
+  <h1>光學檔案傳輸 · 螢幕 → 相機 · 完全離線</h1>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="send">📤 傳送端（Sender）</div>
+  <div class="tab" data-tab="recv">📷 接收端（Receiver）</div>
+</div>
+
+<main>
+  <!-- ============ SENDER ============ -->
+  <section id="send">
+    <div class="card">
+      <div class="row">
+        <input type="file" id="file">
+        <button id="btnSend" class="primary" disabled>▶ 開始播放</button>
+        <button id="btnStop" disabled>■ 停止</button>
+      </div>
+      <div class="muted" style="margin-top:8px">選一個<b>小檔案</b>（建議 &lt; 100&nbsp;KB，例如小圖片、文字檔）。把畫面全螢幕、亮度開最大，讓另一台裝置的相機對準這個格點動畫。</div>
+
+      <details>
+        <summary>⚙️ 傳送設定</summary>
+        <div class="settings">
+          <div class="f"><label>密度（格點大小）</label>
+            <select id="density">
+              <option value="28">低 · 28×28（最好讀，較慢）</option>
+              <option value="36" selected>中 · 36×36</option>
+              <option value="44">高 · 44×44</option>
+              <option value="52">超高 · 52×52（近距離高畫質相機）</option>
+            </select>
+          </div>
+          <div class="f"><label>播放速率 FPS：<span id="fpsVal">8</span></label>
+            <input type="range" id="fps" min="3" max="20" value="8">
+          </div>
+          <div class="f"><label>顯示尺寸（像素/格）：<span id="cpVal">10</span></label>
+            <input type="range" id="cell" min="6" max="16" value="10">
+          </div>
+        </div>
+      </details>
+
+      <div class="grid-wrap"><canvas id="tx" class="code" width="360" height="360"></canvas></div>
+      <div class="kpi">
+        <div><b class="stat" id="txFps">0</b><span>實際 FPS</span></div>
+        <div><b class="stat" id="txSeq">0</b><span>已播放幀</span></div>
+        <div><b class="stat" id="txK">–</b><span>區塊數 K</span></div>
+      </div>
+      <div class="muted" id="txInfo" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- ============ RECEIVER ============ -->
+  <section id="recv" class="hidden">
+    <div class="card">
+      <div class="row">
+        <button id="btnCam" class="blue">📷 開啟相機</button>
+        <button id="btnCamStop" disabled>■ 關閉</button>
+        <button id="btnReset">↻ 重置</button>
+      </div>
+      <div class="muted" style="margin-top:8px">把整個黑白格點對準<b>綠色框</b>內、盡量正對（不要斜）、手拿穩或靠著東西。框變<b>白色</b>=已鎖定。</div>
+      <div class="videoBox">
+        <video id="video" playsinline muted></video>
+        <div class="guide" id="guide"></div>
+      </div>
+      <div class="bar"><i id="barFill"></i></div>
+      <div class="kpi">
+        <div><b class="stat" id="rxProg">0%</b><span>進度</span></div>
+        <div><b class="stat" id="rxHave">0</b><span>已收區塊</span></div>
+        <div><b class="stat" id="rxFrames">0</b><span>成功解幀</span></div>
+      </div>
+      <div class="muted" id="rxStatus" style="margin-top:8px">等待相機…</div>
+      <div id="result" class="hidden">
+        <div class="card" style="margin-top:12px;border-color:var(--accent)">
+          <b class="ok">✅ 傳輸完成！</b>
+          <div class="muted" id="resInfo" style="margin-top:6px"></div>
+          <div id="preview"></div>
+          <a class="dl" id="dl"><button class="primary">⬇ 下載檔案</button></a>
+        </div>
+      </div>
+
+      <details>
+        <summary>⚙️ 接收設定</summary>
+        <div class="settings">
+          <div class="f"><label>相機解析度</label>
+            <select id="camRes">
+              <option value="720">720（省電）</option>
+              <option value="1080" selected>1080</option>
+              <option value="1440">1440（高畫質）</option>
+            </select>
+          </div>
+          <div class="f"><label>取樣去抖 patch</label>
+            <select id="patch"><option>1</option><option selected>3</option><option>5</option></select>
+          </div>
+        </div>
+        <div class="muted" style="margin-top:8px">相機與傳送設定的密度需相容：接收端會自動偵測格點數，不必手動對齊格數。</div>
+      </details>
+    </div>
+  </section>
+
+  <div class="card">
+    <details>
+      <summary>ℹ️ 這是什麼／運作原理</summary>
+      <div class="muted" style="margin-top:8px">
+        兩台裝置之間<b>沒有網路、藍牙或配對</b>，資料完全靠<b>光</b>傳輸：傳送端把檔案編碼成一連串會不斷變化的黑白格點動畫，接收端用相機拍下並重建。<br><br>
+        核心用了 <b>噴泉碼（LT / Luby Transform）</b>：每一幀都是「檔案若干區塊的 XOR」，接收端<b>不需照順序</b>、也<b>允許漏掉一些幀</b>，只要湊齊約 K×1.1~1.5 個有效幀就能把檔案「剝解」出來。每幀都自帶標頭與 <code>CRC32</code>，可中途鎖定、換檔自動重置。<br><br>
+        靈感來自 <code>decimen-optical-transfer</code>（fountain-coded QR）。本頁不依賴任何外部函式庫，編碼與相機解碼皆為內建純 JavaScript，因此可離線單檔執行。
+      </div>
+    </details>
+  </div>
+</main>
+
+<script>
+/* =================== CORE CODEC (inlined) =================== */
+const CRC_TABLE=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})();
+function crc32(b,s=0,e=b.length){let c=0xFFFFFFFF;for(let i=s;i<e;i++)c=CRC_TABLE[(c^b[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function mulberry32(a){return function(){a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return ((t^(t>>>14))>>>0)/4294967296;};}
+function seedFor(session,seq){return (Math.imul(session,2654435761)^Math.imul(seq+1,40503)^0x9E3779B9)>>>0;}
+function sampleDegree(rng,K){const u=rng();let acc=1/K;if(u<acc)return 1;for(let d=2;d<=K;d++){acc+=1/(d*(d-1));if(u<acc)return d;}return K;}
+function deriveIndices(session,seq,K){if(K<=0)return[];if(seq<K)return[seq];const rng=mulberry32(seedFor(session,seq));let d=sampleDegree(rng,K);if(d>K)d=K;const set=new Set();let g=0;while(set.size<d&&g++<K*8)set.add(Math.floor(rng()*K)%K);return[...set];}
+const HEADER=15,MAGIC=0x46;
+function buildPacket(meta,blocks,seq){const{session,fileLen,blockSize,K}=meta;const total=HEADER+blockSize+4;const p=new Uint8Array(total);const dv=new DataView(p.buffer);p[0]=MAGIC;dv.setUint16(1,session,true);dv.setUint32(3,fileLen,true);dv.setUint16(7,blockSize,true);dv.setUint16(9,K,true);dv.setUint32(11,seq,true);const idx=deriveIndices(session,seq,K);const pay=p.subarray(HEADER,HEADER+blockSize);for(const bi of idx){const src=blocks[bi];for(let j=0;j<blockSize;j++)pay[j]^=src[j];}const crc=crc32(p,0,HEADER+blockSize);dv.setUint32(HEADER+blockSize,crc,true);return p;}
+function parsePacket(bytes){if(bytes.length<HEADER+4)return null;if(bytes[0]!==MAGIC)return null;const dv=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);const session=dv.getUint16(1,true);const fileLen=dv.getUint32(3,true);const blockSize=dv.getUint16(7,true);const K=dv.getUint16(9,true);const seq=dv.getUint32(11,true);const total=HEADER+blockSize+4;if(blockSize===0||blockSize>4096||K===0)return null;if(bytes.length<total)return null;const crcGot=dv.getUint32(HEADER+blockSize,true);const crcCalc=crc32(bytes,0,HEADER+blockSize);if(crcGot!==crcCalc)return null;const idx=deriveIndices(session,seq,K);const payload=bytes.slice(HEADER,HEADER+blockSize);return{session,fileLen,blockSize,K,seq,indices:idx,payload};}
+function xorInto(a,b){for(let j=0;j<a.length;j++)a[j]^=b[j];}
+class LTDecoder{constructor(){this.reset();}
+ reset(){this.K=0;this.blockSize=0;this.fileLen=0;this.session=-1;this.blocks=null;this.have=0;this.symbols=[];this.done=false;this.result=null;}
+ init(session,K,blockSize,fileLen){this.session=session;this.K=K;this.blockSize=blockSize;this.fileLen=fileLen;this.blocks=new Array(K).fill(null);this.have=0;this.symbols=[];this.done=false;this.result=null;}
+ addPacket(pk){if(this.done)return false;if(this.session!==pk.session||this.K!==pk.K||this.blockSize!==pk.blockSize){this.init(pk.session,pk.K,pk.blockSize,pk.fileLen);}
+  let idx=pk.indices.filter(i=>i<this.K);let data=pk.payload.slice();idx=idx.filter(i=>{if(this.blocks[i]){xorInto(data,this.blocks[i]);return false;}return true;});if(idx.length===0)return false;this.symbols.push({idx:new Set(idx),data});this.peel();return true;}
+ peel(){let prog=true;while(prog&&this.have<this.K){prog=false;for(let s=0;s<this.symbols.length;s++){const sym=this.symbols[s];if(!sym)continue;for(const i of[...sym.idx])if(this.blocks[i]){xorInto(sym.data,this.blocks[i]);sym.idx.delete(i);}if(sym.idx.size===0){this.symbols[s]=null;continue;}if(sym.idx.size===1){const i=[...sym.idx][0];if(!this.blocks[i]){this.blocks[i]=sym.data;this.have++;prog=true;}this.symbols[s]=null;}}}if(this.have>=this.K&&!this.done)this.finish();}
+ finish(){const full=new Uint8Array(this.K*this.blockSize);for(let i=0;i<this.K;i++)full.set(this.blocks[i],i*this.blockSize);this.result=full.slice(0,this.fileLen);this.done=true;}
+ progress(){return this.K?this.have/this.K:0;}}
+function packContainer(name,data){const enc=new TextEncoder();const nb=enc.encode(name);const out=new Uint8Array(2+nb.length+data.length);new DataView(out.buffer).setUint16(0,nb.length,true);out.set(nb,2);out.set(data,2+nb.length);return out;}
+function unpackContainer(b){const dv=new DataView(b.buffer,b.byteOffset,b.byteLength);const nl=dv.getUint16(0,true);const name=new TextDecoder().decode(b.slice(2,2+nl));const data=b.slice(2+nl);return{name,data};}
+
+/* =================== GRID OPTICAL CODEC =================== */
+// grid layout: ring0 = BLACK finder border, ring1 = WHITE quiet, interior D=N-4 data cells (1 bit each)
+function gridCapacityBytes(N){const D=N-4;return Math.floor((D*D)/8);}
+function packetToBits(pkt,D){const nbits=D*D;const bits=new Uint8Array(nbits);const avail=pkt.length*8;for(let i=0;i<avail&&i<nbits;i++){bits[i]=(pkt[i>>3]>>(7-(i&7)))&1;}return bits;}
+function renderGrid(ctx,N,cell,bits){const px=cell;const W=N*px;ctx.canvas.width=W;ctx.canvas.height=W;ctx.fillStyle='#fff';ctx.fillRect(0,0,W,W);
+  const D=N-4;
+  // black finder border ring (index 0 and N-1)
+  ctx.fillStyle='#000';
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(r===0||c===0||r===N-1||c===N-1){ctx.fillRect(c*px,r*px,px,px);} }
+  // ring1 stays white (already). data cells
+  for(let dr=0;dr<D;dr++)for(let dc=0;dc<D;dc++){const bit=bits[dr*D+dc];if(bit){ctx.fillRect((dc+2)*px,(dr+2)*px,px,px);} }
+}
+
+/* =================== SENDER =================== */
+const $=id=>document.getElementById(id);
+let tx={running:false,blocks:null,meta:null,seq:0,N:36,cell:10,fps:8,last:0,frames:0,fpsT:0};
+const txCanvas=$('tx'),txCtx=txCanvas.getContext('2d',{willReadFrequently:false});
+
+$('file').addEventListener('change',()=>{ $('btnSend').disabled=!$('file').files.length; });
+$('density').addEventListener('change',prepareIfLoaded);
+$('fps').addEventListener('input',e=>{tx.fps=+e.target.value;$('fpsVal').textContent=e.target.value;});
+$('cell').addEventListener('input',e=>{tx.cell=+e.target.value;$('cpVal').textContent=e.target.value;});
+
+function prepareIfLoaded(){ if(tx.blocks) buildStream(); }
+
+async function buildStream(){
+  const f=$('file').files[0]; if(!f) return;
+  const N=+$('density').value; tx.N=N; tx.cell=+$('cell').value; tx.fps=+$('fps').value;
+  const capBytes=gridCapacityBytes(N); const blockSize=capBytes-(HEADER+4);
+  if(blockSize<16){ $('txInfo').innerHTML='<span class="err">格點太小，容量不足，請提高密度。</span>'; return; }
+  const raw=new Uint8Array(await f.arrayBuffer());
+  const container=packContainer(f.name,raw);
+  const K=Math.ceil(container.length/blockSize);
+  const blocks=[];for(let i=0;i<K;i++){const b=new Uint8Array(blockSize);b.set(container.subarray(i*blockSize,Math.min((i+1)*blockSize,container.length)));blocks.push(b);}
+  const session=(Math.floor(Math.random()*65535))&0xffff;
+  tx.blocks=blocks; tx.meta={session,fileLen:container.length,blockSize,K}; tx.seq=0;
+  $('txK').textContent=K;
+  $('txInfo').innerHTML=`檔案 <b>${f.name}</b> · ${raw.length.toLocaleString()} B → K=${K} 區塊 · 每幀 ${blockSize} B · 容量 ${capBytes} B/幀`;
+  // render first frame preview
+  renderSeq(0);
+}
+
+function renderSeq(seq){
+  const D=tx.N-4;
+  const pkt=buildPacket(tx.meta,tx.blocks,seq);
+  const bits=packetToBits(pkt,D);
+  renderGrid(txCtx,tx.N,tx.cell,bits);
+}
+
+$('btnSend').addEventListener('click',async()=>{
+  await buildStream(); if(!tx.blocks) return;
+  tx.running=true; tx.frames=0; tx.fpsT=performance.now();
+  $('btnSend').disabled=true; $('btnStop').disabled=false;
+  requestAnimationFrame(txLoop);
+});
+$('btnStop').addEventListener('click',()=>{tx.running=false;$('btnSend').disabled=false;$('btnStop').disabled=true;});
+
+function txLoop(t){
+  if(!tx.running) return;
+  const interval=1000/tx.fps;
+  if(t-tx.last>=interval){
+    tx.last=t;
+    renderSeq(tx.seq);
+    tx.seq++; tx.frames++;
+    $('txSeq').textContent=tx.seq;
+    if(t-tx.fpsT>=1000){$('txFps').textContent=tx.frames;tx.frames=0;tx.fpsT=t;}
+  }
+  requestAnimationFrame(txLoop);
+}
+
+/* =================== RECEIVER =================== */
+let rx={stream:null,running:false,dec:new LTDecoder(),frames:0,patch:3,rafId:null};
+const video=$('video'),guide=$('guide');
+const work=document.createElement('canvas'),wctx=work.getContext('2d',{willReadFrequently:true});
+
+$('btnCam').addEventListener('click',startCam);
+$('btnCamStop').addEventListener('click',stopCam);
+$('btnReset').addEventListener('click',()=>{rx.dec.reset();rx.frames=0;updateRx();$('result').classList.add('hidden');$('rxStatus').textContent='已重置，等待畫面…';});
+$('patch').addEventListener('change',e=>rx.patch=+e.target.value);
+
+async function startCam(){
+  try{
+    const res=+$('camRes').value;
+    rx.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:res},height:{ideal:res}},audio:false});
+    video.srcObject=rx.stream; await video.play();
+    rx.running=true; $('btnCam').disabled=true; $('btnCamStop').disabled=false;
+    $('rxStatus').textContent='相機已開啟，對準格點…';
+    scanLoop();
+  }catch(err){ $('rxStatus').innerHTML='<span class="err">無法開啟相機：'+err.message+'</span><br><span class="muted">需在 https 或 localhost 下，並允許相機權限。</span>'; }
+}
+function stopCam(){rx.running=false;if(rx.stream){rx.stream.getTracks().forEach(t=>t.stop());rx.stream=null;}$('btnCam').disabled=false;$('btnCamStop').disabled=true;$('rxStatus').textContent='相機已關閉。';}
+
+function scanLoop(){
+  if(!rx.running)return;
+  const vw=video.videoWidth,vh=video.videoHeight;
+  if(vw&&vh){
+    // ROI = central guide square (inset 6% like the CSS guide)
+    const side=Math.min(vw,vh); const inset=0.06;
+    const roi=Math.round(side*(1-2*inset));
+    const rx0=Math.round((vw-roi)/2), ry0=Math.round((vh-roi)/2);
+    if(work.width!==roi){work.width=roi;work.height=roi;}
+    wctx.drawImage(video,rx0,ry0,roi,roi,0,0,roi,roi);
+    try{ processROI(roi); }catch(e){ /* ignore transient */ }
+  }
+  if('requestVideoFrameCallback' in video){ video.requestVideoFrameCallback(()=>scanLoop()); }
+  else { rx.rafId=requestAnimationFrame(scanLoop); }
+}
+
+function processROI(size){
+  const img=wctx.getImageData(0,0,size,size);const d=img.data;
+  // grayscale + Otsu on a downsampled histogram
+  const gray=new Uint8Array(size*size);const hist=new Uint32Array(256);
+  for(let i=0,p=0;i<d.length;i+=4,p++){const g=(d[i]*77+d[i+1]*150+d[i+2]*29)>>8;gray[p]=g;hist[g]++;}
+  const thr=otsu(hist,size*size);
+  // dark bounding box (the black finder border is the outermost dark ring)
+  let minX=size,minY=size,maxX=-1,maxY=-1,darkCount=0;
+  // sample on a stride for speed
+  const step=Math.max(1,Math.floor(size/300));
+  for(let y=0;y<size;y+=step){for(let x=0;x<size;x+=step){if(gray[y*size+x]<thr){darkCount++;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;}}}
+  if(maxX<0){setLock(false);return;}
+  const bw=maxX-minX,bh=maxY-minY;
+  if(bw<size*0.35||bh<size*0.35){setLock(false);return;} // too small / not aligned
+  const aspect=bw/bh; if(aspect<0.72||aspect>1.38){setLock(false);return;} // not square-ish
+  // We don't know N a priori: try detecting it from the border thickness / or scan candidate N.
+  // Simpler & robust: assume the sender density is one of known values and pick the N whose
+  // decoded packet passes CRC. Try each candidate.
+  const cands=[28,36,44,52];
+  for(const N of cands){
+    const bits=sampleGrid(gray,size,minX,minY,maxX,maxY,N,thr);
+    if(!bits)continue;
+    const D=N-4; const nbytes=Math.floor((D*D)/8);
+    const bytes=bitsToBytes(bits,nbytes);
+    const pk=parsePacket(bytes);
+    if(pk){ setLock(true); const adv=rx.dec.addPacket(pk); if(adv||rx.dec.done){ rx.frames++; updateRx(); if(rx.dec.done) onComplete(); } return; }
+  }
+  setLock(false,true); // border found but decode failed (blur/skew)
+}
+
+function bitsToBytes(bits,n){const out=new Uint8Array(n);for(let i=0;i<n;i++){let v=0;for(let j=0;j<8;j++)v=(v<<1)|(bits[i*8+j]||0);out[i]=v;}return out;}
+
+function sampleGrid(gray,size,x0,y0,x1,y1,N,thr){
+  const D=N-4;const cw=(x1-x0)/N, ch=(y1-y0)/N;
+  if(cw<1.2||ch<1.2)return null;
+  // verify finder: border ring should be mostly dark, quiet ring mostly light
+  let borderDark=0,borderTot=0,quietLight=0,quietTot=0;
+  const cellVal=(gr,gc)=>{const cx=Math.round(x0+(gc+0.5)*cw),cy=Math.round(y0+(gr+0.5)*ch);const r=rx.patch>>1;let s=0,c=0;for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const xx=cx+dx,yy=cy+dy;if(xx>=0&&yy>=0&&xx<size&&yy<size){s+=gray[yy*size+xx];c++;}}return c?s/c:255;};
+  for(let k=0;k<N;k++){
+    for(const [gr,gc] of [[0,k],[N-1,k],[k,0],[k,N-1]]){ borderTot++; if(cellVal(gr,gc)<thr)borderDark++; }
+    for(const [gr,gc] of [[1,k],[N-2,k],[k,1],[k,N-2]]){ quietTot++; if(cellVal(gr,gc)>=thr)quietLight++; }
+  }
+  if(borderDark/borderTot<0.75)return null;   // border not solid enough
+  if(quietLight/quietTot<0.6)return null;      // quiet ring not light enough
+  // sample data cells
+  const bits=new Uint8Array(D*D);
+  for(let dr=0;dr<D;dr++)for(let dc=0;dc<D;dc++){const v=cellVal(dr+2,dc+2);bits[dr*D+dc]=v<thr?1:0;}
+  return bits;
+}
+
+function otsu(hist,total){let sum=0;for(let i=0;i<256;i++)sum+=i*hist[i];let sumB=0,wB=0,maxVar=-1,thr=127;for(let i=0;i<256;i++){wB+=hist[i];if(!wB)continue;const wF=total-wB;if(!wF)break;sumB+=i*hist[i];const mB=sumB/wB,mF=(sum-sumB)/wF;const v=wB*wF*(mB-mF)*(mB-mF);if(v>=maxVar){maxVar=v;thr=i;}}return Math.max(1,Math.min(254,thr));}
+
+let lockTimer=null;
+function setLock(on,warn){ guide.classList.toggle('lock',!!on); if(on){$('rxStatus').textContent='🔒 已鎖定，接收中…';} else if(warn){$('rxStatus').textContent='偵測到格點但解碼失敗：拿穩、正對、靠近一點。';} }
+
+function updateRx(){const p=Math.round(rx.dec.progress()*100);$('rxProg').textContent=p+'%';$('barFill').style.width=p+'%';$('rxHave').textContent=rx.dec.have+' / '+(rx.dec.K||'–');$('rxFrames').textContent=rx.frames;}
+
+function onComplete(){
+  const {name,data}=unpackContainer(rx.dec.result);
+  const blob=new Blob([data]);const url=URL.createObjectURL(blob);
+  $('dl').href=url; $('dl').download=name||'received.bin';
+  $('resInfo').innerHTML=`檔名：<b>${name}</b> · 大小 ${data.length.toLocaleString()} B · CRC32 <code>${crc32(data).toString(16)}</code>`;
+  const prev=$('preview');prev.innerHTML='';
+  if(/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name)){const im=new Image();im.src=url;prev.appendChild(im);}
+  else if(/\.(txt|json|csv|md|log|xml|html?)$/i.test(name)){const t=new TextDecoder().decode(data.slice(0,4000));const pre=document.createElement('pre');pre.textContent=t;pre.style.cssText='white-space:pre-wrap;background:#0e141a;border:1px solid var(--line);border-radius:8px;padding:10px;max-height:220px;overflow:auto;font-size:12px';prev.appendChild(pre);}
+  $('result').classList.remove('hidden');
+  $('rxStatus').innerHTML='<span class="ok">✅ 完成！可下載。</span>';
+}
+
+/* =================== TABS =================== */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');
+  const which=t.dataset.tab;$('send').classList.toggle('hidden',which!=='send');$('recv').classList.toggle('hidden',which!=='recv');
+  if(which!=='recv'){/* keep camera running is fine */}
+}));
+</script>
+</body>
+</html>
